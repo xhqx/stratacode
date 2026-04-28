@@ -12,6 +12,7 @@ export type FormState = {
   name: string
   baseURL: string
   apiKey: string
+  proxyURL: string
   models: ModelEntry[]
   headers: HeaderRow[]
   saving: boolean
@@ -21,6 +22,7 @@ export type FormErrors = {
   providerID: string | undefined
   name: string | undefined
   baseURL: string | undefined
+  proxyURL: string | undefined
   models: Array<{ id?: string; name?: string; variants?: Array<{ name?: string }> }>
   headers: Array<{ key?: string; value?: string }>
 }
@@ -45,7 +47,7 @@ type ValidateResult = {
       npm: string
       name: string
       env?: string[]
-      options: { baseURL: string; headers?: Record<string, string> }
+      options: { baseURL: string; proxyURL?: string; headers?: Record<string, string> }
       models: Record<string, unknown>
     }
   }
@@ -129,6 +131,7 @@ export function validateCustomProvider(input: ValidateArgs): ValidateResult {
   const providerID = input.form.providerID.trim()
   const name = input.form.name.trim()
   const baseURL = input.form.baseURL.trim()
+  const proxyURL = input.form.proxyURL?.trim() || ""
   const apiKey = input.form.apiKey.trim()
 
   const rawEnv = apiKey.match(/^\{env:([^}]+)\}$/)?.[1]?.trim()
@@ -151,6 +154,10 @@ export function validateCustomProvider(input: ValidateArgs): ValidateResult {
       ? input.t("provider.custom.error.baseURL.format")
       : undefined
 
+  const proxyUrlError = proxyURL && !/^https?:\/\//.test(proxyURL)
+    ? input.t("provider.custom.error.baseURL.format") // Reuse the URL format error message
+    : undefined
+
   const seenModels = new Set<string>()
   const modelErrors = input.form.models.map((m) => checkModel(m, seenModels, input.t))
   const modelsValid = modelErrors.every((m) => !m.id && !m.name && m.variants.every((v) => !v.name))
@@ -163,11 +170,12 @@ export function validateCustomProvider(input: ValidateArgs): ValidateResult {
     providerID: idErr ?? existsErr,
     name: nameError,
     baseURL: urlError,
+    proxyURL: proxyUrlError,
     models: modelErrors,
     headers: headerErrors,
   }
 
-  const ok = !idErr && !existsErr && !nameError && !urlError && modelsValid && headersValid
+  const ok = !idErr && !existsErr && !nameError && !urlError && !proxyUrlError && modelsValid && headersValid
   if (!ok) return { errors }
 
   const headers = Object.fromEntries(
@@ -179,6 +187,7 @@ export function validateCustomProvider(input: ValidateArgs): ValidateResult {
 
   const options = {
     baseURL,
+    ...(proxyURL ? { proxyURL } : {}),
     ...(Object.keys(headers).length ? { headers } : {}),
   }
 

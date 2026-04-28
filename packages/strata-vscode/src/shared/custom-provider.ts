@@ -34,6 +34,7 @@ export const CustomProviderConfigSchema = z
           .refine((value) => value.startsWith("http://") || value.startsWith("https://"), {
             message: INVALID_BASE_URL,
           }),
+        proxyURL: z.string().trim().url().optional(),
         headers: z.record(z.string().trim().min(1), z.string().trim().min(1)).optional(),
       })
       .strict(),
@@ -58,6 +59,7 @@ export type SanitizedProviderConfig = {
   env?: string[]
   options: {
     baseURL: string
+    proxy?: string
     headers?: Record<string, string>
   }
   models: Record<string, { name: string; reasoning?: true; variants?: Record<string, VariantConfig> }>
@@ -123,6 +125,7 @@ export function normalizeCustomProviderConfig(
     ...(config.env ? { env: config.env.map((item) => item.trim()) } : {}),
     options: {
       baseURL: config.options.baseURL.trim(),
+      ...(config.options.proxyURL ? { proxy: config.options.proxyURL.trim() } : {}),
       ...(headers && Object.keys(headers).length > 0 ? { headers } : {}),
     },
     models: Object.fromEntries(

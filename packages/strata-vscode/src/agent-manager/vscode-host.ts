@@ -65,8 +65,8 @@ export class VscodeHost implements Host {
     }
 
     panel.iconPath = {
-      light: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-light.svg"),
-      dark: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-dark.svg"),
+      light: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-light.png"),
+      dark: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-dark.png"),
     }
 
     const port = this.connectionService.getServerInfo()?.port

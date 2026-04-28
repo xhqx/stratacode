@@ -13,6 +13,7 @@ import { ProviderID, ModelID } from "@/provider/schema"
 import { Effect, Schema } from "effect"
 import type { LanguageModelV3 } from "@ai-sdk/provider"
 import { mapValues, omit, pickBy } from "remeda"
+import { Flag } from "@/flag/flag"
 
 // Re-export for consumers that previously imported from provider.ts
 export { Prompt, AiSdkProvider }
@@ -120,6 +121,16 @@ export function strataCustomLoaders(dep: CustomDep): Record<string, CustomLoader
       }),
 
     strata: Effect.fnUntraced(function* (input: any) {
+      if (!Flag.STRATA_ENABLE_GATEWAY) {
+        return {
+          autoload: false,
+          options: {},
+          getModel: async () => {
+            throw new Error("Strata Gateway is disabled.")
+          },
+        }
+      }
+
       const env = yield* dep.env()
       const hasKey = yield* Effect.gen(function* () {
         if (input.env.some((item: string) => env[item])) return true

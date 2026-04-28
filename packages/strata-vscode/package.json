@@ -125,8 +125,8 @@
         "command": "strata-code.new.openInTab",
         "title": "Strata Code",
         "icon": {
-          "light": "assets/icons/strata-light.svg",
-          "dark": "assets/icons/strata-dark.svg"
+          "light": "assets/icons/strata-light.png",
+          "dark": "assets/icons/strata-dark.png"
         }
       },
       {
@@ -293,8 +293,8 @@
         "title": "Generate Commit Message",
         "category": "Strata Code",
         "icon": {
-          "light": "assets/icons/strata-light.svg",
-          "dark": "assets/icons/strata-dark.svg"
+          "light": "assets/icons/strata-light.png",
+          "dark": "assets/icons/strata-dark.png"
         }
       },
       {

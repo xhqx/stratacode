@@ -57,7 +57,7 @@ export class Service extends Context.Service<Service, Interface>()("@opencode/Pl
 // Built-in plugins that are directly imported (not installed from npm)
 // stratacode_change start
 const INTERNAL_PLUGINS: PluginInstance[] = [
-  StrataAuthPlugin,
+  ...(Flag.STRATA_ENABLE_GATEWAY ? [StrataAuthPlugin] : []),
   CodexAuthPlugin,
   CopilotAuthPlugin,
   GitlabAuthPlugin as unknown as PluginInstance,

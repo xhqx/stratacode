@@ -81,8 +81,8 @@ export class StrataClawProvider implements vscode.Disposable {
     this.panel = panel
 
     panel.iconPath = {
-      light: vscode.Uri.joinPath(this.uri, "assets", "icons", "strata-light.svg"),
-      dark: vscode.Uri.joinPath(this.uri, "assets", "icons", "strata-dark.svg"),
+      light: vscode.Uri.joinPath(this.uri, "assets", "icons", "strata-light.png"),
+      dark: vscode.Uri.joinPath(this.uri, "assets", "icons", "strata-dark.png"),
     }
 
     panel.webview.options = {

@@ -383,6 +383,37 @@ test("env variable takes precedence, config merges options", async () => {
   })
 })
 
+test("provider proxy config is merged into options", async () => {
+  await using tmp = await tmpdir({
+    init: async (dir) => {
+      await Bun.write(
+        path.join(dir, "opencode.json"),
+        JSON.stringify({
+          $schema: "https://app.strata.ai/config.json",
+          provider: {
+            anthropic: {
+              options: {
+                proxy: "http://test-proxy:8080",
+              },
+            },
+          },
+        }),
+      )
+    },
+  })
+  await Instance.provide({
+    directory: tmp.path,
+    init: async () => {
+      set("ANTHROPIC_API_KEY", "test-api-key")
+    },
+    fn: async () => {
+      const providers = await list()
+      expect(providers[ProviderID.anthropic]).toBeDefined()
+      expect(providers[ProviderID.anthropic].options.proxy).toBe("http://test-proxy:8080")
+    },
+  })
+})
+
 test("getModel returns model for valid provider/model", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {

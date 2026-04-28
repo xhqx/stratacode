@@ -1480,10 +1480,19 @@ const layer: Layer.Layer<
         const customFetch = options["fetch"]
         const chunkTimeout = options["chunkTimeout"]
         delete options["chunkTimeout"]
+        const proxy = options["proxy"] // stratacode_change
+        delete options["proxy"] // stratacode_change
 
         options["fetch"] = async (input: any, init?: BunFetchRequestInit) => {
           const fetchFn = customFetch ?? fetch
-          const opts = init ?? {}
+          const opts = { ...(init ?? {}) } // stratacode_change - Create new object to avoid mutating caller's init
+
+          // stratacode_change start - apply provider proxy if request doesn't override it
+          if (proxy && !opts.proxy) {
+            opts.proxy = proxy
+          }
+          // stratacode_change end
+
           const chunkAbortCtl = typeof chunkTimeout === "number" && chunkTimeout > 0 ? new AbortController() : undefined
           // stratacode_change start - use cancellable timeout for connection phase
           const timeout = buildTimeoutSignal(options)

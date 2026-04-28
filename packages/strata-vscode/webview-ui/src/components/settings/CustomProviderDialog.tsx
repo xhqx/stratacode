@@ -112,6 +112,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     providerID: props.existing?.providerID ?? "",
     name: props.existing?.name ?? "",
     baseURL: (props.existing?.config?.options as { baseURL?: string } | undefined)?.baseURL ?? "",
+    proxyURL: (props.existing?.config?.options as { proxy?: string } | undefined)?.proxy ?? "",
     apiKey: resolveCustomProviderKey(auth),
     models: initModels(),
     headers: initHeaders(),
@@ -122,6 +123,7 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
     providerID: undefined,
     name: undefined,
     baseURL: undefined,
+    proxyURL: undefined,
     models: form.models.map((m) => ({ variants: m.variants.map(() => ({})) })),
     headers: form.headers.map(() => ({})),
   })
@@ -491,6 +493,15 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
               }}
               validationState={errors.baseURL ? "invalid" : undefined}
               error={errors.baseURL}
+            />
+            <TextField
+              label="Proxy URL"
+              placeholder="e.g. http://proxy.company.com:8080"
+              description="Optional HTTP/HTTPS proxy to route requests for this provider."
+              value={form.proxyURL}
+              onChange={(v) => setForm("proxyURL", v)}
+              validationState={errors.proxyURL ? "invalid" : undefined}
+              error={errors.proxyURL}
             />
             <TextField
               type="password"

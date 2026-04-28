@@ -86,6 +86,17 @@ export const Info = Schema.Struct({
       Schema.Struct({
         apiKey: Schema.optional(Schema.String),
         baseURL: Schema.optional(Schema.String),
+        proxy: Schema.optional(
+          Schema.Union([
+            Schema.String,
+            Schema.Struct({
+              url: Schema.String,
+              headers: Schema.optional(Schema.Record(Schema.String, Schema.String)),
+            }),
+          ]),
+        ).annotate({
+          description: "HTTP/HTTPS proxy URL or config object. Overrides global HTTP_PROXY/HTTPS_PROXY.",
+        }),
         enterpriseUrl: Schema.optional(Schema.String).annotate({
           description: "GitHub Enterprise URL for copilot authentication",
         }),

@@ -71,6 +71,7 @@ describe("sanitizeCustomProviderConfig", () => {
       env: [" MY_PROVIDER_KEY "],
       options: {
         baseURL: "https://example.com/v1 ",
+        proxyURL: "http://test-proxy:8080 ",
         headers: {
           Authorization: " Bearer test ",
           " X-Test ": " 123 ",
@@ -88,6 +89,7 @@ describe("sanitizeCustomProviderConfig", () => {
         env: ["MY_PROVIDER_KEY"],
         options: {
           baseURL: "https://example.com/v1",
+          proxy: "http://test-proxy:8080",
           headers: {
             Authorization: "Bearer test",
             "X-Test": "123",

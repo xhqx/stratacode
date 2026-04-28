@@ -104,6 +104,9 @@ export const Flag = {
   get STRATA_CLIENT() {
     return process.env["STRATA_CLIENT"] ?? "cli"
   },
+  get STRATA_ENABLE_GATEWAY() {
+    return !falsy("STRATA_ENABLE_GATEWAY")
+  },
   // stratacode_change start
   get STRATA_SESSION_RETRY_LIMIT() {
     return number("STRATA_SESSION_RETRY_LIMIT")
