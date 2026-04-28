@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
 /**
- * Transform Tauri/Desktop config files with Kilo branding
+ * Transform Tauri/Desktop config files with Strata branding
  *
  * This script handles Tauri configuration files (JSON, TOML, Rust) by:
  * 1. Taking upstream's version as the base
- * 2. Applying predictable Kilo branding transforms
+ * 2. Applying predictable Strata branding transforms
  *
  * Handles:
  * - tauri.conf.json / tauri.prod.conf.json
@@ -15,7 +15,7 @@
 import { $ } from "bun"
 import { info, success, warn, debug } from "../utils/logger"
 import { defaultConfig } from "../utils/config"
-import { oursHasKilocodeChanges } from "../utils/git"
+import { oursHasStratacodeChanges } from "../utils/git"
 
 export interface TauriTransformResult {
   file: string
@@ -41,13 +41,13 @@ const TAURI_REPLACEMENTS: TauriReplacement[] = [
   // JSON config - product names
   {
     pattern: /"productName":\s*"OpenCode[^"]*"/g,
-    replacement: '"productName": "Kilo"',
+    replacement: '"productName": "Strata"',
     description: "Product name in JSON",
     fileTypes: [".json"],
   },
   {
     pattern: /"title":\s*"OpenCode[^"]*"/g,
-    replacement: '"title": "Kilo"',
+    replacement: '"title": "Strata"',
     description: "Title in JSON",
     fileTypes: [".json"],
   },
@@ -55,24 +55,24 @@ const TAURI_REPLACEMENTS: TauriReplacement[] = [
   // JSON config - identifiers
   {
     pattern: /ai\.opencode\.desktop\.dev/g,
-    replacement: "ai.kilo.desktop.dev",
+    replacement: "ai.strata.desktop.dev",
     description: "Dev identifier",
   },
   {
     pattern: /ai\.opencode\.desktop/g,
-    replacement: "ai.kilo.desktop",
+    replacement: "ai.strata.desktop",
     description: "Prod identifier",
   },
 
   // Binary names
   {
     pattern: /opencode-cli/g,
-    replacement: "kilo-cli",
+    replacement: "strata-cli",
     description: "CLI binary name",
   },
   {
     pattern: /"mainBinaryName":\s*"[Oo]pen[Cc]ode"/g,
-    replacement: '"mainBinaryName": "Kilo"',
+    replacement: '"mainBinaryName": "Strata"',
     description: "Main binary name",
     fileTypes: [".json"],
   },
@@ -80,31 +80,31 @@ const TAURI_REPLACEMENTS: TauriReplacement[] = [
   // GitHub references
   {
     pattern: /github\.com\/anomalyco\/opencode/g,
-    replacement: "github.com/Kilo-Org/kilocode",
+    replacement: "github.com/Strata-Org/stratacode",
     description: "GitHub URL",
   },
   {
     pattern: /anomalyco\/opencode/g,
-    replacement: "Kilo-Org/kilocode",
+    replacement: "Strata-Org/stratacode",
     description: "GitHub repo",
   },
 
   // Cargo.toml specific
   {
     pattern: /name\s*=\s*"opencode-desktop"/g,
-    replacement: 'name = "kilo-desktop"',
+    replacement: 'name = "strata-desktop"',
     description: "Cargo package name",
     fileTypes: [".toml"],
   },
   {
     pattern: /authors\s*=\s*\["OpenCode"\]/g,
-    replacement: 'authors = ["Kilo"]',
+    replacement: 'authors = ["Strata"]',
     description: "Cargo authors",
     fileTypes: [".toml"],
   },
   {
     pattern: /name\s*=\s*"opencode_lib"/g,
-    replacement: 'name = "kilo_lib"',
+    replacement: 'name = "strata_lib"',
     description: "Cargo lib name",
     fileTypes: [".toml"],
   },
@@ -112,37 +112,37 @@ const TAURI_REPLACEMENTS: TauriReplacement[] = [
   // Rust source specific
   {
     pattern: /opencode\.db/g,
-    replacement: "kilo.db",
+    replacement: "strata.db",
     description: "Database filename",
     fileTypes: [".rs"],
   },
   {
     pattern: /opencode\.settings\.dat/g,
-    replacement: "kilo.settings.dat",
+    replacement: "strata.settings.dat",
     description: "Settings file name",
     fileTypes: [".rs"],
   },
   {
     pattern: /"\.opencode\/bin"/g,
-    replacement: '".kilo/bin"',
+    replacement: '".strata/bin"',
     description: "CLI install dir",
     fileTypes: [".rs"],
   },
   {
     pattern: /CLI_BINARY_NAME\s*=\s*"opencode"/g,
-    replacement: 'CLI_BINARY_NAME = "kilo"',
+    replacement: 'CLI_BINARY_NAME = "strata"',
     description: "CLI binary constant",
     fileTypes: [".rs"],
   },
   {
     pattern: /opencode_lib::run/g,
-    replacement: "kilo_lib::run",
+    replacement: "strata_lib::run",
     description: "Lib run call",
     fileTypes: [".rs"],
   },
   {
     pattern: /killall opencode-cli/g,
-    replacement: "killall kilo-cli",
+    replacement: "killall strata-cli",
     description: "Killall command",
     fileTypes: [".rs"],
   },
@@ -150,26 +150,26 @@ const TAURI_REPLACEMENTS: TauriReplacement[] = [
   // Domain
   {
     pattern: /opencode\.ai/g,
-    replacement: "kilo.ai",
+    replacement: "strata.ai",
     description: "Domain",
   },
 
   // Environment variables (exclude OPENCODE_API_KEY)
   {
     pattern: /OPENCODE_(?!API_KEY)([A-Z_]+)/g,
-    replacement: "KILO_$1",
+    replacement: "STRATA_$1",
     description: "Env variable",
     fileTypes: [".rs"],
   },
   {
     pattern: /__OPENCODE__/g,
-    replacement: "__KILO__",
+    replacement: "__STRATA__",
     description: "Window global",
     fileTypes: [".rs", ".tsx"],
   },
   {
     pattern: /OPENCODE_PORT/g,
-    replacement: "KILO_PORT",
+    replacement: "STRATA_PORT",
     description: "Port env var",
   },
 ]
@@ -241,9 +241,9 @@ export async function transformTauriFile(
     return { file, action: "transformed", replacements: 0, dryRun: true }
   }
 
-  // If our version has kilocode_change markers, flag for manual resolution
-  if (await oursHasKilocodeChanges(file)) {
-    warn(`${file} has kilocode_change markers — skipping auto-transform, needs manual resolution`)
+  // If our version has stratacode_change markers, flag for manual resolution
+  if (await oursHasStratacodeChanges(file)) {
+    warn(`${file} has stratacode_change markers — skipping auto-transform, needs manual resolution`)
     return { file, action: "flagged", replacements: 0, dryRun: false }
   }
 

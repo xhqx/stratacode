@@ -19,7 +19,7 @@ import { SessionStatus } from "../../src/session/status"
 import { SessionSummary } from "../../src/session/summary"
 import { Snapshot } from "../../src/snapshot"
 import { Log } from "../../src/util"
-import { SessionNetwork } from "../../src/session/network" // kilocode_change
+import { SessionNetwork } from "../../src/session/network" // stratacode_change
 import * as CrossSpawnSpawner from "../../src/effect/cross-spawn-spawner"
 import { provideTmpdirServer } from "../fixture/fixture"
 import { testEffect } from "../lib/effect"
@@ -418,11 +418,11 @@ it.live("session.processor effect tests reset reasoning state across retries", (
     ({ dir, llm }) =>
       Effect.gen(function* () {
         const { processors, session, provider } = yield* boot()
-        // kilocode_change start — auto-reply to network reconnection prompts triggered by reset()
+        // stratacode_change start — auto-reply to network reconnection prompts triggered by reset()
         const offAsk = Bus.subscribe(SessionNetwork.Event.Asked, (event) => {
           void SessionNetwork.reply({ requestID: event.properties.id })
         })
-        // kilocode_change end
+        // stratacode_change end
 
         yield* llm.push(reply().reason("one").reset(), reply().reason("two").stop())
 
@@ -460,7 +460,7 @@ it.live("session.processor effect tests reset reasoning state across retries", (
         expect(yield* llm.calls).toBe(2)
         expect(reasoning.some((part) => part.text === "two")).toBe(true)
         expect(reasoning.some((part) => part.text === "onetwo")).toBe(false)
-        offAsk() // kilocode_change — cleanup subscriber
+        offAsk() // stratacode_change — cleanup subscriber
       }),
     { git: true, config: (url) => providerCfg(url) },
   ),

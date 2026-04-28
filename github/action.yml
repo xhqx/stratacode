@@ -1,5 +1,5 @@
-name: "Kilo GitHub Action"
-description: "Run Kilo AI agent in GitHub Actions workflows"
+name: "Strata GitHub Action"
+description: "Run Strata AI agent in GitHub Actions workflows"
 branding:
   icon: "code"
   color: "gray-dark"
@@ -14,7 +14,7 @@ inputs:
     required: false
 
   share:
-    description: "Share the Kilo session (defaults to true for public repos)"
+    description: "Share the Strata session (defaults to true for public repos)"
     required: false
 
   prompt:
@@ -22,12 +22,12 @@ inputs:
     required: false
 
   use_github_token:
-    description: "Use GITHUB_TOKEN directly instead of Kilo App token exchange. When true, skips OIDC and uses the GITHUB_TOKEN env var."
+    description: "Use GITHUB_TOKEN directly instead of Strata App token exchange. When true, skips OIDC and uses the GITHUB_TOKEN env var."
     required: false
     default: "false"
 
   mentions:
-    description: "Comma-separated list of trigger phrases (case-insensitive). Defaults to '/kilo,/kc'"
+    description: "Comma-separated list of trigger phrases (case-insensitive). Defaults to '/strata,/kc'"
     required: false
 
   variant:
@@ -35,47 +35,47 @@ inputs:
     required: false
 
   oidc_base_url:
-    description: "Base URL for OIDC token exchange API. Only required when running a custom GitHub App install. Defaults to https://api.kilo.ai"
+    description: "Base URL for OIDC token exchange API. Only required when running a custom GitHub App install. Defaults to https://api.strata.ai"
     required: false
 
-  kilo_api_key:
-    description: "Kilo API key for gateway authentication"
+  strata_api_key:
+    description: "Strata API key for gateway authentication"
     required: false
 
-  kilo_org_id:
-    description: "Kilo organization ID"
+  strata_org_id:
+    description: "Strata organization ID"
     required: false
 
 runs:
   using: "composite"
   steps:
-    - name: Get Kilo version
+    - name: Get Strata version
       id: version
       shell: bash
       run: |
-        VERSION=$(curl -sf https://api.github.com/repos/Kilo-Org/kilocode/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+        VERSION=$(curl -sf https://api.github.com/repos/Strata-Org/stratacode/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
         echo "version=${VERSION:-latest}" >> $GITHUB_OUTPUT
 
-    - name: Cache Kilo
+    - name: Cache Strata
       id: cache
       uses: actions/cache@v4
       with:
-        path: ~/.kilo/bin
-        key: kilo-${{ runner.os }}-${{ runner.arch }}-${{ steps.version.outputs.version }}
+        path: ~/.strata/bin
+        key: strata-${{ runner.os }}-${{ runner.arch }}-${{ steps.version.outputs.version }}
 
-    - name: Install Kilo
+    - name: Install Strata
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
-      run: curl -fsSL https://kilo.ai/cli/install | bash
+      run: curl -fsSL https://strata.ai/cli/install | bash
 
-    - name: Add Kilo to PATH
+    - name: Add Strata to PATH
       shell: bash
-      run: echo "$HOME/.kilo/bin" >> $GITHUB_PATH
+      run: echo "$HOME/.strata/bin" >> $GITHUB_PATH
 
-    - name: Run Kilo
+    - name: Run Strata
       shell: bash
-      id: run_kilo
-      run: kilo github run
+      id: run_strata
+      run: strata github run
       env:
         MODEL: ${{ inputs.model }}
         AGENT: ${{ inputs.agent }}
@@ -85,5 +85,5 @@ runs:
         MENTIONS: ${{ inputs.mentions }}
         VARIANT: ${{ inputs.variant }}
         OIDC_BASE_URL: ${{ inputs.oidc_base_url }}
-        KILO_API_KEY: ${{ inputs.kilo_api_key }}
-        KILO_ORG_ID: ${{ inputs.kilo_org_id }}
+        STRATA_API_KEY: ${{ inputs.strata_api_key }}
+        STRATA_ORG_ID: ${{ inputs.strata_org_id }}

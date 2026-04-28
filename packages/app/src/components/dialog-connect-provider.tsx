@@ -1,4 +1,4 @@
-import type { ProviderAuthAuthorization, ProviderAuthMethod } from "@kilocode/sdk/v2/client"
+import type { ProviderAuthAuthorization, ProviderAuthMethod } from "@stratacode/sdk/v2/client"
 import { Button } from "@opencode-ai/ui/button"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { Dialog } from "@opencode-ai/ui/dialog"
@@ -422,21 +422,21 @@ export function DialogConnectProvider(props: { provider: string }) {
     return (
       <div class="flex flex-col gap-6">
         <Switch>
-          {/* kilocode_change start */}
-          <Match when={provider().id === "kilo"}>
+          {/* stratacode_change start */}
+          <Match when={provider().id === "strata"}>
             <div class="flex flex-col gap-4">
-              <div class="text-14-regular text-text-base">{language.t("provider.connect.kiloGateway.line1")}</div>
-              <div class="text-14-regular text-text-base">{language.t("provider.connect.kiloGateway.line2")}</div>
+              <div class="text-14-regular text-text-base">{language.t("provider.connect.strataGateway.line1")}</div>
+              <div class="text-14-regular text-text-base">{language.t("provider.connect.strataGateway.line2")}</div>
               <div class="text-14-regular text-text-base">
-                {language.t("provider.connect.kiloGateway.visit.prefix")}
-                <Link href="https://kilo.ai" tabIndex={-1}>
-                  {language.t("provider.connect.kiloGateway.visit.link")}
+                {language.t("provider.connect.strataGateway.visit.prefix")}
+                <Link href="https://strata.ai" tabIndex={-1}>
+                  {language.t("provider.connect.strataGateway.visit.link")}
                 </Link>
-                {language.t("provider.connect.kiloGateway.visit.suffix")}
+                {language.t("provider.connect.strataGateway.visit.suffix")}
               </div>
             </div>
           </Match>
-          {/* kilocode_change end */}
+          {/* stratacode_change end */}
           <Match when={true}>
             <div class="text-14-regular text-text-base">
               {language.t("provider.connect.apiKey.description", { provider: provider().name })}

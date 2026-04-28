@@ -6,12 +6,12 @@ import { Provider } from "@/provider"
 import { errors } from "../../error"
 import { lazy } from "@/util/lazy"
 import { jsonRequest } from "./trace"
-// kilocode_change start
-import { fetchDefaultModel } from "@kilocode/kilo-gateway"
+// stratacode_change start
+import { fetchDefaultModel } from "@stratacode/strata-gateway"
 import { Auth } from "@/auth"
 import { Effect } from "effect"
 import { ModelID, ProviderID } from "@/provider/schema"
-// kilocode_change end
+// stratacode_change end
 
 export const ConfigRoutes = lazy(() =>
   new Hono()
@@ -65,7 +65,7 @@ export const ConfigRoutes = lazy(() =>
           return config
         }),
     )
-    // kilocode_change start
+    // stratacode_change start
     .get(
       "/warnings",
       describeRoute({
@@ -87,7 +87,7 @@ export const ConfigRoutes = lazy(() =>
         return c.json(await Config.warnings())
       },
     )
-    // kilocode_change end
+    // stratacode_change end
     .get(
       "/providers",
       describeRoute({
@@ -111,25 +111,25 @@ export const ConfigRoutes = lazy(() =>
           const providers = yield* svc.list()
           const defaults = Provider.defaultModelIDs(providers)
 
-          // kilocode_change start - Fetch default model from Kilo API when the kilo provider is available.
-          // Only call the Kilo API when the kilo provider is actually available.
+          // stratacode_change start - Fetch default model from Strata API when the strata provider is available.
+          // Only call the Strata API when the strata provider is actually available.
           // This prevents unnecessary network calls for teams using only their
           // own providers (e.g. LiteLLM) via enabled_providers config.
-          if (providers[ProviderID.kilo]) {
+          if (providers[ProviderID.strata]) {
             const auth = yield* Auth.Service
-            const kiloAuth = yield* auth.get("kilo")
-            const token = kiloAuth?.type === "oauth" ? kiloAuth.access : kiloAuth?.key
-            const organizationId = kiloAuth?.type === "oauth" ? kiloAuth.accountId : undefined
-            const kiloApiDefault = yield* Effect.promise(() => fetchDefaultModel(token, organizationId))
-            if (kiloApiDefault && providers[ProviderID.kilo]?.models[kiloApiDefault]) {
-              defaults[ProviderID.kilo] = ModelID.make(kiloApiDefault)
+            const strataAuth = yield* auth.get("strata")
+            const token = strataAuth?.type === "oauth" ? strataAuth.access : strataAuth?.key
+            const organizationId = strataAuth?.type === "oauth" ? strataAuth.accountId : undefined
+            const strataApiDefault = yield* Effect.promise(() => fetchDefaultModel(token, organizationId))
+            if (strataApiDefault && providers[ProviderID.strata]?.models[strataApiDefault]) {
+              defaults[ProviderID.strata] = ModelID.make(strataApiDefault)
             }
           }
-          // kilocode_change end
+          // stratacode_change end
 
           return {
             providers: Object.values(providers),
-            default: defaults, // kilocode_change
+            default: defaults, // stratacode_change
           }
         }),
     ),

@@ -83,7 +83,7 @@ export const WebFetchTool = Tool.define(
               () =>
                 httpOk.execute(
                   HttpClientRequest.get(params.url).pipe(
-                    HttpClientRequest.setHeaders({ ...headers, "User-Agent": "kilo" }), // kilocode_change
+                    HttpClientRequest.setHeaders({ ...headers, "User-Agent": "strata" }), // stratacode_change
                   ),
                 ),
             ),

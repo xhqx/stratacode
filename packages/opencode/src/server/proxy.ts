@@ -24,8 +24,8 @@ function headers(req: Request, extra?: HeadersInit) {
   const out = new Headers(req.headers)
   for (const key of hop) out.delete(key)
   out.delete("accept-encoding")
-  out.delete("x-kilo-directory")
-  out.delete("x-kilo-workspace")
+  out.delete("x-strata-directory")
+  out.delete("x-strata-workspace")
   if (!extra) return out
   for (const [key, value] of new Headers(extra).entries()) {
     out.set(key, value)
@@ -63,7 +63,7 @@ const app = (upgrade: UpgradeWebSocket) =>
   new Hono().get(
     "/__workspace_ws",
     upgrade((c) => {
-      const url = c.req.header("x-kilo-proxy-url")
+      const url = c.req.header("x-strata-proxy-url")
       const queue: Msg[] = []
       let remote: WebSocket | undefined
       return {
@@ -108,7 +108,7 @@ const app = (upgrade: UpgradeWebSocket) =>
 const log = Log.Default.clone().tag("service", "server-proxy")
 
 export async function http(url: string | URL, extra: HeadersInit | undefined, req: Request, workspaceID: WorkspaceID) {
-  if (!(await Workspace.isSyncing(workspaceID))) { // kilocode_change missing await
+  if (!(await Workspace.isSyncing(workspaceID))) { // stratacode_change missing await
     return new Response(`broken sync connection for workspace: ${workspaceID}`, {
       status: 503,
       headers: {
@@ -154,7 +154,7 @@ export function websocket(
   proxy.pathname = "/__workspace_ws"
   proxy.search = ""
   const next = new Headers(req.headers)
-  next.set("x-kilo-proxy-url", socket(target))
+  next.set("x-strata-proxy-url", socket(target))
   for (const [key, value] of new Headers(extra).entries()) {
     next.set(key, value)
   }

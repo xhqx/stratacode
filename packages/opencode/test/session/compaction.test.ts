@@ -1413,14 +1413,14 @@ describe("session.compaction.process", () => {
           await Promise.race([
             ready.promise,
             wait(5000).then(() => {
-              // kilocode_change
+              // stratacode_change
               throw new Error("timed out waiting for retry status")
             }),
           ])
 
           const start = Date.now()
           abort.abort()
-          // kilocode_change start
+          // stratacode_change start
           const result = await Promise.race([
             run.then((value) => ({ kind: "done" as const, value, ms: Date.now() - start })),
             wait(2000).then(() => ({ kind: "timeout" as const })),
@@ -1431,7 +1431,7 @@ describe("session.compaction.process", () => {
             expect(result.value).toBe("stop")
             expect(result.ms).toBeLessThan(2000)
           }
-          // kilocode_change end
+          // stratacode_change end
         } finally {
           off?.()
           abort.abort()
@@ -2093,7 +2093,7 @@ describe("SessionNs.getUsage", () => {
     expect(result.cost).toBe(3 + 1.5)
   })
 
-  // kilocode_change start - Test for OpenRouter provider cost
+  // stratacode_change start - Test for OpenRouter provider cost
   test("uses openrouter provider cost when available", () => {
     const model = createModel({
       context: 100_000,
@@ -2186,7 +2186,7 @@ describe("SessionNs.getUsage", () => {
     expect(result.cost).toBe(3 + 1.5)
   })
 
-  test("uses upstreamInferenceCost for Kilo provider", () => {
+  test("uses upstreamInferenceCost for Strata provider", () => {
     const model = createModel({
       context: 100_000,
       output: 32_000,
@@ -2196,7 +2196,7 @@ describe("SessionNs.getUsage", () => {
         cache: { read: 0.3, write: 3.75 },
       },
     })
-    const provider = { id: "kilo" } as Provider.Info
+    const provider = { id: "strata" } as Provider.Info
     const result = SessionNs.getUsage({
       model,
       provider,
@@ -2219,7 +2219,7 @@ describe("SessionNs.getUsage", () => {
       },
     })
 
-    // Should use upstreamInferenceCost for Kilo provider (BYOK)
+    // Should use upstreamInferenceCost for Strata provider (BYOK)
     expect(result.cost).toBe(0.2)
   })
 
@@ -2295,7 +2295,7 @@ describe("SessionNs.getUsage", () => {
     expect(result.cost).toBe(0.3)
   })
 
-  test("uses regular cost when upstreamInferenceCost is missing for Kilo", () => {
+  test("uses regular cost when upstreamInferenceCost is missing for Strata", () => {
     const model = createModel({
       context: 100_000,
       output: 32_000,
@@ -2305,7 +2305,7 @@ describe("SessionNs.getUsage", () => {
         cache: { read: 0.3, write: 3.75 },
       },
     })
-    const provider = { id: "kilo" } as Provider.Info
+    const provider = { id: "strata" } as Provider.Info
     const result = SessionNs.getUsage({
       model,
       provider,
@@ -2326,10 +2326,10 @@ describe("SessionNs.getUsage", () => {
       },
     })
 
-    // When upstream cost is missing for Kilo, fall back to regular cost field
+    // When upstream cost is missing for Strata, fall back to regular cost field
     expect(result.cost).toBe(0.01)
   })
-  // kilocode_change end
+  // stratacode_change end
 
   test.each(["@ai-sdk/anthropic", "@ai-sdk/amazon-bedrock", "@ai-sdk/google-vertex/anthropic"])(
     "computes total from components for %s models",

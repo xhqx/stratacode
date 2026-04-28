@@ -6,7 +6,7 @@ import { Effect, Layer, Context } from "effect"
 import { NamedError } from "@opencode-ai/shared/util/error"
 import type { Agent } from "@/agent/agent"
 import { Bus } from "@/bus"
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import { InstanceState } from "@/effect"
 import { Flag } from "@/flag/flag"
 import { Global } from "@/global"
@@ -17,16 +17,16 @@ import { ConfigMarkdown } from "../config"
 import { Glob } from "@opencode-ai/shared/util/glob"
 import { Log } from "../util"
 import { Discovery } from "./discovery"
-import { rm } from "fs/promises" // kilocode_change
-import { BUILTIN_SKILLS } from "../kilocode/skills/builtin" // kilocode_change
+import { rm } from "fs/promises" // stratacode_change
+import { BUILTIN_SKILLS } from "../stratacode/skills/builtin" // stratacode_change
 
 const log = Log.create({ service: "skill" })
 const EXTERNAL_DIRS = [".claude", ".agents"]
-// kilocode_change start
+// stratacode_change start
 export const BUILTIN_LOCATION = "builtin"
-// kilocode_change end
+// stratacode_change end
 const EXTERNAL_SKILL_PATTERN = "skills/**/SKILL.md"
-const KILO_SKILL_PATTERN = "{skill,skills}/**/SKILL.md"
+const STRATA_SKILL_PATTERN = "{skill,skills}/**/SKILL.md"
 const SKILL_PATTERN = "**/SKILL.md"
 
 export const Info = z.object({
@@ -156,7 +156,7 @@ const discoverSkills = Effect.fnUntraced(function* (
 ) {
   const state: ScanState = { matches: new Set(), dirs: new Set() }
 
-  if (!Flag.KILO_DISABLE_EXTERNAL_SKILLS) {
+  if (!Flag.STRATA_DISABLE_EXTERNAL_SKILLS) {
     for (const dir of EXTERNAL_DIRS) {
       const root = path.join(Global.Path.home, dir)
       if (!(yield* fsys.isDir(root))) continue
@@ -174,7 +174,7 @@ const discoverSkills = Effect.fnUntraced(function* (
 
   const configDirs = yield* config.directories()
   for (const dir of configDirs) {
-    yield* scan(state, dir, KILO_SKILL_PATTERN)
+    yield* scan(state, dir, STRATA_SKILL_PATTERN)
   }
 
   const cfg = yield* config.get()
@@ -203,7 +203,7 @@ const discoverSkills = Effect.fnUntraced(function* (
 })
 
 const loadSkills = Effect.fnUntraced(function* (state: State, discovered: DiscoveryState, bus: Bus.Interface) {
-  // kilocode_change start - seed built-in skills before discovery so user skills can override
+  // stratacode_change start - seed built-in skills before discovery so user skills can override
   for (const skill of BUILTIN_SKILLS) {
     state.skills[skill.name] = {
       name: skill.name,
@@ -212,7 +212,7 @@ const loadSkills = Effect.fnUntraced(function* (state: State, discovered: Discov
       content: skill.content,
     }
   }
-  // kilocode_change end
+  // stratacode_change end
 
   yield* Effect.forEach(discovered.matches, (match) => add(state, match, bus), {
     concurrency: "unbounded",
@@ -276,12 +276,12 @@ export const defaultLayer = layer.pipe(
   Layer.provide(AppFileSystem.defaultLayer),
 )
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const all = () => runPromise((svc) => svc.all())
 export const get = (name: string) => runPromise((svc) => svc.get(name))
 export const dirs = () => runPromise((svc) => svc.dirs())
-// kilocode_change end
+// stratacode_change end
 
 export function fmt(list: Info[], opts: { verbose: boolean }) {
   if (list.length === 0) return "No skills are currently available."
@@ -309,7 +309,7 @@ export function fmt(list: Info[], opts: { verbose: boolean }) {
   ].join("\n")
 }
 
-// kilocode_change start - skill removal
+// stratacode_change start - skill removal
 export async function remove(location: string) {
   if (location === BUILTIN_LOCATION) {
     throw new Error("cannot remove built-in skill")
@@ -318,6 +318,6 @@ export async function remove(location: string) {
   const dir = path.dirname(resolved)
   await rm(dir, { recursive: true, force: true })
 }
-// kilocode_change end
+// stratacode_change end
 
 export * as Skill from "."

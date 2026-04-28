@@ -8,8 +8,8 @@ import z from "zod"
 import { Config } from "../config"
 import { MCP } from "../mcp"
 import { Skill } from "../skill"
-import { localReviewCommand, localReviewUncommittedCommand } from "@/kilocode/review/command" // kilocode_change
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { localReviewCommand, localReviewUncommittedCommand } from "@/stratacode/review/command" // stratacode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import PROMPT_INITIALIZE from "./template/initialize.txt"
 import PROMPT_REVIEW from "./template/review.txt"
 
@@ -62,10 +62,10 @@ export function hints(template: string) {
 export const Default = {
   INIT: "init",
   REVIEW: "review",
-  // kilocode_change start
+  // stratacode_change start
   LOCAL_REVIEW: "local-review",
   LOCAL_REVIEW_UNCOMMITTED: "local-review-uncommitted",
-  // kilocode_change end
+  // stratacode_change end
 } as const
 
 export interface Interface {
@@ -107,10 +107,10 @@ export const layer = Layer.effect(
         hints: hints(PROMPT_REVIEW),
       }
 
-      // kilocode_change start
+      // stratacode_change start
       commands[Default.LOCAL_REVIEW] = localReviewCommand()
       commands[Default.LOCAL_REVIEW_UNCOMMITTED] = localReviewUncommittedCommand()
-      // kilocode_change end
+      // stratacode_change end
 
       for (const [name, command] of Object.entries(cfg.command ?? {})) {
         commands[name] = {
@@ -196,12 +196,12 @@ export const defaultLayer = layer.pipe(
   Layer.provide(Skill.defaultLayer),
 )
 
-// kilocode_change start
+// stratacode_change start
 const { runPromise } = makeRuntime(Service, defaultLayer)
 
 export async function get(name: string) {
   return runPromise((svc) => svc.get(name))
 }
-// kilocode_change end
+// stratacode_change end
 
 export * as Command from "."

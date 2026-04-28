@@ -16,7 +16,7 @@ import flexoki from "./theme/flexoki.json" with { type: "json" }
 import github from "./theme/github.json" with { type: "json" }
 import gruvbox from "./theme/gruvbox.json" with { type: "json" }
 import kanagawa from "./theme/kanagawa.json" with { type: "json" }
-import kilo from "./theme/kilo.json" with { type: "json" } // kilocode_change
+import strata from "./theme/strata.json" with { type: "json" } // stratacode_change
 import material from "./theme/material.json" with { type: "json" }
 import matrix from "./theme/matrix.json" with { type: "json" }
 import mercury from "./theme/mercury.json" with { type: "json" }
@@ -37,7 +37,7 @@ import vercel from "./theme/vercel.json" with { type: "json" }
 import vesper from "./theme/vesper.json" with { type: "json" }
 import zenburn from "./theme/zenburn.json" with { type: "json" }
 import carbonfox from "./theme/carbonfox.json" with { type: "json" }
-import colorblind from "./theme/colorblind.json" with { type: "json" } // kilocode_change
+import colorblind from "./theme/colorblind.json" with { type: "json" } // stratacode_change
 import { useKV } from "./kv"
 import { useRenderer } from "@opentui/solid"
 import { createStore, produce } from "solid-js/store"
@@ -45,7 +45,7 @@ import { Global } from "@/global"
 import { Filesystem } from "@/util"
 import { useTuiConfig } from "./tui-config"
 import { isRecord } from "@/util/record"
-import type { TuiThemeCurrent } from "@kilocode/plugin/tui"
+import type { TuiThemeCurrent } from "@stratacode/plugin/tui"
 
 type Theme = TuiThemeCurrent & {
   _hasSelectedListItemText: boolean
@@ -101,7 +101,7 @@ export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   github,
   gruvbox,
   kanagawa,
-  kilo, // kilocode_change
+  strata, // stratacode_change
   material,
   matrix,
   mercury,
@@ -122,17 +122,17 @@ export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   vercel,
   zenburn,
   carbonfox,
-  colorblind, // kilocode_change
+  colorblind, // stratacode_change
 }
 
-// kilocode_change start
+// stratacode_change start
 function isValidTheme(t: unknown): t is ThemeJson {
   if (t == null || typeof t !== "object" || !("theme" in t)) return false
   const theme = (t as Record<string, unknown>).theme
   if (theme == null || typeof theme !== "object") return false
   return "background" in theme && "text" in theme && "primary" in theme
 }
-// kilocode_change end
+// stratacode_change end
 
 type State = {
   themes: Record<string, ThemeJson>
@@ -333,8 +333,8 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
         }
         draft.mode = mode
         draft.lock = lock
-        const active = config.theme ?? kv.get("theme", "kilo") // kilocode_change
-        draft.active = typeof active === "string" ? active : "kilo" // kilocode_change
+        const active = config.theme ?? kv.get("theme", "strata") // stratacode_change
+        draft.active = typeof active === "string" ? active : "strata" // stratacode_change
         draft.ready = false
       }),
     )
@@ -353,7 +353,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
             syncThemes()
           })
           .catch(() => {
-            setStore("active", "kilo") // kilocode_change
+            setStore("active", "strata") // stratacode_change
           }),
       ]).finally(() => {
         setStore("ready", true)
@@ -372,7 +372,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
             systemTheme = undefined
             syncThemes()
             if (store.active === "system") {
-              setStore("active", "kilo") // kilocode_change
+              setStore("active", "strata") // stratacode_change
             }
             return
           }
@@ -427,7 +427,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
       process.off("SIGUSR2", refresh)
     })
 
-    // kilocode_change start - safe fallback to kilo import if store lookup fails
+    // stratacode_change start - safe fallback to strata import if store lookup fails
     const values = createMemo(() => {
       const active = store.themes[store.active]
       if (active) return resolveTheme(active, store.mode)
@@ -438,9 +438,9 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
         if (theme) return resolveTheme(theme, store.mode)
       }
 
-      return resolveTheme(store.themes.kilo, store.mode) // kilocode_change
+      return resolveTheme(store.themes.strata, store.mode) // stratacode_change
     })
-    // kilocode_change end
+    // stratacode_change end
 
     createEffect(() => {
       renderer.setBackgroundColor(values().background)
@@ -449,7 +449,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
     const syntax = createMemo(() => generateSyntax(values()))
     const subtleSyntax = createMemo(() => generateSubtleSyntax(values()))
 
-    // kilocode_change - use empty object as proxy target; all reads go through the getter
+    // stratacode_change - use empty object as proxy target; all reads go through the getter
     return {
       theme: new Proxy({} as Theme, {
         get(_target, prop) {
@@ -501,7 +501,7 @@ async function getCustomThemes() {
     Global.Path.config,
     ...(await Array.fromAsync(
       Filesystem.up({
-        targets: [".kilo", ".opencode"], // kilocode_change
+        targets: [".strata", ".opencode"], // stratacode_change
         start: process.cwd(),
       }),
     )),
@@ -516,12 +516,12 @@ async function getCustomThemes() {
       symlink: true,
     })) {
       const name = path.basename(item, ".json")
-      // kilocode_change start - validate custom theme JSON and protect built-in keys
+      // stratacode_change start - validate custom theme JSON and protect built-in keys
       if (name in DEFAULT_THEMES) continue
       const json = await Filesystem.readJson(item).catch(() => null)
       if (!isValidTheme(json)) continue
       result[name] = json
-      // kilocode_change end
+      // stratacode_change end
     }
   }
   return result

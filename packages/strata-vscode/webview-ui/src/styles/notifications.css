@@ -1,0 +1,165 @@
+/* ============================================
+   Strata Notifications
+   ============================================ */
+
+.strata-notifications {
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  animation: strata-notifications-slide-in 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes strata-notifications-slide-in {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.strata-notifications-card {
+  background-color: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.strata-notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.strata-notifications-title {
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  font-size: 13px;
+  flex: 1;
+}
+
+.strata-notifications-message {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.strata-notifications-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  container-type: inline-size;
+}
+
+.strata-notifications-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.strata-notifications-next-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+.strata-notifications-cta-group {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  flex: 1 1 auto;
+}
+
+@container (max-width: 300px) {
+  .strata-notifications-cta-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.strata-notifications-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 8px;
+  background: none;
+  border: 1px solid var(--vscode-focusBorder);
+  border-radius: 3px;
+  color: var(--vscode-focusBorder);
+  font-size: 12px;
+  font-family: var(--vscode-font-family);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.strata-notifications-action-btn:hover {
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.strata-notifications-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 8px;
+  background-color: var(--vscode-button-background);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--vscode-button-foreground);
+  font-size: 12px;
+  font-family: var(--vscode-font-family);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.strata-notifications-primary-btn:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.strata-notifications-back-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+
+.strata-notifications-back-link:hover {
+  color: var(--vscode-foreground);
+}
+
+.strata-notifications-nav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  color: var(--vscode-descriptionForeground);
+  display: inline-flex;
+  align-items: center;
+}
+
+.strata-notifications-nav-btn:hover {
+  color: var(--vscode-foreground);
+}
+
+.strata-notifications-nav-count {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  white-space: nowrap;
+  padding: 0 4px;
+}

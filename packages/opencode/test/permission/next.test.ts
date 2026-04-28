@@ -1,11 +1,11 @@
-import { afterAll, afterEach, test, expect } from "bun:test" // kilocode_change
-import fs from "fs/promises" // kilocode_change
+import { afterAll, afterEach, test, expect } from "bun:test" // stratacode_change
+import fs from "fs/promises" // stratacode_change
 import os from "os"
-import path from "path" // kilocode_change
+import path from "path" // stratacode_change
 import { Cause, Effect, Exit, Fiber, Layer } from "effect"
 import { Bus } from "../../src/bus"
-import { Config } from "../../src/config" // kilocode_change
-import { Global } from "../../src/global" // kilocode_change
+import { Config } from "../../src/config" // stratacode_change
+import { Global } from "../../src/global" // stratacode_change
 import * as CrossSpawnSpawner from "../../src/effect/cross-spawn-spawner"
 import { Permission } from "../../src/permission"
 import { PermissionID } from "../../src/permission/schema"
@@ -22,15 +22,15 @@ afterEach(async () => {
   await Instance.disposeAll()
 })
 
-// kilocode_change start
+// stratacode_change start
 afterAll(async () => {
   const dir = Global.Path.config
-  for (const file of ["kilo.jsonc", "kilo.json", "config.json", "opencode.json", "opencode.jsonc"]) {
+  for (const file of ["strata.jsonc", "strata.json", "config.json", "opencode.json", "opencode.jsonc"]) {
     await fs.rm(path.join(dir, file), { force: true }).catch(() => {})
   }
   await Config.invalidate(true)
 })
-// kilocode_change end
+// stratacode_change end
 
 const rejectAll = (message?: string) =>
   Effect.gen(function* () {
@@ -820,7 +820,7 @@ it.live("reply - always persists approval and resolves", () =>
   }),
 )
 
-// kilocode_change start - session-scoped allowEverything enable
+// stratacode_change start - session-scoped allowEverything enable
 it.live("allowEverything - session-scoped enable stays within one session", () =>
   withDir({ git: true }, () =>
     Effect.gen(function* () {
@@ -879,7 +879,7 @@ it.live("allowEverything - session-scoped enable stays within one session", () =
     }),
   ),
 )
-// kilocode_change end
+// stratacode_change end
 
 it.live("reply - reject cancels all pending for same session", () =>
   withDir({ git: true }, () =>

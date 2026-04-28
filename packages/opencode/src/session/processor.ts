@@ -17,9 +17,9 @@ import { SessionStatus } from "./status"
 import { SessionSummary } from "./summary"
 import type { Provider } from "@/provider"
 import { Question } from "@/question"
-import { KiloSessionProcessor } from "@/kilocode/session/processor" // kilocode_change
-import { Suggestion } from "@/kilocode/suggestion" // kilocode_change
-import { NotFoundError } from "@/storage" // kilocode_change
+import { StrataSessionProcessor } from "@/stratacode/session/processor" // stratacode_change
+import { Suggestion } from "@/stratacode/suggestion" // stratacode_change
+import { NotFoundError } from "@/storage" // stratacode_change
 import { errorMessage } from "@/util/error"
 import { Log } from "@/util"
 import { isRecord } from "@/util/record"
@@ -74,7 +74,7 @@ interface ProcessorContext extends Input {
   needsCompaction: boolean
   currentText: MessageV2.TextPart | undefined
   reasoningMap: Record<string, MessageV2.ReasoningPart>
-  stepStart: number // kilocode_change
+  stepStart: number // stratacode_change
 }
 
 type StreamEvent = Event
@@ -125,10 +125,10 @@ export const layer: Layer.Layer<
         needsCompaction: false,
         currentText: undefined,
         reasoningMap: {},
-        stepStart: 0, // kilocode_change
+        stepStart: 0, // stratacode_change
       }
       let aborted = false
-      const ac = new AbortController() // kilocode_change — abort controller for offline handler
+      const ac = new AbortController() // stratacode_change — abort controller for offline handler
       const slog = log.clone().tag("session.id", input.sessionID).tag("messageID", input.assistantMessage.id)
 
       const parse = (e: unknown) =>
@@ -158,7 +158,7 @@ export const layer: Layer.Layer<
         return { call, part }
       })
 
-      // kilocode_change start - tolerate deleted sessions during subagent cost reconciliation (#6321)
+      // stratacode_change start - tolerate deleted sessions during subagent cost reconciliation (#6321)
       const reconcile = Effect.fn("SessionProcessor.reconcileCost")(function* () {
         const fresh = yield* Effect.sync(() => {
           try {
@@ -172,7 +172,7 @@ export const layer: Layer.Layer<
         if (fresh.info.cost <= ctx.assistantMessage.cost) return
         ctx.assistantMessage.cost = fresh.info.cost
       })
-      // kilocode_change end
+      // stratacode_change end
 
       const updateToolCall = Effect.fn("SessionProcessor.updateToolCall")(function* (
         toolCallID: string,
@@ -228,13 +228,13 @@ export const layer: Layer.Layer<
             time: { start: match.part.state.time.start, end: Date.now() },
           },
         })
-        // kilocode_change start
+        // stratacode_change start
         if (
           error instanceof Permission.RejectedError ||
           error instanceof Question.RejectedError ||
           error instanceof Suggestion.DismissedError
         ) {
-          // kilocode_change end
+          // stratacode_change end
           ctx.blocked = ctx.shouldBreak
         }
         yield* settleToolCall(toolCallID)
@@ -316,7 +316,7 @@ export const layer: Layer.Layer<
             if (ctx.assistantMessage.summary) {
               throw new Error(`Tool call not allowed while generating summary: ${value.toolName}`)
             }
-            // kilocode_change start — create tool part if tool-input-start was never emitted
+            // stratacode_change start — create tool part if tool-input-start was never emitted
             if (!ctx.toolcalls[value.toolCallId]) {
               log.warn("tool-call without prior tool-input-start", {
                 toolCallId: value.toolCallId,
@@ -338,7 +338,7 @@ export const layer: Layer.Layer<
                 sessionID: part.sessionID,
               }
             }
-            // kilocode_change end
+            // stratacode_change end
             yield* updateToolCall(value.toolCallId, (match) => ({
               ...match,
               tool: value.toolName,
@@ -383,11 +383,11 @@ export const layer: Layer.Layer<
 
           case "tool-result": {
             yield* completeToolCall(value.toolCallId, value.output)
-            // kilocode_change start
+            // stratacode_change start
             if (value.output.metadata?.dismissed === true) {
               ctx.blocked = ctx.shouldBreak
             }
-            // kilocode_change end
+            // stratacode_change end
             return
           }
 
@@ -400,7 +400,7 @@ export const layer: Layer.Layer<
             throw value.error
 
           case "start-step":
-            ctx.stepStart = performance.now() // kilocode_change
+            ctx.stepStart = performance.now() // stratacode_change
             if (!ctx.snapshot) ctx.snapshot = yield* snapshot.track()
             yield* session.updatePart({
               id: PartID.ascending(),
@@ -417,19 +417,19 @@ export const layer: Layer.Layer<
               usage: value.usage,
               metadata: value.providerMetadata,
             })
-            // kilocode_change start
-            KiloSessionProcessor.trackStep({
+            // stratacode_change start
+            StrataSessionProcessor.trackStep({
               sessionID: ctx.sessionID,
               model: ctx.model,
               tokens: usage.tokens,
               cost: usage.cost,
               elapsed: Math.round(performance.now() - ctx.stepStart),
             })
-            // kilocode_change end
+            // stratacode_change end
             ctx.assistantMessage.finish = value.finishReason
-            // kilocode_change start - capture any subagent cost propagated by tool calls during this step (#6321)
+            // stratacode_change start - capture any subagent cost propagated by tool calls during this step (#6321)
             yield* reconcile()
-            // kilocode_change end
+            // stratacode_change end
             ctx.assistantMessage.cost += usage.cost
             ctx.assistantMessage.tokens = usage.tokens
             yield* session.updatePart({
@@ -585,11 +585,11 @@ export const layer: Layer.Layer<
           })
         }
         ctx.toolcalls = {}
-        KiloSessionProcessor.guardEmptyToolCalls(ctx.assistantMessage, MessageV2.parts(ctx.assistantMessage.id)) // kilocode_change
+        StrataSessionProcessor.guardEmptyToolCalls(ctx.assistantMessage, MessageV2.parts(ctx.assistantMessage.id)) // stratacode_change
         ctx.assistantMessage.time.completed = Date.now()
-        // kilocode_change start - reconcile cost with any subagent propagation written during tool calls (#6321)
+        // stratacode_change start - reconcile cost with any subagent propagation written during tool calls (#6321)
         yield* reconcile()
-        // kilocode_change end
+        // stratacode_change end
         yield* session.updateMessage(ctx.assistantMessage)
       })
 
@@ -629,7 +629,7 @@ export const layer: Layer.Layer<
             Effect.onInterrupt(() =>
               Effect.gen(function* () {
                 aborted = true
-                ac.abort() // kilocode_change — also abort offline handler
+                ac.abort() // stratacode_change — also abort offline handler
                 if (!ctx.assistantMessage.error) {
                   yield* halt(new DOMException("Aborted", "AbortError"))
                 }
@@ -642,9 +642,9 @@ export const layer: Layer.Layer<
             Effect.retry(
               SessionRetry.policy({
                 parse,
-                // kilocode_change start
-                ...KiloSessionProcessor.retryOpts({ sessionID: ctx.sessionID, abort: ac.signal, set: status.set }),
-                // kilocode_change end
+                // stratacode_change start
+                ...StrataSessionProcessor.retryOpts({ sessionID: ctx.sessionID, abort: ac.signal, set: status.set }),
+                // stratacode_change end
                 set: (info) =>
                   status.set(ctx.sessionID, {
                     type: "retry",

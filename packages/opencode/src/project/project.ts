@@ -3,7 +3,7 @@ import { and, Database, eq } from "../storage"
 import { ProjectTable } from "./project.sql"
 import { SessionTable } from "../session/session.sql"
 import { Log } from "../util"
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import { Flag } from "@/flag/flag"
 import { BusEvent } from "@/bus/bus-event"
 import { GlobalBus } from "@/bus/global"
@@ -152,7 +152,7 @@ export const layer: Layer.Layer<
         }),
       )
 
-    const fakeVcs = Schema.decodeUnknownSync(Schema.optional(ProjectVcs))(Flag.KILO_FAKE_VCS)
+    const fakeVcs = Schema.decodeUnknownSync(Schema.optional(ProjectVcs))(Flag.STRATA_FAKE_VCS)
 
     const resolveGitPath = (cwd: string, name: string) => {
       if (!name) return cwd
@@ -166,9 +166,9 @@ export const layer: Layer.Layer<
     const scope = yield* Scope.Scope
 
     const readCachedProjectId = Effect.fnUntraced(function* (dir: string) {
-      // kilocode change start
-      return yield* fs.readFileString(pathSvc.join(dir, "kilo")).pipe(
-        // kilocode change end
+      // stratacode change start
+      return yield* fs.readFileString(pathSvc.join(dir, "strata")).pipe(
+        // stratacode change end
         Effect.map((x) => x.trim()),
         Effect.map(ProjectID.make),
         Effect.catch(() => Effect.void),
@@ -235,7 +235,7 @@ export const layer: Layer.Layer<
 
           id = roots[0] ? ProjectID.make(roots[0]) : undefined
           if (id) {
-            yield* fs.writeFileString(pathSvc.join(common, "kilo"), id).pipe(Effect.ignore) // kilocode_change
+            yield* fs.writeFileString(pathSvc.join(common, "strata"), id).pipe(Effect.ignore) // stratacode_change
           }
         }
 
@@ -269,7 +269,7 @@ export const layer: Layer.Layer<
             time: { created: Date.now(), updated: Date.now() },
           }
 
-      if (Flag.KILO_EXPERIMENTAL_ICON_DISCOVERY) yield* discover(existing).pipe(Effect.ignore, Effect.forkIn(scope))
+      if (Flag.STRATA_EXPERIMENTAL_ICON_DISCOVERY) yield* discover(existing).pipe(Effect.ignore, Effect.forkIn(scope))
 
       const result: Info = {
         ...existing,
@@ -499,8 +499,8 @@ export function setInitialized(id: ProjectID) {
   )
 }
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const fromDirectory = (directory: string) => runPromise((svc) => svc.fromDirectory(directory))
 export const sandboxes = (id: ProjectID) => runPromise((svc) => svc.sandboxes(id))
-// kilocode_change end
+// stratacode_change end

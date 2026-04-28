@@ -6,7 +6,7 @@ import { checksum } from "@opencode-ai/shared/util/encode"
 import { ComponentProps, createEffect, createResource, createSignal, onCleanup, splitProps } from "solid-js"
 import { isServer } from "solid-js/web"
 import { stream } from "./markdown-stream"
-import { tryFastRender } from "../kilocode/markdown-fast-path" // kilocode_change
+import { tryFastRender } from "../stratacode/markdown-fast-path" // stratacode_change
 
 type Entry = {
   hash: string
@@ -287,14 +287,14 @@ export function Markdown(
   )
 
   let copyCleanup: (() => void) | undefined
-  // kilocode_change start: generation counter prevents stale deferredHighlight
+  // stratacode_change start: generation counter prevents stale deferredHighlight
   // callbacks from overwriting copyCleanup set by a newer render (issue #6221).
   // The abort signal cancels the previous in-flight highlight pass so rapid
   // streaming tokens don't spawn concurrent passes racing on the same DOM nodes.
   const highlightState = { gen: 0, signal: { aborted: false } }
-  // kilocode_change end
+  // stratacode_change end
 
-  // kilocode_change start: rAF-coalesced morphdom render.
+  // stratacode_change start: rAF-coalesced morphdom render.
   // During LLM token streaming, content updates arrive at 60–200Hz. Each
   // token reparses the full accumulated HTML (temp.innerHTML = content) and
   // diffs it via morphdom. CPU profile of a 7s streaming window showed 2,940
@@ -304,7 +304,7 @@ export function Markdown(
   let pendingFrame: number | undefined
   let pendingContent: string | undefined
   let pendingLabels: { copy: string; copied: string } | undefined
-  // kilocode_change end
+  // stratacode_change end
 
   createEffect(() => {
     const container = root()
@@ -313,7 +313,7 @@ export function Markdown(
     if (isServer) return
 
     if (!content) {
-      // kilocode_change start: cancel any in-flight coalesced render so a
+      // stratacode_change start: cancel any in-flight coalesced render so a
       // clear takes precedence over a pending parse.
       if (pendingFrame !== undefined) {
         cancelAnimationFrame(pendingFrame)
@@ -321,7 +321,7 @@ export function Markdown(
         pendingContent = undefined
         pendingLabels = undefined
       }
-      // kilocode_change end
+      // stratacode_change end
       container.innerHTML = ""
       return
     }
@@ -331,7 +331,7 @@ export function Markdown(
       copied: i18n.t("ui.message.copied"),
     }
 
-    // kilocode_change start
+    // stratacode_change start
     const fast = tryFastRender(container, content, local.streaming, decorate, setupCodeCopy, () => labels, copyCleanup)
     if (fast.handled) {
       // Fast path took over; drop any pending coalesced morphdom from a
@@ -346,9 +346,9 @@ export function Markdown(
       kickHighlight(container, labels)
       return
     }
-    // kilocode_change end
+    // stratacode_change end
 
-    // kilocode_change start: queue the latest content for a single rAF tick.
+    // stratacode_change start: queue the latest content for a single rAF tick.
     // Further updates before the frame runs simply overwrite pendingContent,
     // so K rapid updates collapse to 1 parse instead of K.
     pendingContent = content
@@ -367,7 +367,7 @@ export function Markdown(
       temp.innerHTML = next
       decorate(temp, nextLabels)
 
-      // kilocode_change start: morphdom guard for highlighted blocks (issue #6221)
+      // stratacode_change start: morphdom guard for highlighted blocks (issue #6221)
       // During streaming, morphdom re-runs on every token. Without this guard,
       // it would revert already-highlighted <pre> blocks back to plain code.
       morphdom(container, temp, {
@@ -409,14 +409,14 @@ export function Markdown(
           return true
         },
       })
-      // kilocode_change end
+      // stratacode_change end
 
       kickHighlight(container, nextLabels)
     })
-    // kilocode_change end
+    // stratacode_change end
   })
 
-  // kilocode_change start: progressive Shiki highlighting (issue #6221, PR #7102).
+  // stratacode_change start: progressive Shiki highlighting (issue #6221, PR #7102).
   // Parser emits plain <pre><code data-lang="..."> blocks; we upgrade them to
   // Shiki-highlighted <pre class="shiki"> here via setTimeout(0) so initial
   // paint is instant and session switches with many code blocks don't freeze.
@@ -437,14 +437,14 @@ export function Markdown(
       signal,
     )
   }
-  // kilocode_change end
+  // stratacode_change end
 
   onCleanup(() => {
-    // kilocode_change: cancel any in-flight deferredHighlight pass so its
+    // stratacode_change: cancel any in-flight deferredHighlight pass so its
     // completion callback doesn't touch the unmounted DOM.
     highlightState.signal.aborted = true
     highlightState.gen++
-    // kilocode_change: cancel any queued rAF parse so it doesn't touch the
+    // stratacode_change: cancel any queued rAF parse so it doesn't touch the
     // unmounted DOM after dispose.
     if (pendingFrame !== undefined) {
       cancelAnimationFrame(pendingFrame)

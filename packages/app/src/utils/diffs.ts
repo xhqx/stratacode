@@ -1,5 +1,5 @@
-import type { SnapshotFileDiff, VcsFileDiff } from "@kilocode/sdk/v2"
-import type { Message } from "@kilocode/sdk/v2/client"
+import type { SnapshotFileDiff, VcsFileDiff } from "@stratacode/sdk/v2"
+import type { Message } from "@stratacode/sdk/v2/client"
 
 type Diff = SnapshotFileDiff | VcsFileDiff
 

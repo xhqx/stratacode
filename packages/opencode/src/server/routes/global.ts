@@ -59,7 +59,7 @@ async function streamEvents(c: Context, subscribe: (q: AsyncQueue<string | null>
 
     stream.onAbort(stop)
 
-    // kilocode_change start
+    // stratacode_change start
     // On Windows, stream.onAbort() may never fire after a client disconnects
     // (delayed TCP RST detection via IOCP). Without this try/catch, the
     // GlobalBus listener, heartbeat interval, and AsyncQueue stay alive
@@ -79,7 +79,7 @@ async function streamEvents(c: Context, subscribe: (q: AsyncQueue<string | null>
     } finally {
       stop()
     }
-    // kilocode_change end
+    // stratacode_change end
   })
 }
 
@@ -213,7 +213,7 @@ export const GlobalRoutes = lazy(() =>
         },
       }),
       async (c) => {
-        await Config.invalidate() // kilocode_change - reset cached global config so re-init reads fresh data from disk
+        await Config.invalidate() // stratacode_change - reset cached global config so re-init reads fresh data from disk
         GlobalBus.emit("event", {
           directory: "global",
           payload: {
@@ -227,8 +227,8 @@ export const GlobalRoutes = lazy(() =>
     .post(
       "/upgrade",
       describeRoute({
-        summary: "Upgrade kilo", // kilocode_change
-        description: "Upgrade kilo to the specified version or latest if not specified.", // kilocode_change
+        summary: "Upgrade strata", // stratacode_change
+        description: "Upgrade strata to the specified version or latest if not specified.", // stratacode_change
         operationId: "global.upgrade",
         responses: {
           200: {

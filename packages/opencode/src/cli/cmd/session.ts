@@ -25,8 +25,8 @@ function pagerCmd(): string[] {
     if (Filesystem.stat(lessOnPath)?.size) return [lessOnPath, ...lessOptions]
   }
 
-  if (Flag.KILO_GIT_BASH_PATH) {
-    const less = path.join(Flag.KILO_GIT_BASH_PATH, "..", "..", "usr", "bin", "less.exe")
+  if (Flag.STRATA_GIT_BASH_PATH) {
+    const less = path.join(Flag.STRATA_GIT_BASH_PATH, "..", "..", "usr", "bin", "less.exe")
     if (Filesystem.stat(less)?.size) return [less, ...lessOptions]
   }
 
@@ -76,7 +76,7 @@ export const SessionListCommand = cmd({
   command: "list",
   describe: "list sessions",
   builder: (yargs: Argv) => {
-    // kilocode_change start
+    // stratacode_change start
     return (
       yargs
         .option("max-count", {
@@ -90,8 +90,8 @@ export const SessionListCommand = cmd({
           choices: ["table", "json"],
           default: "table",
         })
-        // kilocode_change end
-        // kilocode_change start
+        // stratacode_change end
+        // stratacode_change start
         .option("all", {
           alias: "a",
           describe: "list sessions from all projects",
@@ -104,25 +104,25 @@ export const SessionListCommand = cmd({
           type: "string",
         })
     )
-    // kilocode_change end
+    // stratacode_change end
   },
-  // kilocode_change start
+  // stratacode_change start
   handler: async (args) => {
     await bootstrap(process.cwd(), async () => {
-      // kilocode_change end
-      // kilocode_change start
+      // stratacode_change end
+      // stratacode_change start
       const sessions = args.all
         ? [...Session.listGlobal({ roots: true, limit: args.maxCount, search: args.search })]
         : [...Session.list({ roots: true, limit: args.maxCount, search: args.search })]
-      // kilocode_change end
+      // stratacode_change end
 
-      // kilocode_change start
+      // stratacode_change start
       if (sessions.length === 0) {
         return
       }
-      // kilocode_change end
+      // stratacode_change end
 
-      // kilocode_change start
+      // stratacode_change start
       let output: string
       if (args.format === "json") {
         output = args.all
@@ -132,7 +132,7 @@ export const SessionListCommand = cmd({
         output = args.all
           ? formatGlobalSessionTable(sessions as Session.GlobalInfo[])
           : formatSessionTable(sessions as Session.Info[])
-        // kilocode_change end
+        // stratacode_change end
       }
 
       const shouldPaginate = process.stdout.isTTY && !args.maxCount && args.format === "table"
@@ -178,7 +178,7 @@ function formatSessionTable(sessions: Session.Info[]): string {
   return lines.join(EOL)
 }
 
-// kilocode_change start
+// stratacode_change start
 function formatSessionJSON(sessions: Session.Info[]): string {
   const jsonData = sessions.map((session) => ({
     id: session.id,
@@ -190,9 +190,9 @@ function formatSessionJSON(sessions: Session.Info[]): string {
   }))
   return JSON.stringify(jsonData, null, 2)
 }
-// kilocode_change end
+// stratacode_change end
 
-// kilocode_change start
+// stratacode_change start
 function formatGlobalSessionTable(sessions: Session.GlobalInfo[]): string {
   const lines: string[] = []
 
@@ -231,4 +231,4 @@ function formatGlobalSessionJSON(sessions: Session.GlobalInfo[]): string {
   }))
   return JSON.stringify(jsonData, null, 2)
 }
-// kilocode_change end
+// stratacode_change end

@@ -25,7 +25,7 @@ jobs:
   # Native runners required: bun install cross-compilation flags (--os/--cpu)
   # do not produce byte-identical node_modules as native installs.
   compute-hash:
-    if: github.repository == 'Kilo-Org/kilocode'
+    if: github.repository == 'Strata-Org/stratacode'
     strategy:
       fail-fast: false
       matrix:
@@ -81,7 +81,7 @@ jobs:
 
   update-hashes:
     needs: compute-hash
-    if: github.repository == 'Kilo-Org/kilocode' && github.event_name != 'pull_request'
+    if: github.repository == 'Strata-Org/stratacode' && github.event_name != 'pull_request'
     runs-on: blacksmith-4vcpu-ubuntu-2404
 
     steps:
@@ -96,10 +96,10 @@ jobs:
         id: committer
         uses: ./.github/actions/setup-git-committer
         with:
-          # kilocode_change start
-          kilo-maintainer-app-id: ${{ secrets.KILO_MAINTAINER_APP_ID }}
-          kilo-maintainer-app-secret: ${{ secrets.KILO_MAINTAINER_APP_SECRET }}
-          # kilocode_change end
+          # stratacode_change start
+          strata-maintainer-app-id: ${{ secrets.STRATA_MAINTAINER_APP_ID }}
+          strata-maintainer-app-secret: ${{ secrets.STRATA_MAINTAINER_APP_SECRET }}
+          # stratacode_change end
 
       - name: Pull latest changes
         run: |

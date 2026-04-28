@@ -5,12 +5,12 @@ import fs from "fs"
 import path from "path"
 import { fileURLToPath } from "url"
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
-import { createRequire } from "module" // kilocode_change
+import { createRequire } from "module" // stratacode_change
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const dir = path.resolve(__dirname, "..")
-const require = createRequire(import.meta.url) // kilocode_change
+const require = createRequire(import.meta.url) // stratacode_change
 
 process.chdir(dir)
 
@@ -18,7 +18,7 @@ await import("./generate.ts")
 
 import { Script } from "@opencode-ai/script"
 import pkg from "../package.json"
-import { LanceDBRuntime } from "../src/kilocode/lancedb" // kilocode_change
+import { LanceDBRuntime } from "../src/stratacode/lancedb" // stratacode_change
 
 // Load migrations from migration directories
 const migrationDirs = (
@@ -81,7 +81,7 @@ const createEmbeddedWebUIBundle = async () => {
 
 const embeddedFileMap = skipEmbedWebUi ? null : await createEmbeddedWebUIBundle()
 
-// kilocode_change start - codebase indexing
+// stratacode_change start - codebase indexing
 async function copyTreeSitterWasms(outputDir: string) {
   const runtimeWasmPath = require.resolve("web-tree-sitter/tree-sitter.wasm")
   const languagePackagePath = require.resolve("tree-sitter-wasms/package.json")
@@ -99,7 +99,7 @@ async function copyTreeSitterWasms(outputDir: string) {
 
   console.log(`copied ${languageWasmFiles.length + 1} tree-sitter wasm files to ${targetDir}`)
 }
-// kilocode_change end
+// stratacode_change end
 
 const allTargets: {
   os: string
@@ -219,8 +219,8 @@ for (const item of targets) {
     conditions: ["browser"],
     tsconfig: "./tsconfig.json",
     plugins: [plugin],
-    sourcemap: "external", // kilocode_change
-    external: ["node-gyp", ...LanceDBRuntime.external], // kilocode_change
+    sourcemap: "external", // stratacode_change
+    external: ["node-gyp", ...LanceDBRuntime.external], // stratacode_change
     format: "esm",
     minify: true,
     splitting: true,
@@ -230,26 +230,26 @@ for (const item of targets) {
       autoloadTsconfig: true,
       autoloadPackageJson: true,
       target: name.replace(pkg.name, "bun") as any,
-      outfile: `dist/${name}/bin/kilo`, // kilocode_change
-      execArgv: [`--user-agent=kilo/${Script.version}`, "--use-system-ca", "--"], // kilocode_change
+      outfile: `dist/${name}/bin/strata`, // stratacode_change
+      execArgv: [`--user-agent=strata/${Script.version}`, "--use-system-ca", "--"], // stratacode_change
       windows: {},
     },
     files: embeddedFileMap ? { "opencode-web-ui.gen.ts": embeddedFileMap } : {},
     entrypoints: ["./src/index.ts", parserWorker, workerPath, ...(embeddedFileMap ? ["opencode-web-ui.gen.ts"] : [])],
     define: {
-      KILO_VERSION: `'${Script.version}'`,
-      KILO_MIGRATIONS: JSON.stringify(migrations),
+      STRATA_VERSION: `'${Script.version}'`,
+      STRATA_MIGRATIONS: JSON.stringify(migrations),
       OTUI_TREE_SITTER_WORKER_PATH: bunfsRoot + workerRelativePath,
-      KILO_WORKER_PATH: workerPath,
-      KILO_CHANNEL: `'${Script.channel}'`,
-      KILO_LIBC: item.os === "linux" ? `'${item.abi ?? "glibc"}'` : "",
-      KILO_BUILD_KIND: Script.release ? `'release'` : `'source'`, // kilocode_change
+      STRATA_WORKER_PATH: workerPath,
+      STRATA_CHANNEL: `'${Script.channel}'`,
+      STRATA_LIBC: item.os === "linux" ? `'${item.abi ?? "glibc"}'` : "",
+      STRATA_BUILD_KIND: Script.release ? `'release'` : `'source'`, // stratacode_change
     },
   })
 
-  await copyTreeSitterWasms(path.resolve(dir, `dist/${name}/bin`)) // kilocode_change
+  await copyTreeSitterWasms(path.resolve(dir, `dist/${name}/bin`)) // stratacode_change
 
-  // kilocode_change start - fix Nix-specific ELF interpreter paths for Linux binaries
+  // stratacode_change start - fix Nix-specific ELF interpreter paths for Linux binaries
   if (item.os === "linux") {
     const interpreters: Record<string, string> = {
       x64: "/lib64/ld-linux-x86-64.so.2",
@@ -261,18 +261,18 @@ for (const item of targets) {
     const interpreter = interpreters[key]
     if (interpreter) {
       try {
-        await $`patchelf --set-interpreter ${interpreter} dist/${name}/bin/kilo`
+        await $`patchelf --set-interpreter ${interpreter} dist/${name}/bin/strata`
         console.log(`patched interpreter for ${name} -> ${interpreter}`)
       } catch {
         console.warn(`patchelf not available, skipping interpreter fix for ${name}`)
       }
     }
   }
-  // kilocode_change end
+  // stratacode_change end
 
   // Smoke test: only run if binary is for current platform
   if (item.os === process.platform && item.arch === process.arch && !item.abi) {
-    const binaryPath = `dist/${name}/bin/kilo` // kilocode_change
+    const binaryPath = `dist/${name}/bin/strata` // stratacode_change
     console.log(`Running smoke test: ${binaryPath} --version`)
     try {
       const versionOutput = await $`${binaryPath} --version`.text()
@@ -291,12 +291,12 @@ for (const item of targets) {
         version: Script.version,
         os: [item.os],
         cpu: [item.arch],
-        // kilocode_change start
+        // stratacode_change start
         repository: {
           type: "git",
-          url: "https://github.com/Kilo-Org/kilocode",
+          url: "https://github.com/Strata-Org/stratacode",
         },
-        // kilocode_change end
+        // stratacode_change end
       },
       null,
       2,
@@ -306,20 +306,20 @@ for (const item of targets) {
 }
 
 if (Script.release) {
-  const archives: string[] = [] // kilocode_change
+  const archives: string[] = [] // stratacode_change
   for (const key of Object.keys(binaries)) {
-    const archive = key.replace(pkg.name, "kilo") // kilocode_change
+    const archive = key.replace(pkg.name, "strata") // stratacode_change
     if (key.includes("linux")) {
-      const out = path.resolve("dist", `${archive}.tar.gz`) // kilocode_change
-      await $`tar -czf ${out} *`.cwd(`dist/${key}/bin`) // kilocode_change
-      archives.push(out) // kilocode_change
+      const out = path.resolve("dist", `${archive}.tar.gz`) // stratacode_change
+      await $`tar -czf ${out} *`.cwd(`dist/${key}/bin`) // stratacode_change
+      archives.push(out) // stratacode_change
     } else {
-      const out = path.resolve("dist", `${archive}.zip`) // kilocode_change
-      await $`zip -r ${out} *`.cwd(`dist/${key}/bin`) // kilocode_change
-      archives.push(out) // kilocode_change
+      const out = path.resolve("dist", `${archive}.zip`) // stratacode_change
+      await $`zip -r ${out} *`.cwd(`dist/${key}/bin`) // stratacode_change
+      archives.push(out) // stratacode_change
     }
   }
-  await $`gh release upload v${Script.version} ${archives} --clobber` // kilocode_change
+  await $`gh release upload v${Script.version} ${archives} --clobber` // stratacode_change
 }
 
 export { binaries }

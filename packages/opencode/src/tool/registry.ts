@@ -1,7 +1,7 @@
 import { PlanExitTool } from "./plan"
 import { Session } from "../session"
 import { QuestionTool } from "./question"
-import { SuggestTool } from "../kilocode/suggestion/tool" // kilocode_change
+import { SuggestTool } from "../stratacode/suggestion/tool" // stratacode_change
 import { BashTool } from "./bash"
 import { EditTool } from "./edit"
 import { GlobTool } from "./glob"
@@ -15,15 +15,15 @@ import { InvalidTool } from "./invalid"
 import { SkillTool } from "./skill"
 import * as Tool from "./tool"
 import { Config } from "../config"
-import { type ToolContext as PluginToolContext, type ToolDefinition } from "@kilocode/plugin"
+import { type ToolContext as PluginToolContext, type ToolDefinition } from "@stratacode/plugin"
 import z from "zod"
 import { Plugin } from "../plugin"
 import { Provider } from "../provider"
 import { ProviderID, type ModelID } from "../provider/schema"
 import { WebSearchTool } from "./websearch"
 import { CodeSearchTool } from "./codesearch"
-import { KiloToolRegistry } from "../kilocode/tool/registry" // kilocode_change
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { StrataToolRegistry } from "../stratacode/tool/registry" // stratacode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import { Flag } from "@/flag/flag"
 import { Log } from "@/util"
 import { LspTool } from "./lsp"
@@ -117,8 +117,8 @@ export const layer: Layer.Layer<
     const patchtool = yield* ApplyPatchTool
     const skilltool = yield* SkillTool
     const agent = yield* Agent.Service
-    const suggesttool = yield* SuggestTool // kilocode_change
-    const kiloToolInfos = yield* KiloToolRegistry.infos() // kilocode_change
+    const suggesttool = yield* SuggestTool // stratacode_change
+    const strataToolInfos = yield* StrataToolRegistry.infos() // stratacode_change
 
     const state = yield* InstanceState.make<State>(
       Effect.fn("ToolRegistry.state")(function* (ctx) {
@@ -178,9 +178,9 @@ export const layer: Layer.Layer<
         }
 
         const cfg = yield* config.get()
-        const questionEnabled = KiloToolRegistry.question() // kilocode_change
+        const questionEnabled = StrataToolRegistry.question() // stratacode_change
 
-        // kilocode_change start
+        // stratacode_change start
         const tool = yield* Effect.all({
           invalid: Tool.init(invalid),
           bash: Tool.init(bash),
@@ -199,13 +199,13 @@ export const layer: Layer.Layer<
           question: Tool.init(question),
           lsp: Tool.init(lsptool),
           plan: Tool.init(plan),
-          suggest: Tool.init(suggesttool), // kilocode_change
+          suggest: Tool.init(suggesttool), // stratacode_change
         })
-        // kilocode_change end
+        // stratacode_change end
 
-        const kilo = yield* KiloToolRegistry.build(kiloToolInfos) // kilocode_change
+        const strata = yield* StrataToolRegistry.build(strataToolInfos) // stratacode_change
 
-        // kilocode_change start
+        // stratacode_change start
         return {
           custom,
           builtin: [
@@ -224,15 +224,15 @@ export const layer: Layer.Layer<
             tool.code,
             tool.skill,
             tool.patch,
-            ...(KiloToolRegistry.plan() ? [tool.plan] : []), // kilocode_change
-            ...KiloToolRegistry.suggest(tool.suggest), // kilocode_change
-            ...KiloToolRegistry.extra(kilo, cfg), // kilocode_change
-            ...(Flag.KILO_EXPERIMENTAL_LSP_TOOL ? [tool.lsp] : []),
+            ...(StrataToolRegistry.plan() ? [tool.plan] : []), // stratacode_change
+            ...StrataToolRegistry.suggest(tool.suggest), // stratacode_change
+            ...StrataToolRegistry.extra(strata, cfg), // stratacode_change
+            ...(Flag.STRATA_EXPERIMENTAL_LSP_TOOL ? [tool.lsp] : []),
           ],
           task: tool.task,
           read: tool.read,
         }
-        // kilocode_change end
+        // stratacode_change end
       }),
     )
 
@@ -282,14 +282,14 @@ export const layer: Layer.Layer<
     const tools: Interface["tools"] = Effect.fn("ToolRegistry.tools")(function* (input) {
       const filtered = (yield* all()).filter((tool) => {
         if (tool.id === CodeSearchTool.id || tool.id === WebSearchTool.id) {
-          return input.providerID === ProviderID.kilo || Flag.KILO_ENABLE_EXA // kilocode_change
+          return input.providerID === ProviderID.strata || Flag.STRATA_ENABLE_EXA // stratacode_change
         }
 
         const usePatch =
-          KiloToolRegistry.e2e() || // kilocode_change
+          StrataToolRegistry.e2e() || // stratacode_change
           (input.modelID.includes("gpt-") && !input.modelID.includes("oss") && !input.modelID.includes("gpt-4"))
         if (tool.id === ApplyPatchTool.id) return usePatch
-        if (tool.id === EditTool.id) return !usePatch // kilocode_change
+        if (tool.id === EditTool.id) return !usePatch // stratacode_change
 
         return true
       })
@@ -351,7 +351,7 @@ export const defaultLayer = Layer.suspend(() =>
     Layer.provide(Truncate.defaultLayer),
   ),
 )
-// kilocode_change start
+// stratacode_change start
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const ids = () => runPromise((svc) => svc.ids())
-// kilocode_change end
+// stratacode_change end

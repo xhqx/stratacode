@@ -1,15 +1,15 @@
 import { RequestError, type McpServer } from "@agentclientprotocol/sdk"
 import type { ACPSessionState } from "./types"
 import { Log } from "@/util"
-import type { KiloClient } from "@kilocode/sdk/v2"
+import type { StrataClient } from "@stratacode/sdk/v2"
 
 const log = Log.create({ service: "acp-session-manager" })
 
 export class ACPSessionManager {
   private sessions = new Map<string, ACPSessionState>()
-  private sdk: KiloClient
+  private sdk: StrataClient
 
-  constructor(sdk: KiloClient) {
+  constructor(sdk: StrataClient) {
     this.sdk = sdk
   }
 

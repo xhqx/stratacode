@@ -51,7 +51,7 @@ describe("tui thread", () => {
     const { TuiThreadCommand } = await import("../../../src/cli/cmd/tui/thread")
     const args: Parameters<NonNullable<typeof TuiThreadCommand.handler>>[0] = {
       _: [],
-      $0: "kilo", // kilocode_change
+      $0: "strata", // stratacode_change
       project,
       prompt: "hi",
       model: undefined,
@@ -59,13 +59,13 @@ describe("tui thread", () => {
       session: undefined,
       continue: false,
       fork: false,
-      "cloud-fork": undefined, // kilocode_change
-      cloudFork: undefined, // kilocode_change
+      "cloud-fork": undefined, // stratacode_change
+      cloudFork: undefined, // stratacode_change
       port: 0,
       hostname: "127.0.0.1",
       mdns: false,
-      "mdns-domain": "kilo.local", // kilocode_change
-      mdnsDomain: "kilo.local", // kilocode_change
+      "mdns-domain": "strata.local", // stratacode_change
+      mdnsDomain: "strata.local", // stratacode_change
       cors: [],
     }
     return TuiThreadCommand.handler(args)

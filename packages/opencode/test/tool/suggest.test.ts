@@ -1,2 +1,2 @@
-// kilocode_change - new file
-// Moved to test/kilocode/suggestion/tool.test.ts.
+// stratacode_change - new file
+// Moved to test/stratacode/suggestion/tool.test.ts.

@@ -1,0 +1,5 @@
+/* Strata Inline Input overrides */
+
+[data-component="inline-input"] {
+  font-size: 13px;
+}

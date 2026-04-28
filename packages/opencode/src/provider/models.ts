@@ -8,19 +8,19 @@ import { lazy } from "@/util/lazy"
 import { Filesystem } from "../util"
 import { Flock } from "@opencode-ai/shared/util/flock"
 import { Hash } from "@opencode-ai/shared/util/hash"
-// kilocode_change start
+// stratacode_change start
 import { Config } from "../config"
 import { ModelCache } from "./model-cache"
 import { Auth } from "../auth"
-import { AI_SDK_PROVIDERS, KILO_OPENROUTER_BASE, PROMPTS } from "@kilocode/kilo-gateway"
-// kilocode_change end
+import { AI_SDK_PROVIDERS, STRATA_OPENROUTER_BASE, PROMPTS } from "@stratacode/strata-gateway"
+// stratacode_change end
 
 // Try to import bundled snapshot (generated at build time)
 // Falls back to undefined in dev mode when snapshot doesn't exist
 /* @ts-ignore */
 
-// kilocode_change start
-const normalizeKiloBaseURL = (baseURL: string | undefined, orgId: string | undefined): string | undefined => {
+// stratacode_change start
+const normalizeStrataBaseURL = (baseURL: string | undefined, orgId: string | undefined): string | undefined => {
   if (!baseURL) return undefined
   const trimmed = baseURL.replace(/\/+$/, "")
   if (orgId) {
@@ -36,7 +36,7 @@ const normalizeKiloBaseURL = (baseURL: string | undefined, orgId: string | undef
 export const Prompt = z.enum(PROMPTS)
 
 export const AiSdkProvider = z.enum(AI_SDK_PROVIDERS)
-// kilocode_change end
+// stratacode_change end
 
 const log = Log.create({ service: "models.dev" })
 const source = url()
@@ -99,12 +99,12 @@ export const Model = z.object({
     })
     .optional(),
 
-  // kilocode_change start
+  // stratacode_change start
   recommendedIndex: z.number().optional(),
   prompt: Prompt.optional().catch(undefined),
   isFree: z.boolean().optional(),
   ai_sdk_provider: AiSdkProvider.optional().catch(undefined),
-  // kilocode_change end
+  // stratacode_change end
 
   experimental: z
     .object({
@@ -141,7 +141,7 @@ export const Provider = z.object({
 export type Provider = z.infer<typeof Provider>
 
 function url() {
-  return Flag.KILO_MODELS_URL || "https://models.dev"
+  return Flag.STRATA_MODELS_URL || "https://models.dev"
 }
 
 function fresh() {
@@ -161,16 +161,16 @@ const fetchApi = async () => {
 }
 
 export const Data = lazy(async () => {
-  const result = await Filesystem.readJson(Flag.KILO_MODELS_PATH ?? filepath).catch(() => {})
+  const result = await Filesystem.readJson(Flag.STRATA_MODELS_PATH ?? filepath).catch(() => {})
   if (result) return result
   // @ts-ignore
   const snapshot = await import("./models-snapshot.js")
     .then((m) => m.snapshot as Record<string, unknown>)
     .catch(() => undefined)
   if (snapshot) return snapshot
-  if (Flag.KILO_DISABLE_MODELS_FETCH) return {}
+  if (Flag.STRATA_DISABLE_MODELS_FETCH) return {}
   return Flock.withLock(`models-dev:${filepath}`, async () => {
-    const result = await Filesystem.readJson(Flag.KILO_MODELS_PATH ?? filepath).catch(() => {})
+    const result = await Filesystem.readJson(Flag.STRATA_MODELS_PATH ?? filepath).catch(() => {})
     if (result) return result
     const result2 = await fetchApi()
     if (result2.ok) {
@@ -184,36 +184,36 @@ export const Data = lazy(async () => {
 
 export async function get() {
   const result = await Data()
-  // kilocode_change start
+  // stratacode_change start
   const providers = result as Record<string, Provider>
 
-  if (providers["kilo"]) {
-    delete providers["kilo"]
+  if (providers["strata"]) {
+    delete providers["strata"]
   }
 
-  // Inject kilo provider with dynamic model fetching
-  // Skip injection entirely when enabled_providers is set and doesn't include "kilo",
-  // or when "kilo" is in disabled_providers. This prevents unnecessary network calls
-  // to the Kilo API for teams using only their own providers (e.g. LiteLLM).
+  // Inject strata provider with dynamic model fetching
+  // Skip injection entirely when enabled_providers is set and doesn't include "strata",
+  // or when "strata" is in disabled_providers. This prevents unnecessary network calls
+  // to the Strata API for teams using only their own providers (e.g. LiteLLM).
   const config = await Config.get()
   const disabled = new Set(config.disabled_providers ?? [])
   const enabled = config.enabled_providers ? new Set(config.enabled_providers) : null
-  const kiloAllowed = (!enabled || enabled.has("kilo")) && !disabled.has("kilo")
+  const strataAllowed = (!enabled || enabled.has("strata")) && !disabled.has("strata")
 
-  if (kiloAllowed && !providers["kilo"]) {
-    const kiloOptions = config.provider?.kilo?.options
+  if (strataAllowed && !providers["strata"]) {
+    const strataOptions = config.provider?.strata?.options
     // resolve org ID from auth (OAuth accountId) not just config
-    const kiloAuth = await Auth.get("kilo")
-    const kiloOrgId =
-      kiloOptions?.kilocodeOrganizationId ?? (kiloAuth?.type === "oauth" ? kiloAuth.accountId : undefined)
-    const normalizedBaseURL = normalizeKiloBaseURL(kiloOptions?.baseURL, kiloOrgId)
-    const kiloFetchOptions = {
+    const strataAuth = await Auth.get("strata")
+    const strataOrgId =
+      strataOptions?.stratacodeOrganizationId ?? (strataAuth?.type === "oauth" ? strataAuth.accountId : undefined)
+    const normalizedBaseURL = normalizeStrataBaseURL(strataOptions?.baseURL, strataOrgId)
+    const strataFetchOptions = {
       ...(normalizedBaseURL ? { baseURL: normalizedBaseURL } : {}),
-      ...(kiloOrgId ? { kilocodeOrganizationId: kiloOrgId } : {}),
+      ...(strataOrgId ? { stratacodeOrganizationId: strataOrgId } : {}),
     }
-    const defaultBaseURL = kiloOrgId
-      ? `https://api.kilo.ai/api/organizations/${kiloOrgId}`
-      : "https://api.kilo.ai/api/openrouter"
+    const defaultBaseURL = strataOrgId
+      ? `https://api.strata.ai/api/organizations/${strataOrgId}`
+      : "https://api.strata.ai/api/openrouter"
     const providerBaseURL = normalizedBaseURL ?? defaultBaseURL
     const ensureTrailingSlash = (value: string): string => (value.endsWith("/") ? value : `${value}/`)
     const apertisConfig = config.provider?.apertis?.options
@@ -222,23 +222,23 @@ export async function get() {
       ...(apertisConfig?.baseURL ? { baseURL: apertisConfig.baseURL } : {}),
     }
 
-    const [kiloModels, apertisModels] = await Promise.all([
-      ModelCache.fetch("kilo", kiloFetchOptions).catch(() => ({})),
+    const [strataModels, apertisModels] = await Promise.all([
+      ModelCache.fetch("strata", strataFetchOptions).catch(() => ({})),
       !providers["apertis"]
         ? ModelCache.fetch("apertis", apertisFetchOptions).catch(() => ({}))
         : Promise.resolve(null),
     ])
 
-    providers["kilo"] = {
-      id: "kilo",
-      name: "Kilo Gateway",
-      env: ["KILO_API_KEY"],
-      api: ensureTrailingSlash(KILO_OPENROUTER_BASE),
-      npm: "@kilocode/kilo-gateway",
-      models: kiloModels,
+    providers["strata"] = {
+      id: "strata",
+      name: "Strata Gateway",
+      env: ["STRATA_API_KEY"],
+      api: ensureTrailingSlash(STRATA_OPENROUTER_BASE),
+      npm: "@stratacode/strata-gateway",
+      models: strataModels,
     }
-    if (Object.keys(kiloModels).length === 0) {
-      ModelCache.refresh("kilo", kiloFetchOptions).catch(() => {})
+    if (Object.keys(strataModels).length === 0) {
+      ModelCache.refresh("strata", strataFetchOptions).catch(() => {})
     }
 
     if (!providers["apertis"] && apertisModels !== null) {
@@ -275,7 +275,7 @@ export async function get() {
   }
 
   return providers
-  // kilocode_change end
+  // stratacode_change end
 }
 
 export async function refresh(force = false) {
@@ -293,7 +293,7 @@ export async function refresh(force = false) {
   })
 }
 
-if (!Flag.KILO_DISABLE_MODELS_FETCH && !process.argv.includes("--get-yargs-completions")) {
+if (!Flag.STRATA_DISABLE_MODELS_FETCH && !process.argv.includes("--get-yargs-completions")) {
   void refresh()
   setInterval(
     async () => {

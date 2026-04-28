@@ -187,18 +187,18 @@ export const layer = Layer.effect(
         ...input.env,
         ...shell.env,
         TERM: "xterm-256color",
-        KILO_TERMINAL: "1",
+        STRATA_TERMINAL: "1",
       } as Record<string, string>
-      // kilocode_change start
-      // Don't leak the kilo server's auth credential into user shells.
+      // stratacode_change start
+      // Don't leak the strata server's auth credential into user shells.
       // Anything the shell forks (npm post-install scripts, `curl | bash`,
       // supply-chain-compromised tools) would otherwise see the password
-      // with zero effort. Users who genuinely need `kilo run`/`kilo tui
-      // attach` to auto-connect from inside a kilo-spawned terminal can
+      // with zero effort. Users who genuinely need `strata run`/`strata tui
+      // attach` to auto-connect from inside a strata-spawned terminal can
       // pass `--password` explicitly or re-export the env themselves.
-      delete env.KILO_SERVER_PASSWORD
-      delete env.KILO_SERVER_USERNAME
-      // kilocode_change end
+      delete env.STRATA_SERVER_PASSWORD
+      delete env.STRATA_SERVER_USERNAME
+      // stratacode_change end
 
       if (process.platform === "win32") {
         env.LC_ALL = "C.UTF-8"

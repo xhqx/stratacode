@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "kilo",
-    "description": "kilo api",
+    "title": "strata",
+    "description": "strata api",
     "version": "1.0.0"
   },
   "paths": {
@@ -10,7 +10,7 @@
       "get": {
         "operationId": "global.health",
         "summary": "Get health",
-        "description": "Get health information about the Kilo server.",
+        "description": "Get health information about the Strata server.",
         "responses": {
           "200": {
             "description": "Health information",
@@ -36,7 +36,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.global.health({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.global.health({\n  ...\n})"
           }
         ]
       }
@@ -45,7 +45,7 @@
       "get": {
         "operationId": "global.event",
         "summary": "Get global events",
-        "description": "Subscribe to global events from the Kilo system using server-sent events.",
+        "description": "Subscribe to global events from the Strata system using server-sent events.",
         "responses": {
           "200": {
             "description": "Event stream",
@@ -61,7 +61,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.global.event({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.global.event({\n  ...\n})"
           }
         ]
       }
@@ -70,7 +70,7 @@
       "get": {
         "operationId": "global.config.get",
         "summary": "Get global configuration",
-        "description": "Retrieve the current global Kilo configuration settings and preferences.",
+        "description": "Retrieve the current global Strata configuration settings and preferences.",
         "responses": {
           "200": {
             "description": "Get global config info",
@@ -86,14 +86,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.global.config.get({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.global.config.get({\n  ...\n})"
           }
         ]
       },
       "patch": {
         "operationId": "global.config.update",
         "summary": "Update global configuration",
-        "description": "Update global Kilo configuration settings and preferences.",
+        "description": "Update global Strata configuration settings and preferences.",
         "responses": {
           "200": {
             "description": "Successfully updated global config",
@@ -128,7 +128,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.global.config.update({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.global.config.update({\n  ...\n})"
           }
         ]
       }
@@ -137,7 +137,7 @@
       "post": {
         "operationId": "global.dispose",
         "summary": "Dispose instance",
-        "description": "Clean up and dispose all Kilo instances, releasing all resources.",
+        "description": "Clean up and dispose all Strata instances, releasing all resources.",
         "responses": {
           "200": {
             "description": "Global disposed",
@@ -153,7 +153,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.global.dispose({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.global.dispose({\n  ...\n})"
           }
         ]
       }
@@ -161,8 +161,8 @@
     "/global/upgrade": {
       "post": {
         "operationId": "global.upgrade",
-        "summary": "Upgrade kilo",
-        "description": "Upgrade kilo to the specified version or latest if not specified.",
+        "summary": "Upgrade strata",
+        "description": "Upgrade strata to the specified version or latest if not specified.",
         "responses": {
           "200": {
             "description": "Upgrade result",
@@ -229,7 +229,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.global.upgrade({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.global.upgrade({\n  ...\n})"
           }
         ]
       }
@@ -283,7 +283,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.auth.set({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.auth.set({\n  ...\n})"
           }
         ]
       },
@@ -326,7 +326,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.auth.remove({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.auth.remove({\n  ...\n})"
           }
         ]
       }
@@ -410,7 +410,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.app.log({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.app.log({\n  ...\n})"
           }
         ]
       }
@@ -466,7 +466,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.workspace.adaptor.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.workspace.adaptor.list({\n  ...\n})"
           }
         ]
       }
@@ -554,7 +554,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.workspace.create({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.workspace.create({\n  ...\n})"
           }
         ]
       },
@@ -596,7 +596,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.workspace.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.workspace.list({\n  ...\n})"
           }
         ]
       }
@@ -651,7 +651,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.workspace.status({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.workspace.status({\n  ...\n})"
           }
         ]
       }
@@ -711,7 +711,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.workspace.remove({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.workspace.remove({\n  ...\n})"
           }
         ]
       }
@@ -795,7 +795,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.workspace.sessionRestore({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.workspace.sessionRestore({\n  ...\n})"
           }
         ]
       }
@@ -820,7 +820,7 @@
           }
         ],
         "summary": "List all projects",
-        "description": "Get a list of projects that have been opened with Kilo.",
+        "description": "Get a list of projects that have been opened with Strata.",
         "responses": {
           "200": {
             "description": "List of projects",
@@ -839,7 +839,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.project.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.project.list({\n  ...\n})"
           }
         ]
       }
@@ -864,7 +864,7 @@
           }
         ],
         "summary": "Get current project",
-        "description": "Retrieve the currently active project that Kilo is working with.",
+        "description": "Retrieve the currently active project that Strata is working with.",
         "responses": {
           "200": {
             "description": "Current project information",
@@ -880,7 +880,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.project.current({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.project.current({\n  ...\n})"
           }
         ]
       }
@@ -921,7 +921,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.project.initGit({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.project.initGit({\n  ...\n})"
           }
         ]
       }
@@ -1027,7 +1027,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.project.update({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.project.update({\n  ...\n})"
           }
         ]
       }
@@ -1052,7 +1052,7 @@
           }
         ],
         "summary": "List PTY sessions",
-        "description": "Get a list of all active pseudo-terminal (PTY) sessions managed by Kilo.",
+        "description": "Get a list of all active pseudo-terminal (PTY) sessions managed by Strata.",
         "responses": {
           "200": {
             "description": "List of sessions",
@@ -1071,7 +1071,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.pty.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.pty.list({\n  ...\n})"
           }
         ]
       },
@@ -1155,7 +1155,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.pty.create({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.pty.create({\n  ...\n})"
           }
         ]
       }
@@ -1215,7 +1215,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.pty.get({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.pty.get({\n  ...\n})"
           }
         ]
       },
@@ -1299,7 +1299,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.pty.update({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.pty.update({\n  ...\n})"
           }
         ]
       },
@@ -1357,7 +1357,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.pty.remove({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.pty.remove({\n  ...\n})"
           }
         ]
       }
@@ -1417,7 +1417,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.pty.connect({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.pty.connect({\n  ...\n})"
           }
         ]
       }
@@ -1442,7 +1442,7 @@
           }
         ],
         "summary": "Get configuration",
-        "description": "Retrieve the current Kilo configuration settings and preferences.",
+        "description": "Retrieve the current Strata configuration settings and preferences.",
         "responses": {
           "200": {
             "description": "Get config info",
@@ -1458,7 +1458,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.config.get({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.config.get({\n  ...\n})"
           }
         ]
       },
@@ -1481,7 +1481,7 @@
           }
         ],
         "summary": "Update configuration",
-        "description": "Update Kilo configuration settings and preferences.",
+        "description": "Update Strata configuration settings and preferences.",
         "responses": {
           "200": {
             "description": "Successfully updated config",
@@ -1516,7 +1516,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.config.update({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.config.update({\n  ...\n})"
           }
         ]
       }
@@ -1572,7 +1572,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.config.warnings({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.config.warnings({\n  ...\n})"
           }
         ]
       }
@@ -1631,7 +1631,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.config.providers({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.config.providers({\n  ...\n})"
           }
         ]
       }
@@ -1689,7 +1689,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.console.get({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.console.get({\n  ...\n})"
           }
         ]
       }
@@ -1760,7 +1760,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.console.listOrgs({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.console.listOrgs({\n  ...\n})"
           }
         ]
       }
@@ -1785,7 +1785,7 @@
           }
         ],
         "summary": "Switch active Console org",
-        "description": "Persist a new active Console account/org selection for the current local Kilo state.",
+        "description": "Persist a new active Console account/org selection for the current local Strata state.",
         "responses": {
           "200": {
             "description": "Switch success",
@@ -1819,7 +1819,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.console.switchOrg({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.console.switchOrg({\n  ...\n})"
           }
         ]
       }
@@ -1870,7 +1870,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tool.ids({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tool.ids({\n  ...\n})"
           }
         ]
       }
@@ -1937,7 +1937,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tool.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tool.list({\n  ...\n})"
           }
         ]
       }
@@ -1997,7 +1997,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.worktree.create({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.worktree.create({\n  ...\n})"
           }
         ]
       },
@@ -2039,7 +2039,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.worktree.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.worktree.list({\n  ...\n})"
           }
         ]
       },
@@ -2097,7 +2097,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.worktree.remove({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.worktree.remove({\n  ...\n})"
           }
         ]
       }
@@ -2157,7 +2157,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.worktree.reset({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.worktree.reset({\n  ...\n})"
           }
         ]
       }
@@ -2219,7 +2219,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.worktree.diff({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.worktree.diff({\n  ...\n})"
           }
         ]
       }
@@ -2281,7 +2281,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.worktree.diffSummary({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.worktree.diffSummary({\n  ...\n})"
           }
         ]
       }
@@ -2356,7 +2356,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.worktree.diffFile({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.worktree.diffFile({\n  ...\n})"
           }
         ]
       }
@@ -2446,7 +2446,7 @@
           }
         ],
         "summary": "List sessions",
-        "description": "Get a list of all Kilo sessions across projects, sorted by most recently updated. Archived sessions are excluded by default.",
+        "description": "Get a list of all Strata sessions across projects, sorted by most recently updated. Archived sessions are excluded by default.",
         "responses": {
           "200": {
             "description": "List of sessions",
@@ -2465,7 +2465,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.session.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.session.list({\n  ...\n})"
           }
         ]
       }
@@ -2512,7 +2512,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.experimental.resource.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.experimental.resource.list({\n  ...\n})"
           }
         ]
       }
@@ -2570,7 +2570,7 @@
           }
         ],
         "summary": "List sessions",
-        "description": "Get a list of all Kilo sessions, sorted by most recently updated.",
+        "description": "Get a list of all Strata sessions, sorted by most recently updated.",
         "responses": {
           "200": {
             "description": "List of sessions",
@@ -2589,7 +2589,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.list({\n  ...\n})"
           }
         ]
       },
@@ -2612,7 +2612,7 @@
           }
         ],
         "summary": "Create session",
-        "description": "Create a new Kilo session for interacting with AI assistants and managing conversations.",
+        "description": "Create a new Strata session for interacting with AI assistants and managing conversations.",
         "responses": {
           "200": {
             "description": "Successfully created session",
@@ -2666,7 +2666,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.create({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.create({\n  ...\n})"
           }
         ]
       }
@@ -2723,7 +2723,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.status({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.status({\n  ...\n})"
           }
         ]
       }
@@ -2757,7 +2757,7 @@
           }
         ],
         "summary": "Get session",
-        "description": "Retrieve detailed information about a specific Kilo session.",
+        "description": "Retrieve detailed information about a specific Strata session.",
         "tags": ["Session"],
         "responses": {
           "200": {
@@ -2794,7 +2794,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.get({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.get({\n  ...\n})"
           }
         ]
       },
@@ -2862,7 +2862,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.delete({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.delete({\n  ...\n})"
           }
         ]
       },
@@ -2955,7 +2955,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.update({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.update({\n  ...\n})"
           }
         ]
       }
@@ -3029,7 +3029,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.children({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.children({\n  ...\n})"
           }
         ]
       }
@@ -3102,7 +3102,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.todo({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.todo({\n  ...\n})"
           }
         ]
       }
@@ -3194,7 +3194,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.init({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.init({\n  ...\n})"
           }
         ]
       }
@@ -3259,7 +3259,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.fork({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.fork({\n  ...\n})"
           }
         ]
       }
@@ -3329,7 +3329,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.abort({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.abort({\n  ...\n})"
           }
         ]
       }
@@ -3399,7 +3399,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.share({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.share({\n  ...\n})"
           }
         ]
       },
@@ -3467,7 +3467,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.unshare({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.unshare({\n  ...\n})"
           }
         ]
       }
@@ -3528,7 +3528,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.diff({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.diff({\n  ...\n})"
           }
         ]
       }
@@ -3620,7 +3620,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.summarize({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.summarize({\n  ...\n})"
           }
         ]
       }
@@ -3722,7 +3722,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.messages({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.messages({\n  ...\n})"
           }
         ]
       },
@@ -3897,7 +3897,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.prompt({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.prompt({\n  ...\n})"
           }
         ]
       }
@@ -3988,7 +3988,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.message({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.message({\n  ...\n})"
           }
         ]
       },
@@ -4065,7 +4065,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.deleteMessage({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.deleteMessage({\n  ...\n})"
           }
         ]
       }
@@ -4152,7 +4152,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.part.delete({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.part.delete({\n  ...\n})"
           }
         ]
       },
@@ -4246,7 +4246,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.part.update({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.part.update({\n  ...\n})"
           }
         ]
       }
@@ -4404,7 +4404,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.prompt_async({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.prompt_async({\n  ...\n})"
           }
         ]
       }
@@ -4550,7 +4550,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.command({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.command({\n  ...\n})"
           }
         ]
       }
@@ -4666,7 +4666,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.shell({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.shell({\n  ...\n})"
           }
         ]
       }
@@ -4756,7 +4756,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.revert({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.revert({\n  ...\n})"
           }
         ]
       }
@@ -4826,7 +4826,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.unrevert({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.unrevert({\n  ...\n})"
           }
         ]
       }
@@ -4922,7 +4922,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.permission.respond({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.permission.respond({\n  ...\n})"
           }
         ]
       }
@@ -4986,7 +4986,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.session.viewed({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.session.viewed({\n  ...\n})"
           }
         ]
       }
@@ -5075,7 +5075,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.permission.reply({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.permission.reply({\n  ...\n})"
           }
         ]
       }
@@ -5168,7 +5168,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.permission.saveAlwaysRules({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.permission.saveAlwaysRules({\n  ...\n})"
           }
         ]
       }
@@ -5212,7 +5212,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.permission.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.permission.list({\n  ...\n})"
           }
         ]
       }
@@ -5256,7 +5256,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.question.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.question.list({\n  ...\n})"
           }
         ]
       }
@@ -5345,7 +5345,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.question.reply({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.question.reply({\n  ...\n})"
           }
         ]
       }
@@ -5415,7 +5415,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.question.reject({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.question.reject({\n  ...\n})"
           }
         ]
       }
@@ -5480,7 +5480,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.provider.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.provider.list({\n  ...\n})"
           }
         ]
       }
@@ -5530,7 +5530,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.provider.auth({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.provider.auth({\n  ...\n})"
           }
         ]
       }
@@ -5616,7 +5616,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.provider.oauth.authorize({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.provider.oauth.authorize({\n  ...\n})"
           }
         ]
       }
@@ -5696,7 +5696,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.provider.oauth.callback({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.provider.oauth.callback({\n  ...\n})"
           }
         ]
       }
@@ -5799,7 +5799,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.sync.replay({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.sync.replay({\n  ...\n})"
           }
         ]
       }
@@ -5892,7 +5892,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.sync.history.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.sync.history.list({\n  ...\n})"
           }
         ]
       }
@@ -5995,7 +5995,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.find.text({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.find.text({\n  ...\n})"
           }
         ]
       }
@@ -6072,7 +6072,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.find.files({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.find.files({\n  ...\n})"
           }
         ]
       }
@@ -6124,7 +6124,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.find.symbols({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.find.symbols({\n  ...\n})"
           }
         ]
       }
@@ -6176,7 +6176,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.file.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.file.list({\n  ...\n})"
           }
         ]
       }
@@ -6225,7 +6225,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.file.read({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.file.read({\n  ...\n})"
           }
         ]
       }
@@ -6269,7 +6269,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.file.status({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.file.status({\n  ...\n})"
           }
         ]
       }
@@ -6310,7 +6310,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.event.subscribe({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.event.subscribe({\n  ...\n})"
           }
         ]
       }
@@ -6357,7 +6357,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.mcp.status({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.mcp.status({\n  ...\n})"
           }
         ]
       },
@@ -6437,7 +6437,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.mcp.add({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.mcp.add({\n  ...\n})"
           }
         ]
       }
@@ -6513,7 +6513,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.mcp.auth.start({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.mcp.auth.start({\n  ...\n})"
           }
         ]
       },
@@ -6577,7 +6577,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.mcp.auth.remove({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.mcp.auth.remove({\n  ...\n})"
           }
         ]
       }
@@ -6662,7 +6662,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.mcp.auth.callback({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.mcp.auth.callback({\n  ...\n})"
           }
         ]
       }
@@ -6731,7 +6731,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.mcp.auth.authenticate({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.mcp.auth.authenticate({\n  ...\n})"
           }
         ]
       }
@@ -6779,7 +6779,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.mcp.connect({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.mcp.connect({\n  ...\n})"
           }
         ]
       }
@@ -6827,7 +6827,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.mcp.disconnect({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.mcp.disconnect({\n  ...\n})"
           }
         ]
       }
@@ -6893,7 +6893,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.appendPrompt({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.appendPrompt({\n  ...\n})"
           }
         ]
       }
@@ -6934,7 +6934,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.openHelp({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.openHelp({\n  ...\n})"
           }
         ]
       }
@@ -6975,7 +6975,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.openSessions({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.openSessions({\n  ...\n})"
           }
         ]
       }
@@ -7016,7 +7016,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.openThemes({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.openThemes({\n  ...\n})"
           }
         ]
       }
@@ -7057,7 +7057,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.openModels({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.openModels({\n  ...\n})"
           }
         ]
       }
@@ -7098,7 +7098,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.submitPrompt({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.submitPrompt({\n  ...\n})"
           }
         ]
       }
@@ -7139,7 +7139,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.clearPrompt({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.clearPrompt({\n  ...\n})"
           }
         ]
       }
@@ -7205,7 +7205,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.executeCommand({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.executeCommand({\n  ...\n})"
           }
         ]
       }
@@ -7273,7 +7273,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.showToast({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.showToast({\n  ...\n})"
           }
         ]
       }
@@ -7346,7 +7346,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.publish({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.publish({\n  ...\n})"
           }
         ]
       }
@@ -7424,7 +7424,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.selectSession({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.selectSession({\n  ...\n})"
           }
         ]
       }
@@ -7472,7 +7472,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.control.next({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.control.next({\n  ...\n})"
           }
         ]
       }
@@ -7520,7 +7520,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.tui.control.response({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.tui.control.response({\n  ...\n})"
           }
         ]
       }
@@ -7545,7 +7545,7 @@
           }
         ],
         "summary": "Dispose instance",
-        "description": "Clean up and dispose the current Kilo instance, releasing all resources.",
+        "description": "Clean up and dispose the current Strata instance, releasing all resources.",
         "responses": {
           "200": {
             "description": "Instance disposed",
@@ -7561,7 +7561,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.instance.dispose({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.instance.dispose({\n  ...\n})"
           }
         ]
       }
@@ -7586,7 +7586,7 @@
           }
         ],
         "summary": "Get paths",
-        "description": "Retrieve the current working directory and related path information for the Kilo instance.",
+        "description": "Retrieve the current working directory and related path information for the Strata instance.",
         "responses": {
           "200": {
             "description": "Path",
@@ -7602,7 +7602,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.path.get({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.path.get({\n  ...\n})"
           }
         ]
       }
@@ -7643,7 +7643,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.vcs.get({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.vcs.get({\n  ...\n})"
           }
         ]
       }
@@ -7696,7 +7696,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.vcs.diff({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.vcs.diff({\n  ...\n})"
           }
         ]
       }
@@ -7721,7 +7721,7 @@
           }
         ],
         "summary": "List commands",
-        "description": "Get a list of all available commands in the Kilo system.",
+        "description": "Get a list of all available commands in the Strata system.",
         "responses": {
           "200": {
             "description": "List of commands",
@@ -7740,7 +7740,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.command.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.command.list({\n  ...\n})"
           }
         ]
       }
@@ -7765,7 +7765,7 @@
           }
         ],
         "summary": "List agents",
-        "description": "Get a list of all available AI agents in the Kilo system.",
+        "description": "Get a list of all available AI agents in the Strata system.",
         "responses": {
           "200": {
             "description": "List of agents",
@@ -7784,7 +7784,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.app.agents({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.app.agents({\n  ...\n})"
           }
         ]
       }
@@ -7809,7 +7809,7 @@
           }
         ],
         "summary": "List skills",
-        "description": "Get a list of all available skills in the Kilo system.",
+        "description": "Get a list of all available skills in the Strata system.",
         "responses": {
           "200": {
             "description": "List of skills",
@@ -7843,7 +7843,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.app.skills({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.app.skills({\n  ...\n})"
           }
         ]
       }
@@ -7887,7 +7887,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.lsp.status({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.lsp.status({\n  ...\n})"
           }
         ]
       }
@@ -7931,7 +7931,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.formatter.status({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.formatter.status({\n  ...\n})"
           }
         ]
       }
@@ -8013,7 +8013,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.permission.allowEverything({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.permission.allowEverything({\n  ...\n})"
           }
         ]
       }
@@ -8057,7 +8057,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.network.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.network.list({\n  ...\n})"
           }
         ]
       }
@@ -8126,7 +8126,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.network.reply({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.network.reply({\n  ...\n})"
           }
         ]
       }
@@ -8195,7 +8195,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.network.reject({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.network.reject({\n  ...\n})"
           }
         ]
       }
@@ -8239,7 +8239,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.suggestion.list({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.suggestion.list({\n  ...\n})"
           }
         ]
       }
@@ -8326,7 +8326,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.suggestion.accept({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.suggestion.accept({\n  ...\n})"
           }
         ]
       }
@@ -8395,7 +8395,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.suggestion.dismiss({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.suggestion.dismiss({\n  ...\n})"
           }
         ]
       }
@@ -8420,7 +8420,7 @@
           }
         ],
         "summary": "Capture telemetry event",
-        "description": "Forward a telemetry event to PostHog via kilo-telemetry.",
+        "description": "Forward a telemetry event to PostHog via strata-telemetry.",
         "responses": {
           "200": {
             "description": "Event captured",
@@ -8470,7 +8470,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.telemetry.capture({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.telemetry.capture({\n  ...\n})"
           }
         ]
       }
@@ -8520,7 +8520,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.remote.enable({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.remote.enable({\n  ...\n})"
           }
         ]
       }
@@ -8570,7 +8570,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.remote.disable({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.remote.disable({\n  ...\n})"
           }
         ]
       }
@@ -8620,7 +8620,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.remote.status({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.remote.status({\n  ...\n})"
           }
         ]
       }
@@ -8704,7 +8704,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.commitMessage.generate({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.commitMessage.generate({\n  ...\n})"
           }
         ]
       }
@@ -8778,14 +8778,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.enhancePrompt.enhance({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.enhancePrompt.enhance({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilocode/session-import/project": {
+    "/stratacode/session-import/project": {
       "post": {
-        "operationId": "kilocode.sessionImport.project",
+        "operationId": "stratacode.sessionImport.project",
         "parameters": [
           {
             "in": "query",
@@ -8894,14 +8894,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilocode.sessionImport.project({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.stratacode.sessionImport.project({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilocode/session-import/session": {
+    "/stratacode/session-import/session": {
       "post": {
-        "operationId": "kilocode.sessionImport.session",
+        "operationId": "stratacode.sessionImport.session",
         "parameters": [
           {
             "in": "query",
@@ -9061,14 +9061,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilocode.sessionImport.session({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.stratacode.sessionImport.session({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilocode/session-import/message": {
+    "/stratacode/session-import/message": {
       "post": {
-        "operationId": "kilocode.sessionImport.message",
+        "operationId": "stratacode.sessionImport.message",
         "parameters": [
           {
             "in": "query",
@@ -9295,14 +9295,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilocode.sessionImport.message({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.stratacode.sessionImport.message({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilocode/session-import/part": {
+    "/stratacode/session-import/part": {
       "post": {
-        "operationId": "kilocode.sessionImport.part",
+        "operationId": "stratacode.sessionImport.part",
         "parameters": [
           {
             "in": "query",
@@ -9623,14 +9623,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilocode.sessionImport.part({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.stratacode.sessionImport.part({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilocode/heap/snapshot": {
+    "/stratacode/heap/snapshot": {
       "post": {
-        "operationId": "kilocode.heap.snapshot",
+        "operationId": "stratacode.heap.snapshot",
         "parameters": [
           {
             "in": "query",
@@ -9674,14 +9674,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilocode.heap.snapshot({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.stratacode.heap.snapshot({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilocode/skill/remove": {
+    "/stratacode/skill/remove": {
       "post": {
-        "operationId": "kilocode.removeSkill",
+        "operationId": "stratacode.removeSkill",
         "parameters": [
           {
             "in": "query",
@@ -9740,14 +9740,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilocode.removeSkill({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.stratacode.removeSkill({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilocode/agent/remove": {
+    "/stratacode/agent/remove": {
       "post": {
-        "operationId": "kilocode.removeAgent",
+        "operationId": "stratacode.removeAgent",
         "parameters": [
           {
             "in": "query",
@@ -9806,14 +9806,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilocode.removeAgent({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.stratacode.removeAgent({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/profile": {
+    "/strata/profile": {
       "get": {
-        "operationId": "kilo.profile",
+        "operationId": "strata.profile",
         "parameters": [
           {
             "in": "query",
@@ -9830,8 +9830,8 @@
             }
           }
         ],
-        "summary": "Get Kilo Gateway profile",
-        "description": "Fetch user profile and organizations from Kilo Gateway",
+        "summary": "Get Strata Gateway profile",
+        "description": "Fetch user profile and organizations from Strata Gateway",
         "responses": {
           "200": {
             "description": "Profile data",
@@ -9916,14 +9916,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilo.profile({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.strata.profile({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/organization": {
+    "/strata/organization": {
       "post": {
-        "operationId": "kilo.organization.set",
+        "operationId": "strata.organization.set",
         "parameters": [
           {
             "in": "query",
@@ -9940,8 +9940,8 @@
             }
           }
         ],
-        "summary": "Update Kilo Gateway organization",
-        "description": "Switch to a different Kilo Gateway organization",
+        "summary": "Update Strata Gateway organization",
+        "description": "Switch to a different Strata Gateway organization",
         "responses": {
           "200": {
             "description": "Organization updated successfully",
@@ -9989,14 +9989,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilo.organization.set({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.strata.organization.set({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/modes": {
+    "/strata/modes": {
       "get": {
-        "operationId": "kilo.modes",
+        "operationId": "strata.modes",
         "parameters": [
           {
             "in": "query",
@@ -10118,14 +10118,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilo.modes({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.strata.modes({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/fim": {
+    "/strata/fim": {
       "post": {
-        "operationId": "kilo.fim",
+        "operationId": "strata.fim",
         "parameters": [
           {
             "in": "query",
@@ -10143,7 +10143,7 @@
           }
         ],
         "summary": "FIM completion",
-        "description": "Proxy a Fill-in-the-Middle completion request to the Kilo Gateway",
+        "description": "Proxy a Fill-in-the-Middle completion request to the Strata Gateway",
         "responses": {
           "200": {
             "description": "Streaming FIM completion response",
@@ -10228,14 +10228,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilo.fim({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.strata.fim({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/notifications": {
+    "/strata/notifications": {
       "get": {
-        "operationId": "kilo.notifications",
+        "operationId": "strata.notifications",
         "parameters": [
           {
             "in": "query",
@@ -10252,8 +10252,8 @@
             }
           }
         ],
-        "summary": "Get Kilo notifications",
-        "description": "Fetch notifications from Kilo Gateway for CLI display",
+        "summary": "Get Strata notifications",
+        "description": "Fetch notifications from Strata Gateway for CLI display",
         "responses": {
           "200": {
             "description": "Notifications list",
@@ -10315,14 +10315,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilo.notifications({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.strata.notifications({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/cloud/session/{id}": {
+    "/strata/cloud/session/{id}": {
       "get": {
-        "operationId": "kilo.cloud.session.get",
+        "operationId": "strata.cloud.session.get",
         "parameters": [
           {
             "in": "query",
@@ -10348,7 +10348,7 @@
           }
         ],
         "summary": "Get cloud session",
-        "description": "Fetch full session data from the Kilo cloud for preview",
+        "description": "Fetch full session data from the Strata cloud for preview",
         "responses": {
           "200": {
             "description": "Cloud session data",
@@ -10372,14 +10372,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilo.cloud.session.get({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.strata.cloud.session.get({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/cloud/session/import": {
+    "/strata/cloud/session/import": {
       "post": {
-        "operationId": "kilo.cloud.session.import",
+        "operationId": "strata.cloud.session.import",
         "parameters": [
           {
             "in": "query",
@@ -10446,14 +10446,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilo.cloud.session.import({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.strata.cloud.session.import({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/claw/status": {
+    "/strata/claw/status": {
       "get": {
-        "operationId": "kilo.claw.status",
+        "operationId": "strata.claw.status",
         "parameters": [
           {
             "in": "query",
@@ -10470,8 +10470,8 @@
             }
           }
         ],
-        "summary": "Get KiloClaw instance status",
-        "description": "Fetch the user's KiloClaw instance status via the KiloClaw worker",
+        "summary": "Get StrataClaw instance status",
+        "description": "Fetch the user's StrataClaw instance status via the StrataClaw worker",
         "responses": {
           "200": {
             "description": "Instance status",
@@ -10558,14 +10558,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilo.claw.status({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.strata.claw.status({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/claw/chat-credentials": {
+    "/strata/claw/chat-credentials": {
       "get": {
-        "operationId": "kilo.claw.chatCredentials",
+        "operationId": "strata.claw.chatCredentials",
         "parameters": [
           {
             "in": "query",
@@ -10582,8 +10582,8 @@
             }
           }
         ],
-        "summary": "Get KiloClaw chat credentials",
-        "description": "Fetch Stream Chat credentials for the user's KiloClaw instance",
+        "summary": "Get StrataClaw chat credentials",
+        "description": "Fetch Stream Chat credentials for the user's StrataClaw instance",
         "responses": {
           "200": {
             "description": "Stream Chat credentials or null",
@@ -10621,14 +10621,14 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilo.claw.chatCredentials({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.strata.claw.chatCredentials({\n  ...\n})"
           }
         ]
       }
     },
-    "/kilo/cloud-sessions": {
+    "/strata/cloud-sessions": {
       "get": {
-        "operationId": "kilo.cloudSessions",
+        "operationId": "strata.cloudSessions",
         "parameters": [
           {
             "in": "query",
@@ -10667,7 +10667,7 @@
           }
         ],
         "summary": "Get cloud sessions",
-        "description": "Fetch cloud CLI sessions from Kilo API",
+        "description": "Fetch cloud CLI sessions from Strata API",
         "responses": {
           "200": {
             "description": "Cloud sessions list",
@@ -10737,7 +10737,7 @@
         "x-codeSamples": [
           {
             "lang": "js",
-            "source": "import { createKiloClient } from \"@kilocode/sdk\n\nconst client = createKiloClient()\nawait client.kilo.cloudSessions({\n  ...\n})"
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.strata.cloudSessions({\n  ...\n})"
           }
         ]
       }
@@ -12265,12 +12265,12 @@
         },
         "required": ["type", "properties"]
       },
-      "Event.kilo-sessions.remote-status-changed": {
+      "Event.strata-sessions.remote-status-changed": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "const": "kilo-sessions.remote-status-changed"
+            "const": "strata-sessions.remote-status-changed"
           },
           "properties": {
             "type": "object",
@@ -14588,7 +14588,7 @@
                 "$ref": "#/components/schemas/Event.session.compacted"
               },
               {
-                "$ref": "#/components/schemas/Event.kilo-sessions.remote-status-changed"
+                "$ref": "#/components/schemas/Event.strata-sessions.remote-status-changed"
               },
               {
                 "$ref": "#/components/schemas/Event.worktree.ready"
@@ -14673,7 +14673,7 @@
         "enum": ["DEBUG", "INFO", "WARN", "ERROR"]
       },
       "ServerConfig": {
-        "description": "Server configuration for kilo serve and web commands",
+        "description": "Server configuration for strata serve and web commands",
         "type": "object",
         "properties": {
           "port": {
@@ -14691,7 +14691,7 @@
             "type": "boolean"
           },
           "mdnsDomain": {
-            "description": "Custom domain name for mDNS service (default: kilo.local)",
+            "description": "Custom domain name for mDNS service (default: strata.local)",
             "type": "string"
           },
           "cors": {
@@ -15469,7 +15469,7 @@
             "$ref": "#/components/schemas/ServerConfig"
           },
           "command": {
-            "description": "Command configuration, see https://kilo.ai/docs/commands",
+            "description": "Command configuration, see https://strata.ai/docs/commands",
             "type": "object",
             "propertyNames": {
               "type": "string"
@@ -15566,7 +15566,7 @@
             "type": "boolean"
           },
           "remote_control": {
-            "description": "Enable remote control of sessions via Kilo Cloud. Equivalent to running /remote on startup.",
+            "description": "Enable remote control of sessions via Strata Cloud. Equivalent to running /remote on startup.",
             "type": "boolean"
           },
           "indexing": {
@@ -15644,7 +15644,7 @@
             }
           },
           "agent": {
-            "description": "Agent configuration, see https://kilo.ai/docs/agents",
+            "description": "Agent configuration, see https://strata.ai/docs/agents",
             "type": "object",
             "properties": {
               "plan": {
@@ -17200,7 +17200,7 @@
             "$ref": "#/components/schemas/Event.session.compacted"
           },
           {
-            "$ref": "#/components/schemas/Event.kilo-sessions.remote-status-changed"
+            "$ref": "#/components/schemas/Event.strata-sessions.remote-status-changed"
           },
           {
             "$ref": "#/components/schemas/Event.worktree.ready"

@@ -1,4 +1,4 @@
-import type { FileContent } from "@kilocode/sdk/v2"
+import type { FileContent } from "@stratacode/sdk/v2"
 
 export type FileSelection = {
   startLine: number

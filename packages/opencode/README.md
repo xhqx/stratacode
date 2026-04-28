@@ -1,31 +1,31 @@
-# Kilo Code CLI
+# Strata Code CLI
 
 The AI coding agent built for the terminal. Generate code from natural language, automate tasks, and run terminal commands -- powered by 500+ AI models.
 
 ## Install
 
 ```bash
-npm install -g @kilocode/cli
+npm install -g @stratacode/cli
 ```
 
 Or run directly with npx:
 
 ```bash
-npx --package @kilocode/cli kilo
+npx --package @stratacode/cli strata
 ```
 
 ## Getting Started
 
-Run `kilo` in any project directory to launch the interactive TUI:
+Run `strata` in any project directory to launch the interactive TUI:
 
 ```bash
-kilo
+strata
 ```
 
 Run a one-off task:
 
 ```bash
-kilo run "add input validation to the signup form"
+strata run "add input validation to the signup form"
 ```
 
 ## Features
@@ -36,46 +36,46 @@ kilo run "add input validation to the signup form"
 - **MCP servers** -- extend agent capabilities with the Model Context Protocol
 - **Multiple modes** -- Plan with Architect, code with Coder, debug with Debugger, or create your own
 - **Sessions** -- resume previous conversations and export transcripts
-- **API keys optional** -- bring your own keys or use Kilo credits
+- **API keys optional** -- bring your own keys or use Strata credits
 
 ## Commands
 
 | Command               | Description                |
 | --------------------- | -------------------------- |
-| `kilo`                | Launch interactive TUI     |
-| `kilo run "<task>"`   | Run a one-off task         |
-| `kilo auth`           | Manage authentication      |
-| `kilo models`         | List available models      |
-| `kilo mcp`            | Manage MCP servers         |
-| `kilo session list`   | List sessions              |
-| `kilo session delete` | Delete a session           |
-| `kilo export`         | Export session transcripts |
+| `strata`                | Launch interactive TUI     |
+| `strata run "<task>"`   | Run a one-off task         |
+| `strata auth`           | Manage authentication      |
+| `strata models`         | List available models      |
+| `strata mcp`            | Manage MCP servers         |
+| `strata session list`   | List sessions              |
+| `strata session delete` | Delete a session           |
+| `strata export`         | Export session transcripts |
 
-Run `kilo --help` for the full list.
+Run `strata --help` for the full list.
 
 ## Alternative Installation
 
 ### Homebrew (macOS/Linux)
 
 ```bash
-brew install Kilo-Org/tap/kilo
+brew install Strata-Org/tap/strata
 ```
 
 ### GitHub Releases
 
-Download pre-built binaries from the [Releases page](https://github.com/Kilo-Org/kilocode/releases).
+Download pre-built binaries from the [Releases page](https://github.com/Strata-Org/stratacode/releases).
 
 ## Documentation
 
-- [Docs](https://kilo.ai/docs)
-- [Getting Started](https://kilo.ai/docs/getting-started)
+- [Docs](https://strata.ai/docs)
+- [Getting Started](https://strata.ai/docs/getting-started)
 
 ## Links
 
-- [GitHub](https://github.com/Kilo-Org/kilocode)
-- [Discord](https://kilo.ai/discord)
-- [VS Code Extension](https://kilo.ai/vscode-marketplace)
-- [Website](https://kilo.ai)
+- [GitHub](https://github.com/Strata-Org/stratacode)
+- [Discord](https://strata.ai/discord)
+- [VS Code Extension](https://strata.ai/vscode-marketplace)
+- [Website](https://strata.ai)
 
 ## License
 

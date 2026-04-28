@@ -8,9 +8,9 @@ on:
 
 jobs:
   daily-recap:
-    # kilocode_change start - disabled for kilo-cli fork (OpenCode Discord integration)
+    # stratacode_change start - disabled for strata-cli fork (OpenCode Discord integration)
     if: false
-    # kilocode_change end
+    # stratacode_change end
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
@@ -31,7 +31,7 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KILO_PERMISSION: |
+          STRATA_PERMISSION: |
             {
               "bash": {
                 "*": "deny",
@@ -46,7 +46,7 @@ jobs:
           # Get today's date range
           TODAY=$(date -u +%Y-%m-%d)
 
-          opencode run -m kilo/anthropic/claude-sonnet-4.5 "Generate a daily issues recap for the OpenCode repository.
+          opencode run -m strata/anthropic/claude-sonnet-4.5 "Generate a daily issues recap for the OpenCode repository.
 
           TODAY'S DATE: ${TODAY}
 

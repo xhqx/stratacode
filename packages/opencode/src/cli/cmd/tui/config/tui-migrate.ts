@@ -132,16 +132,16 @@ async function backupAndStripLegacy(file: string, source: string) {
 }
 
 async function opencodeFiles(input: { directories: string[]; cwd: string }) {
-  // kilocode_change start: use kilo directory everywhere
-  const project = Flag.KILO_DISABLE_PROJECT_CONFIG
+  // stratacode_change start: use strata directory everywhere
+  const project = Flag.STRATA_DISABLE_PROJECT_CONFIG
     ? []
-    : await Filesystem.findUp(["kilo.json", "kilo.jsonc"], input.cwd, undefined, { rootFirst: true })
-  const files = [...project, ...ConfigPaths.fileInDirectory(Global.Path.config, "kilo")]
-  // kilocode_change end
+    : await Filesystem.findUp(["strata.json", "strata.jsonc"], input.cwd, undefined, { rootFirst: true })
+  const files = [...project, ...ConfigPaths.fileInDirectory(Global.Path.config, "strata")]
+  // stratacode_change end
   for (const dir of unique(input.directories)) {
-    files.push(...ConfigPaths.fileInDirectory(dir, "kilo"))
+    files.push(...ConfigPaths.fileInDirectory(dir, "strata"))
   }
-  if (Flag.KILO_CONFIG) files.push(Flag.KILO_CONFIG)
+  if (Flag.STRATA_CONFIG) files.push(Flag.STRATA_CONFIG)
 
   const existing = await Promise.all(
     unique(files).map(async (file) => {

@@ -5,39 +5,39 @@ export const GenerateCommand = {
   command: "generate",
   handler: async () => {
     const specs = await Server.openapi()
-    // kilocode_change start
-    specs.info.title = "kilo"
-    specs.info.description = "kilo api"
-    // kilocode_change end
+    // stratacode_change start
+    specs.info.title = "strata"
+    specs.info.description = "strata api"
+    // stratacode_change end
     for (const item of Object.values(specs.paths)) {
       for (const method of ["get", "post", "put", "delete", "patch"] as const) {
         const operation = item[method]
         if (!operation?.operationId) continue
         // @ts-expect-error
         operation["x-codeSamples"] = [
-          // kilocode_change start
+          // stratacode_change start
           {
             lang: "js",
             source: [
-              `import { createKiloClient } from "@kilocode/sdk`,
+              `import { createStrataClient } from "@stratacode/sdk`,
               ``,
-              `const client = createKiloClient()`,
+              `const client = createStrataClient()`,
               `await client.${operation.operationId}({`,
               `  ...`,
               `})`,
             ].join("\n"),
           },
-          // kilocode_change end,
+          // stratacode_change end,
         ]
       }
     }
     const raw = JSON.stringify(specs, null, 2)
-    // kilocode_change start - replace upstream product name in all descriptions
-      .replaceAll("OpenCode", "Kilo")
-      .replaceAll("opencode.local", "kilo.local")
-      .replaceAll("opencode serve", "kilo serve")
-      .replaceAll("https://opencode.ai/", "https://kilo.ai/")
-    // kilocode_change end
+    // stratacode_change start - replace upstream product name in all descriptions
+      .replaceAll("OpenCode", "Strata")
+      .replaceAll("opencode.local", "strata.local")
+      .replaceAll("opencode serve", "strata serve")
+      .replaceAll("https://opencode.ai/", "https://strata.ai/")
+    // stratacode_change end
 
     // Format through prettier so output is byte-identical to committed file
     // regardless of whether ./script/format.ts runs afterward.

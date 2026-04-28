@@ -48,11 +48,11 @@ import { ConfigMCP } from "@/config/mcp"
 import { Todo } from "@/session/todo"
 import { z } from "zod"
 import { LoadAPIKeyError } from "ai"
-import type { AssistantMessage, Event, KiloClient, SessionMessageResponse, ToolPart } from "@kilocode/sdk/v2"
+import type { AssistantMessage, Event, StrataClient, SessionMessageResponse, ToolPart } from "@stratacode/sdk/v2"
 import { applyPatch } from "diff"
 import { InstallationVersion } from "@/installation/version"
 
-import { fetchDefaultModel } from "@kilocode/kilo-gateway" // kilocode_change
+import { fetchDefaultModel } from "@stratacode/strata-gateway" // stratacode_change
 
 type ModeOption = { id: string; name: string; description?: string }
 type ModelOption = { modelId: string; name: string }
@@ -62,7 +62,7 @@ const DEFAULT_VARIANT_VALUE = "default"
 const log = Log.create({ service: "acp-agent" })
 
 async function getContextLimit(
-  sdk: KiloClient,
+  sdk: StrataClient,
   providerID: ProviderID,
   modelID: ModelID,
   directory: string,
@@ -82,7 +82,7 @@ async function getContextLimit(
 
 async function sendUsageUpdate(
   connection: AgentSideConnection,
-  sdk: KiloClient,
+  sdk: StrataClient,
   sessionID: string,
   directory: string,
 ): Promise<void> {
@@ -130,7 +130,7 @@ async function sendUsageUpdate(
     })
 }
 
-export async function init({ sdk: _sdk }: { sdk: KiloClient }) {
+export async function init({ sdk: _sdk }: { sdk: StrataClient }) {
   return {
     create: (connection: AgentSideConnection, fullConfig: ACPConfig) => {
       return new Agent(connection, fullConfig)
@@ -141,7 +141,7 @@ export async function init({ sdk: _sdk }: { sdk: KiloClient }) {
 export class Agent implements ACPAgent {
   private connection: AgentSideConnection
   private config: ACPConfig
-  private sdk: KiloClient
+  private sdk: StrataClient
   private sessionManager: ACPSessionManager
   private eventAbort = new AbortController()
   private eventStarted = false
@@ -535,13 +535,13 @@ export class Agent implements ACPAgent {
   async initialize(params: InitializeRequest): Promise<InitializeResponse> {
     log.info("initialize", { protocolVersion: params.protocolVersion })
 
-    // kilocode_change start
+    // stratacode_change start
     const authMethod: AuthMethod = {
-      description: "Run `kilo auth login` in the terminal",
-      name: "Login with Kilo",
-      id: "kilo-login",
+      description: "Run `strata auth login` in the terminal",
+      name: "Login with Strata",
+      id: "strata-login",
     }
-    // kilocode_change end
+    // stratacode_change end
 
     // If client supports terminal-auth capability, use that instead.
     if (params.clientCapabilities?._meta?.["terminal-auth"] === true) {
@@ -549,7 +549,7 @@ export class Agent implements ACPAgent {
         "terminal-auth": {
           command: "opencode",
           args: ["auth", "login"],
-          label: "Kilo Login", // kilocode_change
+          label: "Strata Login", // stratacode_change
         },
       }
     }
@@ -574,7 +574,7 @@ export class Agent implements ACPAgent {
       },
       authMethods: [authMethod],
       agentInfo: {
-        name: "Kilo", // kilocode_change
+        name: "Strata", // stratacode_change
         version: InstallationVersion,
       },
     }
@@ -1628,10 +1628,10 @@ async function defaultModel(config: ACPConfig, cwd?: string): Promise<{ provider
 
   if (specified && !providers.length) return specified
 
-  // kilocode_change start
-  const kiloProvider = providers.find((p) => p.id === "kilo")
-  if (kiloProvider) {
-    const [best] = Provider.sort(Object.values(kiloProvider.models))
+  // stratacode_change start
+  const strataProvider = providers.find((p) => p.id === "strata")
+  if (strataProvider) {
+    const [best] = Provider.sort(Object.values(strataProvider.models))
     if (best) {
       return {
         providerID: ProviderID.make(best.providerID),
@@ -1639,7 +1639,7 @@ async function defaultModel(config: ACPConfig, cwd?: string): Promise<{ provider
       }
     }
   }
-  // kilocode_change end
+  // stratacode_change end
 
   const models = providers.flatMap((p) => Object.values(p.models))
   const [best] = Provider.sort(models)
@@ -1652,18 +1652,18 @@ async function defaultModel(config: ACPConfig, cwd?: string): Promise<{ provider
 
   if (specified) return specified
 
-  // kilocode_change start
-  // Only fall back to the Kilo provider if it was present in the available
+  // stratacode_change start
+  // Only fall back to the Strata provider if it was present in the available
   // providers list. When teams configure enabled_providers to use only their
   // own models, this prevents silently routing requests to an external API.
   // Note: LiteLLM / custom provider users won't reach here — the function
   // returns earlier via `specified` (config.model) or the sorted providers list.
-  if (providers.some((p) => p.id === "kilo")) {
+  if (providers.some((p) => p.id === "strata")) {
     const freeModel = await fetchDefaultModel()
-    return { providerID: ProviderID.kilo, modelID: ModelID.make(freeModel) }
+    return { providerID: ProviderID.strata, modelID: ModelID.make(freeModel) }
   }
   throw new Error("no model available: no providers are configured and no default model is set")
-  // kilocode_change end
+  // stratacode_change end
 }
 
 function parseUri(

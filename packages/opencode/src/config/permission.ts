@@ -3,7 +3,7 @@ import { Schema, SchemaGetter } from "effect"
 import { zod } from "@/util/effect-zod"
 import { withStatics } from "@/util/schema"
 
-export const Action = Schema.NullOr(Schema.Literals(["ask", "allow", "deny"])) // kilocode_change - nullable allows null as a delete sentinel
+export const Action = Schema.NullOr(Schema.Literals(["ask", "allow", "deny"])) // stratacode_change - nullable allows null as a delete sentinel
   .annotate({ identifier: "PermissionActionConfig" })
   .pipe(withStatics((s) => ({ zod: zod(s) })))
 export type Action = Schema.Schema.Type<typeof Action>
@@ -58,7 +58,7 @@ const InputSchema = Schema.Union([Action, InputObject])
 // Normalise the Action shorthand into `{ "*": action }`. Object inputs pass
 // through untouched.
 const normalizeInput = (input: Schema.Schema.Type<typeof InputSchema>): Schema.Schema.Type<typeof InputObject> =>
-  input === null || typeof input === "string" ? { "*": input } : input // kilocode_change
+  input === null || typeof input === "string" ? { "*": input } : input // stratacode_change
 
 export const Info = InputSchema.pipe(
   Schema.decodeTo(InputObject, {

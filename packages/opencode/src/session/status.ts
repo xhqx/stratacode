@@ -2,7 +2,7 @@ import { BusEvent } from "@/bus/bus-event"
 import { Bus } from "@/bus"
 import { InstanceState } from "@/effect"
 import { SessionID } from "./schema"
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import { Effect, Layer, Context } from "effect"
 import z from "zod"
 
@@ -20,13 +20,13 @@ export const Info = z
     z.object({
       type: z.literal("busy"),
     }),
-    // kilocode_change start
+    // stratacode_change start
     z.object({
       type: z.literal("offline"),
       requestID: z.string(),
       message: z.string(),
     }),
-    // kilocode_change end
+    // stratacode_change end
   ])
   .meta({
     ref: "SessionStatus",
@@ -93,12 +93,12 @@ export const layer = Layer.effect(
 
 export const defaultLayer = layer.pipe(Layer.provide(Bus.layer))
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 
 export const list = () => runPromise((svc) => svc.list())
 export const get = (sessionID: SessionID) => runPromise((svc) => svc.get(sessionID))
 export const set = (sessionID: SessionID, status: Info) => runPromise((svc) => svc.set(sessionID, status))
-// kilocode_change end
+// stratacode_change end
 
 export * as SessionStatus from "./status"

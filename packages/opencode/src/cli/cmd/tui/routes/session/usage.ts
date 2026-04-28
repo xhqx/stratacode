@@ -1,5 +1,5 @@
-// kilocode_change - new file
-import type { Message } from "@kilocode/sdk/v2"
+// stratacode_change - new file
+import type { Message } from "@stratacode/sdk/v2"
 
 const fmt = new Intl.NumberFormat("en-US")
 

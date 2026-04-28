@@ -614,8 +614,8 @@ export type EventSessionCompacted = {
   }
 }
 
-export type EventKiloSessionsRemoteStatusChanged = {
-  type: "kilo-sessions.remote-status-changed"
+export type EventStrataSessionsRemoteStatusChanged = {
+  type: "strata-sessions.remote-status-changed"
   properties: {
     enabled: boolean
     connected: boolean
@@ -1333,7 +1333,7 @@ export type GlobalEvent = {
     | EventIndexingStatus
     | EventVcsBranchUpdated
     | EventSessionCompacted
-    | EventKiloSessionsRemoteStatusChanged
+    | EventStrataSessionsRemoteStatusChanged
     | EventWorktreeReady
     | EventWorktreeFailed
     | EventPtyCreated
@@ -1366,7 +1366,7 @@ export type GlobalEvent = {
 export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR"
 
 /**
- * Server configuration for kilo serve and web commands
+ * Server configuration for strata serve and web commands
  */
 export type ServerConfig = {
   /**
@@ -1382,7 +1382,7 @@ export type ServerConfig = {
    */
   mdns?: boolean
   /**
-   * Custom domain name for mDNS service (default: kilo.local)
+   * Custom domain name for mDNS service (default: strata.local)
    */
   mdnsDomain?: string
   /**
@@ -1791,7 +1791,7 @@ export type Config = {
   logLevel?: LogLevel
   server?: ServerConfig
   /**
-   * Command configuration, see https://kilo.ai/docs/commands
+   * Command configuration, see https://strata.ai/docs/commands
    */
   command?: {
     [key: string]: {
@@ -1852,7 +1852,7 @@ export type Config = {
    */
   enabled_providers?: Array<string>
   /**
-   * Enable remote control of sessions via Kilo Cloud. Equivalent to running /remote on startup.
+   * Enable remote control of sessions via Strata Cloud. Equivalent to running /remote on startup.
    */
   remote_control?: boolean
   indexing?: IndexingConfig
@@ -1881,7 +1881,7 @@ export type Config = {
     [key: string]: AgentConfig | undefined
   }
   /**
-   * Agent configuration, see https://kilo.ai/docs/agents
+   * Agent configuration, see https://strata.ai/docs/agents
    */
   agent?: {
     plan?: AgentConfig
@@ -2438,7 +2438,7 @@ export type Event =
   | EventIndexingStatus
   | EventVcsBranchUpdated
   | EventSessionCompacted
-  | EventKiloSessionsRemoteStatusChanged
+  | EventStrataSessionsRemoteStatusChanged
   | EventWorktreeReady
   | EventWorktreeFailed
   | EventPtyCreated
@@ -6470,7 +6470,7 @@ export type EnhancePromptEnhanceResponses = {
 
 export type EnhancePromptEnhanceResponse = EnhancePromptEnhanceResponses[keyof EnhancePromptEnhanceResponses]
 
-export type KilocodeSessionImportProjectData = {
+export type StratacodeSessionImportProjectData = {
   body?: {
     id: string
     worktree: string
@@ -6491,20 +6491,20 @@ export type KilocodeSessionImportProjectData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilocode/session-import/project"
+  url: "/stratacode/session-import/project"
 }
 
-export type KilocodeSessionImportProjectErrors = {
+export type StratacodeSessionImportProjectErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KilocodeSessionImportProjectError =
-  KilocodeSessionImportProjectErrors[keyof KilocodeSessionImportProjectErrors]
+export type StratacodeSessionImportProjectError =
+  StratacodeSessionImportProjectErrors[keyof StratacodeSessionImportProjectErrors]
 
-export type KilocodeSessionImportProjectResponses = {
+export type StratacodeSessionImportProjectResponses = {
   /**
    * Project import result
    */
@@ -6515,10 +6515,10 @@ export type KilocodeSessionImportProjectResponses = {
   }
 }
 
-export type KilocodeSessionImportProjectResponse =
-  KilocodeSessionImportProjectResponses[keyof KilocodeSessionImportProjectResponses]
+export type StratacodeSessionImportProjectResponse =
+  StratacodeSessionImportProjectResponses[keyof StratacodeSessionImportProjectResponses]
 
-export type KilocodeSessionImportSessionData = {
+export type StratacodeSessionImportSessionData = {
   body?: {
     id: string
     projectID: string
@@ -6557,20 +6557,20 @@ export type KilocodeSessionImportSessionData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilocode/session-import/session"
+  url: "/stratacode/session-import/session"
 }
 
-export type KilocodeSessionImportSessionErrors = {
+export type StratacodeSessionImportSessionErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KilocodeSessionImportSessionError =
-  KilocodeSessionImportSessionErrors[keyof KilocodeSessionImportSessionErrors]
+export type StratacodeSessionImportSessionError =
+  StratacodeSessionImportSessionErrors[keyof StratacodeSessionImportSessionErrors]
 
-export type KilocodeSessionImportSessionResponses = {
+export type StratacodeSessionImportSessionResponses = {
   /**
    * Session import result
    */
@@ -6581,10 +6581,10 @@ export type KilocodeSessionImportSessionResponses = {
   }
 }
 
-export type KilocodeSessionImportSessionResponse =
-  KilocodeSessionImportSessionResponses[keyof KilocodeSessionImportSessionResponses]
+export type StratacodeSessionImportSessionResponse =
+  StratacodeSessionImportSessionResponses[keyof StratacodeSessionImportSessionResponses]
 
-export type KilocodeSessionImportMessageData = {
+export type StratacodeSessionImportMessageData = {
   body?: {
     id: string
     sessionID: string
@@ -6641,20 +6641,20 @@ export type KilocodeSessionImportMessageData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilocode/session-import/message"
+  url: "/stratacode/session-import/message"
 }
 
-export type KilocodeSessionImportMessageErrors = {
+export type StratacodeSessionImportMessageErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KilocodeSessionImportMessageError =
-  KilocodeSessionImportMessageErrors[keyof KilocodeSessionImportMessageErrors]
+export type StratacodeSessionImportMessageError =
+  StratacodeSessionImportMessageErrors[keyof StratacodeSessionImportMessageErrors]
 
-export type KilocodeSessionImportMessageResponses = {
+export type StratacodeSessionImportMessageResponses = {
   /**
    * Message import result
    */
@@ -6665,10 +6665,10 @@ export type KilocodeSessionImportMessageResponses = {
   }
 }
 
-export type KilocodeSessionImportMessageResponse =
-  KilocodeSessionImportMessageResponses[keyof KilocodeSessionImportMessageResponses]
+export type StratacodeSessionImportMessageResponse =
+  StratacodeSessionImportMessageResponses[keyof StratacodeSessionImportMessageResponses]
 
-export type KilocodeSessionImportPartData = {
+export type StratacodeSessionImportPartData = {
   body?: {
     id: string
     messageID: string
@@ -6764,19 +6764,19 @@ export type KilocodeSessionImportPartData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilocode/session-import/part"
+  url: "/stratacode/session-import/part"
 }
 
-export type KilocodeSessionImportPartErrors = {
+export type StratacodeSessionImportPartErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KilocodeSessionImportPartError = KilocodeSessionImportPartErrors[keyof KilocodeSessionImportPartErrors]
+export type StratacodeSessionImportPartError = StratacodeSessionImportPartErrors[keyof StratacodeSessionImportPartErrors]
 
-export type KilocodeSessionImportPartResponses = {
+export type StratacodeSessionImportPartResponses = {
   /**
    * Part import result
    */
@@ -6787,38 +6787,38 @@ export type KilocodeSessionImportPartResponses = {
   }
 }
 
-export type KilocodeSessionImportPartResponse =
-  KilocodeSessionImportPartResponses[keyof KilocodeSessionImportPartResponses]
+export type StratacodeSessionImportPartResponse =
+  StratacodeSessionImportPartResponses[keyof StratacodeSessionImportPartResponses]
 
-export type KilocodeHeapSnapshotData = {
+export type StratacodeHeapSnapshotData = {
   body?: never
   path?: never
   query?: {
     directory?: string
     workspace?: string
   }
-  url: "/kilocode/heap/snapshot"
+  url: "/stratacode/heap/snapshot"
 }
 
-export type KilocodeHeapSnapshotErrors = {
+export type StratacodeHeapSnapshotErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KilocodeHeapSnapshotError = KilocodeHeapSnapshotErrors[keyof KilocodeHeapSnapshotErrors]
+export type StratacodeHeapSnapshotError = StratacodeHeapSnapshotErrors[keyof StratacodeHeapSnapshotErrors]
 
-export type KilocodeHeapSnapshotResponses = {
+export type StratacodeHeapSnapshotResponses = {
   /**
    * Heap snapshot file path
    */
   200: string
 }
 
-export type KilocodeHeapSnapshotResponse = KilocodeHeapSnapshotResponses[keyof KilocodeHeapSnapshotResponses]
+export type StratacodeHeapSnapshotResponse = StratacodeHeapSnapshotResponses[keyof StratacodeHeapSnapshotResponses]
 
-export type KilocodeRemoveSkillData = {
+export type StratacodeRemoveSkillData = {
   body?: {
     location: string
   }
@@ -6827,28 +6827,28 @@ export type KilocodeRemoveSkillData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilocode/skill/remove"
+  url: "/stratacode/skill/remove"
 }
 
-export type KilocodeRemoveSkillErrors = {
+export type StratacodeRemoveSkillErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KilocodeRemoveSkillError = KilocodeRemoveSkillErrors[keyof KilocodeRemoveSkillErrors]
+export type StratacodeRemoveSkillError = StratacodeRemoveSkillErrors[keyof StratacodeRemoveSkillErrors]
 
-export type KilocodeRemoveSkillResponses = {
+export type StratacodeRemoveSkillResponses = {
   /**
    * Skill removed
    */
   200: boolean
 }
 
-export type KilocodeRemoveSkillResponse = KilocodeRemoveSkillResponses[keyof KilocodeRemoveSkillResponses]
+export type StratacodeRemoveSkillResponse = StratacodeRemoveSkillResponses[keyof StratacodeRemoveSkillResponses]
 
-export type KilocodeRemoveAgentData = {
+export type StratacodeRemoveAgentData = {
   body?: {
     name: string
   }
@@ -6857,47 +6857,47 @@ export type KilocodeRemoveAgentData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilocode/agent/remove"
+  url: "/stratacode/agent/remove"
 }
 
-export type KilocodeRemoveAgentErrors = {
+export type StratacodeRemoveAgentErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KilocodeRemoveAgentError = KilocodeRemoveAgentErrors[keyof KilocodeRemoveAgentErrors]
+export type StratacodeRemoveAgentError = StratacodeRemoveAgentErrors[keyof StratacodeRemoveAgentErrors]
 
-export type KilocodeRemoveAgentResponses = {
+export type StratacodeRemoveAgentResponses = {
   /**
    * Agent removed
    */
   200: boolean
 }
 
-export type KilocodeRemoveAgentResponse = KilocodeRemoveAgentResponses[keyof KilocodeRemoveAgentResponses]
+export type StratacodeRemoveAgentResponse = StratacodeRemoveAgentResponses[keyof StratacodeRemoveAgentResponses]
 
-export type KiloProfileData = {
+export type StrataProfileData = {
   body?: never
   path?: never
   query?: {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/profile"
+  url: "/strata/profile"
 }
 
-export type KiloProfileErrors = {
+export type StrataProfileErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KiloProfileError = KiloProfileErrors[keyof KiloProfileErrors]
+export type StrataProfileError = StrataProfileErrors[keyof StrataProfileErrors]
 
-export type KiloProfileResponses = {
+export type StrataProfileResponses = {
   /**
    * Profile data
    */
@@ -6918,9 +6918,9 @@ export type KiloProfileResponses = {
   }
 }
 
-export type KiloProfileResponse = KiloProfileResponses[keyof KiloProfileResponses]
+export type StrataProfileResponse = StrataProfileResponses[keyof StrataProfileResponses]
 
-export type KiloOrganizationSetData = {
+export type StrataOrganizationSetData = {
   body?: {
     organizationId: string | null
   }
@@ -6929,38 +6929,38 @@ export type KiloOrganizationSetData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/organization"
+  url: "/strata/organization"
 }
 
-export type KiloOrganizationSetErrors = {
+export type StrataOrganizationSetErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KiloOrganizationSetError = KiloOrganizationSetErrors[keyof KiloOrganizationSetErrors]
+export type StrataOrganizationSetError = StrataOrganizationSetErrors[keyof StrataOrganizationSetErrors]
 
-export type KiloOrganizationSetResponses = {
+export type StrataOrganizationSetResponses = {
   /**
    * Organization updated successfully
    */
   200: boolean
 }
 
-export type KiloOrganizationSetResponse = KiloOrganizationSetResponses[keyof KiloOrganizationSetResponses]
+export type StrataOrganizationSetResponse = StrataOrganizationSetResponses[keyof StrataOrganizationSetResponses]
 
-export type KiloModesData = {
+export type StrataModesData = {
   body?: never
   path?: never
   query?: {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/modes"
+  url: "/strata/modes"
 }
 
-export type KiloModesResponses = {
+export type StrataModesResponses = {
   /**
    * Organization modes list
    */
@@ -6993,9 +6993,9 @@ export type KiloModesResponses = {
   }
 }
 
-export type KiloModesResponse = KiloModesResponses[keyof KiloModesResponses]
+export type StrataModesResponse = StrataModesResponses[keyof StrataModesResponses]
 
-export type KiloFimData = {
+export type StrataFimData = {
   body?: {
     prefix: string
     suffix: string
@@ -7008,19 +7008,19 @@ export type KiloFimData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/fim"
+  url: "/strata/fim"
 }
 
-export type KiloFimErrors = {
+export type StrataFimErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KiloFimError = KiloFimErrors[keyof KiloFimErrors]
+export type StrataFimError = StrataFimErrors[keyof StrataFimErrors]
 
-export type KiloFimResponses = {
+export type StrataFimResponses = {
   /**
    * Streaming FIM completion response
    */
@@ -7039,28 +7039,28 @@ export type KiloFimResponses = {
   }
 }
 
-export type KiloFimResponse = KiloFimResponses[keyof KiloFimResponses]
+export type StrataFimResponse = StrataFimResponses[keyof StrataFimResponses]
 
-export type KiloNotificationsData = {
+export type StrataNotificationsData = {
   body?: never
   path?: never
   query?: {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/notifications"
+  url: "/strata/notifications"
 }
 
-export type KiloNotificationsErrors = {
+export type StrataNotificationsErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KiloNotificationsError = KiloNotificationsErrors[keyof KiloNotificationsErrors]
+export type StrataNotificationsError = StrataNotificationsErrors[keyof StrataNotificationsErrors]
 
-export type KiloNotificationsResponses = {
+export type StrataNotificationsResponses = {
   /**
    * Notifications list
    */
@@ -7077,9 +7077,9 @@ export type KiloNotificationsResponses = {
   }>
 }
 
-export type KiloNotificationsResponse = KiloNotificationsResponses[keyof KiloNotificationsResponses]
+export type StrataNotificationsResponse = StrataNotificationsResponses[keyof StrataNotificationsResponses]
 
-export type KiloCloudSessionGetData = {
+export type StrataCloudSessionGetData = {
   body?: never
   path: {
     id: string
@@ -7088,26 +7088,26 @@ export type KiloCloudSessionGetData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/cloud/session/{id}"
+  url: "/strata/cloud/session/{id}"
 }
 
-export type KiloCloudSessionGetErrors = {
+export type StrataCloudSessionGetErrors = {
   /**
    * Not found
    */
   404: NotFoundError
 }
 
-export type KiloCloudSessionGetError = KiloCloudSessionGetErrors[keyof KiloCloudSessionGetErrors]
+export type StrataCloudSessionGetError = StrataCloudSessionGetErrors[keyof StrataCloudSessionGetErrors]
 
-export type KiloCloudSessionGetResponses = {
+export type StrataCloudSessionGetResponses = {
   /**
    * Cloud session data
    */
   200: unknown
 }
 
-export type KiloCloudSessionImportData = {
+export type StrataCloudSessionImportData = {
   body?: {
     sessionId: string
   }
@@ -7116,10 +7116,10 @@ export type KiloCloudSessionImportData = {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/cloud/session/import"
+  url: "/strata/cloud/session/import"
 }
 
-export type KiloCloudSessionImportErrors = {
+export type StrataCloudSessionImportErrors = {
   /**
    * Bad request
    */
@@ -7130,26 +7130,26 @@ export type KiloCloudSessionImportErrors = {
   404: NotFoundError
 }
 
-export type KiloCloudSessionImportError = KiloCloudSessionImportErrors[keyof KiloCloudSessionImportErrors]
+export type StrataCloudSessionImportError = StrataCloudSessionImportErrors[keyof StrataCloudSessionImportErrors]
 
-export type KiloCloudSessionImportResponses = {
+export type StrataCloudSessionImportResponses = {
   /**
    * Imported session info
    */
   200: unknown
 }
 
-export type KiloClawStatusData = {
+export type StrataClawStatusData = {
   body?: never
   path?: never
   query?: {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/claw/status"
+  url: "/strata/claw/status"
 }
 
-export type KiloClawStatusResponses = {
+export type StrataClawStatusResponses = {
   /**
    * Instance status
    */
@@ -7170,19 +7170,19 @@ export type KiloClawStatusResponses = {
   }
 }
 
-export type KiloClawStatusResponse = KiloClawStatusResponses[keyof KiloClawStatusResponses]
+export type StrataClawStatusResponse = StrataClawStatusResponses[keyof StrataClawStatusResponses]
 
-export type KiloClawChatCredentialsData = {
+export type StrataClawChatCredentialsData = {
   body?: never
   path?: never
   query?: {
     directory?: string
     workspace?: string
   }
-  url: "/kilo/claw/chat-credentials"
+  url: "/strata/claw/chat-credentials"
 }
 
-export type KiloClawChatCredentialsResponses = {
+export type StrataClawChatCredentialsResponses = {
   /**
    * Stream Chat credentials or null
    */
@@ -7194,9 +7194,9 @@ export type KiloClawChatCredentialsResponses = {
   } | null
 }
 
-export type KiloClawChatCredentialsResponse = KiloClawChatCredentialsResponses[keyof KiloClawChatCredentialsResponses]
+export type StrataClawChatCredentialsResponse = StrataClawChatCredentialsResponses[keyof StrataClawChatCredentialsResponses]
 
-export type KiloCloudSessionsData = {
+export type StrataCloudSessionsData = {
   body?: never
   path?: never
   query?: {
@@ -7206,19 +7206,19 @@ export type KiloCloudSessionsData = {
     limit?: number
     gitUrl?: string
   }
-  url: "/kilo/cloud-sessions"
+  url: "/strata/cloud-sessions"
 }
 
-export type KiloCloudSessionsErrors = {
+export type StrataCloudSessionsErrors = {
   /**
    * Bad request
    */
   400: BadRequestError
 }
 
-export type KiloCloudSessionsError = KiloCloudSessionsErrors[keyof KiloCloudSessionsErrors]
+export type StrataCloudSessionsError = StrataCloudSessionsErrors[keyof StrataCloudSessionsErrors]
 
-export type KiloCloudSessionsResponses = {
+export type StrataCloudSessionsResponses = {
   /**
    * Cloud sessions list
    */
@@ -7234,4 +7234,4 @@ export type KiloCloudSessionsResponses = {
   }
 }
 
-export type KiloCloudSessionsResponse = KiloCloudSessionsResponses[keyof KiloCloudSessionsResponses]
+export type StrataCloudSessionsResponse = StrataCloudSessionsResponses[keyof StrataCloudSessionsResponses]

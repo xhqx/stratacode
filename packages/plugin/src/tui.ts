@@ -1,6 +1,6 @@
 import type {
   AgentPart,
-  KiloClient,
+  StrataClient,
   Event,
   FilePart,
   LspStatus,
@@ -14,7 +14,7 @@ import type {
   SessionStatus,
   TextPart,
   Config as SdkConfig,
-} from "@kilocode/sdk/v2"
+} from "@stratacode/sdk/v2"
 import type { CliRenderer, ParsedKey, RGBA, SlotMode } from "@opentui/core"
 import type { JSX, SolidPlugin } from "@opentui/solid"
 import type { Config as PluginConfig, PluginOptions } from "./index.js"
@@ -478,7 +478,7 @@ export type TuiPluginApi = {
   kv: TuiKV
   state: TuiState
   theme: TuiTheme
-  client: KiloClient
+  client: StrataClient
   event: TuiEventBus
   renderer: CliRenderer
   slots: TuiSlots

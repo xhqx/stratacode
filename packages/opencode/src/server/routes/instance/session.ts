@@ -1110,7 +1110,7 @@ export const SessionRoutes = lazy(() =>
     )
     .post(
       "/viewed",
-      // kilocode_change start
+      // stratacode_change start
       describeRoute({
         summary: "Set viewed sessions",
         description: "Notify the server which sessions the user is currently viewing, or clear all.",
@@ -1130,10 +1130,10 @@ export const SessionRoutes = lazy(() =>
         }),
       ),
       async (c) => {
-        const { KiloSessions } = await import("@/kilo-sessions/kilo-sessions")
+        const { StrataSessions } = await import("@/strata-sessions/strata-sessions")
         const body = c.req.valid("json")
-        KiloSessions.setViewedSessions({ focused: body.focused ?? [], open: body.open ?? [] })
-        // kilocode_change end
+        StrataSessions.setViewedSessions({ focused: body.focused ?? [], open: body.open ?? [] })
+        // stratacode_change end
         return c.json(true)
       },
     ),

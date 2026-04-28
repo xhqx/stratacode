@@ -29,7 +29,7 @@ import {
   Todo,
   QuestionAnswer,
   QuestionInfo,
-} from "@kilocode/sdk/v2"
+} from "@stratacode/sdk/v2"
 import { useData } from "../context"
 import { useFileComponent } from "../context/file"
 import { useDialog } from "../context/dialog"
@@ -135,7 +135,7 @@ export interface MessageProps {
   parts: PartType[]
   actions?: UserActions
   showAssistantCopyPartID?: string | null
-  queued?: boolean // kilocode_change
+  queued?: boolean // stratacode_change
   showReasoningSummaries?: boolean
 }
 
@@ -807,7 +807,7 @@ export function Message(props: MessageProps) {
             message={userMessage() as UserMessage}
             parts={props.parts}
             actions={props.actions}
-            queued={props.queued} // kilocode_change
+            queued={props.queued} // stratacode_change
           />
         )}
       </Match>
@@ -1003,7 +1003,7 @@ export function UserMessageDisplay(props: {
   message: UserMessage
   parts: PartType[]
   actions?: UserActions
-  queued?: boolean // kilocode_change
+  queued?: boolean // stratacode_change
 }) {
   const data = useData()
   const dialog = useDialog()
@@ -1092,7 +1092,7 @@ export function UserMessageDisplay(props: {
                   data-slot="user-message-attachment"
                   data-type={type}
                   data-clickable={type === "image" ? "true" : undefined}
-                  data-queued={props.queued ? "" : undefined} // kilocode_change
+                  data-queued={props.queued ? "" : undefined} // stratacode_change
                   title={type === "file" ? name : undefined}
                   onClick={() => {
                     if (type === "image") openImagePreview(file.url, name)
@@ -1119,16 +1119,16 @@ export function UserMessageDisplay(props: {
         <>
           <div data-slot="user-message-body">
             <div data-slot="user-message-text" data-queued={props.queued ? "" : undefined}>
-              {/* kilocode_change */}
+              {/* stratacode_change */}
               <HighlightedText text={text()} references={inlineFiles()} agents={agents()} />
             </div>
-            {/* kilocode_change start */}
+            {/* stratacode_change start */}
             <Show when={props.queued}>
               <div data-slot="user-message-queued-indicator">
                 <TextShimmer text={i18n.t("ui.message.queued")} />
               </div>
             </Show>
-            {/* kilocode_change end */}
+            {/* stratacode_change end */}
           </div>
           <div data-slot="user-message-copy-wrapper">
             <Show when={metaHead() || metaTail()}>

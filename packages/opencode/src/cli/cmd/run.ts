@@ -8,7 +8,7 @@ import { bootstrap } from "../bootstrap"
 import { EOL } from "os"
 import { text as streamText } from "node:stream/consumers"
 import { Filesystem } from "../../util"
-import { createKiloClient, type KiloClient, type ToolPart } from "@kilocode/sdk/v2"
+import { createStrataClient, type StrataClient, type ToolPart } from "@stratacode/sdk/v2"
 import { Server } from "../../server/server"
 import { Provider } from "../../provider"
 import { Agent } from "../../agent/agent"
@@ -27,7 +27,7 @@ import { SkillTool } from "../../tool/skill"
 import { BashTool } from "../../tool/bash"
 import { TodoWriteTool } from "../../tool/todo"
 import { Locale } from "../../util"
-import { importCloudSession, validateCloudFork } from "@/kilocode/cloud-session" // kilocode_change
+import { importCloudSession, validateCloudFork } from "@/stratacode/cloud-session" // stratacode_change
 import { AppRuntime } from "@/effect/app-runtime"
 
 type ToolProps<T> = {
@@ -214,7 +214,7 @@ function normalizePath(input?: string) {
 
 export const RunCommand = cmd({
   command: "run [message..]",
-  describe: "run kilo with a message", // kilocode_change
+  describe: "run strata with a message", // stratacode_change
   builder: (yargs: Argv) => {
     return (
       yargs
@@ -278,7 +278,7 @@ export const RunCommand = cmd({
         .option("password", {
           alias: ["p"],
           type: "string",
-          describe: "basic auth password (defaults to KILO_SERVER_PASSWORD)",
+          describe: "basic auth password (defaults to STRATA_SERVER_PASSWORD)",
         })
         .option("dir", {
           type: "string",
@@ -297,13 +297,13 @@ export const RunCommand = cmd({
           describe: "show thinking blocks",
           default: false,
         })
-        // kilocode_change start - auto approve all permissions
+        // stratacode_change start - auto approve all permissions
         .option("auto", {
           type: "boolean",
           describe: "auto-approve all permissions (for autonomous/pipeline usage)",
           default: false,
         })
-        // kilocode_change end
+        // stratacode_change end
         .option("dangerously-skip-permissions", {
           type: "boolean",
           describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
@@ -361,13 +361,13 @@ export const RunCommand = cmd({
       UI.error("--fork requires --continue or --session")
       process.exit(1)
     }
-    // kilocode_change start
+    // stratacode_change start
     const cloudForkError = validateCloudFork(args)
     if (cloudForkError) {
       UI.error(cloudForkError)
       process.exit(1)
     }
-    // kilocode_change end
+    // stratacode_change end
 
     const rules: Permission.Ruleset = [
       {
@@ -393,10 +393,10 @@ export const RunCommand = cmd({
       return message.slice(0, 50) + (message.length > 50 ? "..." : "")
     }
 
-    async function session(sdk: KiloClient) {
+    async function session(sdk: StrataClient) {
       const baseID = args.continue ? (await sdk.session.list()).data?.find((s) => !s.parentID)?.id : args.session
 
-      // kilocode_change start
+      // stratacode_change start
       if (baseID && args.cloudFork) {
         const id = await importCloudSession(sdk, baseID).catch(() => undefined)
         if (!id) {
@@ -405,7 +405,7 @@ export const RunCommand = cmd({
         }
         return id
       }
-      // kilocode_change end
+      // stratacode_change end
 
       if (baseID && args.fork) {
         const forked = await sdk.session.fork({ sessionID: baseID })
@@ -419,10 +419,10 @@ export const RunCommand = cmd({
       return result.data?.id
     }
 
-    async function share(sdk: KiloClient, sessionID: string) {
+    async function share(sdk: StrataClient, sessionID: string) {
       const cfg = await sdk.config.get()
       if (!cfg.data) return
-      if (cfg.data.share !== "auto" && !Flag.KILO_AUTO_SHARE && !args.share) return
+      if (cfg.data.share !== "auto" && !Flag.STRATA_AUTO_SHARE && !args.share) return
       const res = await sdk.session.share({ sessionID }).catch((error) => {
         if (error instanceof Error && error.message.includes("disabled")) {
           UI.println(UI.Style.TEXT_DANGER_BOLD + "!  " + error.message)
@@ -434,7 +434,7 @@ export const RunCommand = cmd({
       }
     }
 
-    async function execute(sdk: KiloClient) {
+    async function execute(sdk: StrataClient) {
       function tool(part: ToolPart) {
         try {
           if (part.tool === "bash") return bash(props<typeof BashTool>(part))
@@ -468,8 +468,8 @@ export const RunCommand = cmd({
 
       async function loop() {
         const toggles = new Map<string, boolean>()
-        const MAX_RETRIES = 3 // kilocode_change
-        let retries = 0 // kilocode_change
+        const MAX_RETRIES = 3 // stratacode_change
+        let retries = 0 // stratacode_change
 
         for await (const event of events.stream) {
           if (
@@ -560,7 +560,7 @@ export const RunCommand = cmd({
             UI.error(err)
           }
 
-          // kilocode_change start
+          // stratacode_change start
           if (
             event.type === "session.status" &&
             event.properties.sessionID === sessionID &&
@@ -568,7 +568,7 @@ export const RunCommand = cmd({
           ) {
             retries = 0
           }
-          // kilocode_change end
+          // stratacode_change end
 
           if (
             event.type === "session.status" &&
@@ -583,7 +583,7 @@ export const RunCommand = cmd({
             if (permission.sessionID !== sessionID) continue
 
             if (args.auto) {
-              // kilocode_change - In auto mode, automatically approve all permissions without prompting
+              // stratacode_change - In auto mode, automatically approve all permissions without prompting
               await sdk.permission.reply({
                 requestID: permission.id,
                 reply: "once",
@@ -600,7 +600,7 @@ export const RunCommand = cmd({
               })
             }
           }
-          // kilocode_change start - network retry handling
+          // stratacode_change start - network retry handling
           if (event.type === "session.network.asked") {
             const request = event.properties
             if (request.sessionID !== sessionID) continue
@@ -619,7 +619,7 @@ export const RunCommand = cmd({
               requestID: request.id,
             })
           }
-          // kilocode_change end
+          // stratacode_change end
         }
       }
 
@@ -721,13 +721,13 @@ export const RunCommand = cmd({
 
     if (args.attach) {
       const headers = (() => {
-        const password = args.password ?? process.env.KILO_SERVER_PASSWORD
+        const password = args.password ?? process.env.STRATA_SERVER_PASSWORD
         if (!password) return undefined
-        const username = process.env.KILO_SERVER_USERNAME ?? "kilo" // kilocode_change
+        const username = process.env.STRATA_SERVER_USERNAME ?? "strata" // stratacode_change
         const auth = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`
         return { Authorization: auth }
       })()
-      const sdk = createKiloClient({ baseUrl: args.attach, directory, headers })
+      const sdk = createStrataClient({ baseUrl: args.attach, directory, headers })
       return await execute(sdk)
     }
 
@@ -736,7 +736,7 @@ export const RunCommand = cmd({
         const request = new Request(input, init)
         return Server.Default().app.fetch(request)
       }) as typeof globalThis.fetch
-      const sdk = createKiloClient({ baseUrl: "http://kilo.internal", fetch: fetchFn })
+      const sdk = createStrataClient({ baseUrl: "http://strata.internal", fetch: fetchFn })
       await execute(sdk)
     })
   },

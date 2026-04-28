@@ -30,7 +30,7 @@ export const SessionTable = sqliteTable(
     summary_additions: integer(),
     summary_deletions: integer(),
     summary_files: integer(),
-    summary_diffs: text({ mode: "json" }).$type<Snapshot.SummaryFileDiff[]>(), // kilocode_change
+    summary_diffs: text({ mode: "json" }).$type<Snapshot.SummaryFileDiff[]>(), // stratacode_change
     revert: text({ mode: "json" }).$type<{ messageID: MessageID; partID?: PartID; snapshot?: string; diff?: string }>(),
     permission: text({ mode: "json" }).$type<Permission.Ruleset>(),
     ...Timestamps,

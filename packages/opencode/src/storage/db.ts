@@ -16,7 +16,7 @@ import { InstanceState } from "@/effect"
 import { iife } from "@/util/iife"
 import { init } from "#db"
 
-declare const KILO_MIGRATIONS: { sql: string; timestamp: number; name: string }[] | undefined
+declare const STRATA_MIGRATIONS: { sql: string; timestamp: number; name: string }[] | undefined
 
 export const NotFoundError = NamedError.create(
   "NotFoundError",
@@ -27,16 +27,16 @@ export const NotFoundError = NamedError.create(
 
 const log = Log.create({ service: "db" })
 
-// kilocode_change start - always use kilo.db regardless of channel
+// stratacode_change start - always use strata.db regardless of channel
 export function getChannelPath() {
-  return path.join(Global.Path.data, "kilo.db")
+  return path.join(Global.Path.data, "strata.db")
 }
-// kilocode_change end
+// stratacode_change end
 
 export const Path = iife(() => {
-  if (Flag.KILO_DB) {
-    if (Flag.KILO_DB === ":memory:" || path.isAbsolute(Flag.KILO_DB)) return Flag.KILO_DB
-    return path.join(Global.Path.data, Flag.KILO_DB)
+  if (Flag.STRATA_DB) {
+    if (Flag.STRATA_DB === ":memory:" || path.isAbsolute(Flag.STRATA_DB)) return Flag.STRATA_DB
+    return path.join(Global.Path.data, Flag.STRATA_DB)
   }
   return getChannelPath()
 })
@@ -94,15 +94,15 @@ export const Client = lazy(() => {
 
   // Apply schema migrations
   const entries =
-    typeof KILO_MIGRATIONS !== "undefined"
-      ? KILO_MIGRATIONS
+    typeof STRATA_MIGRATIONS !== "undefined"
+      ? STRATA_MIGRATIONS
       : migrations(path.join(import.meta.dirname, "../../migration"))
   if (entries.length > 0) {
     log.info("applying migrations", {
       count: entries.length,
-      mode: typeof KILO_MIGRATIONS !== "undefined" ? "bundled" : "dev",
+      mode: typeof STRATA_MIGRATIONS !== "undefined" ? "bundled" : "dev",
     })
-    if (Flag.KILO_SKIP_MIGRATIONS) {
+    if (Flag.STRATA_SKIP_MIGRATIONS) {
       for (const item of entries) {
         item.sql = "select 1;"
       }

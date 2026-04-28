@@ -2,8 +2,8 @@ export * from "./gen/types.gen.js"
 
 import { createClient } from "./gen/client/client.gen.js"
 import { type Config } from "./gen/client/types.gen.js"
-import { KiloClient } from "./gen/sdk.gen.js"
-export { type Config as KiloClientConfig, KiloClient }
+import { StrataClient } from "./gen/sdk.gen.js"
+export { type Config as StrataClientConfig, StrataClient }
 
 function pick(value: string | null, fallback?: string) {
   if (!value) return
@@ -16,7 +16,7 @@ function pick(value: string | null, fallback?: string) {
 function rewrite(request: Request, directory?: string) {
   if (request.method !== "GET" && request.method !== "HEAD") return request
 
-  const value = pick(request.headers.get("x-kilo-directory"), directory)
+  const value = pick(request.headers.get("x-strata-directory"), directory)
   if (!value) return request
 
   const url = new URL(request.url)
@@ -24,12 +24,12 @@ function rewrite(request: Request, directory?: string) {
     url.searchParams.set("directory", value)
   }
 
-  const next = new Request(url.href, request) // kilocode_change
-  next.headers.delete("x-kilo-directory")
+  const next = new Request(url.href, request) // stratacode_change
+  next.headers.delete("x-strata-directory")
   return next
 }
 
-export function createKiloClient(config?: Config & { directory?: string }) {
+export function createStrataClient(config?: Config & { directory?: string }) {
   if (!config?.fetch) {
     const customFetch: any = (req: any) => {
       // Pass duplex in the init arg so it survives VS Code's proxy-agent
@@ -49,7 +49,7 @@ export function createKiloClient(config?: Config & { directory?: string }) {
   if (config?.directory) {
     config.headers = {
       ...config.headers,
-      "x-kilo-directory": encodeURIComponent(config.directory),
+      "x-strata-directory": encodeURIComponent(config.directory),
     }
   }
 
@@ -60,5 +60,5 @@ export function createKiloClient(config?: Config & { directory?: string }) {
 
   const client = createClient(config)
   client.interceptors.request.use((request) => rewrite(request, config?.directory))
-  return new KiloClient({ client })
+  return new StrataClient({ client })
 }

@@ -1,4 +1,4 @@
-// kilocode_change - new file
+// stratacode_change - new file
 import { EOL } from "os"
 import { Config } from "../../config"
 import { bootstrap } from "../bootstrap"

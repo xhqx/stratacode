@@ -6,7 +6,7 @@ import { Provider } from "@/provider"
 import { ModelsDev } from "@/provider"
 import { ProviderAuth } from "@/provider"
 import { ProviderID } from "@/provider/schema"
-import { mapValues, pickBy } from "remeda" // kilocode_change
+import { mapValues, pickBy } from "remeda" // stratacode_change
 import { errors } from "../../error"
 import { lazy } from "@/util/lazy"
 import { Effect } from "effect"
@@ -50,14 +50,14 @@ export const ProviderRoutes = lazy(() =>
             mapValues(filtered, (x) => Provider.fromModelsDevProvider(x)),
             connected,
           )
-          // kilocode_change start: Filter out providers with no models to prevent crashes
+          // stratacode_change start: Filter out providers with no models to prevent crashes
           const validProviders = pickBy(providers, (item) => Object.keys(item.models).length > 0)
           return {
             all: Object.values(validProviders),
             default: Provider.defaultModelIDs(validProviders),
             connected: Object.keys(connected),
           }
-          // kilocode_change end
+          // stratacode_change end
         }),
     )
     .get(

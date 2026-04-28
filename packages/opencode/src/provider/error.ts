@@ -47,11 +47,11 @@ function isOverflow(message: string) {
 
 function message(providerID: ProviderID, e: APICallError) {
   return iife(() => {
-    // kilocode_change start - surface a branded reauth hint for expired Copilot tokens
+    // stratacode_change start - surface a branded reauth hint for expired Copilot tokens
     if (providerID.includes("github-copilot") && e.statusCode === 403) {
-      return "Please reauthenticate with the copilot provider to ensure your credentials work properly with Kilo."
+      return "Please reauthenticate with the copilot provider to ensure your credentials work properly with Strata."
     }
-    // kilocode_change end
+    // stratacode_change end
     const msg = e.message
     if (msg === "") {
       if (e.responseBody) return e.responseBody
@@ -79,7 +79,7 @@ function message(providerID: ProviderID, e: APICallError) {
     // provide a human-readable message instead of dumping raw markup
     if (/^\s*<!doctype|^\s*<html/i.test(e.responseBody)) {
       if (e.statusCode === 401) {
-        return "Unauthorized: request was blocked by a gateway or proxy. Your authentication token may be missing or expired — try running `kilo auth login <your provider URL>` to re-authenticate." // kilocode_change
+        return "Unauthorized: request was blocked by a gateway or proxy. Your authentication token may be missing or expired — try running `strata auth login <your provider URL>` to re-authenticate." // stratacode_change
       }
       if (e.statusCode === 403) {
         return "Forbidden: request was blocked by a gateway or proxy. You may not have permission to access this resource — check your account and provider settings."

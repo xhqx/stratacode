@@ -2300,7 +2300,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "kilo-desktop"
+name = "strata-desktop"
 version = "0.0.0"
 dependencies = [
  "chrono",

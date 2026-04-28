@@ -21,17 +21,17 @@ import { tmpdir } from "../fixture/fixture"
 
 void Log.init({ print: false })
 
-const original = Flag.KILO_EXPERIMENTAL_WORKSPACES
+const original = Flag.STRATA_EXPERIMENTAL_WORKSPACES
 
 beforeEach(() => {
   Database.close()
-  Flag.KILO_EXPERIMENTAL_WORKSPACES = true
+  Flag.STRATA_EXPERIMENTAL_WORKSPACES = true
 })
 
 afterEach(async () => {
   mock.restore()
   await Instance.disposeAll()
-  Flag.KILO_EXPERIMENTAL_WORKSPACES = original
+  Flag.STRATA_EXPERIMENTAL_WORKSPACES = original
   await resetDatabase()
 })
 

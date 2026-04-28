@@ -30,7 +30,7 @@ const node = CrossSpawnSpawner.defaultLayer
 
 const it = testEffect(Layer.mergeAll(ToolRegistry.defaultLayer, node))
 
-// kilocode_change - skip on windows: address windows ci failures #9496
+// stratacode_change - skip on windows: address windows ci failures #9496
 const unix = process.platform !== "win32" ? it.live : it.live.skip
 
 describe("tool.skill", () => {
@@ -55,11 +55,11 @@ Use this skill.
           )
           yield* Effect.promise(() => Bun.write(path.join(skill, "scripts", "demo.txt"), "demo"))
 
-          const home = process.env.KILO_TEST_HOME
-          process.env.KILO_TEST_HOME = dir
+          const home = process.env.STRATA_TEST_HOME
+          process.env.STRATA_TEST_HOME = dir
           yield* Effect.addFinalizer(() =>
             Effect.sync(() => {
-              process.env.KILO_TEST_HOME = home
+              process.env.STRATA_TEST_HOME = home
             }),
           )
 
@@ -97,16 +97,16 @@ Use this skill.
     ),
   )
 
-  // kilocode_change start
-  it.live("built-in kilo-config includes named command lookup guidance", () =>
+  // stratacode_change start
+  it.live("built-in strata-config includes named command lookup guidance", () =>
     provideTmpdirInstance(
       (dir) =>
         Effect.gen(function* () {
-          const home = process.env.KILO_TEST_HOME
-          process.env.KILO_TEST_HOME = dir
+          const home = process.env.STRATA_TEST_HOME
+          process.env.STRATA_TEST_HOME = dir
           yield* Effect.addFinalizer(() =>
             Effect.sync(() => {
-              process.env.KILO_TEST_HOME = home
+              process.env.STRATA_TEST_HOME = home
             }),
           )
 
@@ -124,17 +124,17 @@ Use this skill.
             ask: () => Effect.void,
           }
 
-          const result = yield* tool.execute({ name: "kilo-config" }, ctx)
+          const result = yield* tool.execute({ name: "strata-config" }, ctx)
 
           expect(result.metadata.dir).toBe("builtin")
           expect(result.output).toContain("Finding a named command")
-          expect(result.output).toContain("~/.config/kilo/")
-          expect(result.output).toContain("~/.kilocode/")
+          expect(result.output).toContain("~/.config/strata/")
+          expect(result.output).toContain("~/.stratacode/")
           expect(result.output).toContain("**/command/")
           expect(result.output).toContain("explicit search")
         }),
       { git: true },
     ),
   )
-  // kilocode_change end
+  // stratacode_change end
 })

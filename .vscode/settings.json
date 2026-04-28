@@ -4,12 +4,12 @@
     "editor.defaultFormatter": null
   },
   "files.exclude": {
-    "packages/kilo-vscode/out": false,
-    "packages/kilo-vscode/dist": false
+    "packages/strata-vscode/out": false,
+    "packages/strata-vscode/dist": false
   },
   "search.exclude": {
-    "packages/kilo-vscode/out": true,
-    "packages/kilo-vscode/dist": true
+    "packages/strata-vscode/out": true,
+    "packages/strata-vscode/dist": true
   },
   "typescript.tsc.autoDetect": "off"
 }

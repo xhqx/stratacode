@@ -58,7 +58,7 @@ export async function tmpdir<T>(options?: TmpDirOptions<T>) {
     await Bun.write(
       path.join(dirpath, "opencode.json"),
       JSON.stringify({
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         ...options.config,
       }),
     )

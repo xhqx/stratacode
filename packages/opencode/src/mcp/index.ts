@@ -1,11 +1,11 @@
-// kilocode_change start
+// stratacode_change start
 // The MCP SDK only sets windowsHide:true in Electron (checks `'type' in process`).
 // Bun's process object lacks `type`, so stdio transports flash a CMD window on
 // every MCP server start. We patch it before the SDK is imported.
 if (process.platform === "win32" && !("type" in process)) {
-  Object.defineProperty(process, "type", { value: "kilo-bun", configurable: true })
+  Object.defineProperty(process, "type", { value: "strata-bun", configurable: true })
 }
-// kilocode_change end
+// stratacode_change end
 
 import { dynamicTool, type Tool, jsonSchema, type JSONSchema7 } from "ai"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
@@ -32,7 +32,7 @@ import { McpOAuthCallback } from "./oauth-callback"
 import { McpAuth } from "./auth"
 import { BusEvent } from "../bus/bus-event"
 import { Bus } from "@/bus"
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import { TuiEvent } from "@/cli/cmd/tui/event"
 import open from "open"
 import { Effect, Exit, Layer, Option, Context, Stream } from "effect"
@@ -44,7 +44,7 @@ import * as CrossSpawnSpawner from "@/effect/cross-spawn-spawner"
 const log = Log.create({ service: "mcp" })
 const DEFAULT_TIMEOUT = 30_000
 
-// kilocode_change start — inject --rm for Docker containers to prevent stopped container accumulation
+// stratacode_change start — inject --rm for Docker containers to prevent stopped container accumulation
 export function ensureDockerRm(cmd: string, args: string[]): string[] {
   const isDocker = cmd === "docker" || cmd === "podman"
   if (!isDocker) return args
@@ -56,7 +56,7 @@ export function ensureDockerRm(cmd: string, args: string[]): string[] {
   result.splice(runIdx + 1, 0, "--rm")
   return result
 }
-// kilocode_change end
+// stratacode_change end
 
 export const Resource = z
   .object({
@@ -414,12 +414,12 @@ export const layer = Layer.effect(
       mcp: ConfigMCP.Info & { type: "local" },
     ) {
       const [cmd, ...args] = mcp.command
-      const finalArgs = ensureDockerRm(cmd, args) // kilocode_change
+      const finalArgs = ensureDockerRm(cmd, args) // stratacode_change
       const cwd = yield* InstanceState.directory
       const transport = new StdioClientTransport({
         stderr: "pipe",
         command: cmd,
-        args: finalArgs, // kilocode_change
+        args: finalArgs, // stratacode_change
         cwd,
         env: {
           ...process.env,
@@ -954,11 +954,11 @@ export const defaultLayer = layer.pipe(
   Layer.provide(AppFileSystem.defaultLayer),
 )
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const status = () => runPromise((svc) => svc.status())
 export const connect = (name: string) => runPromise((svc) => svc.connect(name))
 export const disconnect = (name: string) => runPromise((svc) => svc.disconnect(name))
-// kilocode_change end
+// stratacode_change end
 
 export * as MCP from "."

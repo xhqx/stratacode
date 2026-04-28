@@ -15,7 +15,7 @@ import { createDebouncedSignal } from "../util/signal"
 import { useToast } from "../ui/toast"
 import { DialogWorkspaceCreate, openWorkspaceSession, restoreWorkspaceSession } from "./dialog-workspace-create"
 import { Spinner } from "./spinner"
-import path from "path" // kilocode_change
+import path from "path" // stratacode_change
 import { errorMessage } from "@/util/error"
 import { DialogSessionDeleteFailed } from "./dialog-session-delete-failed"
 
@@ -32,9 +32,9 @@ export function DialogSessionList() {
   const toast = useToast()
   const [toDelete, setToDelete] = createSignal<string>()
   const [search, setSearch] = createDebouncedSignal("", 150)
-  const [global, setGlobal] = createSignal(true) // kilocode_change - show all worktrees by default
+  const [global, setGlobal] = createSignal(true) // stratacode_change - show all worktrees by default
 
-  // kilocode_change start - always fetch from experimental endpoint (returns GlobalSession with worktree info)
+  // stratacode_change start - always fetch from experimental endpoint (returns GlobalSession with worktree info)
   const [searchResults, searchActions] = createResource(
     () => search(),
     async (query) => {
@@ -50,11 +50,11 @@ export function DialogSessionList() {
       return result.data ?? []
     },
   )
-  // kilocode_change end
+  // stratacode_change end
 
   const currentSessionID = createMemo(() => (route.data.type === "session" ? route.data.sessionID : undefined))
 
-  // kilocode_change start - client-side worktree filtering when global is off
+  // stratacode_change start - client-side worktree filtering when global is off
   const sessions = createMemo(() => {
     const all = searchResults() ?? []
     if (global()) return all
@@ -62,7 +62,7 @@ export function DialogSessionList() {
     if (!root || root === "/") return all
     return all.filter((s) => s.directory === root || s.directory.startsWith(root + path.sep))
   })
-  // kilocode_change end
+  // stratacode_change end
 
   function createWorkspace() {
     dialog.replace(() => (
@@ -103,7 +103,7 @@ export function DialogSessionList() {
           }
           await project.workspace.sync()
           await sync.session.refresh()
-          if (search()) await searchActions.refetch() // kilocode_change - use createResource actions
+          if (search()) await searchActions.refetch() // stratacode_change - use createResource actions
           if (info?.workspaceID === session.workspaceID) {
             route.navigate({ type: "home" })
           }
@@ -134,7 +134,7 @@ export function DialogSessionList() {
 
   const options = createMemo(() => {
     const today = new Date().toDateString()
-    const all = global() // kilocode_change
+    const all = global() // stratacode_change
     return sessions()
       .filter((x) => x.parentID === undefined)
       .toSorted((a, b) => {
@@ -151,7 +151,7 @@ export function DialogSessionList() {
         }
 
         let footer = ""
-        if (Flag.KILO_EXPERIMENTAL_WORKSPACES) {
+        if (Flag.STRATA_EXPERIMENTAL_WORKSPACES) {
           if (x.workspaceID) {
             let desc = "unknown"
             if (workspace) {
@@ -185,7 +185,7 @@ export function DialogSessionList() {
         const isWorking = status?.type === "busy"
         return {
           title: isDeleting ? `Press ${keybind.print("session_delete")} again to confirm` : x.title,
-          description: all && x.worktreeName ? `(${x.worktreeName})` : undefined, // kilocode_change - worktree label
+          description: all && x.worktreeName ? `(${x.worktreeName})` : undefined, // stratacode_change - worktree label
           bg: isDeleting ? theme.error : undefined,
           value: x.id,
           category,
@@ -201,7 +201,7 @@ export function DialogSessionList() {
 
   return (
     <DialogSelect
-      title={global() ? "Sessions (all worktrees)" : "Sessions (current worktree)"} // kilocode_change
+      title={global() ? "Sessions (all worktrees)" : "Sessions (current worktree)"} // stratacode_change
       options={options()}
       skipFilter={true}
       current={currentSessionID()}
@@ -258,7 +258,7 @@ export function DialogSessionList() {
               if (status && status !== "connected") {
                 await sync.session.refresh()
               }
-              void searchActions.refetch() // kilocode_change
+              void searchActions.refetch() // stratacode_change
               setToDelete(undefined)
               return
             }
@@ -267,8 +267,8 @@ export function DialogSessionList() {
         },
         {
           keybind: keybind.all.session_rename?.[0],
-          title: "rename", // kilocode_change
-          // kilocode_change start
+          title: "rename", // stratacode_change
+          // stratacode_change start
           onTrigger: async (option) => {
             const item = sessions().find((x) => x.id === option.value)
             dialog.replace(() => (
@@ -290,12 +290,12 @@ export function DialogSessionList() {
             setGlobal((v) => !v)
           },
         },
-        // kilocode_change end
+        // stratacode_change end
         {
           keybind: Keybind.parse("ctrl+w")[0],
           title: "new workspace",
           side: "right",
-          disabled: !Flag.KILO_EXPERIMENTAL_WORKSPACES,
+          disabled: !Flag.STRATA_EXPERIMENTAL_WORKSPACES,
           onTrigger: () => {
             createWorkspace()
           },

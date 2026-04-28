@@ -7,15 +7,15 @@ import { InstallationVersion } from "@/installation/version"
 
 export async function upgrade() {
   const config = await AppRuntime.runPromise(Config.Service.use((cfg) => cfg.getGlobal()))
-  if (config.autoupdate === false || Flag.KILO_DISABLE_AUTOUPDATE) return
+  if (config.autoupdate === false || Flag.STRATA_DISABLE_AUTOUPDATE) return
   const method = await AppRuntime.runPromise(Installation.Service.use((svc) => svc.method()))
-  // kilocode_change start - only auto-upgrade for npm/pnpm/bun (we only publish @kilocode/cli via npm registry)
+  // stratacode_change start - only auto-upgrade for npm/pnpm/bun (we only publish @stratacode/cli via npm registry)
   if (method !== "npm" && method !== "pnpm" && method !== "bun") return
-  // kilocode_change end
+  // stratacode_change end
   const latest = await AppRuntime.runPromise(Installation.Service.use((svc) => svc.latest(method))).catch(() => {})
   if (!latest) return
 
-  if (Flag.KILO_ALWAYS_NOTIFY_UPDATE) {
+  if (Flag.STRATA_ALWAYS_NOTIFY_UPDATE) {
     await Bus.publish(Installation.Event.UpdateAvailable, { version: latest })
     return
   }

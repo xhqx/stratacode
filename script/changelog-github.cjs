@@ -1,13 +1,13 @@
-// kilocode_change - new file
+// stratacode_change - new file
 // Custom changelog generator that wraps @changesets/changelog-github
 // but strips "Thanks @user!" for team members.
 const github = require("@changesets/changelog-github")
 
 const team = new Set([
   "actions-user",
-  "kilo-maintainer[bot]",
-  "kiloconnect[bot]",
-  "kiloconnect-lite[bot]",
+  "strata-maintainer[bot]",
+  "strataconnect[bot]",
+  "strataconnect-lite[bot]",
   "alexkgold",
   "arimesser",
   "arkadiykondrashov",
@@ -21,7 +21,7 @@ const team = new Set([
   "DScdng",
   "emilieschario",
   "eshurakov",
-  "Helix-Kilo",
+  "Helix-Strata",
   "iscekic",
   "jeanduplessis",
   "jobrietbergen",
@@ -29,13 +29,13 @@ const team = new Set([
   "kevinvandijk",
   "alex-alecu",
   "imanolmzd-svg",
-  "kilocode-bot",
-  "kilo-code-bot",
-  "kilo-code-bot[bot]",
+  "stratacode-bot",
+  "strata-code-bot",
+  "strata-code-bot[bot]",
   "kirillk",
   "lambertjosh",
   "LigiaZ",
-  "marius-kilocode",
+  "marius-stratacode",
   "markijbema",
   "olearycrew",
   "pandemicsyn",

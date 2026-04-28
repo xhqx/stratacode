@@ -9,28 +9,28 @@ import { Auth } from "../auth"
 import { ProviderTransform } from "../provider"
 
 import PROMPT_GENERATE from "./generate.txt"
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import PROMPT_COMPACTION from "./prompt/compaction.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
 import PROMPT_SUMMARY from "./prompt/summary.txt"
 import PROMPT_TITLE from "./prompt/title.txt"
 import { Permission } from "@/permission"
 import { mergeDeep, pipe, sortBy, values } from "remeda"
-import { Global } from "@/global" // kilocode_change
-import { KilocodePaths } from "@/kilocode/paths" // kilocode_change
-import path from "path" // kilocode_change
+import { Global } from "@/global" // stratacode_change
+import { StratacodePaths } from "@/stratacode/paths" // stratacode_change
+import path from "path" // stratacode_change
 import { Plugin } from "@/plugin"
 import { Skill } from "../skill"
 import { Effect, Context, Layer } from "effect"
 import { InstanceState } from "@/effect"
-import * as KiloAgent from "@/kilocode/agent" // kilocode_change
+import * as StrataAgent from "@/stratacode/agent" // stratacode_change
 
 export const Info = z
   .object({
     name: z.string(),
-    displayName: z.string().optional(), // kilocode_change - human-readable name for org modes
+    displayName: z.string().optional(), // stratacode_change - human-readable name for org modes
     description: z.string().optional(),
-    deprecated: z.boolean().optional(), // kilocode_change
+    deprecated: z.boolean().optional(), // stratacode_change
     mode: z.enum(["subagent", "primary", "all"]),
     native: z.boolean().optional(),
     hidden: z.boolean().optional(),
@@ -85,24 +85,24 @@ export const layer = Layer.effect(
       Effect.fn("Agent.state")(function* (_ctx) {
         const cfg = yield* config.get()
         const skillDirs = yield* skill.dirs()
-        // kilocode_change start - include global config dirs so agents can read them without prompting
+        // stratacode_change start - include global config dirs so agents can read them without prompting
         const whitelistedDirs = [
           Truncate.GLOB,
           ...skillDirs.map((dir) => path.join(dir, "*")),
           path.join(Global.Path.config, "*"),
-          ...KilocodePaths.globalDirs().map((dir) => path.join(dir, "*")),
+          ...StratacodePaths.globalDirs().map((dir) => path.join(dir, "*")),
         ]
-        // kilocode_change end
+        // stratacode_change end
 
         const baseDefaults = Permission.fromConfig({
-          // kilocode_change: renamed from defaults
+          // stratacode_change: renamed from defaults
           "*": "allow",
           doom_loop: "ask",
           external_directory: {
             "*": "ask",
             ...Object.fromEntries(whitelistedDirs.map((dir) => [dir, "allow"])),
           },
-          suggest: "deny", // kilocode_change
+          suggest: "deny", // stratacode_change
           question: "deny",
           plan_enter: "deny",
           plan_exit: "deny",
@@ -115,10 +115,10 @@ export const layer = Layer.effect(
           },
         })
 
-        // kilocode_change start - patch defaults with bash allowlist and recall permission
-        const kilo = KiloAgent.prepare(cfg)
-        const defaults = Permission.merge(baseDefaults, kilo.defaultsPatch)
-        // kilocode_change end
+        // stratacode_change start - patch defaults with bash allowlist and recall permission
+        const strata = StrataAgent.prepare(cfg)
+        const defaults = Permission.merge(baseDefaults, strata.defaultsPatch)
+        // stratacode_change end
 
         const user = Permission.fromConfig(cfg.permission ?? {})
 
@@ -131,7 +131,7 @@ export const layer = Layer.effect(
               defaults,
               Permission.fromConfig({
                 question: "allow",
-                suggest: "allow", // kilocode_change
+                suggest: "allow", // stratacode_change
                 plan_enter: "allow",
               }),
               user,
@@ -251,14 +251,14 @@ export const layer = Layer.effect(
           },
         }
 
-        // kilocode_change start - rename build→code, add debug/orchestrator/ask, patch plan/explore
-        KiloAgent.patchAgents(agents, defaults, user, cfg, kilo)
-        // kilocode_change end
+        // stratacode_change start - rename build→code, add debug/orchestrator/ask, patch plan/explore
+        StrataAgent.patchAgents(agents, defaults, user, cfg, strata)
+        // stratacode_change end
 
-        // kilocode_change start - preprocess config to remap "build" key → "code"
-        const agentConfigs = KiloAgent.preprocessConfig(cfg.agent ?? {})
+        // stratacode_change start - preprocess config to remap "build" key → "code"
+        const agentConfigs = StrataAgent.preprocessConfig(cfg.agent ?? {})
         for (const [key, value] of Object.entries(agentConfigs)) {
-          // kilocode_change end
+          // stratacode_change end
           if (value.disable) {
             delete agents[key]
             continue
@@ -285,7 +285,7 @@ export const layer = Layer.effect(
           item.steps = value.steps ?? item.steps
           item.options = mergeDeep(item.options, value.options ?? {})
           item.permission = Permission.merge(item.permission, Permission.fromConfig(value.permission ?? {}))
-          KiloAgent.processConfigItem(item) // kilocode_change - populate displayName from options
+          StrataAgent.processConfigItem(item) // stratacode_change - populate displayName from options
         }
 
         // Ensure Truncate.GLOB is allowed unless explicitly configured
@@ -305,7 +305,7 @@ export const layer = Layer.effect(
         }
 
         const get = Effect.fnUntraced(function* (agent: string) {
-          return agents[KiloAgent.resolveKey(agent)] // kilocode_change - treat "build" as "code"
+          return agents[StrataAgent.resolveKey(agent)] // stratacode_change - treat "build" as "code"
         })
 
         const list = Effect.fnUntraced(function* () {
@@ -314,7 +314,7 @@ export const layer = Layer.effect(
             agents,
             values(),
             sortBy(
-              [(x) => (cfg.default_agent ? x.name === cfg.default_agent : x.name === "code"), "desc"], // kilocode_change - renamed from "build" to "code"
+              [(x) => (cfg.default_agent ? x.name === cfg.default_agent : x.name === "code"), "desc"], // stratacode_change - renamed from "build" to "code"
               [(x) => x.name, "asc"],
             ),
           )
@@ -323,17 +323,17 @@ export const layer = Layer.effect(
         const defaultAgent = Effect.fnUntraced(function* () {
           const c = yield* config.get()
           if (c.default_agent) {
-            const effective = KiloAgent.resolveKey(c.default_agent) // kilocode_change - treat "build" as "code"
-            const agent = agents[effective] // kilocode_change
+            const effective = StrataAgent.resolveKey(c.default_agent) // stratacode_change - treat "build" as "code"
+            const agent = agents[effective] // stratacode_change
             if (!agent) throw new Error(`default agent "${c.default_agent}" not found`)
             if (agent.mode === "subagent") throw new Error(`default agent "${c.default_agent}" is a subagent`)
             if (agent.hidden === true) throw new Error(`default agent "${c.default_agent}" is hidden`)
             return agent.name
           }
-          // kilocode_change start - prefer "code" as default agent (key order changes after rename from "build")
+          // stratacode_change start - prefer "code" as default agent (key order changes after rename from "build")
           const code = agents.code
           if (code && code.mode !== "subagent" && code.hidden !== true) return code.name
-          // kilocode_change end
+          // stratacode_change end
           const visible = Object.values(agents).find((a) => a.mode !== "subagent" && a.hidden !== true)
           if (!visible) throw new Error("no primary visible agent found")
           return visible.name
@@ -375,9 +375,9 @@ export const layer = Layer.effect(
         const isOpenaiOauth = model.providerID === "openai" && authInfo?.type === "oauth"
 
         const params = {
-          // kilocode_change start - enable telemetry with custom PostHog tracer
-          experimental_telemetry: KiloAgent.telemetryOptions(cfg),
-          // kilocode_change end
+          // stratacode_change start - enable telemetry with custom PostHog tracer
+          experimental_telemetry: StrataAgent.telemetryOptions(cfg),
+          // stratacode_change end
           temperature: 0.3,
           messages: [
             ...(isOpenaiOauth
@@ -432,18 +432,18 @@ export const defaultLayer = layer.pipe(
   Layer.provide(Skill.defaultLayer),
 )
 
-// kilocode_change start - agent removal (delegated to kilocode module)
-export const RemoveError = KiloAgent.RemoveError
+// stratacode_change start - agent removal (delegated to stratacode module)
+export const RemoveError = StrataAgent.RemoveError
 export async function remove(name: string) {
-  return KiloAgent.remove(name)
+  return StrataAgent.remove(name)
 }
-// kilocode_change end
+// stratacode_change end
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const get = (agent: string) => runPromise((svc) => svc.get(agent))
 export const list = () => runPromise((svc) => svc.list())
 export const defaultAgent = () => runPromise((svc) => svc.defaultAgent())
-// kilocode_change end
+// stratacode_change end
 
 export * as Agent from "./agent"

@@ -33,7 +33,7 @@ const ctx = {
   sessionID: SessionID.make("ses_test"),
   messageID: MessageID.make(""),
   callID: "",
-  agent: "code", // kilocode_change
+  agent: "code", // stratacode_change
   abort: AbortSignal.any([]),
   messages: [],
   metadata: () => Effect.void,
@@ -485,7 +485,7 @@ describe("tool.bash permissions", () => {
       test(
         `asks for external_directory permission for missing PowerShell env paths [${item.label}]`,
         withShell(item, async () => {
-          const key = "KILO_TEST_MISSING"
+          const key = "STRATA_TEST_MISSING"
           const prev = process.env[key]
           delete process.env[key]
           try {
@@ -966,10 +966,10 @@ describe("tool.bash permissions", () => {
         await Effect.runPromise(bash.execute({ command: "ls -la", description: "List" }, capture(requests)))
         const bashReq = requests.find((r) => r.permission === "bash")
         expect(bashReq).toBeDefined()
-        // kilocode_change start — arity prefix produces "ls *" with space before wildcard
+        // stratacode_change start — arity prefix produces "ls *" with space before wildcard
         expect(bashReq!.always).toContain("ls *")
         expect(bashReq!.patterns).toContain("ls -la")
-        // kilocode_change end
+        // stratacode_change end
       },
     })
   })

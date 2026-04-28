@@ -6,7 +6,7 @@ import {
   relative,
   resolve as pathResolve,
   sep,
-} from "path" // kilocode_change - harden containment checks
+} from "path" // stratacode_change - harden containment checks
 import { realpathSync } from "fs"
 import * as NFS from "fs/promises"
 import { lookup } from "mime-types"
@@ -238,9 +238,9 @@ export namespace AppFileSystem {
   }
 
   export function contains(parent: string, child: string) {
-    // kilocode_change start - reject cross-drive and escaped relative paths
+    // stratacode_change start - reject cross-drive and escaped relative paths
     const rel = relative(parent, child)
     return rel === "" || (!isAbsolute(rel) && rel !== ".." && !rel.startsWith(`..${sep}`))
-    // kilocode_change end
+    // stratacode_change end
   }
 }

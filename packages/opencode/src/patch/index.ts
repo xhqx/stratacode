@@ -2,7 +2,7 @@ import z from "zod"
 import * as path from "path"
 import * as fs from "fs/promises"
 import { Log } from "../util"
-import { Encoding } from "../kilocode/encoding" // kilocode_change
+import { Encoding } from "../stratacode/encoding" // stratacode_change
 import * as Bom from "../util/bom"
 
 const log = Log.create({ service: "patch" })
@@ -307,20 +307,20 @@ interface ApplyPatchFileUpdate {
   unified_diff: string
   content: string
   bom: boolean
-  encoding: string // kilocode_change
+  encoding: string // stratacode_change
 }
 
 export function deriveNewContentsFromChunks(filePath: string, chunks: UpdateFileChunk[]): ApplyPatchFileUpdate {
   // Read original file content
   let originalContent: ReturnType<typeof Bom.split>
-  let encoding: string // kilocode_change - track detected encoding for round-trip write
+  let encoding: string // stratacode_change - track detected encoding for round-trip write
   try {
-    // kilocode_change start - encoding-aware read replaces readFileSync(filePath, "utf-8").
+    // stratacode_change start - encoding-aware read replaces readFileSync(filePath, "utf-8").
     // Encoding.readSync strips UTF-8 BOMs so the BOM flag is derived from the encoding label.
     const result = Encoding.readSync(filePath)
     originalContent = { bom: result.encoding === "utf-8-bom", text: result.text }
     encoding = result.encoding
-    // kilocode_change end
+    // stratacode_change end
   } catch (error) {
     throw new Error(`Failed to read file ${filePath}: ${error}`, { cause: error })
   }
@@ -350,7 +350,7 @@ export function deriveNewContentsFromChunks(filePath: string, chunks: UpdateFile
     unified_diff: unifiedDiff,
     content: newContent,
     bom: originalContent.bom || next.bom,
-    encoding, // kilocode_change - include detected encoding for round-trip write
+    encoding, // stratacode_change - include detected encoding for round-trip write
   }
 }
 
@@ -538,7 +538,7 @@ export async function applyHunksToFiles(hunks: Hunk[]): Promise<AffectedPaths> {
   for (const hunk of hunks) {
     switch (hunk.type) {
       case "add":
-        await Encoding.write(hunk.path, hunk.contents) // kilocode_change - encoding-aware write (mkdirs)
+        await Encoding.write(hunk.path, hunk.contents) // stratacode_change - encoding-aware write (mkdirs)
         added.push(hunk.path)
         log.info(`Added file: ${hunk.path}`)
         break
@@ -554,13 +554,13 @@ export async function applyHunksToFiles(hunks: Hunk[]): Promise<AffectedPaths> {
 
         if (hunk.move_path) {
           // Handle file move
-          await Encoding.write(hunk.move_path, Bom.join(fileUpdate.content, fileUpdate.bom), fileUpdate.encoding) // kilocode_change - encoding-aware write (mkdirs) replaces fs.mkdir + fs.writeFile
+          await Encoding.write(hunk.move_path, Bom.join(fileUpdate.content, fileUpdate.bom), fileUpdate.encoding) // stratacode_change - encoding-aware write (mkdirs) replaces fs.mkdir + fs.writeFile
           await fs.unlink(hunk.path)
           modified.push(hunk.move_path)
           log.info(`Moved file: ${hunk.path} -> ${hunk.move_path}`)
         } else {
           // Regular update
-          await Encoding.write(hunk.path, Bom.join(fileUpdate.content, fileUpdate.bom), fileUpdate.encoding) // kilocode_change - encoding-aware write replaces fs.writeFile
+          await Encoding.write(hunk.path, Bom.join(fileUpdate.content, fileUpdate.bom), fileUpdate.encoding) // stratacode_change - encoding-aware write replaces fs.writeFile
           modified.push(hunk.path)
           log.info(`Updated file: ${hunk.path}`)
         }
@@ -625,7 +625,7 @@ export async function maybeParseApplyPatchVerified(
             // For delete, we need to read the current content
             const deletePath = path.resolve(effectiveCwd, hunk.path)
             try {
-              const content = (await Encoding.read(deletePath)).text // kilocode_change - encoding-aware read
+              const content = (await Encoding.read(deletePath)).text // stratacode_change - encoding-aware read
               changes.set(resolvedPath, {
                 type: "delete",
                 content,

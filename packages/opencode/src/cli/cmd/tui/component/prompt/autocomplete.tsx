@@ -52,9 +52,9 @@ export type AutocompleteRef = {
   onInput: (value: string) => void
   onKeyDown: (e: KeyEvent) => void
   onCursorChange: () => void
-  // kilocode_change start - let the prompt close autocomplete without mutating draft text
+  // stratacode_change start - let the prompt close autocomplete without mutating draft text
   dismiss: () => void
-  // kilocode_change end
+  // stratacode_change end
   visible: false | "@" | "/"
 }
 
@@ -490,7 +490,7 @@ export function Autocomplete(props: {
     })
   }
 
-  // kilocode_change start - keep slash text intact when overlays hide the prompt,
+  // stratacode_change start - keep slash text intact when overlays hide the prompt,
   // but still allow normal autocomplete dismissal to clean it up.
   function dismiss() {
     if (!store.visible) return
@@ -510,18 +510,18 @@ export function Autocomplete(props: {
     }
     dismiss()
   }
-  // kilocode_change end
+  // stratacode_change end
 
   onMount(() => {
     props.ref({
       get visible() {
         return store.visible
       },
-      // kilocode_change start
+      // stratacode_change start
       dismiss() {
         dismiss()
       },
-      // kilocode_change end
+      // stratacode_change end
       onInput(value) {
         if (store.visible) {
           if (
@@ -599,7 +599,7 @@ export function Autocomplete(props: {
             e.preventDefault()
             return
           }
-          // kilocode_change start
+          // stratacode_change start
           if (name === "right") {
             // Right arrow should not accept the suggestion when cursor is not
             // within the filter region (not near where the suggestion is being added)
@@ -610,7 +610,7 @@ export function Autocomplete(props: {
               return
             }
           }
-          // kilocode_change end
+          // stratacode_change end
         }
         if (!store.visible) {
           if (e.name === "@") {
@@ -626,7 +626,7 @@ export function Autocomplete(props: {
           }
         }
       },
-      // kilocode_change start
+      // stratacode_change start
       onCursorChange() {
         if (!store.visible) return
         const cursor = props.input().cursorOffset
@@ -642,7 +642,7 @@ export function Autocomplete(props: {
           hide()
         }
       },
-      // kilocode_change end
+      // stratacode_change end
     })
   })
 

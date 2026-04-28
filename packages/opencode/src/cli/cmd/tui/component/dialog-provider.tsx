@@ -8,15 +8,15 @@ import { DialogPrompt } from "../ui/dialog-prompt"
 import { Link } from "../ui/link"
 import { useTheme } from "../context/theme"
 import { TextAttributes } from "@opentui/core"
-import type { ProviderAuthAuthorization, ProviderAuthMethod } from "@kilocode/sdk/v2"
+import type { ProviderAuthAuthorization, ProviderAuthMethod } from "@stratacode/sdk/v2"
 import { DialogModel } from "./dialog-model"
 import { useKeyboard } from "@opentui/solid"
 import * as Clipboard from "@tui/util/clipboard"
 import { useToast } from "../ui/toast"
 import { isConsoleManagedProvider } from "@tui/util/provider-origin"
-import * as KiloProvider from "@/kilocode/cli/cmd/tui/component/dialog-provider" // kilocode_change
+import * as StrataProvider from "@/stratacode/cli/cmd/tui/component/dialog-provider" // stratacode_change
 
-const PROVIDER_PRIORITY: Record<string, number> = KiloProvider.PROVIDER_PRIORITY // kilocode_change
+const PROVIDER_PRIORITY: Record<string, number> = StrataProvider.PROVIDER_PRIORITY // stratacode_change
 
 export function createDialogProviderOptions() {
   const sync = useSync()
@@ -33,9 +33,9 @@ export function createDialogProviderOptions() {
         const connected = sync.data.provider_next.connected.includes(provider.id)
 
         return {
-          title: KiloProvider.PROVIDER_TITLES[provider.id] ?? provider.name, // kilocode_change
+          title: StrataProvider.PROVIDER_TITLES[provider.id] ?? provider.name, // stratacode_change
           value: provider.id,
-          description: KiloProvider.PROVIDER_DESCRIPTIONS[provider.id], // kilocode_change
+          description: StrataProvider.PROVIDER_DESCRIPTIONS[provider.id], // stratacode_change
           footer: consoleManaged ? sync.data.console_state.activeOrgName : undefined,
           category: provider.id in PROVIDER_PRIORITY ? "Popular" : "Other",
           gutter: connected ? <text fg={theme.success}>✓</text> : undefined,
@@ -103,8 +103,8 @@ export function createDialogProviderOptions() {
                 ))
               }
               if (result.data?.method === "auto") {
-                // kilocode_change start
-                const kilo = KiloProvider.renderAutoMethod({
+                // stratacode_change start
+                const strata = StrataProvider.renderAutoMethod({
                   providerID: provider.id,
                   title: method.label,
                   index,
@@ -113,10 +113,10 @@ export function createDialogProviderOptions() {
                   useTheme,
                   DialogModel,
                 })
-                if (kilo) {
-                  dialog.replace(kilo)
+                if (strata) {
+                  dialog.replace(strata)
                 } else {
-                  // kilocode_change end
+                  // stratacode_change end
                   dialog.replace(() => (
                     <AutoMethod
                       providerID={provider.id}
@@ -125,7 +125,7 @@ export function createDialogProviderOptions() {
                       authorization={result.data!}
                     />
                   ))
-                } // kilocode_change
+                } // stratacode_change
               }
             }
             if (method.type === "api") {
@@ -269,7 +269,7 @@ function ApiMethod(props: ApiMethodProps) {
     <DialogPrompt
       title={props.title}
       placeholder="API key"
-      description={KiloProvider.renderApiDescription(props.providerID, theme)} // kilocode_change
+      description={StrataProvider.renderApiDescription(props.providerID, theme)} // stratacode_change
       onConfirm={async (value) => {
         if (!value) return
         await sdk.client.auth.set({

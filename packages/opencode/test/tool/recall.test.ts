@@ -1,4 +1,4 @@
-// kilocode_change - new file
+// stratacode_change - new file
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import { $ } from "bun"
 import { Effect } from "effect"
@@ -11,7 +11,7 @@ import { resetDatabase } from "../fixture/db"
 import { tmpdir } from "../fixture/fixture"
 import type { Tool } from "../../src/tool"
 import { SessionID, MessageID } from "../../src/session/schema"
-import { RemoteSender } from "../../src/kilo-sessions/remote-sender"
+import { RemoteSender } from "../../src/strata-sessions/remote-sender"
 
 beforeEach(() => {
   spyOn(RemoteSender, "create").mockReturnValue({ handle() {}, dispose() {} })

@@ -5,7 +5,7 @@ import { Effect, Layer } from "effect"
 import { Instance } from "../../src/project/instance"
 import * as CrossSpawnSpawner from "../../src/effect/cross-spawn-spawner"
 import { ToolRegistry } from "../../src/tool"
-import { provideTmpdirInstance, tmpdir } from "../fixture/fixture" // kilocode_change
+import { provideTmpdirInstance, tmpdir } from "../fixture/fixture" // stratacode_change
 import { testEffect } from "../lib/effect"
 
 const node = CrossSpawnSpawner.defaultLayer
@@ -17,13 +17,13 @@ afterEach(async () => {
 })
 
 describe("tool.registry", () => {
-  // kilocode_change start - plan_exit is always registered
+  // stratacode_change start - plan_exit is always registered
   it.live("plan_exit is always registered regardless of client", () =>
     Effect.gen(function* () {
-      const original = process.env["KILO_CLIENT"]
+      const original = process.env["STRATA_CLIENT"]
       try {
         for (const client of ["cli", "vscode", "desktop", "app"]) {
-          process.env["KILO_CLIENT"] = client
+          process.env["STRATA_CLIENT"] = client
           yield* provideTmpdirInstance(
             () =>
               Effect.gen(function* () {
@@ -35,24 +35,24 @@ describe("tool.registry", () => {
           )
         }
       } finally {
-        if (original === undefined) delete process.env["KILO_CLIENT"]
-        else process.env["KILO_CLIENT"] = original
+        if (original === undefined) delete process.env["STRATA_CLIENT"]
+        else process.env["STRATA_CLIENT"] = original
       }
     }),
   )
-  // kilocode_change end
+  // stratacode_change end
 
-  // kilocode_change start
+  // stratacode_change start
   test("suggest is registered for cli and vscode only", async () => {
-    const original = process.env["KILO_CLIENT"]
-    const originalQuestion = process.env["KILO_ENABLE_QUESTION_TOOL"]
-    const originalConfig = process.env["KILO_CONFIG_DIR"]
+    const original = process.env["STRATA_CLIENT"]
+    const originalQuestion = process.env["STRATA_ENABLE_QUESTION_TOOL"]
+    const originalConfig = process.env["STRATA_CONFIG_DIR"]
     try {
       for (const client of ["cli", "vscode", "desktop", "app"]) {
-        process.env["KILO_CLIENT"] = client
-        process.env["KILO_ENABLE_QUESTION_TOOL"] = client === "vscode" ? "true" : "false"
+        process.env["STRATA_CLIENT"] = client
+        process.env["STRATA_ENABLE_QUESTION_TOOL"] = client === "vscode" ? "true" : "false"
         await using tmp = await tmpdir({ git: true })
-        process.env["KILO_CONFIG_DIR"] = tmp.path
+        process.env["STRATA_CONFIG_DIR"] = tmp.path
         await Instance.provide({
           directory: tmp.path,
           fn: async () => {
@@ -63,15 +63,15 @@ describe("tool.registry", () => {
         })
       }
     } finally {
-      if (original === undefined) delete process.env["KILO_CLIENT"]
-      else process.env["KILO_CLIENT"] = original
-      if (originalQuestion === undefined) delete process.env["KILO_ENABLE_QUESTION_TOOL"]
-      else process.env["KILO_ENABLE_QUESTION_TOOL"] = originalQuestion
-      if (originalConfig === undefined) delete process.env["KILO_CONFIG_DIR"]
-      else process.env["KILO_CONFIG_DIR"] = originalConfig
+      if (original === undefined) delete process.env["STRATA_CLIENT"]
+      else process.env["STRATA_CLIENT"] = original
+      if (originalQuestion === undefined) delete process.env["STRATA_ENABLE_QUESTION_TOOL"]
+      else process.env["STRATA_ENABLE_QUESTION_TOOL"] = originalQuestion
+      if (originalConfig === undefined) delete process.env["STRATA_CONFIG_DIR"]
+      else process.env["STRATA_CONFIG_DIR"] = originalConfig
     }
   })
-  // kilocode_change end
+  // stratacode_change end
 
   it.live("loads tools from .opencode/tool (singular)", () =>
     provideTmpdirInstance((dir) =>
@@ -141,7 +141,7 @@ describe("tool.registry", () => {
             JSON.stringify({
               name: "custom-tools",
               dependencies: {
-                "@kilocode/plugin": "^0.0.0",
+                "@stratacode/plugin": "^0.0.0",
                 cowsay: "^1.6.0",
               },
             }),
@@ -156,7 +156,7 @@ describe("tool.registry", () => {
               packages: {
                 "": {
                   dependencies: {
-                    "@kilocode/plugin": "^0.0.0",
+                    "@stratacode/plugin": "^0.0.0",
                     cowsay: "^1.6.0",
                   },
                 },

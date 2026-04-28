@@ -11,8 +11,8 @@ export function publish(port: number, domain?: string) {
   if (bonjour) unpublish()
 
   try {
-    const host = domain ?? "kilo.local" // kilocode_change
-    const name = `kilo-${port}` // kilocode_change
+    const host = domain ?? "strata.local" // stratacode_change
+    const name = `strata-${port}` // stratacode_change
     bonjour = new Bonjour()
     const service = bonjour.publish({
       name,

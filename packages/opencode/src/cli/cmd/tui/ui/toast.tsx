@@ -59,7 +59,7 @@ function init() {
       const { duration, ...currentToast } = options
       setStore("currentToast", currentToast)
       if (timeoutHandle) clearTimeout(timeoutHandle)
-      // kilocode_change start
+      // stratacode_change start
       timeoutHandle = null
       if (duration && duration > 0) {
         timeoutHandle = setTimeout(() => {
@@ -73,7 +73,7 @@ function init() {
       timeoutHandle = null
       setStore("currentToast", null)
     },
-    // kilocode_change end
+    // stratacode_change end
     error: (err: any) => {
       if (err instanceof Error)
         return toast.show({

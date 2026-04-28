@@ -1,6 +1,6 @@
 import { Context, Effect, Layer } from "effect"
 
-import { Global } from "../global" // kilocode_change
+import { Global } from "../global" // stratacode_change
 import { Instance } from "../project/instance"
 
 import PROMPT_ANTHROPIC from "./prompt/anthropic.txt"
@@ -9,7 +9,7 @@ import PROMPT_BEAST from "./prompt/beast.txt"
 import PROMPT_GEMINI from "./prompt/gemini.txt"
 import PROMPT_GPT from "./prompt/gpt.txt"
 import PROMPT_KIMI from "./prompt/kimi.txt"
-import PROMPT_LING from "./prompt/ling.txt" // kilocode_change
+import PROMPT_LING from "./prompt/ling.txt" // stratacode_change
 
 import PROMPT_CODEX from "./prompt/codex.txt"
 import PROMPT_TRINITY from "./prompt/trinity.txt"
@@ -18,13 +18,13 @@ import type { Agent } from "@/agent/agent"
 import { Permission } from "@/permission"
 import { Skill } from "@/skill"
 
-// kilocode_change start
-import SOUL from "../kilocode/soul.txt"
-import { staticEnvLines, type EditorContext } from "../kilocode/editor-context"
-import { isLing } from "../kilocode/model-match"
-// kilocode_change end
+// stratacode_change start
+import SOUL from "../stratacode/soul.txt"
+import { staticEnvLines, type EditorContext } from "../stratacode/editor-context"
+import { isLing } from "../stratacode/model-match"
+// stratacode_change end
 
-// kilocode_change start
+// stratacode_change start
 export function instructions() {
   return PROMPT_CODEX.trim()
 }
@@ -32,10 +32,10 @@ export function instructions() {
 export function soul() {
   return SOUL.trim()
 }
-// kilocode_change end
+// stratacode_change end
 
 export function provider(model: Provider.Model) {
-  // kilocode_change start
+  // stratacode_change start
   switch (model.prompt) {
     case "anthropic":
       return [PROMPT_ANTHROPIC]
@@ -52,7 +52,7 @@ export function provider(model: Provider.Model) {
     case "trinity":
       return [PROMPT_TRINITY]
   }
-  // kilocode_change end
+  // stratacode_change end
 
   if (model.api.id.includes("gpt-4") || model.api.id.includes("o1") || model.api.id.includes("o3"))
     return [PROMPT_BEAST]
@@ -66,12 +66,12 @@ export function provider(model: Provider.Model) {
   if (model.api.id.includes("claude")) return [PROMPT_ANTHROPIC]
   if (model.api.id.toLowerCase().includes("trinity")) return [PROMPT_TRINITY]
   if (model.api.id.toLowerCase().includes("kimi")) return [PROMPT_KIMI]
-  if (isLing(model.api.id)) return [PROMPT_LING] // kilocode_change
+  if (isLing(model.api.id)) return [PROMPT_LING] // stratacode_change
   return [PROMPT_DEFAULT]
 }
 
 export interface Interface {
-  readonly environment: (model: Provider.Model, editorContext?: EditorContext) => string[] // kilocode_change
+  readonly environment: (model: Provider.Model, editorContext?: EditorContext) => string[] // stratacode_change
   readonly skills: (agent: Agent.Info) => Effect.Effect<string | undefined>
 }
 
@@ -83,7 +83,7 @@ export const layer = Layer.effect(
     const skill = yield* Skill.Service
 
     return Service.of({
-      environment(model, editorContext) { // kilocode_change
+      environment(model, editorContext) { // stratacode_change
         const project = Instance.project
         return [
           [
@@ -95,9 +95,9 @@ export const layer = Layer.effect(
             `  Is directory a git repo: ${project.vcs === "git" ? "yes" : "no"}`,
             `  Platform: ${process.platform}`,
             `  Today's date: ${new Date().toDateString()}`,
-            `  Project config: .kilo/command/*.md, .kilo/agent/*.md, kilo.json, AGENTS.md. Put new commands and agents in .kilo/. Do not use .kilocode/ or .opencode/.`, // kilocode_change
-            `  Global config: ${Global.Path.config}/ (same structure)`, // kilocode_change
-            ...staticEnvLines(editorContext), // kilocode_change
+            `  Project config: .strata/command/*.md, .strata/agent/*.md, strata.json, AGENTS.md. Put new commands and agents in .strata/. Do not use .stratacode/ or .opencode/.`, // stratacode_change
+            `  Global config: ${Global.Path.config}/ (same structure)`, // stratacode_change
+            ...staticEnvLines(editorContext), // stratacode_change
             `</env>`,
           ].join("\n"),
         ]

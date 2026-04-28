@@ -6,8 +6,8 @@ import type * as Provider from "./provider"
 import type * as ModelsDev from "./models"
 import { iife } from "@/util/iife"
 import { Flag } from "@/flag/flag"
-import { kiloProviderOptions } from "@/kilocode/provider-options"
-import { isLing } from "@/kilocode/model-match" // kilocode_change
+import { strataProviderOptions } from "@/stratacode/provider-options"
+import { isLing } from "@/stratacode/model-match" // stratacode_change
 
 type Modality = NonNullable<ModelsDev.Model["modalities"]>["input"][number]
 
@@ -19,7 +19,7 @@ function mimeToModality(mime: string): Modality | undefined {
   return undefined
 }
 
-export const OUTPUT_TOKEN_MAX = Flag.KILO_EXPERIMENTAL_OUTPUT_TOKEN_MAX || 32_000
+export const OUTPUT_TOKEN_MAX = Flag.STRATA_EXPERIMENTAL_OUTPUT_TOKEN_MAX || 32_000
 
 // Maps npm package to the key the AI SDK expects for providerOptions
 function sdkKey(npm: string): string | undefined {
@@ -43,7 +43,7 @@ function sdkKey(npm: string): string | undefined {
       return "gateway"
     case "@openrouter/ai-sdk-provider":
       return "openrouter"
-    case "@kilocode/kilo-gateway": // kilocode_change
+    case "@stratacode/strata-gateway": // stratacode_change
       return "openrouter"
   }
   return undefined
@@ -56,11 +56,11 @@ function normalizeMessages(
 ): ModelMessage[] {
   // Anthropic rejects messages with empty content - filter out empty string messages
   // and remove empty text/reasoning parts from array content
-  // kilocode_change start - only filter for Claude models on Bedrock, not all Bedrock models
+  // stratacode_change start - only filter for Claude models on Bedrock, not all Bedrock models
   const bedrock = model.api.npm === "@ai-sdk/amazon-bedrock"
   const claude = model.api.id.includes("anthropic") || model.api.id.includes("claude") || model.id.includes("claude")
   if (model.api.npm === "@ai-sdk/anthropic" || (bedrock && claude)) {
-    // kilocode_change end
+    // stratacode_change end
     msgs = msgs
       .map((msg) => {
         if (typeof msg.content === "string") {
@@ -183,7 +183,7 @@ function normalizeMessages(
     return result
   }
 
-  // kilocode_change start - cherry-picked from anomalyco/opencode#24180;
+  // stratacode_change start - cherry-picked from anomalyco/opencode#24180;
   // will be reverted on the next wholesale upstream merge.
   // Deepseek requires all assistant messages to have reasoning on them
   if (model.api.id.includes("deepseek")) {
@@ -202,15 +202,15 @@ function normalizeMessages(
       }
     })
   }
-  // kilocode_change end
+  // stratacode_change end
 
-  // kilocode_change start - cherry-picked from anomalyco/opencode#24435
+  // stratacode_change start - cherry-picked from anomalyco/opencode#24435
   if (
     typeof model.capabilities.interleaved === "object" &&
     model.capabilities.interleaved.field &&
     model.api.npm !== "@openrouter/ai-sdk-provider"
   ) {
-    // kilocode_change end
+    // stratacode_change end
     const field = model.capabilities.interleaved.field
     return msgs.map((msg) => {
       if (msg.role === "assistant" && Array.isArray(msg.content)) {
@@ -220,7 +220,7 @@ function normalizeMessages(
         // Filter out reasoning parts from content
         const filteredContent = msg.content.filter((part: any) => part.type !== "reasoning")
 
-        // kilocode_change start - cherry-picked from anomalyco/opencode#24146;
+        // stratacode_change start - cherry-picked from anomalyco/opencode#24146;
         // will be reverted on the next wholesale upstream merge.
         // Include reasoning_content | reasoning_details directly on the message for all assistant messages.
         // Always set the field even when empty — some providers (e.g. DeepSeek) may return empty
@@ -236,7 +236,7 @@ function normalizeMessages(
             },
           },
         }
-        // kilocode_change end
+        // stratacode_change end
       }
 
       return msg
@@ -397,7 +397,7 @@ export function temperature(model: Provider.Model) {
     }
     return 0.6
   }
-  if (isLing(model.api.id)) return 0.3 // kilocode_change
+  if (isLing(model.api.id)) return 0.3 // stratacode_change
   return undefined
 }
 
@@ -407,7 +407,7 @@ export function topP(model: Provider.Model) {
   if (["minimax-m2", "gemini", "kimi-k2.5", "kimi-k2p5", "kimi-k2-5"].some((s) => id.includes(s))) {
     return 0.95
   }
-  if (isLing(model.api.id)) return 0.95 // kilocode_change
+  if (isLing(model.api.id)) return 0.95 // stratacode_change
   return undefined
 }
 
@@ -418,7 +418,7 @@ export function topK(model: Provider.Model) {
     return 20
   }
   if (id.includes("gemini")) return 64
-  if (isLing(model.api.id)) return 20 // kilocode_change
+  if (isLing(model.api.id)) return 20 // stratacode_change
   return undefined
 }
 
@@ -436,15 +436,15 @@ function anthropicAdaptiveEfforts(apiId: string): string[] | null {
 }
 
 export function variants(model: Provider.Model): Record<string, Record<string, any>> {
-  // kilocode_change start
+  // stratacode_change start
   if (
-    ["@kilocode/kilo-gateway", "@ai-sdk/openai-compatible"].includes(model.api.npm) &&
+    ["@stratacode/strata-gateway", "@ai-sdk/openai-compatible"].includes(model.api.npm) &&
     model.variants &&
     Object.keys(model.variants).length > 0
   ) {
     return model.variants
   }
-  // kilocode_change end
+  // stratacode_change end
 
   if (!model.capabilities.reasoning) return {}
 
@@ -452,15 +452,15 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
   const adaptiveEfforts = anthropicAdaptiveEfforts(model.api.id)
 
   if (
-    // kilocode_change start - cherry-picked from anomalyco/opencode#24157
+    // stratacode_change start - cherry-picked from anomalyco/opencode#24157
     id.includes("deepseek-chat") ||
     id.includes("deepseek-reasoner") ||
     id.includes("deepseek-r1") ||
     id.includes("deepseek-v3") ||
-    // kilocode_change end
+    // stratacode_change end
     id.includes("minimax") ||
-    // id.includes("glm") || // kilocode_change
-    // id.includes("kimi") || // kilocode_change
+    // id.includes("glm") || // stratacode_change
+    // id.includes("kimi") || // stratacode_change
     // TODO: Remove this after models.dev data is fixed to use "kimi-k2.5" instead of "k2p5"
     id.includes("k2p") ||
     id.includes("qwen") ||
@@ -470,8 +470,8 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
 
   // see: https://docs.x.ai/docs/guides/reasoning#control-how-hard-the-model-thinks
   if (id.includes("grok") && id.includes("grok-3-mini")) {
-    if (model.api.npm === "@openrouter/ai-sdk-provider" || model.api.npm === "@kilocode/kilo-gateway") {
-      // kilocode_change - add Kilo Gateway support
+    if (model.api.npm === "@openrouter/ai-sdk-provider" || model.api.npm === "@stratacode/strata-gateway") {
+      // stratacode_change - add Strata Gateway support
       return {
         low: { reasoning: { effort: "low" } },
         high: { reasoning: { effort: "high" } },
@@ -485,21 +485,21 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
   if (id.includes("grok")) return {}
 
   switch (model.api.npm) {
-    case "@kilocode/kilo-gateway": // kilocode_change
+    case "@stratacode/strata-gateway": // stratacode_change
     case "@openrouter/ai-sdk-provider":
-      // kilocode_change start
+      // stratacode_change start
       if (id.includes("glm") || id.includes("kimi") || id.includes("qwen")) {
         return {
           instant: { reasoning: { enabled: false } },
           thinking: { reasoning: { enabled: true } },
         }
       }
-      // kilocode_change end
+      // stratacode_change end
       if (
         !model.id.includes("gpt") &&
         !model.id.includes("gemini-3") &&
         !model.id.includes("claude") &&
-        !model.id.includes("mercury") // kilocode_change
+        !model.id.includes("mercury") // stratacode_change
       )
         return {}
       return Object.fromEntries(OPENAI_EFFORTS.map((effort) => [effort, { reasoning: { effort } }]))
@@ -600,13 +600,13 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
     case "venice-ai-sdk-provider":
     // https://docs.venice.ai/overview/guides/reasoning-models#reasoning-effort
     case "@ai-sdk/openai-compatible":
-      // kilocode_change start - cherry-picked from anomalyco/opencode#24163
+      // stratacode_change start - cherry-picked from anomalyco/opencode#24163
       const efforts = [...WIDELY_SUPPORTED_EFFORTS]
       if (model.api.id.includes("deepseek-v4")) {
         efforts.push("max")
       }
       return Object.fromEntries(efforts.map((effort) => [effort, { reasoningEffort: effort }]))
-    // kilocode_change end
+    // stratacode_change end
 
     case "@ai-sdk/azure":
       // https://v5.ai-sdk.dev/providers/ai-sdk-providers/azure
@@ -615,11 +615,11 @@ export function variants(model: Provider.Model): Record<string, Record<string, a
       if (id.includes("gpt-5-") || id === "gpt-5") {
         azureEfforts.unshift("minimal")
       }
-      // kilocode_change start
+      // stratacode_change start
       if (model.release_date >= "2025-12-04") {
         azureEfforts.push("xhigh")
       }
-      // kilocode_change end
+      // stratacode_change end
       return Object.fromEntries(
         azureEfforts.map((effort) => [
           effort,
@@ -899,7 +899,7 @@ export function options(input: {
   if (
     input.model.api.npm === "@openrouter/ai-sdk-provider" ||
     input.model.api.npm === "@llmgateway/ai-sdk-provider" ||
-    input.model.api.npm === "@kilocode/kilo-gateway" // kilocode_change
+    input.model.api.npm === "@stratacode/strata-gateway" // stratacode_change
   ) {
     result["usage"] = {
       include: true,
@@ -1040,7 +1040,7 @@ export function smallOptions(model: Provider.Model) {
   if (
     model.providerID === "openrouter" ||
     model.providerID === "llmgateway" ||
-    model.api.npm === "@kilocode/kilo-gateway" // kilocode_change
+    model.api.npm === "@stratacode/strata-gateway" // stratacode_change
   ) {
     if (model.api.id.includes("google")) {
       return { reasoning: { enabled: false } }
@@ -1092,11 +1092,11 @@ export function providerOptions(model: Provider.Model, options: { [x: string]: a
     return result
   }
 
-  // kilocode_change start
-  if (model.api.npm === "@kilocode/kilo-gateway") {
-    return kiloProviderOptions(options)
+  // stratacode_change start
+  if (model.api.npm === "@stratacode/strata-gateway") {
+    return strataProviderOptions(options)
   }
-  // kilocode_change end
+  // stratacode_change end
 
   const key = sdkKey(model.api.npm) ?? model.providerID
   // @ai-sdk/azure delegates to OpenAIChatLanguageModel which reads from

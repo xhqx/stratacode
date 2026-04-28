@@ -7,7 +7,7 @@ on:
 
 jobs:
   generate:
-    if: github.repository == 'Kilo-Org/kilocode'
+    if: github.repository == 'Strata-Org/stratacode'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: write
@@ -23,10 +23,10 @@ jobs:
         id: committer
         uses: ./.github/actions/setup-git-committer
         with:
-          # kilocode_change start
-          kilo-maintainer-app-id: ${{ secrets.KILO_MAINTAINER_APP_ID }}
-          kilo-maintainer-app-secret: ${{ secrets.KILO_MAINTAINER_APP_SECRET }}
-          # kilocode_change end
+          # stratacode_change start
+          strata-maintainer-app-id: ${{ secrets.STRATA_MAINTAINER_APP_ID }}
+          strata-maintainer-app-secret: ${{ secrets.STRATA_MAINTAINER_APP_SECRET }}
+          # stratacode_change end
 
       - name: Generate
         run: ./script/generate.ts

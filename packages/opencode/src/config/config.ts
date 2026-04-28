@@ -10,7 +10,7 @@ import { NamedError } from "@opencode-ai/shared/util/error"
 import { Flag } from "../flag/flag"
 import { Auth } from "../auth"
 import { Env } from "../env"
-import { applyEdits, findNodeAtLocation, modify, parseTree } from "jsonc-parser" // kilocode_change - parseTree/findNodeAtLocation used in patchJsonc
+import { applyEdits, findNodeAtLocation, modify, parseTree } from "jsonc-parser" // stratacode_change - parseTree/findNodeAtLocation used in patchJsonc
 import { Instance, type InstanceContext } from "../project/instance"
 import { InstallationLocal, InstallationVersion } from "@/installation/version"
 import { existsSync } from "fs"
@@ -43,13 +43,13 @@ import { ConfigServer } from "./server"
 import { ConfigSkills } from "./skills"
 import { ConfigVariable } from "./variable"
 import { Npm } from "@/npm"
-// kilocode_change start
-import { KilocodeConfig } from "../kilocode/config/config"
-import { KilocodeDefaultPlugins } from "@/kilocode/config/default-plugins" // kilocode_change
-import { IndexingConfig as KiloIndexingConfig } from "@kilocode/kilo-indexing/config" // kilocode_change
+// stratacode_change start
+import { StratacodeConfig } from "../stratacode/config/config"
+import { StratacodeDefaultPlugins } from "@/stratacode/config/default-plugins" // stratacode_change
+import { IndexingConfig as StrataIndexingConfig } from "@stratacode/strata-indexing/config" // stratacode_change
 import { makeRuntime } from "@/effect/run-service"
 import { unique } from "remeda"
-// kilocode_change end
+// stratacode_change end
 
 const log = Log.create({ service: "config" })
 
@@ -74,7 +74,7 @@ function normalizeLoadedConfig(data: unknown, source: string) {
   return copy
 }
 
-// kilocode_change start
+// stratacode_change start
 export const Warning = z.object({
   path: z.string(),
   message: z.string(),
@@ -82,8 +82,8 @@ export const Warning = z.object({
 })
 export type Warning = z.infer<typeof Warning>
 
-const { toWarning, caught: caughtWarning, handleInvalid } = KilocodeConfig
-// kilocode_change end
+const { toWarning, caught: caughtWarning, handleInvalid } = StratacodeConfig
+// stratacode_change end
 
 async function resolveLoadedPlugins<T extends { plugin?: ConfigPlugin.Spec[] }>(config: T, filepath: string) {
   if (!config.plugin) return config
@@ -99,10 +99,10 @@ export const Server = ConfigServer.Server.zod
 export const Layout = ConfigLayout.Layout.zod
 export type Layout = ConfigLayout.Layout
 
-// kilocode_change start - indexing configuration
-export const Indexing = KiloIndexingConfig
+// stratacode_change start - indexing configuration
+export const Indexing = StrataIndexingConfig
 export type Indexing = z.infer<typeof Indexing>
-// kilocode_change end
+// stratacode_change end
 
 // Schemas that still live at the zod layer (have .transform / .preprocess /
 // .meta not expressible in current Effect Schema) get referenced via a
@@ -110,7 +110,7 @@ export type Indexing = z.infer<typeof Indexing>
 // exact zod directly, preserving component $refs.
 const AgentRef = Schema.Any.annotate({ [ZodOverride]: ConfigAgent.Info })
 const LogLevelRef = Schema.Any.annotate({ [ZodOverride]: Log.Level })
-const IndexingRef = Schema.Any.annotate({ [ZodOverride]: KiloIndexingConfig }) // kilocode_change
+const IndexingRef = Schema.Any.annotate({ [ZodOverride]: StrataIndexingConfig }) // stratacode_change
 
 const PositiveInt = Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThan(0))
 const NonNegativeInt = Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThanOrEqualTo(0))
@@ -163,29 +163,29 @@ export const Info = Schema.Struct({
   enabled_providers: Schema.optional(Schema.mutable(Schema.Array(Schema.String))).annotate({
     description: "When set, ONLY these providers will be enabled. All other providers will be ignored",
   }),
-  // kilocode_change start
-  // NOTE: Any new kilocode_change key added to Config.Info must also be mirrored in
+  // stratacode_change start
+  // NOTE: Any new stratacode_change key added to Config.Info must also be mirrored in
   // apps/web/src/app/config.json/extras.ts in the cloud repo, otherwise
-  // $schema: https://app.kilo.ai/config.json will not recognize it.
+  // $schema: https://app.strata.ai/config.json will not recognize it.
   remote_control: Schema.optional(Schema.Boolean).annotate({
-    description: "Enable remote control of sessions via Kilo Cloud. Equivalent to running /remote on startup.",
+    description: "Enable remote control of sessions via Strata Cloud. Equivalent to running /remote on startup.",
   }),
-  indexing: Schema.optional(IndexingRef).annotate({ description: "Codebase indexing configuration" }), // kilocode_change
-  // kilocode_change end
-  // kilocode_change start - nullable for delete sentinel
+  indexing: Schema.optional(IndexingRef).annotate({ description: "Codebase indexing configuration" }), // stratacode_change
+  // stratacode_change end
+  // stratacode_change start - nullable for delete sentinel
   model: Schema.optional(Schema.NullOr(ConfigModelID)).annotate({
     description: "Model to use in the format of provider/model, eg anthropic/claude-2",
   }),
   small_model: Schema.optional(Schema.NullOr(ConfigModelID)).annotate({
     description: "Small model to use for tasks like title generation in the format of provider/model",
   }),
-  // kilocode_change end
-  // kilocode_change start - renamed from "build" to "code"
+  // stratacode_change end
+  // stratacode_change start - renamed from "build" to "code"
   default_agent: Schema.optional(Schema.String).annotate({
     description:
       "Default agent to use when none is specified. Must be a primary agent. Falls back to 'code' if not set or if the specified agent is invalid.",
   }),
-  // kilocode_change end
+  // stratacode_change end
   username: Schema.optional(Schema.String).annotate({
     description: "Custom username to display in conversations instead of system username",
   }),
@@ -204,9 +204,9 @@ export const Info = Schema.Struct({
         // primary
         plan: Schema.optional(AgentRef),
         build: Schema.optional(AgentRef),
-        debug: Schema.optional(AgentRef), // kilocode_change
-        orchestrator: Schema.optional(AgentRef), // kilocode_change
-        ask: Schema.optional(AgentRef), // kilocode_change
+        debug: Schema.optional(AgentRef), // stratacode_change
+        orchestrator: Schema.optional(AgentRef), // stratacode_change
+        ask: Schema.optional(AgentRef), // stratacode_change
         // subagent
         general: Schema.optional(AgentRef),
         explore: Schema.optional(AgentRef),
@@ -244,7 +244,7 @@ export const Info = Schema.Struct({
       url: Schema.optional(Schema.String).annotate({ description: "Enterprise URL" }),
     }),
   ),
-  commit_message: KilocodeConfig.CommitMessageSchema, // kilocode_change
+  commit_message: StratacodeConfig.CommitMessageSchema, // stratacode_change
   compaction: Schema.optional(
     Schema.Struct({
       auto: Schema.optional(Schema.Boolean).annotate({
@@ -269,17 +269,17 @@ export const Info = Schema.Struct({
     Schema.Struct({
       disable_paste_summary: Schema.optional(Schema.Boolean),
       batch_tool: Schema.optional(Schema.Boolean).annotate({ description: "Enable the batch tool" }),
-      codebase_search: Schema.optional(Schema.Boolean).annotate({ description: "Enable AI-powered codebase search" }), // kilocode_change
-      // kilocode_change start
+      codebase_search: Schema.optional(Schema.Boolean).annotate({ description: "Enable AI-powered codebase search" }), // stratacode_change
+      // stratacode_change start
       semantic_indexing: Schema.optional(Schema.Boolean).annotate({
         description: "Enable semantic codebase indexing and the semantic_search tool",
       }),
-      // kilocode_change end
-      // kilocode_change start - enable telemetry by default
+      // stratacode_change end
+      // stratacode_change start - enable telemetry by default
       openTelemetry: Schema.Boolean.pipe(Schema.optional, Schema.withDecodingDefault(Effect.succeed(true))).annotate({
         description: "Enable telemetry. Set to false to opt-out.",
       }),
-      // kilocode_change end
+      // stratacode_change end
       primary_tools: Schema.optional(Schema.mutable(Schema.Array(Schema.String))).annotate({
         description: "Tools that should only be available to primary agents.",
       }),
@@ -331,7 +331,7 @@ type State = {
   config: Info
   directories: string[]
   deps: Fiber.Fiber<void, never>[]
-  warnings: Warning[] // kilocode_change
+  warnings: Warning[] // stratacode_change
   consoleState: ConsoleState
 }
 
@@ -340,19 +340,19 @@ export interface Interface {
   readonly getGlobal: () => Effect.Effect<Info>
   readonly getConsoleState: () => Effect.Effect<ConsoleState>
   readonly update: (config: Info) => Effect.Effect<void>
-  readonly updateGlobal: (config: Info, options?: { dispose?: boolean }) => Effect.Effect<Info> // kilocode_change
+  readonly updateGlobal: (config: Info, options?: { dispose?: boolean }) => Effect.Effect<Info> // stratacode_change
   readonly invalidate: (wait?: boolean) => Effect.Effect<void>
   readonly directories: () => Effect.Effect<string[]>
   readonly waitForDependencies: () => Effect.Effect<void>
-  readonly warnings: () => Effect.Effect<Warning[]> // kilocode_change
+  readonly warnings: () => Effect.Effect<Warning[]> // stratacode_change
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/Config") {}
 
 function globalConfigFile() {
-  // kilocode_change start
-  const candidates = ["kilo.jsonc", "kilo.json", "opencode.jsonc", "opencode.json", "config.json"].map((file) =>
-    // kilocode_change end
+  // stratacode_change start
+  const candidates = ["strata.jsonc", "strata.json", "opencode.jsonc", "opencode.json", "config.json"].map((file) =>
+    // stratacode_change end
     path.join(Global.Path.config, file),
   )
   for (const file of candidates) {
@@ -363,7 +363,7 @@ function globalConfigFile() {
 
 function patchJsonc(input: string, patch: unknown, path: string[] = []): string {
   if (!isRecord(patch)) {
-    // kilocode_change - null means "delete this key" — pass undefined to jsonc-parser's modify()
+    // stratacode_change - null means "delete this key" — pass undefined to jsonc-parser's modify()
     const edits = modify(input, path, patch === null ? undefined : patch, {
       formattingOptions: {
         insertSpaces: true,
@@ -373,7 +373,7 @@ function patchJsonc(input: string, patch: unknown, path: string[] = []): string 
     return applyEdits(input, edits)
   }
 
-  // kilocode_change start — when the existing JSONC node at this path is a
+  // stratacode_change start — when the existing JSONC node at this path is a
   // scalar (e.g. permission.bash is "ask" as a string), jsonc-parser cannot
   // add child keys to it. Detect this case and replace the whole node with
   // the patch object in a single modify() call instead of recursing.
@@ -391,7 +391,7 @@ function patchJsonc(input: string, patch: unknown, path: string[] = []): string 
       return applyEdits(input, edits)
     }
   }
-  // kilocode_change end
+  // stratacode_change end
 
   return Object.entries(patch).reduce((result, [key, value]) => {
     if (value === undefined) return result
@@ -448,8 +448,8 @@ export const layer = Layer.effect(
 
       yield* Effect.promise(() => resolveLoadedPlugins(data, options.path))
       if (!data.$schema) {
-        data.$schema = "https://app.kilo.ai/config.json" // kilocode_change
-        const updated = text.replace(/^\s*\{/, '{\n  "$schema": "https://app.kilo.ai/config.json",') // kilocode_change
+        data.$schema = "https://app.strata.ai/config.json" // stratacode_change
+        const updated = text.replace(/^\s*\{/, '{\n  "$schema": "https://app.strata.ai/config.json",') // stratacode_change
         yield* fs.writeFileString(options.path, updated).pipe(Effect.catch(() => Effect.void))
       }
       return data
@@ -463,14 +463,14 @@ export const layer = Layer.effect(
     })
 
     const loadGlobal = Effect.fnUntraced(function* () {
-      yield* Effect.promise(() => KilocodeConfig.migrateBashPermission()) // kilocode_change
+      yield* Effect.promise(() => StratacodeConfig.migrateBashPermission()) // stratacode_change
       let result: Info = pipe(
         {},
         mergeDeep(yield* loadFile(path.join(Global.Path.config, "config.json"))),
-        // kilocode_change start
-        mergeDeep(yield* loadFile(path.join(Global.Path.config, "kilo.json"))),
-        mergeDeep(yield* loadFile(path.join(Global.Path.config, "kilo.jsonc"))),
-        // kilocode_change end
+        // stratacode_change start
+        mergeDeep(yield* loadFile(path.join(Global.Path.config, "strata.json"))),
+        mergeDeep(yield* loadFile(path.join(Global.Path.config, "strata.jsonc"))),
+        // stratacode_change end
         mergeDeep(yield* loadFile(path.join(Global.Path.config, "opencode.json"))),
         mergeDeep(yield* loadFile(path.join(Global.Path.config, "opencode.jsonc"))),
       )
@@ -482,7 +482,7 @@ export const layer = Layer.effect(
             .then(async (mod) => {
               const { provider, model, ...rest } = mod.default
               if (provider && model) result.model = `${provider}/${model}`
-              result["$schema"] = "https://app.kilo.ai/config.json" // kilocode_change
+              result["$schema"] = "https://app.strata.ai/config.json" // stratacode_change
               result = mergeDeep(result, rest)
               await fsNode.writeFile(path.join(Global.Path.config, "config.json"), JSON.stringify(result, null, 2))
               await fsNode.unlink(legacy)
@@ -515,7 +515,7 @@ export const layer = Layer.effect(
         yield* fs
           .writeFileString(
             gitignore,
-            // kilocode_change start - added pnpm-lock.yaml and yarn.lock (not in upstream)
+            // stratacode_change start - added pnpm-lock.yaml and yarn.lock (not in upstream)
             [
               "node_modules",
               "package.json",
@@ -525,7 +525,7 @@ export const layer = Layer.effect(
               "yarn.lock",
               ".gitignore",
             ].join("\n"),
-            // kilocode_change end
+            // stratacode_change end
           )
           .pipe(
             Effect.catchIf(
@@ -538,13 +538,13 @@ export const layer = Layer.effect(
 
     const loadInstanceState = Effect.fn("Config.loadInstanceState")(
       function* (ctx: InstanceContext) {
-        // kilocode_change start - warning accumulator and legacy Kilo config
+        // stratacode_change start - warning accumulator and legacy Strata config
         const warnings: Warning[] = []
         const auth = yield* authSvc.all().pipe(Effect.orDie)
 
         let result: Info = {}
         const legacy = yield* Effect.promise(() =>
-          KilocodeConfig.loadLegacyConfigs({
+          StratacodeConfig.loadLegacyConfigs({
             projectDir: ctx.directory,
             merge: mergeConfigConcatArrays,
           }),
@@ -552,19 +552,19 @@ export const layer = Layer.effect(
         result = mergeConfigConcatArrays(result, legacy.config)
         warnings.push(...legacy.warnings)
 
-        const orgModes = yield* Effect.promise(() => KilocodeConfig.loadOrganizationModes(auth))
+        const orgModes = yield* Effect.promise(() => StratacodeConfig.loadOrganizationModes(auth))
         if (Object.keys(orgModes.agents).length > 0) {
           result = mergeConfigConcatArrays(result, { agent: orgModes.agents })
         }
         warnings.push(...orgModes.warnings)
-        // kilocode_change end
+        // stratacode_change end
 
         const consoleManagedProviders = new Set<string>()
         let activeOrgName: string | undefined
 
         const pluginScopeForSource = Effect.fnUntraced(function* (source: string) {
           if (source.startsWith("http://") || source.startsWith("https://")) return "global"
-          if (source === "KILO_CONFIG_CONTENT") return "local"
+          if (source === "STRATA_CONFIG_CONTENT") return "local"
           if (yield* InstanceRef.use((ctx) => Effect.succeed(Instance.containsPath(source, ctx)))) return "local"
           return "global"
         })
@@ -601,7 +601,7 @@ export const layer = Layer.effect(
             const source = `${url}/.well-known/opencode`
             process.env[value.key] = value.token
             log.debug("fetching remote config", { url: source })
-            // kilocode_change start - warn instead of fail on wellknown errors
+            // stratacode_change start - warn instead of fail on wellknown errors
             const next = yield* Effect.tryPromise({
               try: async () => {
                 const response = await fetch(source)
@@ -610,7 +610,7 @@ export const layer = Layer.effect(
                 }
                 const wellknown = (await response.json()) as { config?: Record<string, unknown> }
                 const remoteConfig = wellknown.config ?? {}
-                if (!remoteConfig.$schema) remoteConfig.$schema = "https://app.kilo.ai/config.json"
+                if (!remoteConfig.$schema) remoteConfig.$schema = "https://app.strata.ai/config.json"
                 return remoteConfig
               },
               catch: (err) => err,
@@ -634,39 +634,39 @@ export const layer = Layer.effect(
               }),
             )
             yield* merge(source, next, "global")
-            // kilocode_change end
+            // stratacode_change end
           }
         }
 
-        // kilocode_change start - capture global config failures as warnings
+        // stratacode_change start - capture global config failures as warnings
         const global = yield* getGlobal().pipe(
           Effect.catchDefect((err: unknown) => {
             caughtWarning(warnings, "global config", err)
             return Effect.succeed({} as Info)
           }),
         )
-        // kilocode_change end
+        // stratacode_change end
 
         yield* merge(Global.Path.config, global, "global")
 
-        if (Flag.KILO_CONFIG) {
-          // kilocode_change start - capture KILO_CONFIG failures as warnings
+        if (Flag.STRATA_CONFIG) {
+          // stratacode_change start - capture STRATA_CONFIG failures as warnings
           yield* merge(
-            Flag.KILO_CONFIG,
-            yield* loadFile(Flag.KILO_CONFIG).pipe(
+            Flag.STRATA_CONFIG,
+            yield* loadFile(Flag.STRATA_CONFIG).pipe(
               Effect.catchDefect((err: unknown) => {
-                caughtWarning(warnings, Flag.KILO_CONFIG!, err)
+                caughtWarning(warnings, Flag.STRATA_CONFIG!, err)
                 return Effect.succeed({} as Info)
               }),
             ),
           )
-          // kilocode_change end
-          log.debug("loaded custom config", { path: Flag.KILO_CONFIG })
+          // stratacode_change end
+          log.debug("loaded custom config", { path: Flag.STRATA_CONFIG })
         }
 
-        if (!Flag.KILO_DISABLE_PROJECT_CONFIG) {
-          // kilocode_change start - also discover kilo.json project files
-          for (const name of ["kilo", "opencode"] as const) {
+        if (!Flag.STRATA_DISABLE_PROJECT_CONFIG) {
+          // stratacode_change start - also discover strata.json project files
+          for (const name of ["strata", "opencode"] as const) {
             for (const file of yield* ConfigPaths.files(name, ctx.directory, ctx.worktree).pipe(Effect.orDie)) {
               yield* merge(
                 file,
@@ -680,7 +680,7 @@ export const layer = Layer.effect(
               )
             }
           }
-          // kilocode_change end
+          // stratacode_change end
         }
 
         result.agent = result.agent || {}
@@ -689,16 +689,16 @@ export const layer = Layer.effect(
 
         const directories = yield* ConfigPaths.directories(ctx.directory, ctx.worktree)
 
-        if (Flag.KILO_CONFIG_DIR) {
-          log.debug("loading config from KILO_CONFIG_DIR", { path: Flag.KILO_CONFIG_DIR })
+        if (Flag.STRATA_CONFIG_DIR) {
+          log.debug("loading config from STRATA_CONFIG_DIR", { path: Flag.STRATA_CONFIG_DIR })
         }
 
         const deps: Fiber.Fiber<void, never>[] = []
 
-        // kilocode_change start
+        // stratacode_change start
         for (const dir of unique(directories)) {
-          if (KilocodeConfig.isConfigDir(dir, Flag.KILO_CONFIG_DIR)) {
-            for (const file of KilocodeConfig.ALL_CONFIG_FILES) {
+          if (StratacodeConfig.isConfigDir(dir, Flag.STRATA_CONFIG_DIR)) {
+            for (const file of StratacodeConfig.ALL_CONFIG_FILES) {
               const source = path.join(dir, file)
               log.debug(`loading config from ${source}`)
               yield* merge(
@@ -715,7 +715,7 @@ export const layer = Layer.effect(
               result.plugin ??= []
             }
           }
-          // kilocode_change end
+          // stratacode_change end
 
           yield* ensureGitignore(dir).pipe(Effect.orDie)
 
@@ -723,7 +723,7 @@ export const layer = Layer.effect(
             .install(dir, {
               add: [
                 {
-                  name: "@kilocode/plugin",
+                  name: "@stratacode/plugin",
                   version: InstallationLocal ? undefined : InstallationVersion,
                 },
               ],
@@ -742,30 +742,30 @@ export const layer = Layer.effect(
             )
           deps.push(dep)
 
-          // kilocode_change start - propagate parse errors to the Warning accumulator
+          // stratacode_change start - propagate parse errors to the Warning accumulator
           result.command = mergeDeep(
             result.command ?? {},
             yield* Effect.promise(() => ConfigCommand.load(dir, warnings)),
           )
           result.agent = mergeDeep(result.agent ?? {}, yield* Effect.promise(() => ConfigAgent.load(dir, warnings)))
           result.agent = mergeDeep(result.agent ?? {}, yield* Effect.promise(() => ConfigAgent.loadMode(dir, warnings)))
-          // kilocode_change end
+          // stratacode_change end
           // Auto-discovered plugins under `.opencode/plugin(s)` are already local files, so ConfigPlugin.load
           // returns normalized Specs and we only need to attach origin metadata here.
           const list = yield* Effect.promise(() => ConfigPlugin.load(dir))
           yield* mergePluginOrigins(dir, list)
         }
 
-        if (process.env.KILO_CONFIG_CONTENT) {
-          // kilocode_change start - capture KILO_CONFIG_CONTENT parse failures as warnings
-          const source = "KILO_CONFIG_CONTENT"
+        if (process.env.STRATA_CONFIG_CONTENT) {
+          // stratacode_change start - capture STRATA_CONFIG_CONTENT parse failures as warnings
+          const source = "STRATA_CONFIG_CONTENT"
           yield* merge(
             source,
-            yield* loadConfig(process.env.KILO_CONFIG_CONTENT, {
+            yield* loadConfig(process.env.STRATA_CONFIG_CONTENT, {
               dir: ctx.directory,
               source,
             }).pipe(
-              Effect.tap(() => Effect.sync(() => log.debug("loaded custom config from KILO_CONFIG_CONTENT"))),
+              Effect.tap(() => Effect.sync(() => log.debug("loaded custom config from STRATA_CONFIG_CONTENT"))),
               Effect.catchDefect((err: unknown) => {
                 caughtWarning(warnings, source, err)
                 return Effect.succeed({} as Info)
@@ -773,7 +773,7 @@ export const layer = Layer.effect(
             ),
             "local",
           )
-          // kilocode_change end
+          // stratacode_change end
         }
 
         const activeAccount = Option.getOrUndefined(
@@ -789,8 +789,8 @@ export const layer = Layer.effect(
               { concurrency: 2 },
             )
             if (Option.isSome(tokenOpt)) {
-              process.env["KILO_CONSOLE_TOKEN"] = tokenOpt.value
-              yield* env.set("KILO_CONSOLE_TOKEN", tokenOpt.value)
+              process.env["STRATA_CONSOLE_TOKEN"] = tokenOpt.value
+              yield* env.set("STRATA_CONSOLE_TOKEN", tokenOpt.value)
             }
 
             if (Option.isSome(configOpt)) {
@@ -816,14 +816,14 @@ export const layer = Layer.effect(
         }
 
         const managedDir = ConfigManaged.managedConfigDir()
-        // kilocode_change start - include kilo.json/kilo.jsonc in managed dir loading
+        // stratacode_change start - include strata.json/strata.jsonc in managed dir loading
         if (existsSync(managedDir)) {
-          for (const file of KilocodeConfig.ALL_CONFIG_FILES) {
+          for (const file of StratacodeConfig.ALL_CONFIG_FILES) {
             const source = path.join(managedDir, file)
             yield* merge(source, yield* loadFile(source), "global")
           }
         }
-        // kilocode_change end
+        // stratacode_change end
 
         // macOS managed preferences (.mobileconfig deployed via MDM) override everything
         const managed = yield* Effect.promise(() => ConfigManaged.readManagedPreferences())
@@ -846,8 +846,8 @@ export const layer = Layer.effect(
           })
         }
 
-        if (Flag.KILO_PERMISSION) {
-          result.permission = mergeDeep(result.permission ?? {}, JSON.parse(Flag.KILO_PERMISSION))
+        if (Flag.STRATA_PERMISSION) {
+          result.permission = mergeDeep(result.permission ?? {}, JSON.parse(Flag.STRATA_PERMISSION))
         }
 
         if (result.tools) {
@@ -869,21 +869,21 @@ export const layer = Layer.effect(
           result.share = "auto"
         }
 
-        if (Flag.KILO_DISABLE_AUTOCOMPACT) {
+        if (Flag.STRATA_DISABLE_AUTOCOMPACT) {
           result.compaction = { ...result.compaction, auto: false }
         }
-        if (Flag.KILO_DISABLE_PRUNE) {
+        if (Flag.STRATA_DISABLE_PRUNE) {
           result.compaction = { ...result.compaction, prune: false }
         }
-        // kilocode_change start — inject Kilo default plugins into both plugin list and origins
-        KilocodeDefaultPlugins.apply(result, { disabled: Flag.KILO_DISABLE_DEFAULT_PLUGINS, log })
-        // kilocode_change end
+        // stratacode_change start — inject Strata default plugins into both plugin list and origins
+        StratacodeDefaultPlugins.apply(result, { disabled: Flag.STRATA_DISABLE_DEFAULT_PLUGINS, log })
+        // stratacode_change end
 
         return {
           config: result,
           directories,
           deps,
-          warnings, // kilocode_change
+          warnings, // stratacode_change
           consoleState: {
             consoleManagedProviders: Array.from(consoleManagedProviders),
             activeOrgName,
@@ -918,11 +918,11 @@ export const layer = Layer.effect(
       )
     })
 
-    // kilocode_change start
+    // stratacode_change start
     const warnings = Effect.fn("Config.warnings")(function* () {
       return yield* InstanceState.use(state, (s) => s.warnings)
     })
-    // kilocode_change end
+    // stratacode_change end
 
     const update = Effect.fn("Config.update")(function* (config: Info) {
       const dir = yield* InstanceState.directory
@@ -931,9 +931,9 @@ export const layer = Layer.effect(
       yield* fs
         .writeFileString(
           file,
-          JSON.stringify(KilocodeConfig.mergeConfig(writable(existing), writable(config)), null, 2),
+          JSON.stringify(StratacodeConfig.mergeConfig(writable(existing), writable(config)), null, 2),
         )
-        .pipe(Effect.orDie) // kilocode_change
+        .pipe(Effect.orDie) // stratacode_change
       yield* Effect.promise(() => Instance.dispose())
     })
 
@@ -954,17 +954,17 @@ export const layer = Layer.effect(
       else void task
     })
 
-    // kilocode_change start - add dispose option to skip Instance.disposeAll for permission-only changes
+    // stratacode_change start - add dispose option to skip Instance.disposeAll for permission-only changes
     const updateGlobal = Effect.fn("Config.updateGlobal")(function* (config: Info, options?: { dispose?: boolean }) {
       const dispose = options?.dispose ?? true
-      // kilocode_change end
+      // stratacode_change end
       const file = globalConfigFile()
       const before = (yield* readConfigFile(file)) ?? "{}"
 
       let next: Info
       if (!file.endsWith(".jsonc")) {
         const existing = ConfigParse.schema(Info.zod, ConfigParse.jsonc(before, file), file)
-        const merged = KilocodeConfig.mergeConfig(writable(existing), writable(config)) // kilocode_change
+        const merged = StratacodeConfig.mergeConfig(writable(existing), writable(config)) // stratacode_change
         yield* fs.writeFileString(file, JSON.stringify(merged, null, 2)).pipe(Effect.orDie)
         next = merged
       } else {
@@ -973,7 +973,7 @@ export const layer = Layer.effect(
         yield* fs.writeFileString(file, updated).pipe(Effect.orDie)
       }
 
-      // kilocode_change start - skip dispose when caller opts out
+      // stratacode_change start - skip dispose when caller opts out
       if (!dispose) {
         yield* invalidateGlobal
         yield* InstanceState.invalidate(state)
@@ -988,7 +988,7 @@ export const layer = Layer.effect(
         )
         return next
       }
-      // kilocode_change end
+      // stratacode_change end
 
       yield* invalidate()
       return next
@@ -1003,7 +1003,7 @@ export const layer = Layer.effect(
       invalidate,
       directories,
       waitForDependencies,
-      warnings, // kilocode_change
+      warnings, // stratacode_change
     })
   }),
 )
@@ -1017,7 +1017,7 @@ export const defaultLayer = layer.pipe(
   Layer.provide(Npm.defaultLayer),
 )
 
-// kilocode_change start - keep async wrappers for Kilo callsites during Effect migration
+// stratacode_change start - keep async wrappers for Strata callsites during Effect migration
 const { runPromise } = makeRuntime(Service, defaultLayer)
 
 export async function get() {
@@ -1055,4 +1055,4 @@ export async function waitForDependencies() {
 export async function warnings() {
   return runPromise((svc) => svc.warnings())
 }
-// kilocode_change end
+// stratacode_change end

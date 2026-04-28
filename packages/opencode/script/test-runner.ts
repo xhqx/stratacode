@@ -1,4 +1,4 @@
-// kilocode_change - new file
+// stratacode_change - new file
 //
 // Custom test runner that executes each test file in its own isolated process.
 // Prevents cross-contamination between test files by ensuring separate PIDs,

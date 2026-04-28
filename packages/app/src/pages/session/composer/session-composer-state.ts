@@ -1,7 +1,7 @@
 import { createEffect, createMemo, on, onCleanup } from "solid-js"
 import { createStore } from "solid-js/store"
 import { makeEventListener } from "@solid-primitives/event-listener"
-import type { PermissionRequest, QuestionRequest, Todo } from "@kilocode/sdk/v2"
+import type { PermissionRequest, QuestionRequest, Todo } from "@stratacode/sdk/v2"
 import { useParams } from "@solidjs/router"
 import { showToast } from "@opencode-ai/ui/toast"
 import { useGlobalSync } from "@/context/global-sync"

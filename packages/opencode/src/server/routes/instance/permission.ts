@@ -47,7 +47,7 @@ export const PermissionRoutes = lazy(() =>
           return true
         }),
     )
-    // kilocode_change start
+    // stratacode_change start
     .post(
       "/:requestID/always-rules",
       describeRoute({
@@ -92,7 +92,7 @@ export const PermissionRoutes = lazy(() =>
           return true
         }),
     )
-    // kilocode_change end
+    // stratacode_change end
     .get(
       "/",
       describeRoute({

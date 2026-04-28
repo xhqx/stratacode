@@ -13,7 +13,7 @@ let lock = false
 let armed = true
 
 export function start() {
-  if (!Flag.KILO_AUTO_HEAP_SNAPSHOT) return
+  if (!Flag.STRATA_AUTO_HEAP_SNAPSHOT) return
   if (timer) return
 
   const run = async () => {

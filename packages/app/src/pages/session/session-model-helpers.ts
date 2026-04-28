@@ -1,4 +1,4 @@
-import type { UserMessage } from "@kilocode/sdk/v2"
+import type { UserMessage } from "@stratacode/sdk/v2"
 
 type Local = {
   session: {

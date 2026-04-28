@@ -1,4 +1,4 @@
-// kilocode_change - new file
+// stratacode_change - new file
 /** @jsxImportSource @opentui/solid */
 import { Show } from "solid-js"
 import { useKeyboard } from "@opentui/solid"
@@ -6,7 +6,7 @@ import { useTheme } from "../../context/theme"
 import { SplitBorder } from "../../component/border"
 import { useSDK } from "../../context/sdk"
 import { useDialog } from "../../ui/dialog"
-import type { SessionNetworkWait } from "@kilocode/sdk/v2"
+import type { SessionNetworkWait } from "@stratacode/sdk/v2"
 import { useKeybind } from "../../context/keybind"
 
 export function NetworkPrompt(props: { request: SessionNetworkWait }) {

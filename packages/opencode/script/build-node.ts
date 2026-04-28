@@ -51,8 +51,8 @@ await Bun.build({
   sourcemap: "linked",
   external: ["jsonc-parser", "@lydell/node-pty"],
   define: {
-    KILO_MIGRATIONS: JSON.stringify(migrations),
-    KILO_CHANNEL: `'${Script.channel}'`,
+    STRATA_MIGRATIONS: JSON.stringify(migrations),
+    STRATA_CHANNEL: `'${Script.channel}'`,
   },
   files: {
     "opencode-web-ui.gen.ts": "",

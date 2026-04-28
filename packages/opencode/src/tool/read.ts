@@ -1,8 +1,8 @@
 import z from "zod"
 import { Effect, Option, Scope } from "effect"
-import { lstat } from "fs/promises" // kilocode_change
+import { lstat } from "fs/promises" // stratacode_change
 import * as path from "path"
-import { Readable } from "stream" // kilocode_change
+import { Readable } from "stream" // stratacode_change
 import { createInterface } from "readline"
 import * as Tool from "./tool"
 import { AppFileSystem } from "@opencode-ai/shared/filesystem"
@@ -12,9 +12,9 @@ import { Instance } from "../project/instance"
 import { assertExternalDirectoryEffect } from "./external-directory"
 import { Instruction } from "../session/instruction"
 import { isImageAttachment, isPdfAttachment, sniffAttachmentMime } from "@/util/media"
-// kilocode_change start
-import { Encoding } from "../kilocode/encoding"
-// kilocode_change end
+// stratacode_change start
+import { Encoding } from "../stratacode/encoding"
+// stratacode_change end
 
 const DEFAULT_READ_LIMIT = 2000
 const MAX_LINE_LENGTH = 2000
@@ -22,7 +22,7 @@ const MAX_LINE_SUFFIX = `... (line truncated to ${MAX_LINE_LENGTH} chars)`
 const MAX_BYTES = 50 * 1024
 const MAX_BYTES_LABEL = `${MAX_BYTES / 1024} KB`
 const SAMPLE_BYTES = 4096
-const DIRECTORY_CONCURRENCY = 8 // kilocode_change
+const DIRECTORY_CONCURRENCY = 8 // stratacode_change
 
 const parameters = z.object({
   filePath: z.string().describe("The absolute path to the file or directory to read"),
@@ -134,10 +134,10 @@ export const ReadTool = Tool.define(
 
       if (bytes.length === 0) return false
 
-      // kilocode_change start - UTF-16 BOM: NUL bytes are legitimate, skip the NUL/control-char heuristic
+      // stratacode_change start - UTF-16 BOM: NUL bytes are legitimate, skip the NUL/control-char heuristic
       if (Encoding.hasUtf16Bom(Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength), bytes.length))
         return false
-      // kilocode_change end
+      // stratacode_change end
 
       let nonPrintableCount = 0
       for (let i = 0; i < bytes.length; i++) {
@@ -150,7 +150,7 @@ export const ReadTool = Tool.define(
       return nonPrintableCount / bytes.length > 0.3
     }
 
-    // kilocode_change start
+    // stratacode_change start
     type DirectoryFile = {
       filepath: string
       content: string
@@ -183,7 +183,7 @@ export const ReadTool = Tool.define(
       )
       return files.filter((item): item is DirectoryFile => item !== undefined)
     })
-    // kilocode_change end
+    // stratacode_change end
 
     const run = Effect.fn("ReadTool.execute")(function* (params: z.infer<typeof parameters>, ctx: Tool.Context) {
       if (params.offset !== undefined && params.offset < 1) {
@@ -227,11 +227,11 @@ export const ReadTool = Tool.define(
         const start = offset - 1
         const sliced = items.slice(start, start + limit)
         const truncated = start + sliced.length < items.length
-        // kilocode_change start
+        // stratacode_change start
         const expand = Boolean(ctx.extra?.["includeDirectoryFiles"])
         const loaded = expand ? yield* readDirectoryFiles(filepath, sliced) : []
         const content = loaded.map((item) => item.content).join("\n\n")
-        // kilocode_change end
+        // stratacode_change end
 
         return {
           title,
@@ -244,16 +244,16 @@ export const ReadTool = Tool.define(
               ? `\n(Showing ${sliced.length} of ${items.length} entries. Use 'offset' parameter to read beyond entry ${offset + sliced.length})`
               : `\n(${items.length} entries)`,
             `</entries>`,
-            // kilocode_change start
+            // stratacode_change start
             ...(content ? [`\n${content}`] : []),
-            // kilocode_change end
+            // stratacode_change end
           ].join("\n"),
           metadata: {
             preview: sliced.slice(0, 20).join("\n"),
             truncated,
-            // kilocode_change start
+            // stratacode_change start
             loaded: loaded.map((item) => item.filepath),
-            // kilocode_change end
+            // stratacode_change end
           },
         }
       }
@@ -336,13 +336,13 @@ export const ReadTool = Tool.define(
   }),
 )
 
-// kilocode_change start
+// stratacode_change start
 export async function lines(filepath: string, opts: { limit: number; offset: number }) {
-  // kilocode_change end
-  // kilocode_change start - decode with detected encoding; replaces createReadStream(filepath, { encoding: "utf8" })
+  // stratacode_change end
+  // stratacode_change start - decode with detected encoding; replaces createReadStream(filepath, { encoding: "utf8" })
   const encoded = await Encoding.read(filepath)
   const stream = Readable.from([encoded.text])
-  // kilocode_change end
+  // stratacode_change end
   const rl = createInterface({
     input: stream,
     // Note: we use the crlfDelay option to recognize all instances of CR LF

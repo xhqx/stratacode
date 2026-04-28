@@ -44,8 +44,8 @@ logs/
 telemetry-id
 tsconfig.tsbuildinfo
 
-# Kilo
-.kilo/plans/*upstream-merge-report-*.md
+# Strata
+.strata/plans/*upstream-merge-report-*.md
 
 # Test Artifacts
 packages/app/.artifacts/

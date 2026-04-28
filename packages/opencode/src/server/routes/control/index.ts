@@ -7,7 +7,7 @@ import { Hono } from "hono"
 import { describeRoute, resolver, validator, openAPIRouteHandler } from "hono-openapi"
 import z from "zod"
 import { errors } from "../../error"
-import * as KiloServer from "@/kilocode/server/server" // kilocode_change
+import * as StrataServer from "@/stratacode/server/server" // stratacode_change
 
 export function ControlPlaneRoutes(): Hono {
   const app = new Hono()
@@ -46,7 +46,7 @@ export function ControlPlaneRoutes(): Hono {
             yield* auth.set(providerID, info)
           }),
         )
-        await KiloServer.authChanged(providerID) // kilocode_change
+        await StrataServer.authChanged(providerID) // stratacode_change
         return c.json(true)
       },
     )
@@ -82,7 +82,7 @@ export function ControlPlaneRoutes(): Hono {
             yield* auth.remove(providerID)
           }),
         )
-        await KiloServer.authChanged(providerID) // kilocode_change
+        await StrataServer.authChanged(providerID) // stratacode_change
         return c.json(true)
       },
     )
@@ -91,9 +91,9 @@ export function ControlPlaneRoutes(): Hono {
       openAPIRouteHandler(app, {
         documentation: {
           info: {
-            title: KiloServer.DOC_TITLE, // kilocode_change
+            title: StrataServer.DOC_TITLE, // stratacode_change
             version: "0.0.3",
-            description: KiloServer.DOC_DESCRIPTION, // kilocode_change
+            description: StrataServer.DOC_DESCRIPTION, // stratacode_change
           },
           openapi: "3.1.1",
         },

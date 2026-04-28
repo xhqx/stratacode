@@ -13,13 +13,13 @@ import { Glob } from "bun"
 import path from "path"
 
 const ROOT = path.resolve(import.meta.dir, "..")
-const OUTPUT = path.join(ROOT, "packages/kilo-docs/source-links.md")
+const OUTPUT = path.join(ROOT, "packages/strata-docs/source-links.md")
 
 const check = process.argv.includes("--check")
 
 const DIRS = [
-  path.join(ROOT, "packages/kilo-vscode/src"),
-  path.join(ROOT, "packages/kilo-vscode/webview-ui"),
+  path.join(ROOT, "packages/strata-vscode/src"),
+  path.join(ROOT, "packages/strata-vscode/webview-ui"),
   path.join(ROOT, "packages/opencode/src"),
 ]
 
@@ -34,8 +34,8 @@ const URL_RE = /https?:\/\/[^\s"'`)\]},;*\\<>]+/g
 const EXCLUDE_PATTERNS = [
   // Localhost and internal
   /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)/,
-  /^https?:\/\/kilo\.internal/,
-  /^https?:\/\/dev\.kilo\.ai/,
+  /^https?:\/\/strata\.internal/,
+  /^https?:\/\/dev\.strata\.ai/,
   /^https?:\/\/tauri\.localhost/,
   // Example/placeholder URLs
   /^https?:\/\/example\.com/,
@@ -43,8 +43,8 @@ const EXCLUDE_PATTERNS = [
   /^https?:\/\/api\.myprovider\.com/,
   /^https?:\/\/synthetic\.new/,
   // API endpoints (not user-facing)
-  /^https?:\/\/api\.kilo\.ai\/api\//,
-  /^https?:\/\/ingest\.kilosessions\.ai/,
+  /^https?:\/\/api\.strata\.ai\/api\//,
+  /^https?:\/\/ingest\.stratasessions\.ai/,
   /^https?:\/\/api\.openai\.com/,
   /^https?:\/\/api\.github\.com/,
   /^https?:\/\/api\.githubcopilot\.com/,
@@ -161,12 +161,12 @@ if (check) {
     .text()
     .catch(() => "")
   if (committed === output) {
-    console.log("packages/kilo-docs/source-links.md is up to date.")
+    console.log("packages/strata-docs/source-links.md is up to date.")
     process.exit(0)
   }
   console.error(
     [
-      "ERROR: packages/kilo-docs/source-links.md is out of date.",
+      "ERROR: packages/strata-docs/source-links.md is out of date.",
       "",
       "Run the following command locally and commit the result:",
       "",
@@ -178,4 +178,4 @@ if (check) {
 }
 
 await Bun.write(OUTPUT, output)
-console.log(`Wrote ${sorted.length} unique URLs to packages/kilo-docs/source-links.md`)
+console.log(`Wrote ${sorted.length} unique URLs to packages/strata-docs/source-links.md`)

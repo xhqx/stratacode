@@ -1,0 +1,161 @@
+// Regression test: OAuth accountId must flow into model fetch as stratacodeOrganizationId
+// When a user logs in via OAuth and selects an enterprise organization, the model fetch
+// should use the organization-specific endpoint, not the personal endpoint.
+
+import { test, expect, mock } from "bun:test"
+import path from "path"
+import { Log } from "../../src/util"
+
+Log.init({ print: false })
+
+// Capture the options passed to fetchStrataModels
+let captured: any = undefined
+
+mock.module("@stratacode/strata-gateway", () => ({
+  fetchStrataModels: async (options: any) => {
+    captured = options
+    return {
+      "test-model": {
+        id: "test-model",
+        name: "Test Model",
+        cost: { input: 0.001, output: 0.002 },
+        limit: { context: 128000, output: 4096 },
+      },
+    }
+  },
+  STRATA_OPENROUTER_BASE: "https://api.strata.ai/api/openrouter",
+}))
+
+// Mock default plugins to prevent actual installations during tests
+const mockPlugin = () => ({})
+mock.module("opencode-copilot-auth", () => ({ default: mockPlugin }))
+mock.module("opencode-anthropic-auth", () => ({ default: mockPlugin }))
+mock.module("@gitlab/opencode-gitlab-auth", () => ({ default: mockPlugin }))
+
+import { tmpdir } from "../fixture/fixture"
+import { Instance } from "../../src/project/instance"
+import { Auth } from "../../src/auth"
+import { ModelCache } from "../../src/provider/model-cache"
+
+test("model fetch uses accountId from OAuth auth as stratacodeOrganizationId", async () => {
+  await using tmp = await tmpdir({
+    init: async (dir) => {
+      await Bun.write(
+        path.join(dir, "opencode.json"),
+        JSON.stringify({
+          $schema: "https://app.strata.ai/config.json",
+        }),
+      )
+    },
+  })
+  await Instance.provide({
+    directory: tmp.path,
+    init: async () => {
+      // Simulate an OAuth login where user selected an enterprise organization
+      await Auth.set("strata", {
+        type: "oauth",
+        access: "test-oauth-token",
+        refresh: "test-refresh-token",
+        expires: Date.now() + 3600000,
+        accountId: "org-enterprise-123",
+      })
+    },
+    fn: async () => {
+      // Reset captured and cache
+      captured = undefined
+      ModelCache.clear("strata")
+
+      // Trigger model fetch through the cache
+      await ModelCache.fetch("strata")
+
+      // The fetchStrataModels call should have received the organization ID
+      expect(captured).toBeDefined()
+      expect(captured.stratacodeToken).toBe("test-oauth-token")
+      expect(captured.stratacodeOrganizationId).toBe("org-enterprise-123")
+    },
+  })
+})
+
+test("model fetch without OAuth accountId does not set stratacodeOrganizationId", async () => {
+  await using tmp = await tmpdir({
+    init: async (dir) => {
+      await Bun.write(
+        path.join(dir, "opencode.json"),
+        JSON.stringify({
+          $schema: "https://app.strata.ai/config.json",
+        }),
+      )
+    },
+  })
+  await Instance.provide({
+    directory: tmp.path,
+    init: async () => {
+      // Simulate an OAuth login for a personal account (no accountId)
+      await Auth.set("strata", {
+        type: "oauth",
+        access: "test-personal-token",
+        refresh: "test-refresh-token",
+        expires: Date.now() + 3600000,
+      })
+    },
+    fn: async () => {
+      captured = undefined
+      ModelCache.clear("strata")
+
+      await ModelCache.fetch("strata")
+
+      expect(captured).toBeDefined()
+      expect(captured.stratacodeToken).toBe("test-personal-token")
+      expect(captured.stratacodeOrganizationId).toBeUndefined()
+    },
+  })
+})
+
+test("ModelCache.clear removes cached entry so next fetch hits the network", async () => {
+  await using tmp = await tmpdir({
+    init: async (dir) => {
+      await Bun.write(
+        path.join(dir, "opencode.json"),
+        JSON.stringify({
+          $schema: "https://app.strata.ai/config.json",
+        }),
+      )
+    },
+  })
+  await Instance.provide({
+    directory: tmp.path,
+    init: async () => {
+      await Auth.set("strata", {
+        type: "oauth",
+        access: "token-clear-test",
+        refresh: "refresh-clear",
+        expires: Date.now() + 3600000,
+        accountId: "org-clear",
+      })
+    },
+    fn: async () => {
+      // Populate cache
+      captured = undefined
+      ModelCache.clear("strata")
+      await ModelCache.fetch("strata")
+      expect(captured).toBeDefined()
+
+      // Verify cache is populated — second fetch should NOT call fetchStrataModels
+      captured = undefined
+      await ModelCache.fetch("strata")
+      expect(captured).toBeUndefined()
+      expect(ModelCache.get("strata")).toBeDefined()
+
+      // Clear the cache
+      ModelCache.clear("strata")
+
+      // get() should return undefined after clear
+      expect(ModelCache.get("strata")).toBeUndefined()
+
+      // Next fetch should call fetchStrataModels again
+      captured = undefined
+      await ModelCache.fetch("strata")
+      expect(captured).toBeDefined()
+    },
+  })
+})

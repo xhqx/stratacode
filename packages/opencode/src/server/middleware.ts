@@ -10,7 +10,7 @@ import { Flag } from "@/flag/flag"
 import { basicAuth } from "hono/basic-auth"
 import { cors } from "hono/cors"
 import { compress } from "hono/compress"
-import * as KiloServer from "@/kilocode/server/server" // kilocode_change
+import * as StrataServer from "@/stratacode/server/server" // stratacode_change
 
 const log = Log.create({ service: "server" })
 
@@ -41,9 +41,9 @@ export const AuthMiddleware: MiddlewareHandler = (c, next) => {
   // Allow CORS preflight requests to succeed without auth.
   // Browser clients sending Authorization headers will preflight with OPTIONS.
   if (c.req.method === "OPTIONS") return next()
-  const password = Flag.KILO_SERVER_PASSWORD
+  const password = Flag.STRATA_SERVER_PASSWORD
   if (!password) return next()
-  const username = Flag.KILO_SERVER_USERNAME ?? "kilo" // kilocode_change
+  const username = Flag.STRATA_SERVER_USERNAME ?? "strata" // stratacode_change
 
   if (c.req.query("auth_token")) c.req.raw.headers.set("authorization", `Basic ${c.req.query("auth_token")}`)
 
@@ -51,7 +51,7 @@ export const AuthMiddleware: MiddlewareHandler = (c, next) => {
 }
 
 export const LoggerMiddleware: MiddlewareHandler = async (c, next) => {
-  const skip = c.req.path === "/log" || KiloServer.skipLogging(c.req.path) // kilocode_change
+  const skip = c.req.path === "/log" || StrataServer.skipLogging(c.req.path) // stratacode_change
   if (!skip) {
     log.info("request", {
       method: c.req.method,
@@ -79,10 +79,10 @@ export function CorsMiddleware(opts?: { cors?: string[] }): MiddlewareHandler {
 
       if (/^https:\/\/([a-z0-9-]+\.)*opencode\.ai$/.test(input)) return input
 
-      // kilocode_change start
-      const kilo = KiloServer.corsOrigin(input)
-      if (kilo) return kilo
-      // kilocode_change end
+      // stratacode_change start
+      const strata = StrataServer.corsOrigin(input)
+      if (strata) return strata
+      // stratacode_change end
 
       if (opts?.cors?.includes(input)) return input
     },

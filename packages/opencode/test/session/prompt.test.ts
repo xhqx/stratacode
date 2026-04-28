@@ -202,7 +202,7 @@ function makeHttp() {
 
 const it = testEffect(makeHttp())
 const unix = process.platform !== "win32" ? it.live : it.live.skip
-const unixSkip = it.live.skip // kilocode_change - TODO(#8990): skip flaky cancel tests on Linux CI
+const unixSkip = it.live.skip // stratacode_change - TODO(#8990): skip flaky cancel tests on Linux CI
 
 // Config that registers a custom "test" provider with a "test-model" model
 // so provider model lookup succeeds inside the loop.
@@ -471,7 +471,7 @@ it.live("loop continues when finish is tool-calls", () =>
   ),
 )
 
-// kilocode_change - skipped: tracked in #9958
+// stratacode_change - skipped: tracked in #9958
 it.live.skip("glob tool keeps instance context during prompt runs", () =>
   provideTmpdirServer(
     ({ dir, llm }) =>
@@ -657,7 +657,7 @@ it.live(
           const end = Date.now() + 5_000
           while (Date.now() < end) {
             const msgs = await Effect.runPromise(MessageV2.filterCompactedEffect(chat.id))
-            const assistant = msgs.findLast((item) => item.info.role === "assistant" && item.info.agent === "code") // kilocode_change
+            const assistant = msgs.findLast((item) => item.info.role === "assistant" && item.info.agent === "code") // stratacode_change
             const tool = assistant?.parts.find(
               (part): part is MessageV2.ToolPart => part.type === "tool" && part.tool === "task",
             )
@@ -813,7 +813,7 @@ it.live(
   30_000,
 )
 
-// kilocode_change start - handleSubtask propagates child session cost to wrapper (#6321)
+// stratacode_change start - handleSubtask propagates child session cost to wrapper (#6321)
 it.live(
   "handleSubtask propagates subagent cost to wrapper message",
   () =>
@@ -870,7 +870,7 @@ it.live(
     ),
   30_000,
 )
-// kilocode_change end
+// stratacode_change end
 
 it.live(
   "cancel with queued callers resolves all cleanly",
@@ -945,16 +945,16 @@ it.live(
   3_000,
 )
 
-// kilocode_change start - #9492: the upstream fork-based shape of this test
+// stratacode_change start - #9492: the upstream fork-based shape of this test
 // loses Instance AsyncLocalStorage context in the second forked prompt, which
 // surfaces as a "No context found for instance" die before the queue behavior
-// can be exercised. The Kilo queue semantics (in-flight stream drains, second
+// can be exercised. The Strata queue semantics (in-flight stream drains, second
 // LLM request ends with the queued user message) are covered end-to-end in
-// packages/opencode/test/kilocode/session-prompt-queue.test.ts — keep this
+// packages/opencode/test/stratacode/session-prompt-queue.test.ts — keep this
 // upstream scaffold skipped so future OpenCode merges remain friction-free.
 it.live.skip(
   "prompt submitted during an active run is included in the next LLM input",
-  // kilocode_change end
+  // stratacode_change end
   () =>
     provideTmpdirServer(
       Effect.fnUntraced(function* ({ llm }) {
@@ -1307,7 +1307,7 @@ it.live(
   3_000,
 )
 
-// kilocode_change start - TODO(#8990): flaky on Linux CI
+// stratacode_change start - TODO(#8990): flaky on Linux CI
 unixSkip(
   "cancel interrupts shell and resolves cleanly",
   () =>
@@ -1344,9 +1344,9 @@ unixSkip(
     ),
   30_000,
 )
-// kilocode_change end
+// stratacode_change end
 
-// kilocode_change start - TODO(#8990): flaky on Linux CI
+// stratacode_change start - TODO(#8990): flaky on Linux CI
 unixSkip(
   "cancel persists aborted shell result when shell ignores TERM",
   () =>
@@ -1378,7 +1378,7 @@ unixSkip(
     ),
   30_000,
 )
-// kilocode_change end
+// stratacode_change end
 
 unix(
   "cancel finalizes interrupted bash tool output through normal truncation",
@@ -1431,7 +1431,7 @@ unix(
   30_000,
 )
 
-// kilocode_change start - TODO(#8990): flaky on Linux CI
+// stratacode_change start - TODO(#8990): flaky on Linux CI
 unixSkip(
   "cancel interrupts loop queued behind shell",
   () =>
@@ -1459,7 +1459,7 @@ unixSkip(
     ),
   30_000,
 )
-// kilocode_change end
+// stratacode_change end
 
 unix(
   "shell rejects when another shell is already running",
@@ -1916,7 +1916,7 @@ it.live(
             const err = Cause.squash(exit.cause)
             expect(NamedError.Unknown.isInstance(err)).toBe(true)
             if (NamedError.Unknown.isInstance(err)) {
-              expect(err.data.message).toContain("code") // kilocode_change - "build" renamed to "code"
+              expect(err.data.message).toContain("code") // stratacode_change - "build" renamed to "code"
             }
           }
         }),

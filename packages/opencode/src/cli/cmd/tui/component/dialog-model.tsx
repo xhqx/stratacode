@@ -11,10 +11,10 @@ import * as fuzzysort from "fuzzysort"
 
 export function useConnected() {
   const sync = useSync()
-  // kilocode_change - exclude "kilo" (anonymous autoload) alongside "opencode"
+  // stratacode_change - exclude "strata" (anonymous autoload) alongside "opencode"
   return createMemo(() =>
     sync.data.provider.some(
-      (x) => (x.id !== "opencode" && x.id !== "kilo") || Object.values(x.models).some((y) => y.cost?.input !== 0),
+      (x) => (x.id !== "opencode" && x.id !== "strata") || Object.values(x.models).some((y) => y.cost?.input !== 0),
     ),
   )
 }
@@ -28,15 +28,15 @@ export function DialogModel(props: { providerID?: string }) {
 
   const connected = useConnected()
   const providers = createDialogProviderOptions()
-  // kilocode_change start
-  // Memoize anything that iterates all Kilo models to avoid calculating it for
-  // each Kilo model and tanking the UI at a couple hundred models
-  const kiloRank = createMemo(() => {
-    const provider = sync.data.provider.find((provider) => provider.id === "kilo")
+  // stratacode_change start
+  // Memoize anything that iterates all Strata models to avoid calculating it for
+  // each Strata model and tanking the UI at a couple hundred models
+  const strataRank = createMemo(() => {
+    const provider = sync.data.provider.find((provider) => provider.id === "strata")
     const models = provider?.models ?? {}
     return new Map(Object.entries(models).map(([id, info]) => [id, info.recommendedIndex ?? Infinity] as const))
   })
-  // kilocode_change end
+  // stratacode_change end
 
   const showExtra = createMemo(() => connected() && !props.providerID)
 
@@ -96,13 +96,13 @@ export function DialogModel(props: { providerID?: string }) {
             description: favorites.some((item) => item.providerID === provider.id && item.modelID === model)
               ? "(Favorite)"
               : undefined,
-            // kilocode_change start
+            // stratacode_change start
             category: connected()
-              ? provider.id === "kilo" && info.recommendedIndex !== undefined
+              ? provider.id === "strata" && info.recommendedIndex !== undefined
                 ? "Recommended"
                 : provider.name
               : undefined,
-            // kilocode_change end
+            // stratacode_change end
             disabled: provider.id === "opencode" && model.includes("-nano"),
             footer: info.cost?.input === 0 && provider.id === "opencode" ? "Free" : undefined,
             onSelect() {
@@ -118,9 +118,9 @@ export function DialogModel(props: { providerID?: string }) {
             return true
           }),
           sortBy(
-            // kilocode_change start - Sort within Recommended / Kilo Gateway
-            (x) => (x.value.providerID === "kilo" ? (kiloRank().get(x.value.modelID) ?? Infinity) : 0),
-            // kilocode_change end
+            // stratacode_change start - Sort within Recommended / Strata Gateway
+            (x) => (x.value.providerID === "strata" ? (strataRank().get(x.value.modelID) ?? Infinity) : 0),
+            // stratacode_change end
             (x) => x.footer !== "Free",
             (x) => x.title,
           ),
@@ -142,11 +142,11 @@ export function DialogModel(props: { providerID?: string }) {
     if (needle) {
       const filteredProviders = fuzzysort.go(needle, providerOptions, { keys: ["title", "category"] }).map((x) => x.obj)
       const filteredPopular = fuzzysort.go(needle, popularProviders, { keys: ["title"] }).map((x) => x.obj)
-      // kilocode_change start - Partition Kilo Gateway results first (preserves fuzzysort order)
-      const kilo = filteredProviders.filter((x) => x.value.providerID === "kilo")
-      const rest = filteredProviders.filter((x) => x.value.providerID !== "kilo")
-      return [...kilo, ...rest, ...filteredPopular]
-      // kilocode_change end
+      // stratacode_change start - Partition Strata Gateway results first (preserves fuzzysort order)
+      const strata = filteredProviders.filter((x) => x.value.providerID === "strata")
+      const rest = filteredProviders.filter((x) => x.value.providerID !== "strata")
+      return [...strata, ...rest, ...filteredPopular]
+      // stratacode_change end
     }
 
     return [...favoriteOptions, ...recentOptions, ...providerOptions, ...popularProviders]

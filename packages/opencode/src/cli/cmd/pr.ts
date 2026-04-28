@@ -4,11 +4,11 @@ import { AppRuntime } from "@/effect/app-runtime"
 import { Git } from "@/git"
 import { Instance } from "@/project/instance"
 import { Process } from "@/util"
-import { existsSync } from "node:fs" // kilocode_change
+import { existsSync } from "node:fs" // stratacode_change
 
-const subcommand = "pr" // kilocode_change
+const subcommand = "pr" // stratacode_change
 
-// kilocode_change start - resolve the currently running CLI instead of hardcoding opencode
+// stratacode_change start - resolve the currently running CLI instead of hardcoding opencode
 export function cliCommand(
   input = {
     execPath: process.execPath,
@@ -18,17 +18,17 @@ export function cliCommand(
 ) {
   const script = input.argv[1]
   if (!script) return [input.execPath]
-  if (script === subcommand) return [input.execPath] // kilocode_change
+  if (script === subcommand) return [input.execPath] // stratacode_change
   if (script.startsWith("/$bunfs/root/")) return [input.execPath]
   if (script.startsWith("B:/~BUN/root/")) return [input.execPath]
   if (input.exists(script)) return [input.execPath, script]
   return [input.execPath]
 }
-// kilocode_change end
+// stratacode_change end
 
 export const PrCommand = cmd({
-  command: `${subcommand} <number>`, // kilocode_change
-  describe: "fetch and checkout a GitHub PR branch, then run kilo", // kilocode_change
+  command: `${subcommand} <number>`, // stratacode_change
+  describe: "fetch and checkout a GitHub PR branch, then run strata", // stratacode_change
   builder: (yargs) =>
     yargs.positional("number", {
       type: "number",
@@ -47,7 +47,7 @@ export const PrCommand = cmd({
 
         const prNumber = args.number
         const localBranchName = `pr/${prNumber}`
-        const cli = cliCommand() // kilocode_change
+        const cli = cliCommand() // stratacode_change
         UI.println(`Fetching and checking out PR #${prNumber}...`)
 
         // Use gh pr checkout with custom branch name
@@ -117,15 +117,15 @@ export const PrCommand = cmd({
 
             // Check for opencode session link in PR body
             if (prInfo && prInfo.body) {
-              const sessionMatch = prInfo.body.match(/https:\/\/app\.kilo\.ai\/s\/([a-zA-Z0-9_-]+)/)
+              const sessionMatch = prInfo.body.match(/https:\/\/app\.strata\.ai\/s\/([a-zA-Z0-9_-]+)/)
               if (sessionMatch) {
                 const sessionUrl = sessionMatch[0]
-                // kilocode_change start
+                // stratacode_change start
                 UI.println(`Found session: ${sessionUrl}`)
                 UI.println(`Importing session...`)
 
                 const importResult = await Process.text([...cli, "import", sessionUrl], { nothrow: true })
-                // kilocode_change end
+                // stratacode_change end
                 if (importResult.code === 0) {
                   const importOutput = importResult.text.trim()
                   // Extract session ID from the output (format: "Imported session: <session-id>")
@@ -142,20 +142,20 @@ export const PrCommand = cmd({
 
         UI.println(`Successfully checked out PR #${prNumber} as branch '${localBranchName}'`)
         UI.println()
-        UI.println("Starting kilo...") // kilocode_change
+        UI.println("Starting strata...") // stratacode_change
         UI.println()
 
-        const run = sessionId ? [...cli, "-s", sessionId] : cli // kilocode_change
-        // kilocode_change start
+        const run = sessionId ? [...cli, "-s", sessionId] : cli // stratacode_change
+        // stratacode_change start
         const opencodeProcess = Process.spawn(run, {
-          // kilocode_change end
+          // stratacode_change end
           stdin: "inherit",
           stdout: "inherit",
           stderr: "inherit",
           cwd: process.cwd(),
         })
         const code = await opencodeProcess.exited
-        if (code !== 0) throw new Error(`kilo exited with code ${code}`) // kilocode_change
+        if (code !== 0) throw new Error(`strata exited with code ${code}`) // stratacode_change
       },
     })
   },

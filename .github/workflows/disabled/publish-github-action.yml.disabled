@@ -26,8 +26,8 @@ jobs:
         id: committer
         uses: ./.github/actions/setup-git-committer
         with:
-          kilo-maintainer-app-id: ${{ secrets.KILO_MAINTAINER_APP_ID }}
-          kilo-maintainer-app-secret: ${{ secrets.KILO_MAINTAINER_APP_SECRET }}
+          strata-maintainer-app-id: ${{ secrets.STRATA_MAINTAINER_APP_ID }}
+          strata-maintainer-app-secret: ${{ secrets.STRATA_MAINTAINER_APP_SECRET }}
 
       - name: Publish
         run: ./script/publish

@@ -1,21 +1,21 @@
 #!/usr/bin/env bun
 /**
- * Enhanced package.json transform with Kilo dependency injection
+ * Enhanced package.json transform with Strata dependency injection
  *
  * This script handles package.json conflicts by:
  * 1. Taking upstream's version (to get new dependencies)
- * 2. Transforming package names (opencode -> kilo)
- * 3. Injecting Kilo-specific dependencies
- * 4. Preserving Kilo's version number
+ * 2. Transforming package names (opencode -> strata)
+ * 3. Injecting Strata-specific dependencies
+ * 4. Preserving Strata's version number
  * 5. Preserving overrides and patchedDependencies
- * 6. Preserving Kilo's repository configuration
+ * 6. Preserving Strata's repository configuration
  * 7. Using "newest wins" strategy for dependency versions
  */
 
 import { $ } from "bun"
 import { info, success, warn, debug } from "../utils/logger"
 import { getCurrentVersion } from "./preserve-versions"
-import { oursHasKilocodeChanges } from "../utils/git"
+import { oursHasStratacodeChanges } from "../utils/git"
 
 /**
  * Extract clean version string from a version specifier
@@ -132,7 +132,7 @@ function mergeWithNewestVersions(
       if (!theirVersion) {
         // Dependency only exists in ours - keep it
         result[name] = ourVersion
-        changes.push(`${section}: preserved ${name}@${ourVersion} (kilo-only)`)
+        changes.push(`${section}: preserved ${name}@${ourVersion} (strata-only)`)
       } else if (ourVersion !== theirVersion) {
         // Both have it with different versions - compare
         const comparison = compareVersions(ourVersion, theirVersion)
@@ -143,7 +143,7 @@ function mergeWithNewestVersions(
         } else if (comparison > 0) {
           // Ours is newer
           result[name] = ourVersion
-          changes.push(`${section}: ${name} ${theirVersion} -> ${ourVersion} (kilo newer)`)
+          changes.push(`${section}: ${name} ${theirVersion} -> ${ourVersion} (strata newer)`)
         } else if (comparison < 0) {
           // Theirs is newer - already in result
           changes.push(`${section}: ${name} kept upstream ${theirVersion} (upstream newer)`)
@@ -171,41 +171,41 @@ export interface PackageJsonOptions {
 
 // Package name mappings
 const PACKAGE_NAME_MAP: Record<string, string> = {
-  "opencode-ai": "@kilocode/cli",
-  "@opencode-ai/cli": "@kilocode/cli",
-  "@opencode-ai/sdk": "@kilocode/sdk",
-  "@opencode-ai/plugin": "@kilocode/plugin",
+  "opencode-ai": "@stratacode/cli",
+  "@opencode-ai/cli": "@stratacode/cli",
+  "@opencode-ai/sdk": "@stratacode/sdk",
+  "@opencode-ai/plugin": "@stratacode/plugin",
 }
 
-// Kilo-specific dependencies to inject into specific packages
-// NOTE: When adding new Kilo-specific workspace dependencies (packages starting with @kilocode/kilo-*),
+// Strata-specific dependencies to inject into specific packages
+// NOTE: When adding new Strata-specific workspace dependencies (packages starting with @stratacode/strata-*),
 // add them here to prevent them from being removed during upstream merges
-const KILO_DEPENDENCIES: Record<string, Record<string, string>> = {
+const STRATA_DEPENDENCIES: Record<string, Record<string, string>> = {
   // packages/opencode/package.json needs these
   "packages/opencode/package.json": {
-    "@kilocode/kilo-gateway": "workspace:*",
-    "@kilocode/kilo-telemetry": "workspace:*",
+    "@stratacode/strata-gateway": "workspace:*",
+    "@stratacode/strata-telemetry": "workspace:*",
   },
   // packages/app/package.json needs these
   "packages/app/package.json": {
-    "@kilocode/kilo-i18n": "workspace:*",
+    "@stratacode/strata-i18n": "workspace:*",
   },
 }
 
-// Kilo-specific bin entries to set on specific packages
-const KILO_BIN: Record<string, Record<string, string>> = {
+// Strata-specific bin entries to set on specific packages
+const STRATA_BIN: Record<string, Record<string, string>> = {
   "packages/opencode/package.json": {
-    kilo: "./bin/kilo",
-    kilocode: "./bin/kilo",
+    strata: "./bin/strata",
+    stratacode: "./bin/strata",
   },
 }
 
 // Packages that should have their name transformed
 const TRANSFORM_PACKAGE_NAMES: Record<string, string> = {
-  "package.json": "@kilocode/kilo",
-  "packages/opencode/package.json": "@kilocode/cli",
-  "packages/plugin/package.json": "@kilocode/plugin",
-  "packages/sdk/js/package.json": "@kilocode/sdk",
+  "package.json": "@stratacode/strata",
+  "packages/opencode/package.json": "@stratacode/cli",
+  "packages/plugin/package.json": "@stratacode/plugin",
+  "packages/sdk/js/package.json": "@stratacode/sdk",
 }
 
 /**
@@ -251,14 +251,14 @@ export async function transformPackageJson(file: string, options: PackageJsonOpt
     return { file, action: "transformed", changes: [], dryRun: true }
   }
 
-  // If our version has kilocode_change markers, flag for manual resolution
-  if (await oursHasKilocodeChanges(file)) {
-    warn(`${file} has kilocode_change markers — skipping auto-transform, needs manual resolution`)
+  // If our version has stratacode_change markers, flag for manual resolution
+  if (await oursHasStratacodeChanges(file)) {
+    warn(`${file} has stratacode_change markers — skipping auto-transform, needs manual resolution`)
     return { file, action: "flagged", changes: [], dryRun: false }
   }
 
   try {
-    // Save Kilo's version BEFORE taking theirs
+    // Save Strata's version BEFORE taking theirs
     let ourPkg: Record<string, unknown> | null = null
     try {
       const ourContent = await $`git show :2:${file}`.text() // :2: is "ours" in merge
@@ -293,12 +293,12 @@ export async function transformPackageJson(file: string, options: PackageJsonOpt
       pkg.name = newName
     }
 
-    // 2. Preserve Kilo version if requested
+    // 2. Preserve Strata version if requested
     if (options.preserveVersion !== false) {
-      const kiloVersion = await getCurrentVersion()
-      if (pkg.version !== kiloVersion) {
-        changes.push(`version: ${pkg.version} -> ${kiloVersion}`)
-        pkg.version = kiloVersion
+      const strataVersion = await getCurrentVersion()
+      if (pkg.version !== strataVersion) {
+        changes.push(`version: ${pkg.version} -> ${strataVersion}`)
+        pkg.version = strataVersion
       }
     }
 
@@ -331,7 +331,7 @@ export async function transformPackageJson(file: string, options: PackageJsonOpt
         pkg.overrides = mergeWithNewestVersions(ourOverrides, pkg.overrides, changes, "overrides")
       }
 
-      // 5. Preserve patchedDependencies (Kilo-specific, upstream won't have these)
+      // 5. Preserve patchedDependencies (Strata-specific, upstream won't have these)
       const ourPatchedDeps = ourPkg.patchedDependencies as Record<string, string> | undefined
       if (ourPatchedDeps) {
         pkg.patchedDependencies = pkg.patchedDependencies || {}
@@ -343,35 +343,35 @@ export async function transformPackageJson(file: string, options: PackageJsonOpt
         }
       }
 
-      // 6. Preserve repository (Kilo-specific, upstream doesn't have this)
+      // 6. Preserve repository (Strata-specific, upstream doesn't have this)
       const ourRepo = ourPkg.repository
       if (ourRepo && JSON.stringify(pkg.repository) !== JSON.stringify(ourRepo)) {
         pkg.repository = ourRepo
-        changes.push(`repository: preserved Kilo's repository configuration`)
+        changes.push(`repository: preserved Strata's repository configuration`)
       }
 
       // 7. Handle workspaces for root package.json
-      // Kilo has removed hosted platform packages (console/*, slack, etc.)
-      // so we need to preserve Kilo's workspace configuration instead of taking upstream's
+      // Strata has removed hosted platform packages (console/*, slack, etc.)
+      // so we need to preserve Strata's workspace configuration instead of taking upstream's
       const ourWorkspaces = ourPkg.workspaces as { packages?: string[]; catalog?: Record<string, string> } | undefined
       const theirWorkspaces = pkg.workspaces as { packages?: string[]; catalog?: Record<string, string> } | undefined
 
       if (relativePath === "package.json" && ourWorkspaces?.packages) {
         pkg.workspaces = pkg.workspaces || {}
         pkg.workspaces.packages = ourWorkspaces.packages
-        changes.push(`workspaces.packages: preserved Kilo's workspace configuration`)
+        changes.push(`workspaces.packages: preserved Strata's workspace configuration`)
       }
 
       const ourScripts = ourPkg.scripts as Record<string, string> | undefined
       if (relativePath === "package.json" && ourScripts?.extension && pkg.scripts?.extension !== ourScripts.extension) {
         pkg.scripts = pkg.scripts || {}
         pkg.scripts.extension = ourScripts.extension
-        changes.push(`scripts.extension: preserved Kilo's extension script`)
+        changes.push(`scripts.extension: preserved Strata's extension script`)
       }
       if (relativePath === "package.json" && ourScripts?.changeset && pkg.scripts?.changeset !== ourScripts.changeset) {
         pkg.scripts = pkg.scripts || {}
         pkg.scripts.changeset = ourScripts.changeset
-        changes.push(`scripts.changeset: preserved Kilo's changeset script`)
+        changes.push(`scripts.changeset: preserved Strata's changeset script`)
       }
       if (
         relativePath === "package.json" &&
@@ -380,10 +380,10 @@ export async function transformPackageJson(file: string, options: PackageJsonOpt
       ) {
         pkg.scripts = pkg.scripts || {}
         pkg.scripts["changeset:version"] = ourScripts["changeset:version"]
-        changes.push(`scripts.changeset:version: preserved Kilo's changeset:version script`)
+        changes.push(`scripts.changeset:version: preserved Strata's changeset:version script`)
       }
 
-      // Preserve Kilo's test runner scripts for packages/opencode
+      // Preserve Strata's test runner scripts for packages/opencode
       if (
         relativePath === "packages/opencode/package.json" &&
         ourScripts?.test &&
@@ -391,7 +391,7 @@ export async function transformPackageJson(file: string, options: PackageJsonOpt
       ) {
         pkg.scripts = pkg.scripts || {}
         pkg.scripts.test = ourScripts.test
-        changes.push(`scripts.test: preserved Kilo's test runner script`)
+        changes.push(`scripts.test: preserved Strata's test runner script`)
       }
       if (
         relativePath === "packages/opencode/package.json" &&
@@ -400,7 +400,7 @@ export async function transformPackageJson(file: string, options: PackageJsonOpt
       ) {
         pkg.scripts = pkg.scripts || {}
         pkg.scripts["test:ci"] = ourScripts["test:ci"]
-        changes.push(`scripts.test:ci: preserved Kilo's CI test runner script`)
+        changes.push(`scripts.test:ci: preserved Strata's CI test runner script`)
       }
 
       // Merge catalog with "newest wins" strategy
@@ -415,7 +415,7 @@ export async function transformPackageJson(file: string, options: PackageJsonOpt
       }
     }
 
-    // 7. Transform dependency names (opencode -> kilo)
+    // 7. Transform dependency names (opencode -> strata)
     if (pkg.dependencies) {
       const { result, changes: depChanges } = transformDependencies(pkg.dependencies)
       pkg.dependencies = result
@@ -438,11 +438,11 @@ export async function transformPackageJson(file: string, options: PackageJsonOpt
       }
     }
 
-    // 8. Inject Kilo-specific dependencies
-    const kiloDeps = KILO_DEPENDENCIES[relativePath]
-    if (kiloDeps) {
+    // 8. Inject Strata-specific dependencies
+    const strataDeps = STRATA_DEPENDENCIES[relativePath]
+    if (strataDeps) {
       pkg.dependencies = pkg.dependencies || {}
-      for (const [name, version] of Object.entries(kiloDeps)) {
+      for (const [name, version] of Object.entries(strataDeps)) {
         if (!pkg.dependencies[name]) {
           pkg.dependencies[name] = version
           changes.push(`injected: ${name}`)
@@ -450,11 +450,11 @@ export async function transformPackageJson(file: string, options: PackageJsonOpt
       }
     }
 
-    // 9. Set Kilo-specific bin entries
-    const kiloBin = KILO_BIN[relativePath]
-    if (kiloBin) {
-      pkg.bin = kiloBin
-      changes.push(`bin: set Kilo bin entries`)
+    // 9. Set Strata-specific bin entries
+    const strataBin = STRATA_BIN[relativePath]
+    if (strataBin) {
+      pkg.bin = strataBin
+      changes.push(`bin: set Strata bin entries`)
     }
 
     // Write back with proper formatting
@@ -501,23 +501,23 @@ export async function transformConflictedPackageJson(
 }
 
 /**
- * Get Kilo's package.json from the base branch (main) for comparison
- * Used during pre-merge to compare upstream versions against Kilo's versions
+ * Get Strata's package.json from the base branch (main) for comparison
+ * Used during pre-merge to compare upstream versions against Strata's versions
  */
-async function getKiloPackageJson(path: string, baseBranch = "main"): Promise<Record<string, unknown> | null> {
+async function getStrataPackageJson(path: string, baseBranch = "main"): Promise<Record<string, unknown> | null> {
   try {
     // Try to get the file from origin/main (or whatever base branch)
     const content = await $`git show origin/${baseBranch}:${path}`.text()
     return JSON.parse(content)
   } catch {
-    // File might not exist in Kilo
+    // File might not exist in Strata
     return null
   }
 }
 
 /**
  * Transform all package.json files (pre-merge, on opencode branch)
- * This function merges Kilo's versions with upstream, using "newest wins" strategy
+ * This function merges Strata's versions with upstream, using "newest wins" strategy
  */
 export async function transformAllPackageJson(options: PackageJsonOptions = {}): Promise<PackageJsonResult[]> {
   const { Glob } = await import("bun")
@@ -538,8 +538,8 @@ export async function transformAllPackageJson(options: PackageJsonOptions = {}):
       const pkg = JSON.parse(content) // This is upstream's version
       const changes: string[] = []
 
-      // Get Kilo's version from base branch for comparison
-      const kiloPkg = await getKiloPackageJson(path)
+      // Get Strata's version from base branch for comparison
+      const strataPkg = await getStrataPackageJson(path)
 
       // 1. Transform package name if needed
       const newName = TRANSFORM_PACKAGE_NAMES[path]
@@ -548,49 +548,49 @@ export async function transformAllPackageJson(options: PackageJsonOptions = {}):
         pkg.name = newName
       }
 
-      // 2. Preserve Kilo version if requested
+      // 2. Preserve Strata version if requested
       if (options.preserveVersion !== false) {
-        const kiloVersion = await getCurrentVersion()
-        if (pkg.version !== kiloVersion) {
-          changes.push(`version: ${pkg.version} -> ${kiloVersion}`)
-          pkg.version = kiloVersion
+        const strataVersion = await getCurrentVersion()
+        if (pkg.version !== strataVersion) {
+          changes.push(`version: ${pkg.version} -> ${strataVersion}`)
+          pkg.version = strataVersion
         }
       }
 
-      // 3. Merge dependencies with "newest wins" strategy (if Kilo has this file)
-      if (kiloPkg) {
+      // 3. Merge dependencies with "newest wins" strategy (if Strata has this file)
+      if (strataPkg) {
         pkg.dependencies = mergeWithNewestVersions(
-          kiloPkg.dependencies as Record<string, string> | undefined,
+          strataPkg.dependencies as Record<string, string> | undefined,
           pkg.dependencies,
           changes,
           "dependencies",
         )
 
         pkg.devDependencies = mergeWithNewestVersions(
-          kiloPkg.devDependencies as Record<string, string> | undefined,
+          strataPkg.devDependencies as Record<string, string> | undefined,
           pkg.devDependencies,
           changes,
           "devDependencies",
         )
 
         pkg.peerDependencies = mergeWithNewestVersions(
-          kiloPkg.peerDependencies as Record<string, string> | undefined,
+          strataPkg.peerDependencies as Record<string, string> | undefined,
           pkg.peerDependencies,
           changes,
           "peerDependencies",
         )
 
         // 4. Preserve/merge overrides
-        const kiloOverrides = kiloPkg.overrides as Record<string, string> | undefined
-        if (kiloOverrides || pkg.overrides) {
-          pkg.overrides = mergeWithNewestVersions(kiloOverrides, pkg.overrides, changes, "overrides")
+        const strataOverrides = strataPkg.overrides as Record<string, string> | undefined
+        if (strataOverrides || pkg.overrides) {
+          pkg.overrides = mergeWithNewestVersions(strataOverrides, pkg.overrides, changes, "overrides")
         }
 
-        // 5. Preserve patchedDependencies (Kilo-specific, upstream won't have these)
-        const kiloPatchedDeps = kiloPkg.patchedDependencies as Record<string, string> | undefined
-        if (kiloPatchedDeps) {
+        // 5. Preserve patchedDependencies (Strata-specific, upstream won't have these)
+        const strataPatchedDeps = strataPkg.patchedDependencies as Record<string, string> | undefined
+        if (strataPatchedDeps) {
           pkg.patchedDependencies = pkg.patchedDependencies || {}
-          for (const [name, patch] of Object.entries(kiloPatchedDeps)) {
+          for (const [name, patch] of Object.entries(strataPatchedDeps)) {
             if (!pkg.patchedDependencies[name]) {
               pkg.patchedDependencies[name] = patch
               changes.push(`patchedDependencies: preserved ${name}`)
@@ -598,57 +598,57 @@ export async function transformAllPackageJson(options: PackageJsonOptions = {}):
           }
         }
 
-        // 6. Preserve repository (Kilo-specific, upstream doesn't have this)
-        const kiloRepo = kiloPkg.repository
-        if (kiloRepo && JSON.stringify(pkg.repository) !== JSON.stringify(kiloRepo)) {
-          pkg.repository = kiloRepo
-          changes.push(`repository: preserved Kilo's repository configuration`)
+        // 6. Preserve repository (Strata-specific, upstream doesn't have this)
+        const strataRepo = strataPkg.repository
+        if (strataRepo && JSON.stringify(pkg.repository) !== JSON.stringify(strataRepo)) {
+          pkg.repository = strataRepo
+          changes.push(`repository: preserved Strata's repository configuration`)
         }
 
         // 7. Handle workspaces for root package.json
-        // Kilo has removed hosted platform packages (console/*, slack, etc.)
-        // so we need to preserve Kilo's workspace configuration instead of taking upstream's
-        const kiloWorkspaces = kiloPkg.workspaces as
+        // Strata has removed hosted platform packages (console/*, slack, etc.)
+        // so we need to preserve Strata's workspace configuration instead of taking upstream's
+        const strataWorkspaces = strataPkg.workspaces as
           | { packages?: string[]; catalog?: Record<string, string> }
           | undefined
         const upstreamWorkspaces = pkg.workspaces as
           | { packages?: string[]; catalog?: Record<string, string> }
           | undefined
 
-        if (path === "package.json" && kiloWorkspaces?.packages) {
+        if (path === "package.json" && strataWorkspaces?.packages) {
           pkg.workspaces = pkg.workspaces || {}
-          pkg.workspaces.packages = kiloWorkspaces.packages
-          changes.push(`workspaces.packages: preserved Kilo's workspace configuration`)
+          pkg.workspaces.packages = strataWorkspaces.packages
+          changes.push(`workspaces.packages: preserved Strata's workspace configuration`)
         }
 
-        const kiloScripts = kiloPkg.scripts as Record<string, string> | undefined
-        if (path === "package.json" && kiloScripts?.extension && pkg.scripts?.extension !== kiloScripts.extension) {
+        const strataScripts = strataPkg.scripts as Record<string, string> | undefined
+        if (path === "package.json" && strataScripts?.extension && pkg.scripts?.extension !== strataScripts.extension) {
           pkg.scripts = pkg.scripts || {}
-          pkg.scripts.extension = kiloScripts.extension
-          changes.push(`scripts.extension: preserved Kilo's extension script`)
+          pkg.scripts.extension = strataScripts.extension
+          changes.push(`scripts.extension: preserved Strata's extension script`)
         }
 
-        // Preserve Kilo's test runner scripts for packages/opencode
-        if (path === "packages/opencode/package.json" && kiloScripts?.test && pkg.scripts?.test !== kiloScripts.test) {
+        // Preserve Strata's test runner scripts for packages/opencode
+        if (path === "packages/opencode/package.json" && strataScripts?.test && pkg.scripts?.test !== strataScripts.test) {
           pkg.scripts = pkg.scripts || {}
-          pkg.scripts.test = kiloScripts.test
-          changes.push(`scripts.test: preserved Kilo's test runner script`)
+          pkg.scripts.test = strataScripts.test
+          changes.push(`scripts.test: preserved Strata's test runner script`)
         }
         if (
           path === "packages/opencode/package.json" &&
-          kiloScripts?.["test:ci"] &&
-          pkg.scripts?.["test:ci"] !== kiloScripts["test:ci"]
+          strataScripts?.["test:ci"] &&
+          pkg.scripts?.["test:ci"] !== strataScripts["test:ci"]
         ) {
           pkg.scripts = pkg.scripts || {}
-          pkg.scripts["test:ci"] = kiloScripts["test:ci"]
-          changes.push(`scripts.test:ci: preserved Kilo's CI test runner script`)
+          pkg.scripts["test:ci"] = strataScripts["test:ci"]
+          changes.push(`scripts.test:ci: preserved Strata's CI test runner script`)
         }
 
         // Merge catalog with "newest wins" strategy
-        if (kiloWorkspaces?.catalog || upstreamWorkspaces?.catalog) {
+        if (strataWorkspaces?.catalog || upstreamWorkspaces?.catalog) {
           pkg.workspaces = pkg.workspaces || {}
           pkg.workspaces.catalog = mergeWithNewestVersions(
-            kiloWorkspaces?.catalog,
+            strataWorkspaces?.catalog,
             upstreamWorkspaces?.catalog,
             changes,
             "workspaces.catalog",
@@ -656,7 +656,7 @@ export async function transformAllPackageJson(options: PackageJsonOptions = {}):
         }
       }
 
-      // 7. Transform dependency names (opencode -> kilo)
+      // 7. Transform dependency names (opencode -> strata)
       if (pkg.dependencies) {
         const { result, changes: depChanges } = transformDependencies(pkg.dependencies)
         if (depChanges.length > 0) {
@@ -681,11 +681,11 @@ export async function transformAllPackageJson(options: PackageJsonOptions = {}):
         }
       }
 
-      // 8. Inject Kilo-specific dependencies
-      const kiloDeps = KILO_DEPENDENCIES[path]
-      if (kiloDeps) {
+      // 8. Inject Strata-specific dependencies
+      const strataDeps = STRATA_DEPENDENCIES[path]
+      if (strataDeps) {
         pkg.dependencies = pkg.dependencies || {}
-        for (const [name, version] of Object.entries(kiloDeps)) {
+        for (const [name, version] of Object.entries(strataDeps)) {
           if (!pkg.dependencies[name]) {
             pkg.dependencies[name] = version
             changes.push(`injected: ${name}`)
@@ -693,11 +693,11 @@ export async function transformAllPackageJson(options: PackageJsonOptions = {}):
         }
       }
 
-      // 9. Set Kilo-specific bin entries
-      const kiloBin = KILO_BIN[path]
-      if (kiloBin) {
-        pkg.bin = kiloBin
-        changes.push(`bin: set Kilo bin entries`)
+      // 9. Set Strata-specific bin entries
+      const strataBin = STRATA_BIN[path]
+      if (strataBin) {
+        pkg.bin = strataBin
+        changes.push(`bin: set Strata bin entries`)
       }
 
       if (changes.length > 0) {

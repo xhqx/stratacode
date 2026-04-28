@@ -3,7 +3,7 @@ import fs from "fs/promises"
 import path from "path"
 import { Global } from "../../src/global"
 import { Log } from "../../src/util"
-import * as Process from "../../src/util/process" // kilocode_change
+import * as Process from "../../src/util/process" // stratacode_change
 import { tmpdir } from "../fixture/fixture"
 
 const log = Global.Path.log
@@ -44,7 +44,7 @@ test("init cleanup keeps the newest timestamped logs", async () => {
   expect(next).toContain(list.at(-1)!)
 })
 
-// kilocode_change start
+// stratacode_change start
 const root = path.join(import.meta.dir, "../..")
 const worker = path.join(import.meta.dir, "../fixture/log-init-worker.ts")
 
@@ -56,7 +56,7 @@ test("uses single log directory for rotation history", async () => {
     nothrow: true,
   })
 
-  const dir = path.join(tmp.path, "share", "kilo", "log")
+  const dir = path.join(tmp.path, "share", "strata", "log")
   const history = path.join(dir, ".log-history")
 
   expect(out.code).toBe(0)
@@ -75,7 +75,7 @@ test("skips rotation rename when active log file is missing", async () => {
     nothrow: true,
   })
 
-  const dir = path.join(tmp.path, "share", "kilo", "log")
+  const dir = path.join(tmp.path, "share", "strata", "log")
   const list = (await fs.readdir(dir)).sort()
   const next = list.filter((file) => /^\d{8}-\d{4}-\d{2}-dev\.log$/.test(file))
   const stat = await fs.stat(path.join(dir, next[0]!))
@@ -86,4 +86,4 @@ test("skips rotation rename when active log file is missing", async () => {
   expect(next).toHaveLength(1)
   expect(stat.size).toBe(0)
 })
-// kilocode_change end
+// stratacode_change end

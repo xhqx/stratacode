@@ -1,4 +1,4 @@
-import { createStore, reconcile, unwrap } from "solid-js/store" // kilocode_change
+import { createStore, reconcile, unwrap } from "solid-js/store" // stratacode_change
 import { createSimpleContext } from "./helper"
 import type { PromptInfo } from "../component/prompt/history"
 
@@ -13,11 +13,11 @@ export type SessionRoute = {
   prompt?: PromptInfo
 }
 
-// kilocode_change start
-export type KiloClawRoute = {
-  type: "kiloclaw"
+// stratacode_change start
+export type StrataClawRoute = {
+  type: "strataclaw"
 }
-// kilocode_change end
+// stratacode_change end
 
 export type PluginRoute = {
   type: "plugin"
@@ -25,40 +25,40 @@ export type PluginRoute = {
   data?: Record<string, unknown>
 }
 
-export type Route = HomeRoute | SessionRoute | PluginRoute | KiloClawRoute // kilocode_change
+export type Route = HomeRoute | SessionRoute | PluginRoute | StrataClawRoute // stratacode_change
 
 export const { use: useRoute, provider: RouteProvider } = createSimpleContext({
   name: "Route",
   init: (props: { initialRoute?: Route }) => {
     const [store, setStore] = createStore<Route>(
       props.initialRoute ??
-        (process.env["KILO_ROUTE"]
-          ? JSON.parse(process.env["KILO_ROUTE"])
+        (process.env["STRATA_ROUTE"]
+          ? JSON.parse(process.env["STRATA_ROUTE"])
           : {
               type: "home",
             }),
     )
 
-    // kilocode_change start
+    // stratacode_change start
     let previous: Route | undefined
-    // kilocode_change end
+    // stratacode_change end
 
     return {
       get data() {
         return store
       },
       navigate(route: Route) {
-        previous = structuredClone(unwrap(store)) // kilocode_change
+        previous = structuredClone(unwrap(store)) // stratacode_change
         setStore(reconcile(route))
       },
-      // kilocode_change start
+      // stratacode_change start
       back() {
         const target = previous ?? ({ type: "home" } as const)
         previous = undefined
         console.log("navigate", target)
         setStore(target)
       },
-      // kilocode_change end
+      // stratacode_change end
     }
   },
 })

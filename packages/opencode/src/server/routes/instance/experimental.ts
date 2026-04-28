@@ -16,13 +16,13 @@ import { errors } from "../../error"
 import { lazy } from "@/util/lazy"
 import { Effect, Option } from "effect"
 import { Agent } from "@/agent/agent"
-import { Snapshot } from "@/snapshot" // kilocode_change
-import { Review } from "@/kilocode/review/review" // kilocode_change
-import { WorktreeDiff } from "@/kilocode/review/worktree-diff" // kilocode_change
-import { WorktreeFamily } from "@/kilocode/worktree-family" // kilocode_change
-import { Log } from "@/util" // kilocode_change
-import { Filesystem } from "@/util" // kilocode_change
-import path from "path" // kilocode_change
+import { Snapshot } from "@/snapshot" // stratacode_change
+import { Review } from "@/stratacode/review/review" // stratacode_change
+import { WorktreeDiff } from "@/stratacode/review/worktree-diff" // stratacode_change
+import { WorktreeFamily } from "@/stratacode/worktree-family" // stratacode_change
+import { Log } from "@/util" // stratacode_change
+import { Filesystem } from "@/util" // stratacode_change
+import path from "path" // stratacode_change
 import { jsonRequest, runRequest } from "./trace"
 
 const ConsoleOrgOption = z.object({
@@ -330,7 +330,7 @@ export const ExperimentalRoutes = lazy(() =>
           return true
         }),
     )
-    // kilocode_change start - worktree diff endpoint for agent manager
+    // stratacode_change start - worktree diff endpoint for agent manager
     .get(
       "/worktree/diff",
       describeRoute({
@@ -349,7 +349,7 @@ export const ExperimentalRoutes = lazy(() =>
           ...errors(400),
         },
       }),
-      // kilocode_change start
+      // stratacode_change start
       validator(
         "query",
         z.object({
@@ -360,7 +360,7 @@ export const ExperimentalRoutes = lazy(() =>
         const log = Log.create({ service: "worktree-diff" })
         const query = c.req.valid("query")
         const base = query.base || (await Review.getBaseBranch())
-        // kilocode_change end
+        // stratacode_change end
         const dir = Instance.directory
         log.info("computing diff", { dir, base })
         const diffs = await WorktreeDiff.full({ dir, base, log })
@@ -443,7 +443,7 @@ export const ExperimentalRoutes = lazy(() =>
         return c.json((await WorktreeDiff.detail({ dir, base, file: query.file, log })) ?? null)
       },
     )
-    // kilocode_change end
+    // stratacode_change end
     .get(
       "/session",
       describeRoute({
@@ -465,14 +465,14 @@ export const ExperimentalRoutes = lazy(() =>
       validator(
         "query",
         z.object({
-          // kilocode_change start
+          // stratacode_change start
           projectID: z.string().optional().meta({ description: "Filter sessions by project ID" }),
           directory: z.string().optional().meta({ description: "Filter sessions by project directory" }),
           worktrees: z.coerce
             .boolean()
             .optional()
             .meta({ description: "Restrict sessions to the current repo worktree family or current directory" }),
-          // kilocode_change end
+          // stratacode_change end
           roots: z.coerce.boolean().optional().meta({ description: "Only return root sessions (no parentID)" }),
           start: z.coerce
             .number()
@@ -489,19 +489,19 @@ export const ExperimentalRoutes = lazy(() =>
       ),
       async (c) => {
         const query = c.req.valid("query")
-        const limit = query.limit ?? 100 // kilocode_change
-        // kilocode_change start
+        const limit = query.limit ?? 100 // stratacode_change
+        // stratacode_change start
         const projectID = query.worktrees && !query.projectID ? Instance.project.id : query.projectID
-        // kilocode_change end
-        const directories = query.worktrees ? await WorktreeFamily.list() : undefined // kilocode_change
-        // kilocode_change start - sort longest-first so most specific worktree matches first
+        // stratacode_change end
+        const directories = query.worktrees ? await WorktreeFamily.list() : undefined // stratacode_change
+        // stratacode_change start - sort longest-first so most specific worktree matches first
         const sorted = directories ? [...directories].sort((a, b) => b.length - a.length) : undefined
-        // kilocode_change end
+        // stratacode_change end
         const sessions: Session.GlobalInfo[] = []
         for await (const session of Session.listGlobal({
-          projectID, // kilocode_change
-          directory: query.worktrees ? undefined : query.directory, // kilocode_change - ignore SDK-injected directory when listing across worktrees
-          directories, // kilocode_change
+          projectID, // stratacode_change
+          directory: query.worktrees ? undefined : query.directory, // stratacode_change - ignore SDK-injected directory when listing across worktrees
+          directories, // stratacode_change
           roots: query.roots,
           start: query.start,
           cursor: query.cursor,
@@ -509,13 +509,13 @@ export const ExperimentalRoutes = lazy(() =>
           limit: limit + 1,
           archived: query.archived,
         })) {
-          // kilocode_change start - resolve worktree folder name for each session
+          // stratacode_change start - resolve worktree folder name for each session
           if (sorted) {
             const root = sorted.find((d) => Filesystem.contains(d, session.directory))
             sessions.push({ ...session, worktreeName: path.basename(root ?? session.directory) })
             continue
           }
-          // kilocode_change end
+          // stratacode_change end
           sessions.push(session)
         }
         const hasMore = sessions.length > limit

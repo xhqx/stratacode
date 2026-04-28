@@ -62,13 +62,13 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
           return agents()
         },
         current() {
-          // kilocode_change start - fall back to first agent when current is removed (e.g. org switch)
+          // stratacode_change start - fall back to first agent when current is removed (e.g. org switch)
           const found = agents().find((x) => x.name === agentStore.current)
           if (found) return found
           const fallback = agents().at(0)
           if (fallback) setAgentStore("current", fallback.name)
           return fallback
-          // kilocode_change end
+          // stratacode_change end
         },
         set(name: string) {
           if (!agents().some((x) => x.name === name))
@@ -87,7 +87,7 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
             if (next < 0) next = agents().length - 1
             if (next >= agents().length) next = 0
             const value = agents()[next]
-            if (!value) return // kilocode_change - guard against empty agent list during org switch
+            if (!value) return // stratacode_change - guard against empty agent list during org switch
             setAgentStore("current", value.name)
           })
         },
@@ -146,7 +146,7 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
         }
         state.pending = false
         Filesystem.writeJson(filePath, {
-          model: modelStore.model, // kilocode_change
+          model: modelStore.model, // stratacode_change
           recent: modelStore.recent,
           favorite: modelStore.favorite,
           variant: modelStore.variant,
@@ -157,7 +157,7 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
         .then((x: any) => {
           if (Array.isArray(x.recent)) setModelStore("recent", x.recent)
           if (Array.isArray(x.favorite)) setModelStore("favorite", x.favorite)
-          if (typeof x.model === "object" && x.model !== null) setModelStore("model", x.model) // kilocode_change
+          if (typeof x.model === "object" && x.model !== null) setModelStore("model", x.model) // stratacode_change
           if (typeof x.variant === "object" && x.variant !== null) setModelStore("variant", x.variant)
         })
         .catch(() => {})
@@ -208,7 +208,7 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
 
       const currentModel = createMemo(() => {
         const a = agent.current()
-        if (!a) return fallbackModel() // kilocode_change - guard against empty agent list
+        if (!a) return fallbackModel() // stratacode_change - guard against empty agent list
         return (
           getFirstValidModel(
             () => a && modelStore.model[a.name],
@@ -223,11 +223,11 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
         get ready() {
           return modelStore.ready
         },
-        // kilocode_change start - expose saved per-agent pick for auto-apply guard
+        // stratacode_change start - expose saved per-agent pick for auto-apply guard
         saved(name: string) {
           return modelStore.model[name]
         },
-        // kilocode_change end
+        // stratacode_change end
         recent() {
           return modelStore.recent
         },
@@ -265,7 +265,7 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
           const a = agent.current()
           if (!a) return
           setModelStore("model", a.name, { ...val })
-          save() // kilocode_change
+          save() // stratacode_change
         },
         cycleFavorite(direction: 1 | -1) {
           const favorites = modelStore.favorite.filter((item) => isModelValid(item))
@@ -323,7 +323,7 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
                 uniq.map((x) => ({ providerID: x.providerID, modelID: x.modelID })),
               )
             }
-            save() // kilocode_change
+            save() // stratacode_change
           })
         },
         toggleFavorite(model: { providerID: string; modelID: string }) {
@@ -415,12 +415,12 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
 
     // Automatically update model when agent changes
     createEffect(() => {
-      // kilocode_change start - wait for persistence load and skip when a per-agent pick already exists (#9050)
+      // stratacode_change start - wait for persistence load and skip when a per-agent pick already exists (#9050)
       if (!model.ready) return
       const value = agent.current()
       if (!value) return // guard against empty agent list during org switch
       if (model.saved(value.name)) return
-      // kilocode_change end
+      // stratacode_change end
       if (value.model) {
         if (isModelValid(value.model))
           model.set({

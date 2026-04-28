@@ -11,18 +11,18 @@ import { errorMessage } from "@/util/error"
 import { withTimeout } from "@/util/timeout"
 import { withNetworkOptions, resolveNetworkOptionsNoConfig } from "@/cli/network"
 import { Filesystem } from "@/util"
-import type { GlobalEvent } from "@kilocode/sdk/v2"
+import type { GlobalEvent } from "@stratacode/sdk/v2"
 import type { EventSource } from "./context/sdk"
 import { win32DisableProcessedInput, win32InstallCtrlCGuard } from "./win32"
-import { importCloudSession, validateCloudFork } from "@/kilocode/cloud-session" // kilocode_change
-import { createKiloClient } from "@kilocode/sdk/v2" // kilocode_change
+import { importCloudSession, validateCloudFork } from "@/stratacode/cloud-session" // stratacode_change
+import { createStrataClient } from "@stratacode/sdk/v2" // stratacode_change
 import { writeHeapSnapshot } from "v8"
 import { TuiConfig } from "./config/tui"
-import { KILO_PROCESS_ROLE, KILO_RUN_ID, ensureRunID, sanitizedProcessEnv } from "@/util/opencode-process"
+import { STRATA_PROCESS_ROLE, STRATA_RUN_ID, ensureRunID, sanitizedProcessEnv } from "@/util/opencode-process"
 import { validateSession } from "./validate-session"
 
 declare global {
-  const KILO_WORKER_PATH: string
+  const STRATA_WORKER_PATH: string
 }
 
 type RpcClient = ReturnType<typeof Rpc.client<typeof rpc>>
@@ -56,7 +56,7 @@ function createEventSource(client: RpcClient): EventSource {
 }
 
 async function target() {
-  if (typeof KILO_WORKER_PATH !== "undefined") return KILO_WORKER_PATH
+  if (typeof STRATA_WORKER_PATH !== "undefined") return STRATA_WORKER_PATH
   const dist = new URL("./cli/cmd/tui/worker.js", import.meta.url)
   if (await Filesystem.exists(fileURLToPath(dist))) return dist
   return new URL("./worker.ts", import.meta.url)
@@ -71,12 +71,12 @@ async function input(value?: string) {
 
 export const TuiThreadCommand = cmd({
   command: "$0 [project]",
-  describe: "start kilo tui", // kilocode_change
+  describe: "start strata tui", // stratacode_change
   builder: (yargs) =>
     withNetworkOptions(yargs)
       .positional("project", {
         type: "string",
-        describe: "path to start kilo in", // kilocode_change
+        describe: "path to start strata in", // stratacode_change
       })
       .option("model", {
         type: "string",
@@ -127,14 +127,14 @@ export const TuiThreadCommand = cmd({
         process.exitCode = 1
         return
       }
-      // kilocode_change start
+      // stratacode_change start
       const cloudForkError = validateCloudFork(args)
       if (cloudForkError) {
         UI.error(cloudForkError)
         process.exitCode = 1
         return
       }
-      // kilocode_change end
+      // stratacode_change end
 
       // Resolve relative --project paths from PWD, then use the real cwd after
       // chdir so the thread and worker share the same directory key.
@@ -151,8 +151,8 @@ export const TuiThreadCommand = cmd({
       }
       const cwd = Filesystem.resolve(process.cwd())
       const env = sanitizedProcessEnv({
-        [KILO_PROCESS_ROLE]: "worker",
-        [KILO_RUN_ID]: ensureRunID(),
+        [STRATA_PROCESS_ROLE]: "worker",
+        [STRATA_RUN_ID]: ensureRunID(),
       })
 
       const worker = new Worker(file, {
@@ -197,7 +197,7 @@ export const TuiThreadCommand = cmd({
         })
         worker.terminate()
       }
-      // kilocode_change start - graceful shutdown on external signals
+      // stratacode_change start - graceful shutdown on external signals
       // The worker's postMessage for the RPC result may never be delivered
       // after shutdown because the worker's event loop drains. Send the
       // shutdown request without awaiting the response, wait for the worker
@@ -260,7 +260,7 @@ export const TuiThreadCommand = cmd({
         shutdownAndExit({ reason: "parent-exit", code: 0 })
       }, 1000)
       orphanWatch.unref()
-      // kilocode_change end
+      // stratacode_change end
 
       const prompt = await input(args.prompt)
       const config = await TuiConfig.get()
@@ -281,7 +281,7 @@ export const TuiThreadCommand = cmd({
             events: undefined,
           }
         : {
-            url: "http://kilo.internal",
+            url: "http://strata.internal",
             fetch: createWorkerFetch(client),
             events: createEventSource(client),
           }
@@ -304,10 +304,10 @@ export const TuiThreadCommand = cmd({
       }, 1000).unref?.()
 
       try {
-        // kilocode_change start - import cloud session before TUI renders
+        // stratacode_change start - import cloud session before TUI renders
         if (args.cloudFork && args.session) {
           UI.println("Importing session from cloud...")
-          const sdk = createKiloClient({
+          const sdk = createStrataClient({
             baseUrl: transport.url,
             fetch: transport.fetch,
             directory: cwd,
@@ -321,7 +321,7 @@ export const TuiThreadCommand = cmd({
           args.session = id
           args.cloudFork = false
         }
-        // kilocode_change end
+        // stratacode_change end
 
         await tui({
           url: transport.url,

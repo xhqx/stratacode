@@ -3,17 +3,17 @@ name: Check Source Links
 on:
   pull_request:
     paths:
-      - "packages/kilo-vscode/src/**"
-      - "packages/kilo-vscode/webview-ui/**"
+      - "packages/strata-vscode/src/**"
+      - "packages/strata-vscode/webview-ui/**"
       - "packages/opencode/src/**"
-      - "packages/kilo-docs/source-links.md"
+      - "packages/strata-docs/source-links.md"
       - "script/extract-source-links.ts"
       - ".github/workflows/source-check-links.yml"
   workflow_dispatch: # Allow manual trigger
 
 jobs:
   source-links-freshness:
-    if: github.repository == 'Kilo-Org/kilocode'
+    if: github.repository == 'Strata-Org/stratacode'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

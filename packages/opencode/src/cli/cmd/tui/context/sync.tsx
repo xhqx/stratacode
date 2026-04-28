@@ -9,8 +9,8 @@ import type {
   Command,
   PermissionRequest,
   QuestionRequest,
-  SuggestionRequest, // kilocode_change
-  SessionNetworkWait, // kilocode_change
+  SuggestionRequest, // stratacode_change
+  SessionNetworkWait, // stratacode_change
   LspStatus,
   McpStatus,
   McpResource,
@@ -19,7 +19,7 @@ import type {
   ProviderListResponse,
   ProviderAuthMethod,
   VcsInfo,
-} from "@kilocode/sdk/v2"
+} from "@stratacode/sdk/v2"
 import { createStore, produce, reconcile } from "solid-js/store"
 import { useProject } from "@tui/context/project"
 import { useEvent } from "@tui/context/event"
@@ -29,13 +29,13 @@ import { createSimpleContext } from "./helper"
 import type { Snapshot } from "@/snapshot"
 import { useExit } from "./exit"
 import { useArgs } from "./args"
-import { batch, createEffect, on, onMount } from "solid-js" // kilocode_change - add createEffect/on for workspace re-bootstrap
-import { handleSuggestionEvent } from "@/kilocode/suggestion/tui/sync" // kilocode_change
-import { useToast } from "@tui/ui/toast" // kilocode_change
+import { batch, createEffect, on, onMount } from "solid-js" // stratacode_change - add createEffect/on for workspace re-bootstrap
+import { handleSuggestionEvent } from "@/stratacode/suggestion/tui/sync" // stratacode_change
+import { useToast } from "@tui/ui/toast" // stratacode_change
 import { Log } from "@/util"
 import { emptyConsoleState, type ConsoleState } from "@/config/console-state"
-import type { IndexingStatus } from "@kilocode/kilo-indexing/status" // kilocode_change
-import { KiloIndexing } from "@/kilocode/indexing" // kilocode_change
+import type { IndexingStatus } from "@stratacode/strata-indexing/status" // stratacode_change
+import { StrataIndexing } from "@/stratacode/indexing" // stratacode_change
 
 export const { use: useSync, provider: SyncProvider } = createSimpleContext({
   name: "Sync",
@@ -55,21 +55,21 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       question: {
         [sessionID: string]: QuestionRequest[]
       }
-      // kilocode_change start
+      // stratacode_change start
       suggestion: {
         [sessionID: string]: SuggestionRequest[]
       }
       network: {
         [sessionID: string]: SessionNetworkWait[]
       }
-      // kilocode_change end
+      // stratacode_change end
       config: Config
       session: Session[]
       session_status: {
         [sessionID: string]: SessionStatus
       }
       session_diff: {
-        [sessionID: string]: Omit<Snapshot.FileDiff, "before" | "after">[] // kilocode_change
+        [sessionID: string]: Omit<Snapshot.FileDiff, "before" | "after">[] // stratacode_change
       }
       todo: {
         [sessionID: string]: Todo[]
@@ -89,7 +89,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       }
       formatter: FormatterStatus[]
       vcs: VcsInfo | undefined
-      indexing: IndexingStatus // kilocode_change
+      indexing: IndexingStatus // stratacode_change
     }>({
       provider_next: {
         all: [],
@@ -103,10 +103,10 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       agent: [],
       permission: {},
       question: {},
-      // kilocode_change start
+      // stratacode_change start
       suggestion: {},
       network: {},
-      // kilocode_change end
+      // stratacode_change end
       command: [],
       provider: [],
       provider_default: {},
@@ -121,15 +121,15 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       mcp_resource: {},
       formatter: [],
       vcs: undefined,
-      indexing: { state: "Disabled", message: "Indexing disabled.", processedFiles: 0, totalFiles: 0, percent: 0 }, // kilocode_change
+      indexing: { state: "Disabled", message: "Indexing disabled.", processedFiles: 0, totalFiles: 0, percent: 0 }, // stratacode_change
     })
 
     const event = useEvent()
     const project = useProject()
     const sdk = useSDK()
-    const toast = useToast() // kilocode_change
+    const toast = useToast() // stratacode_change
 
-    // kilocode_change start
+    // stratacode_change start
     function evict(sessionID: string) {
       // Collect child session IDs so we can evict them too.
       const children = store.session.filter((s) => s.parentID === sessionID).map((s) => s.id)
@@ -159,7 +159,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       if (msg.role !== "user" || !msg.summary?.diffs) return msg
       return { ...msg, summary: { ...msg.summary, diffs: [] } } as Message
     }
-    // kilocode_change end
+    // stratacode_change end
 
     const fullSyncedSessions = new Set<string>()
     let syncedWorkspace = project.workspace.current()
@@ -242,9 +242,9 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
             }),
           )
           break
-        } // kilocode_change
+        } // stratacode_change
 
-        // kilocode_change start
+        // stratacode_change start
         case "session.network.replied":
         case "session.network.rejected": {
           const requests = store.network[event.properties.sessionID]
@@ -261,14 +261,14 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
         }
 
-        // kilocode_change start
+        // stratacode_change start
         case "suggestion.accepted":
         case "suggestion.dismissed":
         case "suggestion.shown": {
           handleSuggestionEvent(event, store, setStore)
           break
         }
-        // kilocode_change end
+        // stratacode_change end
 
         case "session.network.restored": {
           const requests = store.network[event.properties.sessionID]
@@ -301,7 +301,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           )
           break
         }
-        // kilocode_change end
+        // stratacode_change end
         case "todo.updated":
           setStore("todo", event.properties.sessionID, event.properties.todos)
           break
@@ -310,7 +310,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           setStore("session_diff", event.properties.sessionID, event.properties.diff)
           break
 
-        // kilocode_change start
+        // stratacode_change start
         case "session.deleted": {
           const sid = event.properties.info.id
           const match = Binary.search(store.session, sid, (s) => s.id)
@@ -325,7 +325,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           evict(sid)
           break
         }
-        // kilocode_change end
+        // stratacode_change end
         case "session.updated": {
           const result = Binary.search(store.session, event.properties.info.id, (s) => s.id)
           if (result.found) {
@@ -346,7 +346,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
         }
 
-        // kilocode_change start
+        // stratacode_change start
         case "message.updated": {
           const info = strip(event.properties.info)
           const messages = store.message[info.sessionID]
@@ -387,7 +387,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           }
           break
         }
-        // kilocode_change end
+        // stratacode_change end
         case "message.removed": {
           const messages = store.message[event.properties.sessionID]
           const result = Binary.search(messages, event.properties.messageID, (m) => m.id)
@@ -466,7 +466,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
         }
 
-        // kilocode_change start
+        // stratacode_change start
         case "global.config.updated": {
           sdk.client.config.get().then((x) => {
             if (x.data) setStore("config", reconcile(x.data))
@@ -477,7 +477,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           setStore("indexing", reconcile(event.properties.status))
           break
         }
-        // kilocode_change end
+        // stratacode_change end
       }
     })
 
@@ -562,8 +562,8 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
             sdk.client.experimental.resource
               .list({ workspace })
               .then((x) => setStore("mcp_resource", reconcile(x.data ?? {}))),
-            sdk.client.formatter.status({ workspace }).then((x) => setStore("formatter", reconcile(x.data!))), // kilocode_change
-            // kilocode_change start
+            sdk.client.formatter.status({ workspace }).then((x) => setStore("formatter", reconcile(x.data!))), // stratacode_change
+            // stratacode_change start
             sdk.client.network.list().then((x) => {
               const next: Record<string, SessionNetworkWait[]> = {}
               for (const item of x.data ?? []) {
@@ -572,14 +572,14 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
               }
               setStore("network", reconcile(next))
             }),
-            // kilocode_change end
+            // stratacode_change end
             sdk.client.session.status({ workspace }).then((x) => {
               setStore("session_status", reconcile(x.data ?? {}))
             }),
             sdk.client.provider.auth({ workspace }).then((x) => setStore("provider_auth", reconcile(x.data ?? {}))),
             sdk.client.vcs.get({ workspace }).then((x) => setStore("vcs", reconcile(x.data))),
             project.workspace.sync(),
-            // kilocode_change start - show config warnings as persistent toast
+            // stratacode_change start - show config warnings as persistent toast
             sdk.client.config
               .warnings()
               .then((x) => {
@@ -595,8 +595,8 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
                 })
               })
               .catch(() => {}),
-            KiloIndexing.current().then((x) => setStore("indexing", reconcile(x))),
-            // kilocode_change end
+            StrataIndexing.current().then((x) => setStore("indexing", reconcile(x))),
+            // stratacode_change end
           ]).then(() => {
             setStore("status", "complete")
           })
@@ -619,7 +619,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       void bootstrap()
     })
 
-    // kilocode_change start - re-bootstrap when workspace changes (Agent Manager)
+    // stratacode_change start - re-bootstrap when workspace changes (Agent Manager)
     createEffect(
       on(
         () => project.workspace.current(),
@@ -630,7 +630,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
         { defer: true },
       ),
     )
-    // kilocode_change end
+    // stratacode_change end
 
     const result = {
       data: store,
@@ -639,8 +639,8 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
         return store.status
       },
       get ready() {
-        // return true // kilocode_change - upstream #23037 left this debug path enabled; keep it commented so future merges do not restore eager ready state.
-        if (process.env.KILO_FAST_BOOT) return true
+        // return true // stratacode_change - upstream #23037 left this debug path enabled; keep it commented so future merges do not restore eager ready state.
+        if (process.env.STRATA_FAST_BOOT) return true
         return store.status !== "loading"
       },
       get path() {
@@ -683,7 +683,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
               if (match.found) draft.session[match.index] = session.data!
               if (!match.found) draft.session.splice(match.index, 0, session.data!)
               draft.todo[sessionID] = todo.data ?? []
-              draft.message[sessionID] = messages.data!.map((x) => strip(x.info)) // kilocode_change
+              draft.message[sessionID] = messages.data!.map((x) => strip(x.info)) // stratacode_change
               for (const message of messages.data!) {
                 draft.part[message.info.id] = message.parts
               }
@@ -692,7 +692,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           )
           fullSyncedSessions.add(sessionID)
         },
-        evict, // kilocode_change
+        evict, // stratacode_change
       },
       bootstrap,
     }

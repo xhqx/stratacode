@@ -25,7 +25,7 @@ interface RemovalTargets {
 
 export const UninstallCommand = {
   command: "uninstall",
-  describe: "uninstall kilo and remove all related files", // kilocode_change
+  describe: "uninstall strata and remove all related files", // stratacode_change
   builder: (yargs: Argv) =>
     yargs
       .option("keep-config", {
@@ -56,7 +56,7 @@ export const UninstallCommand = {
     UI.empty()
     UI.println(UI.logo("  "))
     UI.empty()
-    prompts.intro("Uninstall Kilo") // kilocode_change
+    prompts.intro("Uninstall Strata") // stratacode_change
 
     const method = await AppRuntime.runPromise(Installation.Service.use((svc) => svc.method()))
     prompts.log.info(`Installation method: ${method}`)
@@ -130,13 +130,13 @@ async function showRemovalSummary(targets: RemovalTargets, method: Installation.
 
   if (method !== "curl" && method !== "unknown") {
     const cmds: Record<string, string> = {
-      npm: "npm uninstall -g @kilocode/cli", // kilocode_change
-      pnpm: "pnpm uninstall -g @kilocode/cli", // kilocode_change
-      bun: "bun remove -g @kilocode/cli", // kilocode_change
-      yarn: "yarn global remove @kilocode/cli", // kilocode_change
+      npm: "npm uninstall -g @stratacode/cli", // stratacode_change
+      pnpm: "pnpm uninstall -g @stratacode/cli", // stratacode_change
+      bun: "bun remove -g @stratacode/cli", // stratacode_change
+      yarn: "yarn global remove @stratacode/cli", // stratacode_change
       brew: "brew uninstall opencode",
-      choco: "choco uninstall kilo", // kilocode_change
-      scoop: "scoop uninstall kilo", // kilocode_change
+      choco: "choco uninstall strata", // stratacode_change
+      scoop: "scoop uninstall strata", // stratacode_change
     }
     prompts.log.info(`  ✓ Package: ${cmds[method] || method}`)
   }
@@ -181,19 +181,19 @@ async function executeUninstall(method: Installation.Method, targets: RemovalTar
 
   if (method !== "curl" && method !== "unknown") {
     const cmds: Record<string, string[]> = {
-      npm: ["npm", "uninstall", "-g", "@kilocode/cli"], // kilocode_change
-      pnpm: ["pnpm", "uninstall", "-g", "@kilocode/cli"], // kilocode_change
-      bun: ["bun", "remove", "-g", "@kilocode/cli"], // kilocode_change
-      yarn: ["yarn", "global", "remove", "@kilocode/cli"], // kilocode_change
+      npm: ["npm", "uninstall", "-g", "@stratacode/cli"], // stratacode_change
+      pnpm: ["pnpm", "uninstall", "-g", "@stratacode/cli"], // stratacode_change
+      bun: ["bun", "remove", "-g", "@stratacode/cli"], // stratacode_change
+      yarn: ["yarn", "global", "remove", "@stratacode/cli"], // stratacode_change
       brew: ["brew", "uninstall", "opencode"],
-      choco: ["choco", "uninstall", "kilo"], // kilocode_change
-      scoop: ["scoop", "uninstall", "kilo"], // kilocode_change
+      choco: ["choco", "uninstall", "strata"], // stratacode_change
+      scoop: ["scoop", "uninstall", "strata"], // stratacode_change
     }
 
     const cmd = cmds[method]
     if (cmd) {
       spinner.start(`Running ${cmd.join(" ")}...`)
-      const result = await Process.run(cmd, { nothrow: true }) // kilocode_change - removed choco special case
+      const result = await Process.run(cmd, { nothrow: true }) // stratacode_change - removed choco special case
       if (result.code !== 0) {
         spinner.stop(`Package manager uninstall failed: exit code ${result.code}`, 1)
         prompts.log.warn(`You may need to run manually: ${cmd.join(" ")}`)
@@ -209,8 +209,8 @@ async function executeUninstall(method: Installation.Method, targets: RemovalTar
     prompts.log.info(`  rm "${targets.binary}"`)
 
     const binDir = path.dirname(targets.binary)
-    if (binDir.includes(".opencode") || binDir.includes(".kilo")) {
-      // kilocode_change
+    if (binDir.includes(".opencode") || binDir.includes(".strata")) {
+      // stratacode_change
       prompts.log.info(`  rmdir "${binDir}" 2>/dev/null`)
     }
   }
@@ -224,7 +224,7 @@ async function executeUninstall(method: Installation.Method, targets: RemovalTar
   }
 
   UI.empty()
-  prompts.log.success("Thank you for using Kilo!") // kilocode_change
+  prompts.log.success("Thank you for using Strata!") // stratacode_change
 }
 
 async function getShellConfigFile(): Promise<string | null> {
@@ -261,16 +261,16 @@ async function getShellConfigFile(): Promise<string | null> {
     if (!exists) continue
 
     const content = await Filesystem.readText(file).catch(() => "")
-    // kilocode_change start - detect both opencode and kilo markers
+    // stratacode_change start - detect both opencode and strata markers
     if (
       content.includes("# opencode") ||
       content.includes(".opencode/bin") ||
-      content.includes("# kilo") ||
-      content.includes(".kilo/bin")
+      content.includes("# strata") ||
+      content.includes(".strata/bin")
     ) {
       return file
     }
-    // kilocode_change end
+    // stratacode_change end
   }
 
   return null
@@ -286,26 +286,26 @@ async function cleanShellConfig(file: string) {
   for (const line of lines) {
     const trimmed = line.trim()
 
-    // kilocode_change start - clean both opencode and kilo markers
-    if (trimmed === "# opencode" || trimmed === "# kilo") {
+    // stratacode_change start - clean both opencode and strata markers
+    if (trimmed === "# opencode" || trimmed === "# strata") {
       skip = true
       continue
     }
 
     if (skip) {
       skip = false
-      if (trimmed.includes(".opencode/bin") || trimmed.includes(".kilo/bin") || trimmed.includes("fish_add_path")) {
+      if (trimmed.includes(".opencode/bin") || trimmed.includes(".strata/bin") || trimmed.includes("fish_add_path")) {
         continue
       }
     }
 
     if (
-      (trimmed.startsWith("export PATH=") && (trimmed.includes(".opencode/bin") || trimmed.includes(".kilo/bin"))) ||
-      (trimmed.startsWith("fish_add_path") && (trimmed.includes(".opencode") || trimmed.includes(".kilo")))
+      (trimmed.startsWith("export PATH=") && (trimmed.includes(".opencode/bin") || trimmed.includes(".strata/bin"))) ||
+      (trimmed.startsWith("fish_add_path") && (trimmed.includes(".opencode") || trimmed.includes(".strata")))
     ) {
       continue
     }
-    // kilocode_change end
+    // stratacode_change end
 
     filtered.push(line)
   }

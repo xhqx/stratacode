@@ -2,7 +2,7 @@ import { render, TimeToFirstDraw, useKeyboard, useRenderer, useTerminalDimension
 import * as Clipboard from "@tui/util/clipboard"
 import * as Selection from "@tui/util/selection"
 import * as Terminal from "@tui/util/terminal"
-import { createCliRenderer, MouseButton, TextAttributes, type CliRendererConfig } from "@opentui/core" // kilocode_change
+import { createCliRenderer, MouseButton, TextAttributes, type CliRendererConfig } from "@opentui/core" // stratacode_change
 import { RouteProvider, useRoute } from "@tui/context/route"
 import {
   Switch,
@@ -16,12 +16,12 @@ import {
   Show,
   on,
 } from "solid-js"
-import { win32DisableProcessedInput, win32FlushInputBuffer, win32InstallCtrlCGuard } from "./win32" // kilocode_change
+import { win32DisableProcessedInput, win32FlushInputBuffer, win32InstallCtrlCGuard } from "./win32" // stratacode_change
 import { Flag } from "@/flag/flag"
 import semver from "semver"
 import { DialogProvider, useDialog } from "@tui/ui/dialog"
 import { DialogProvider as DialogProviderList } from "@tui/component/dialog-provider"
-import { InstallationVersion } from "@/installation/version" // kilocode_change
+import { InstallationVersion } from "@/installation/version" // stratacode_change
 import { PluginRouteMissing } from "@tui/component/plugin-route-missing"
 import { ProjectProvider } from "@tui/context/project"
 import { useEvent } from "@tui/context/event"
@@ -58,18 +58,18 @@ import { Provider } from "@/provider"
 import { ArgsProvider, useArgs, type Args } from "./context/args"
 import open from "open"
 import { PromptRefProvider, usePromptRef } from "./context/prompt"
-import * as KiloApp from "@/kilocode/cli/cmd/tui/app" // kilocode_change
+import * as StrataApp from "@/stratacode/cli/cmd/tui/app" // stratacode_change
 import { TuiConfigProvider, useTuiConfig } from "./context/tui-config"
 import { TuiConfig } from "@/cli/cmd/tui/config/tui"
 import { createTuiApi, TuiPluginRuntime, type RouteMap } from "./plugin"
 import { FormatError, FormatUnknownError } from "@/cli/error"
-import { resetTerminalState } from "@tui/util/terminal" // kilocode_change
+import { resetTerminalState } from "@tui/util/terminal" // stratacode_change
 
 import type { EventSource } from "./context/sdk"
 import { DialogVariant } from "./component/dialog-variant"
 
 function rendererConfig(_config: TuiConfig.Info): CliRendererConfig {
-  const mouseEnabled = !Flag.KILO_DISABLE_MOUSE && (_config.mouse ?? true)
+  const mouseEnabled = !Flag.STRATA_DISABLE_MOUSE && (_config.mouse ?? true)
 
   return {
     externalOutputMode: "passthrough",
@@ -139,19 +139,19 @@ export function tui(input: {
       await TuiPluginRuntime.dispose()
     }
 
-    // kilocode_change - safety net: ensure mouse tracking is disabled regardless of exit path
-    process.on("exit", resetTerminalState) // kilocode_change
+    // stratacode_change - safety net: ensure mouse tracking is disabled regardless of exit path
+    process.on("exit", resetTerminalState) // stratacode_change
 
     const renderer = await createCliRenderer(rendererConfig(input.config))
 
     await render(() => {
       return (
         <ErrorBoundary
-          // kilocode_change start
+          // stratacode_change start
           fallback={(error, reset) => (
             <ErrorComponent error={error} reset={reset} onBeforeExit={onBeforeExit} onExit={onExit} mode={mode} />
           )}
-          // kilocode_change end
+          // stratacode_change end
         >
           <ArgsProvider {...input.args}>
             <ExitProvider onBeforeExit={onBeforeExit} onExit={onExit}>
@@ -265,7 +265,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     })
 
   useKeyboard((evt) => {
-    if (!Flag.KILO_EXPERIMENTAL_DISABLE_COPY_ON_SELECT) return
+    if (!Flag.STRATA_EXPERIMENTAL_DISABLE_COPY_ON_SELECT) return
     const sel = renderer.getSelection()
     if (!sel) return
 
@@ -311,13 +311,13 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
   }
   const [terminalTitleEnabled, setTerminalTitleEnabled] = createSignal(kv.get("terminal_title_enabled", true))
 
-  KiloApp.useSessionEffects({ route, sdk, sync }) // kilocode_change
+  StrataApp.useSessionEffects({ route, sdk, sync }) // stratacode_change
 
   // Update terminal window title based on current route and session
   createEffect(() => {
-    if (!terminalTitleEnabled() || Flag.KILO_DISABLE_TERMINAL_TITLE) return
+    if (!terminalTitleEnabled() || Flag.STRATA_DISABLE_TERMINAL_TITLE) return
 
-    const titleDefault = KiloApp.APP_TITLE // kilocode_change
+    const titleDefault = StrataApp.APP_TITLE // stratacode_change
 
     if (route.data.type === "home") {
       renderer.setTerminalTitle(titleDefault)
@@ -340,10 +340,10 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       renderer.setTerminalTitle(`${titleDefault} | ${route.data.id}`)
     }
 
-    // kilocode_change start
-    const kiloTitle = KiloApp.getTerminalTitle(route, titleDefault)
-    if (kiloTitle) renderer.setTerminalTitle(kiloTitle)
-    // kilocode_change end
+    // stratacode_change start
+    const strataTitle = StrataApp.getTerminalTitle(route, titleDefault)
+    if (strataTitle) renderer.setTerminalTitle(strataTitle)
+    // stratacode_change end
   })
 
   const args = useArgs()
@@ -657,7 +657,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       title: "Open docs",
       value: "docs.open",
       onSelect: () => {
-        open(KiloApp.DOCS_URL).catch(() => {}) // kilocode_change
+        open(StrataApp.DOCS_URL).catch(() => {}) // stratacode_change
         dialog.clear()
       },
       category: "System",
@@ -766,7 +766,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     },
   ])
 
-  KiloApp.init() // kilocode_change
+  StrataApp.init() // stratacode_change
 
   event.on(TuiEvent.CommandExecute.type, (evt) => {
     command.trigger(evt.properties.command)
@@ -801,7 +801,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
   event.on("session.error", (evt) => {
     const error = evt.properties.error
     if (error && typeof error === "object" && error.name === "MessageAbortedError") return
-    if (KiloApp.handleSessionError(error, toast)) return // kilocode_change
+    if (StrataApp.handleSessionError(error, toast)) return // stratacode_change
 
     const message = errorMessage(error)
 
@@ -853,7 +853,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     await DialogAlert.show(
       dialog,
       "Update Complete",
-      `Successfully updated to ${KiloApp.APP_NAME} v${result.data.version}. Please restart the application.`, // kilocode_change
+      `Successfully updated to ${StrataApp.APP_NAME} v${result.data.version}. Please restart the application.`, // stratacode_change
     )
 
     void exit()
@@ -873,16 +873,16 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       height={dimensions().height}
       backgroundColor={theme.background}
       onMouseDown={(evt) => {
-        if (!Flag.KILO_EXPERIMENTAL_DISABLE_COPY_ON_SELECT) return
+        if (!Flag.STRATA_EXPERIMENTAL_DISABLE_COPY_ON_SELECT) return
         if (evt.button !== MouseButton.RIGHT) return
 
         if (!Selection.copy(renderer, toast)) return
         evt.preventDefault()
         evt.stopPropagation()
       }}
-      onMouseUp={Flag.KILO_EXPERIMENTAL_DISABLE_COPY_ON_SELECT ? undefined : () => Selection.copy(renderer, toast)}
+      onMouseUp={Flag.STRATA_EXPERIMENTAL_DISABLE_COPY_ON_SELECT ? undefined : () => Selection.copy(renderer, toast)}
     >
-      <Show when={Flag.KILO_SHOW_TTFD}>
+      <Show when={Flag.STRATA_SHOW_TTFD}>
         <TimeToFirstDraw />
       </Show>
       <Show when={ready()}>
@@ -893,23 +893,23 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
           <Match when={route.data.type === "session"}>
             <Session />
           </Match>
-          {/* kilocode_change start */}
-          <Match when={route.data.type === "kiloclaw"}>
-            <KiloApp.KiloClawView />
+          {/* stratacode_change start */}
+          <Match when={route.data.type === "strataclaw"}>
+            <StrataApp.StrataClawView />
           </Match>
-          {/* kilocode_change end */}
+          {/* stratacode_change end */}
         </Switch>
       </Show>
       {plugin()}
       <TuiPluginRuntime.Slot name="app" />
-      {/* kilocode_change start */}
+      {/* stratacode_change start */}
       <StartupLoading ready={ready} />
     </box>
   )
 }
-// kilocode_change end
+// stratacode_change end
 
-// kilocode_change start — guard against missing renderer context in ErrorBoundary fallback
+// stratacode_change start — guard against missing renderer context in ErrorBoundary fallback
 function tryUseRenderer() {
   try {
     return useRenderer()
@@ -925,9 +925,9 @@ function tryUseTerminalDimensions() {
     return undefined
   }
 }
-// kilocode_change end
+// stratacode_change end
 
-// kilocode_change start — inlined ErrorComponent with safe renderer/keyboard guards
+// stratacode_change start — inlined ErrorComponent with safe renderer/keyboard guards
 function ErrorComponent(props: {
   error: Error
   reset: () => void
@@ -945,7 +945,7 @@ function ErrorComponent(props: {
     renderer?.setTerminalTitle("")
     renderer?.destroy()
     win32FlushInputBuffer()
-    // kilocode_change - reset terminal state to disable mouse tracking on exit
+    // stratacode_change - reset terminal state to disable mouse tracking on exit
     resetTerminalState()
     await props.onExit()
   }
@@ -963,7 +963,7 @@ function ErrorComponent(props: {
 
   const [copied, setCopied] = createSignal(false)
 
-  const issueURL = new URL("https://github.com/Kilo-Org/kilocode/issues/new?template=bug-report.yml")
+  const issueURL = new URL("https://github.com/Strata-Org/stratacode/issues/new?template=bug-report.yml")
 
   // Choose safe fallback colors per mode since theme context may not be available
   const isLight = props.mode === "light"
@@ -1022,4 +1022,4 @@ function ErrorComponent(props: {
     </box>
   )
 }
-// kilocode_change end
+// stratacode_change end

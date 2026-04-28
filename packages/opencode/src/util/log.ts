@@ -1,10 +1,10 @@
 import path from "path"
-import { existsSync, writeFileSync } from "fs" // kilocode_change
+import { existsSync, writeFileSync } from "fs" // stratacode_change
 import fs from "fs/promises"
 import { Global } from "../global"
 import z from "zod"
 import { Glob } from "@opencode-ai/shared/util/glob"
-import { createStream } from "rotating-file-stream" // kilocode_change
+import { createStream } from "rotating-file-stream" // stratacode_change
 
 export const Level = z.enum(["DEBUG", "INFO", "WARN", "ERROR"]).meta({ ref: "LogLevel", description: "Log level" })
 export type Level = z.infer<typeof Level>
@@ -67,7 +67,7 @@ export async function init(options: Options) {
     options.dev ? "dev.log" : new Date().toISOString().split(".")[0].replace(/:/g, "") + ".log",
   )
   await fs.truncate(logpath).catch(() => {})
-  // kilocode_change start - use rotating-file-stream to cap log files at 50 MB
+  // stratacode_change start - use rotating-file-stream to cap log files at 50 MB
   const dir = path.dirname(logpath)
   const stream = createStream(path.basename(logpath), {
     size: "50M",
@@ -99,7 +99,7 @@ export async function init(options: Options) {
     stream.write(msg)
     return msg.length
   }
-  // kilocode_change end
+  // stratacode_change end
 }
 
 async function cleanup(dir: string) {

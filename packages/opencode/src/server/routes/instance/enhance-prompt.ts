@@ -1,8 +1,8 @@
-// kilocode_change - new file
+// stratacode_change - new file
 import { Hono } from "hono"
 import { describeRoute, resolver, validator } from "hono-openapi"
 import z from "zod"
-import { enhancePrompt } from "@/kilocode/enhance-prompt"
+import { enhancePrompt } from "@/stratacode/enhance-prompt"
 import { lazy } from "@/util/lazy"
 import { errors } from "../../error"
 

@@ -1,5 +1,5 @@
 ---
-"kilo-code": patch
+"strata-code": patch
 ---
 
 Fix switching autocomplete model back to Codestral not persisting.

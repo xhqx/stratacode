@@ -1,0 +1,13 @@
+<idea-plugin>
+    <dependencies>
+        <module name="intellij.platform.backend"/>
+        <module name="intellij.platform.kernel.backend"/>
+        <module name="strata.jetbrains.shared"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <platform.rpc.backend.remoteApiProvider implementation="ai.stratacode.backend.rpc.StrataAppRpcApiProvider"/>
+        <platform.rpc.backend.remoteApiProvider implementation="ai.stratacode.backend.rpc.StrataProjectRpcApiProvider"/>
+        <platform.rpc.backend.remoteApiProvider implementation="ai.stratacode.backend.rpc.StrataSessionRpcApiProvider"/>
+    </extensions>
+</idea-plugin>

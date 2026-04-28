@@ -1,4 +1,4 @@
-import type { TuiPlugin, TuiPluginModule } from "@kilocode/plugin/tui"
+import type { TuiPlugin, TuiPluginModule } from "@stratacode/plugin/tui"
 import { createMemo, Show } from "solid-js"
 import { Tips } from "./tips-view"
 
@@ -35,7 +35,7 @@ const tui: TuiPlugin = async (api) => {
       home_bottom() {
         const hidden = createMemo(() => api.kv.get("tips_hidden", false))
         const first = createMemo(() => api.state.session.count() === 0)
-        const show = createMemo(() => !hidden()) // kilocode_change - always show tips regardless of first-time status
+        const show = createMemo(() => !hidden()) // stratacode_change - always show tips regardless of first-time status
         return <View show={show()} />
       },
     },

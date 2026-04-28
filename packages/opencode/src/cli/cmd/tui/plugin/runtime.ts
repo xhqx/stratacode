@@ -9,7 +9,7 @@ import {
   type TuiPluginStatus,
   type TuiSlotPlugin,
   type TuiTheme,
-} from "@kilocode/plugin/tui"
+} from "@stratacode/plugin/tui"
 import path from "path"
 import { fileURLToPath } from "url"
 import { TuiConfig } from "@/cli/cmd/tui/config/tui"
@@ -989,8 +989,8 @@ async function load(input: { api: Api; config: TuiConfig.Info }) {
     await Instance.provide({
       directory: cwd,
       fn: async () => {
-        const records = Flag.KILO_PURE ? [] : (config.plugin_origins ?? [])
-        if (Flag.KILO_PURE && config.plugin_origins?.length) {
+        const records = Flag.STRATA_PURE ? [] : (config.plugin_origins ?? [])
+        if (Flag.STRATA_PURE && config.plugin_origins?.length) {
           log.info("skipping external tui plugins in pure mode", { count: config.plugin_origins.length })
         }
 

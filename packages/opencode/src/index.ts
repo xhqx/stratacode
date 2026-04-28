@@ -3,10 +3,10 @@ import { hideBin } from "yargs/helpers"
 import { RunCommand } from "./cli/cmd/run"
 import { GenerateCommand } from "./cli/cmd/generate"
 import { Log } from "./util"
-// kilocode_change start
+// stratacode_change start
 // import { LoginCommand, LogoutCommand, SwitchCommand, OrgsCommand } from "./cli/cmd/account"
 // import { ConsoleCommand } from "./cli/cmd/account"
-// kilocode_change end
+// stratacode_change end
 import { ConsoleCommand } from "./cli/cmd/account"
 import { ProvidersCommand } from "./cli/cmd/providers"
 import { AgentCommand } from "./cli/cmd/agent"
@@ -15,34 +15,34 @@ import { UninstallCommand } from "./cli/cmd/uninstall"
 import { ModelsCommand } from "./cli/cmd/models"
 import { UI } from "./cli/ui"
 import { Installation } from "./installation"
-import { InstallationBuildKind, InstallationVersion } from "./installation/version" // kilocode_change - add InstallationBuildKind
+import { InstallationBuildKind, InstallationVersion } from "./installation/version" // stratacode_change - add InstallationBuildKind
 import { NamedError } from "@opencode-ai/shared/util/error"
 import { FormatError } from "./cli/error"
 import { ServeCommand } from "./cli/cmd/serve"
 import { Filesystem } from "./util"
-import { ConfigCommand as ConfigCLICommand } from "./cli/cmd/config" // kilocode_change
+import { ConfigCommand as ConfigCLICommand } from "./cli/cmd/config" // stratacode_change
 import { DebugCommand } from "./cli/cmd/debug"
 import { StatsCommand } from "./cli/cmd/stats"
 import { McpCommand } from "./cli/cmd/mcp"
-// import { GithubCommand } from "./cli/cmd/github" // kilocode_change
+// import { GithubCommand } from "./cli/cmd/github" // stratacode_change
 import { ExportCommand } from "./cli/cmd/export"
 import { ImportCommand } from "./cli/cmd/import"
 import { AttachCommand } from "./cli/cmd/tui/attach"
 import { TuiThreadCommand } from "./cli/cmd/tui/thread"
 import { AcpCommand } from "./cli/cmd/acp"
 import { EOL } from "os"
-// import { WebCommand } from "./cli/cmd/web" // kilocode_change (Disabled unsupported opencode web UI)
+// import { WebCommand } from "./cli/cmd/web" // stratacode_change (Disabled unsupported opencode web UI)
 import { PrCommand } from "./cli/cmd/pr"
 import { SessionCommand } from "./cli/cmd/session"
-import { RemoteCommand } from "./cli/cmd/remote" // kilocode_change
-import { DevSetupCommand, DevAliasCommand } from "./kilocode/cli/dev-setup" // kilocode_change
-// kilocode_change start - Import telemetry, instance disposal, and legacy migration
-import { Telemetry } from "@kilocode/kilo-telemetry"
-import { Instance } from "./project/instance" // kilocode_change
-import { migrateLegacyKiloAuth, ENV_FEATURE, ENV_VERSION } from "@kilocode/kilo-gateway"
+import { RemoteCommand } from "./cli/cmd/remote" // stratacode_change
+import { DevSetupCommand, DevAliasCommand } from "./stratacode/cli/dev-setup" // stratacode_change
+// stratacode_change start - Import telemetry, instance disposal, and legacy migration
+import { Telemetry } from "@stratacode/strata-telemetry"
+import { Instance } from "./project/instance" // stratacode_change
+import { migrateLegacyStrataAuth, ENV_FEATURE, ENV_VERSION } from "@stratacode/strata-gateway"
 
-// kilocode_change - set feature for tracking. 'serve' is spawned by other services
-// (extension, cloud) which set their own KILOCODE_FEATURE env var. Direct CLI use
+// stratacode_change - set feature for tracking. 'serve' is spawned by other services
+// (extension, cloud) which set their own STRATACODE_FEATURE env var. Direct CLI use
 // (any command other than 'serve') is tagged as 'cli'. If 'serve' is spawned without
 // the env var, it gets 'unknown' so the misconfiguration is visible in data.
 if (!process.env[ENV_FEATURE]) {
@@ -50,17 +50,17 @@ if (!process.env[ENV_FEATURE]) {
   process.env[ENV_FEATURE] = isServe ? "unknown" : "cli"
 }
 
-// kilocode_change - set version so kilo-gateway can include it in the editor name header
+// stratacode_change - set version so strata-gateway can include it in the editor name header
 if (!process.env[ENV_VERSION]) {
   process.env[ENV_VERSION] = InstallationVersion
 }
 import { Config } from "./config"
 import { Auth } from "./auth"
-// kilocode_change end
+// stratacode_change end
 import { DbCommand } from "./cli/cmd/db"
 import path from "path"
 import { Global } from "./global"
-import { createHelpCommand } from "./kilocode/help-command" // kilocode_change
+import { createHelpCommand } from "./stratacode/help-command" // stratacode_change
 import { JsonMigration } from "./storage"
 import { Database } from "./storage"
 import { errorMessage } from "./util/error"
@@ -87,18 +87,18 @@ const args = hideBin(process.argv)
 
 function show(out: string) {
   const text = out.trimStart()
-  const end = out.endsWith(EOL) ? "" : EOL // kilocode_change - keep shell prompt on the next line
+  const end = out.endsWith(EOL) ? "" : EOL // stratacode_change - keep shell prompt on the next line
   if (!text.startsWith("opencode ")) {
     process.stderr.write(UI.logo() + EOL + EOL)
-    process.stderr.write(text + end) // kilocode_change
+    process.stderr.write(text + end) // stratacode_change
     return
   }
-  process.stderr.write(out + end) // kilocode_change
+  process.stderr.write(out + end) // stratacode_change
 }
 
-let cli = yargs(args) // kilocode_change
+let cli = yargs(args) // stratacode_change
   .parserConfiguration({ "populate--": true })
-  .scriptName("kilo") // kilocode_change
+  .scriptName("strata") // stratacode_change
   .wrap(100)
   .help("help", "show help")
   .alias("help", "h")
@@ -119,7 +119,7 @@ let cli = yargs(args) // kilocode_change
   })
   .middleware(async (opts) => {
     if (opts.pure) {
-      process.env.KILO_PURE = "1"
+      process.env.STRATA_PURE = "1"
     }
 
     await Log.init({
@@ -136,7 +136,7 @@ let cli = yargs(args) // kilocode_change
 
     process.env.AGENT = "1"
     process.env.OPENCODE = "1"
-    process.env.KILO_PID = String(process.pid)
+    process.env.STRATA_PID = String(process.pid)
 
     Log.Default.info("opencode", {
       version: InstallationVersion,
@@ -145,7 +145,7 @@ let cli = yargs(args) // kilocode_change
       run_id: processMetadata.runID,
     })
 
-    // kilocode_change start - Initialize telemetry
+    // stratacode_change start - Initialize telemetry
     const globalCfg = await Config.getGlobal()
     await Telemetry.init({
       dataPath: Global.Path.data,
@@ -153,23 +153,23 @@ let cli = yargs(args) // kilocode_change
       enabled: globalCfg.experimental?.openTelemetry !== false,
     })
 
-    // Migrate legacy Kilo CLI auth if needed
-    await migrateLegacyKiloAuth(
-      async () => (await Auth.get("kilo")) !== undefined,
-      async (auth) => Auth.set("kilo", auth),
+    // Migrate legacy Strata CLI auth if needed
+    await migrateLegacyStrataAuth(
+      async () => (await Auth.get("strata")) !== undefined,
+      async (auth) => Auth.set("strata", auth),
     )
 
-    const kiloAuth = await Auth.get("kilo")
-    if (kiloAuth) {
-      const token = kiloAuth.type === "oauth" ? kiloAuth.access : kiloAuth.key
-      const accountId = kiloAuth.type === "oauth" ? kiloAuth.accountId : undefined
+    const strataAuth = await Auth.get("strata")
+    if (strataAuth) {
+      const token = strataAuth.type === "oauth" ? strataAuth.access : strataAuth.key
+      const accountId = strataAuth.type === "oauth" ? strataAuth.accountId : undefined
       await Telemetry.updateIdentity(token, accountId)
     }
 
     Telemetry.trackCliStart()
-    // kilocode_change end
+    // stratacode_change end
 
-    const marker = path.join(Global.Path.data, "kilo.db")
+    const marker = path.join(Global.Path.data, "strata.db")
     if (!(await Filesystem.exists(marker))) {
       const tty = process.stderr.isTTY
       process.stderr.write("Performing one time database migration, may take a few minutes..." + EOL)
@@ -215,42 +215,42 @@ let cli = yargs(args) // kilocode_change
   .command(RunCommand)
   .command(GenerateCommand)
   .command(DebugCommand)
-  // kilocode_change start
+  // stratacode_change start
   // .command(LoginCommand)
   // .command(LogoutCommand)
   // .command(SwitchCommand)
   // .command(OrgsCommand)
   // .command(ConsoleCommand)
-  // kilocode_change end
+  // stratacode_change end
   .command(ProvidersCommand)
   .command(AgentCommand)
   .command(UpgradeCommand)
   .command(UninstallCommand)
   .command(ServeCommand)
-  // .command(WebCommand) // kilocode_change (Disabled unsupported opencode web UI)
+  // .command(WebCommand) // stratacode_change (Disabled unsupported opencode web UI)
   .command(ModelsCommand)
   .command(StatsCommand)
   .command(ExportCommand)
   .command(ImportCommand)
-  // .command(GithubCommand) // kilocode_change (Disabled until backend is ready)
+  // .command(GithubCommand) // stratacode_change (Disabled until backend is ready)
   .command(PrCommand)
   .command(SessionCommand)
-  .command(RemoteCommand) // kilocode_change
-  .command(ConfigCLICommand) // kilocode_change
+  .command(RemoteCommand) // stratacode_change
+  .command(ConfigCLICommand) // stratacode_change
   .command(PluginCommand)
   .command(DbCommand)
 
-// kilocode_change start - dev-only commands are hidden from release builds
+// stratacode_change start - dev-only commands are hidden from release builds
 if (InstallationBuildKind !== "release") {
   cli = cli.command(DevSetupCommand).command(DevAliasCommand)
 }
-// kilocode_change end
+// stratacode_change end
 
-// kilocode_change start - registered after initial chain to avoid self-referential type error
+// stratacode_change start - registered after initial chain to avoid self-referential type error
 cli = cli.command(createHelpCommand(() => cli))
 
 cli = cli
-  // kilocode_change end
+  // stratacode_change end
   .fail((msg, err) => {
     if (
       msg?.startsWith("Unknown argument") ||
@@ -313,13 +313,13 @@ try {
   }
   process.exitCode = 1
 } finally {
-  // kilocode_change start - Track CLI exit and shutdown telemetry
+  // stratacode_change start - Track CLI exit and shutdown telemetry
   const exitCode = typeof process.exitCode === "number" ? process.exitCode : undefined
   Telemetry.trackCliExit(exitCode)
   await Telemetry.shutdown()
-  // kilocode_change end
+  // stratacode_change end
 
-  await Instance.disposeAll() // kilocode_change - safety net disposal (no-op if already disposed)
+  await Instance.disposeAll() // stratacode_change - safety net disposal (no-op if already disposed)
 
   // Some subprocesses don't react properly to SIGTERM and similar signals.
   // Most notably, some docker-container-based MCP servers don't handle such signals unless

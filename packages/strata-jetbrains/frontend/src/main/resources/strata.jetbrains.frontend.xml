@@ -1,0 +1,48 @@
+<idea-plugin>
+    <dependencies>
+        <module name="intellij.platform.frontend"/>
+        <module name="strata.jetbrains.shared"/>
+    </dependencies>
+
+    <resource-bundle>messages.StrataBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Strata Code"
+                    anchor="left"
+                    icon="/icons/strata.svg"
+                    factoryClass="ai.stratacode.client.StrataToolWindowFactory"/>
+
+        <registryKey key="strata.session.condense"
+                     description="Enable event condensing in the session update queue (merges redundant snapshots before model delivery)."
+                     defaultValue="true"
+                     restartRequired="false"
+                     overrides="false"/>
+        <registryKey key="strata.session.flushMs"
+                     description="Session update queue flush cadence in milliseconds."
+                     defaultValue="150"
+                     restartRequired="false"
+                     overrides="false"/>
+    </extensions>
+
+    <actions>
+        <action id="Strata.Restart"
+                class="ai.stratacode.client.actions.RestartStrataAction"/>
+
+        <action id="Strata.Reinstall"
+                class="ai.stratacode.client.actions.ReinstallStrataAction"/>
+
+        <action id="Strata.StatusInfo"
+                class="ai.stratacode.client.actions.StatusInfoAction"/>
+
+        <group id="Strata.SettingsGroup">
+            <reference ref="Strata.Restart"/>
+            <reference ref="Strata.Reinstall"/>
+            <separator/>
+            <reference ref="Strata.StatusInfo"/>
+        </group>
+
+        <action id="Strata.Settings"
+                class="ai.stratacode.client.actions.StrataSettingsAction"
+                icon="AllIcons.General.GearPlain"/>
+    </actions>
+</idea-plugin>

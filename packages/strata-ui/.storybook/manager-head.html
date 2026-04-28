@@ -1,0 +1,11 @@
+<style>
+  /* Hide Color Scheme toolbar when strata-vscode theme is active */
+  html[data-strata-theme="strata-vscode"] [aria-label^="Color Scheme"] {
+    display: none !important;
+  }
+
+  /* Hide VS Code Theme toolbar by default and when strata theme is active */
+  html:not([data-strata-theme="strata-vscode"]) [aria-label^="VSCode Theme"] {
+    display: none !important;
+  }
+</style>

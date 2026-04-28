@@ -13,7 +13,7 @@ import { spawn as lspspawn } from "./launch"
 import { Effect, Layer, Context, Schema } from "effect"
 import { InstanceState } from "@/effect"
 import { AppFileSystem } from "@opencode-ai/shared/filesystem"
-import { TsClient } from "../kilocode/ts-client" // kilocode_change
+import { TsClient } from "../stratacode/ts-client" // stratacode_change
 import { withStatics } from "@/util/schema"
 import { zod, ZodOverride } from "@/util/effect-zod"
 
@@ -112,9 +112,9 @@ const kinds = [
 ]
 
 const filterExperimentalServers = (servers: Record<string, LSPServer.Info>) => {
-  if (Flag.KILO_EXPERIMENTAL_LSP_TY) {
+  if (Flag.STRATA_EXPERIMENTAL_LSP_TY) {
     if (servers["pyright"]) {
-      log.info("LSP server pyright is disabled because KILO_EXPERIMENTAL_LSP_TY is enabled")
+      log.info("LSP server pyright is disabled because STRATA_EXPERIMENTAL_LSP_TY is enabled")
       delete servers["pyright"]
     }
   } else {
@@ -280,8 +280,8 @@ export const layer = Layer.effect(
           if (!root) continue
           if (s.broken.has(root + server.id)) continue
 
-          // kilocode_change start - use lightweight tsgo-based client when persistent LSP is not enabled
-          if (server.id === "typescript" && !Flag.KILO_EXPERIMENTAL_LSP_TOOL) {
+          // stratacode_change start - use lightweight tsgo-based client when persistent LSP is not enabled
+          if (server.id === "typescript" && !Flag.STRATA_EXPERIMENTAL_LSP_TOOL) {
             const existing = s.clients.find((x) => x.root === root && x.serverID === server.id)
             if (existing) {
               result.push(existing)
@@ -293,7 +293,7 @@ export const layer = Layer.effect(
             Bus.publish(Event.Updated, {})
             continue
           }
-          // kilocode_change end
+          // stratacode_change end
 
           const match = s.clients.find((x) => x.root === root && x.serverID === server.id)
           if (match) {

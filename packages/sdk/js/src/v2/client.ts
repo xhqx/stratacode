@@ -2,8 +2,8 @@ export * from "./gen/types.gen.js"
 
 import { createClient } from "./gen/client/client.gen.js"
 import { type Config } from "./gen/client/types.gen.js"
-import { KiloClient } from "./gen/sdk.gen.js"
-export { type Config as KiloClientConfig, KiloClient }
+import { StrataClient } from "./gen/sdk.gen.js"
+export { type Config as StrataClientConfig, StrataClient }
 
 function pick(value: string | null, fallback?: string, encode?: (value: string) => string) {
   if (!value) return
@@ -20,8 +20,8 @@ function rewrite(request: Request, values: { directory?: string; workspace?: str
   let changed = false
 
   for (const [name, key] of [
-    ["x-kilo-directory", "directory"],
-    ["x-kilo-workspace", "workspace"],
+    ["x-strata-directory", "directory"],
+    ["x-strata-workspace", "workspace"],
   ] as const) {
     const value = pick(
       request.headers.get(name),
@@ -38,12 +38,12 @@ function rewrite(request: Request, values: { directory?: string; workspace?: str
   if (!changed) return request
 
   const next = new Request(url, request)
-  next.headers.delete("x-kilo-directory")
-  next.headers.delete("x-kilo-workspace")
+  next.headers.delete("x-strata-directory")
+  next.headers.delete("x-strata-workspace")
   return next
 }
 
-export function createKiloClient(config?: Config & { directory?: string; experimental_workspaceID?: string }) {
+export function createStrataClient(config?: Config & { directory?: string; experimental_workspaceID?: string }) {
   if (!config?.fetch) {
     const customFetch: any = (req: any) => {
       // Pass duplex in the init arg so it survives VS Code's proxy-agent
@@ -63,14 +63,14 @@ export function createKiloClient(config?: Config & { directory?: string; experim
   if (config?.directory) {
     config.headers = {
       ...config.headers,
-      "x-kilo-directory": encodeURIComponent(config.directory),
+      "x-strata-directory": encodeURIComponent(config.directory),
     }
   }
 
   if (config?.experimental_workspaceID) {
     config.headers = {
       ...config.headers,
-      "x-kilo-workspace": config.experimental_workspaceID,
+      "x-strata-workspace": config.experimental_workspaceID,
     }
   }
 
@@ -93,5 +93,5 @@ export function createKiloClient(config?: Config & { directory?: string; experim
 
     return response
   })
-  return new KiloClient({ client })
+  return new StrataClient({ client })
 }

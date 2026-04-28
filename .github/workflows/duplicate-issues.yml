@@ -6,7 +6,7 @@ on:
 
 jobs:
   check-duplicates:
-    if: false # kilocode_change - disabled: not needed in kilocode repo
+    if: false # stratacode_change - disabled: not needed in stratacode repo
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
@@ -19,17 +19,17 @@ jobs:
 
       - uses: ./.github/actions/setup-bun
 
-      # kilocode_change start
-      - name: Setup Kilo
-        uses: ./.github/actions/setup-kilo
-      # kilocode_change end
+      # stratacode_change start
+      - name: Setup Strata
+        uses: ./.github/actions/setup-strata
+      # stratacode_change end
 
       - name: Check duplicates and compliance
         env:
-          KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
-          KILO_ORG_ID: ${{ secrets.KILO_ORG_ID }}
+          STRATA_API_KEY: ${{ secrets.STRATA_API_KEY }}
+          STRATA_ORG_ID: ${{ secrets.STRATA_ORG_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KILO_PERMISSION: |
+          STRATA_PERMISSION: |
             {
               "bash": {
                 "*": "deny",
@@ -38,7 +38,7 @@ jobs:
               "webfetch": "deny"
             }
         run: |
-          kilo run -m "kilo/anthropic/claude-haiku-4.5" "A new issue has been created:
+          strata run -m "strata/anthropic/claude-haiku-4.5" "A new issue has been created:
 
           Issue number: ${{ github.event.issue.number }}
 
@@ -134,19 +134,19 @@ jobs:
 
       - uses: ./.github/actions/setup-bun
 
-      # kilocode_change start
-      - name: Setup Kilo
-        uses: ./.github/actions/setup-kilo
-      # kilocode_change end
+      # stratacode_change start
+      - name: Setup Strata
+        uses: ./.github/actions/setup-strata
+      # stratacode_change end
 
       - name: Recheck compliance
         env:
-          # kilocode_change start
-          KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
-          KILO_ORG_ID: ${{ secrets.KILO_ORG_ID }}
-          # kilocode_change end
+          # stratacode_change start
+          STRATA_API_KEY: ${{ secrets.STRATA_API_KEY }}
+          STRATA_ORG_ID: ${{ secrets.STRATA_ORG_ID }}
+          # stratacode_change end
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          KILO_PERMISSION: |
+          STRATA_PERMISSION: |
             {
               "bash": {
                 "*": "deny",
@@ -155,7 +155,7 @@ jobs:
               "webfetch": "deny"
             }
         run: |
-          kilo run -m "kilo/anthropic/claude-haiku-4.5" "Issue #${{ github.event.issue.number }} was previously flagged as non-compliant and has been edited.
+          strata run -m "strata/anthropic/claude-haiku-4.5" "Issue #${{ github.event.issue.number }} was previously flagged as non-compliant and has been edited.
 
           Lookup this issue with gh issue view ${{ github.event.issue.number }}.
 

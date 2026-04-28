@@ -10,10 +10,10 @@ import { withStatics } from "@/util/schema"
 import { configEntryNameFromPath } from "./entry-name"
 import * as ConfigMarkdown from "./markdown"
 import { ConfigModelID } from "./model-id"
-// kilocode_change start
-import { KilocodeConfig } from "@/kilocode/config/config"
+// stratacode_change start
+import { StratacodeConfig } from "@/stratacode/config/config"
 import type { Warning } from "./config"
-// kilocode_change end
+// stratacode_change end
 
 const log = Log.create({ service: "config" })
 
@@ -27,9 +27,9 @@ export const Info = Schema.Struct({
 
 export type Info = Schema.Schema.Type<typeof Info>
 
-// kilocode_change start
+// stratacode_change start
 export async function load(dir: string, warnings?: Warning[]) {
-  // kilocode_change end
+  // stratacode_change end
   const result: Record<string, Info> = {}
   for (const item of await Glob.scan("{command,commands}/**/*.md", {
     cwd: dir,
@@ -41,7 +41,7 @@ export async function load(dir: string, warnings?: Warning[]) {
       const message = ConfigMarkdown.FrontmatterError.isInstance(err)
         ? err.data.message
         : `Failed to parse command ${item}`
-      // kilocode_change start
+      // stratacode_change start
       if (warnings) warnings.push({ path: item, message })
       try {
         const { Session } = await import("@/session")
@@ -51,22 +51,22 @@ export async function load(dir: string, warnings?: Warning[]) {
       }
       log.error("failed to load command", { command: item, err })
       return undefined
-      // kilocode_change end
+      // stratacode_change end
     })
     if (!md) continue
 
-    // kilocode_change start
+    // stratacode_change start
     const patterns = [
-      "/.kilo/command/",
-      "/.kilo/commands/",
-      "/.kilocode/command/",
-      "/.kilocode/commands/",
+      "/.strata/command/",
+      "/.strata/commands/",
+      "/.stratacode/command/",
+      "/.stratacode/commands/",
       "/.opencode/command/",
       "/.opencode/commands/",
       "/command/",
       "/commands/",
     ]
-    // kilocode_change end
+    // stratacode_change end
     const name = configEntryNameFromPath(item, patterns)
 
     const config = {
@@ -79,9 +79,9 @@ export async function load(dir: string, warnings?: Warning[]) {
       result[config.name] = parsed.data
       continue
     }
-    // kilocode_change start
-    await KilocodeConfig.handleInvalid("command", item, parsed.error.issues, parsed.error, warnings)
-    // kilocode_change end
+    // stratacode_change start
+    await StratacodeConfig.handleInvalid("command", item, parsed.error.issues, parsed.error, warnings)
+    // stratacode_change end
   }
   return result
 }

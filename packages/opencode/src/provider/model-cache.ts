@@ -1,5 +1,5 @@
-// kilocode_change new file
-import { fetchKiloModels } from "@kilocode/kilo-gateway"
+// stratacode_change new file
+import { fetchStrataModels } from "@stratacode/strata-gateway"
 import { Config } from "../config"
 import { Auth } from "../auth"
 import { Log } from "../util"
@@ -21,7 +21,7 @@ export namespace ModelCache {
 
   /**
    * Get cached models if available and not expired
-   * @param providerID - Provider identifier (e.g., "kilo")
+   * @param providerID - Provider identifier (e.g., "strata")
    * @returns Cached models or undefined if cache miss or expired
    */
   export function get(providerID: string): Record<string, any> | undefined {
@@ -159,22 +159,22 @@ export namespace ModelCache {
    * @returns Fetched models
    */
   async function fetchModels(providerID: string, options: any): Promise<Record<string, any>> {
-    if (providerID === "kilo") {
-      return fetchKiloModels(options)
+    if (providerID === "strata") {
+      return fetchStrataModels(options)
     }
 
-    // kilocode_change start
+    // stratacode_change start
     if (providerID === "apertis") {
       return fetchApertisModels(options)
     }
-    // kilocode_change end
+    // stratacode_change end
 
     // Other providers not implemented yet
     log.debug("provider not implemented", { providerID })
     return {}
   }
 
-  // kilocode_change start
+  // stratacode_change start
   const APERTIS_BASE_URL = "https://api.apertis.ai/v1"
 
   async function fetchApertisModels(options: any): Promise<Record<string, any>> {
@@ -224,7 +224,7 @@ export namespace ModelCache {
 
     return models
   }
-  // kilocode_change end
+  // stratacode_change end
 
   /**
    * Get authentication options from multiple sources
@@ -235,52 +235,52 @@ export namespace ModelCache {
   async function getAuthOptions(providerID: string): Promise<any> {
     const options: any = {}
 
-    if (providerID === "kilo") {
+    if (providerID === "strata") {
       // Get from Config
       const config = await Config.get()
       const providerConfig = config.provider?.[providerID]
       if (providerConfig?.options?.apiKey) {
-        options.kilocodeToken = providerConfig.options.apiKey
+        options.stratacodeToken = providerConfig.options.apiKey
       }
 
-      // kilocode_change start
-      if (providerConfig?.options?.kilocodeOrganizationId) {
-        options.kilocodeOrganizationId = providerConfig.options.kilocodeOrganizationId
+      // stratacode_change start
+      if (providerConfig?.options?.stratacodeOrganizationId) {
+        options.stratacodeOrganizationId = providerConfig.options.stratacodeOrganizationId
       }
-      // kilocode_change end
+      // stratacode_change end
 
       // Get from Auth
       const auth = await Auth.get(providerID)
       if (auth) {
         if (auth.type === "api") {
-          options.kilocodeToken = auth.key
+          options.stratacodeToken = auth.key
         } else if (auth.type === "oauth") {
-          options.kilocodeToken = auth.access
-          // kilocode_change start - read org ID from OAuth accountId for enterprise model filtering
+          options.stratacodeToken = auth.access
+          // stratacode_change start - read org ID from OAuth accountId for enterprise model filtering
           if (auth.accountId) {
-            options.kilocodeOrganizationId = auth.accountId
+            options.stratacodeOrganizationId = auth.accountId
           }
-          // kilocode_change end
+          // stratacode_change end
         }
       }
 
       // Get from Env (process.env — matches upstream's pattern for sync async helpers)
       const env = process.env
-      if (env.KILO_API_KEY) {
-        options.kilocodeToken = env.KILO_API_KEY
+      if (env.STRATA_API_KEY) {
+        options.stratacodeToken = env.STRATA_API_KEY
       }
-      if (env.KILO_ORG_ID) {
-        options.kilocodeOrganizationId = env.KILO_ORG_ID
+      if (env.STRATA_ORG_ID) {
+        options.stratacodeOrganizationId = env.STRATA_ORG_ID
       }
 
       log.debug("auth options resolved", {
         providerID,
-        hasToken: !!options.kilocodeToken,
-        hasOrganizationId: !!options.kilocodeOrganizationId,
+        hasToken: !!options.stratacodeToken,
+        hasOrganizationId: !!options.stratacodeOrganizationId,
       })
     }
 
-    // kilocode_change start
+    // stratacode_change start
     if (providerID === "apertis") {
       const config = await Config.get()
       const providerConfig = config.provider?.[providerID]
@@ -310,7 +310,7 @@ export namespace ModelCache {
         hasBaseURL: !!options.baseURL,
       })
     }
-    // kilocode_change end
+    // stratacode_change end
 
     return options
   }

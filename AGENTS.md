@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Kilo CLI is an open source AI coding agent that generates code from natural language, automates tasks, and supports 500+ AI models.
+Strata CLI is an open source AI coding agent that generates code from natural language, automates tasks, and supports 500+ AI models.
 
 - ALWAYS USE PARALLEL TOOLS WHEN APPLICABLE.
 - The default branch in this repo is `main`.
@@ -15,26 +15,26 @@ Kilo CLI is an open source AI coding agent that generates code from natural lang
 - **Typecheck**: `bun turbo typecheck` (uses `tsgo`, not `tsc`)
 - **Test**: `bun test` from `packages/opencode/` (NOT from root -- root blocks tests)
 - **Single test**: `bun test test/tool/tool.test.ts` from `packages/opencode/`
-- **CLI build artifact size check**: after `bun run script/build.ts --single --skip-install` in `packages/opencode/`, use `du -h dist/*/*/bin/kilo` (scoped package output lives under `dist/@kilocode/`)
+- **CLI build artifact size check**: after `bun run script/build.ts --single --skip-install` in `packages/opencode/`, use `du -h dist/*/*/bin/strata` (scoped package output lives under `dist/@stratacode/`)
 - **SDK regen**: After changing server endpoints in `packages/opencode/src/server/`, run `./script/generate.ts` from root to regenerate `packages/sdk/js/`
-- **Knip** (unused exports): `bun run knip` from `packages/kilo-vscode/`. CI runs this — all exported types/functions must be imported somewhere. Remove or unexport unused exports before pushing.
-- **Source links**: After adding or changing URLs in `packages/kilo-vscode/`, `packages/kilo-vscode/webview-ui/`, or `packages/opencode/src/`, run `bun run script/extract-source-links.ts` from the repo root and commit the updated `packages/kilo-docs/source-links.md`. CI runs this check — the build fails if the file is stale.
-- **kilocode_change check**: `bun run check-kilocode-change` from `packages/kilo-vscode/`. CI runs this — `kilocode_change` is a marker for upstream merge conflicts and must not appear in `packages/kilo-vscode/` or `packages/kilo-ui/` (these are entirely Kilo Code additions). Remove the markers before pushing.
-- **opencode annotation check**: `bun run script/check-opencode-annotations.ts` from repo root. CI runs this on PRs touching `packages/opencode/` — every Kilo-specific change in shared opencode files must be annotated with `kilocode_change` markers. Exempt paths (no markers needed): `packages/opencode/src/kilocode/`, `packages/opencode/test/kilocode/`, and any path containing `kilocode` in the name.
-- **Backend/SDK programmatic testing**: see [TESTING.md](./TESTING.md) for spawning the local main-branch backend (`bun dev serve`) and driving it via `curl` — use this instead of `kilo serve` (prod binary) when testing backend fixes.
+- **Knip** (unused exports): `bun run knip` from `packages/strata-vscode/`. CI runs this — all exported types/functions must be imported somewhere. Remove or unexport unused exports before pushing.
+- **Source links**: After adding or changing URLs in `packages/strata-vscode/`, `packages/strata-vscode/webview-ui/`, or `packages/opencode/src/`, run `bun run script/extract-source-links.ts` from the repo root and commit the updated `packages/strata-docs/source-links.md`. CI runs this check — the build fails if the file is stale.
+- **stratacode_change check**: `bun run check-stratacode-change` from `packages/strata-vscode/`. CI runs this — `stratacode_change` is a marker for upstream merge conflicts and must not appear in `packages/strata-vscode/` or `packages/strata-ui/` (these are entirely Strata Code additions). Remove the markers before pushing.
+- **opencode annotation check**: `bun run script/check-opencode-annotations.ts` from repo root. CI runs this on PRs touching `packages/opencode/` — every Strata-specific change in shared opencode files must be annotated with `stratacode_change` markers. Exempt paths (no markers needed): `packages/opencode/src/stratacode/`, `packages/opencode/test/stratacode/`, and any path containing `stratacode` in the name.
+- **Backend/SDK programmatic testing**: see [TESTING.md](./TESTING.md) for spawning the local main-branch backend (`bun dev serve`) and driving it via `curl` — use this instead of `strata serve` (prod binary) when testing backend fixes.
 
 ## Products
 
-All products are clients of the **CLI** (`packages/opencode/`), which contains the AI agent runtime, HTTP server, and session management. Each client spawns or connects to a `kilo serve` process and communicates via HTTP + SSE using `@kilocode/sdk`.
+All products are clients of the **CLI** (`packages/opencode/`), which contains the AI agent runtime, HTTP server, and session management. Each client spawns or connects to a `strata serve` process and communicates via HTTP + SSE using `@stratacode/sdk`.
 
 | Product                | Package                 | Description                                                                                                                                                                          |
 | ---------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Kilo CLI               | `packages/opencode/`    | Core engine. TUI, `kilo run`, `kilo serve`, `kilo web`. Fork of upstream OpenCode.                                                                                                   |
-| Kilo VS Code Extension | `packages/kilo-vscode/` | VS Code extension. Bundles the CLI binary, spawns `kilo serve` as a child process. Includes the **Agent Manager** — a multi-session orchestration panel with git worktree isolation. |
+| Strata CLI               | `packages/opencode/`    | Core engine. TUI, `strata run`, `strata serve`, `strata web`. Fork of upstream OpenCode.                                                                                                   |
+| Strata VS Code Extension | `packages/strata-vscode/` | VS Code extension. Bundles the CLI binary, spawns `strata serve` as a child process. Includes the **Agent Manager** — a multi-session orchestration panel with git worktree isolation. |
 | OpenCode Desktop       | `packages/desktop/`     | Standalone Tauri native app. Bundles CLI as sidecar. Single-session UI. Unrelated to the VS Code extension. Not actively maintained — synced from upstream fork.                     |
-| OpenCode Web           | `packages/app/`         | Shared SolidJS frontend used by both the desktop app and `kilo web` CLI command. Not actively maintained — synced from upstream fork.                                                |
+| OpenCode Web           | `packages/app/`         | Shared SolidJS frontend used by both the desktop app and `strata web` CLI command. Not actively maintained — synced from upstream fork.                                                |
 
-**Agent Manager** refers to a feature inside `packages/kilo-vscode/` (extension code in `src/agent-manager/`, webview in `webview-ui/agent-manager/`). It is not a standalone product. See the extension's `AGENTS.md` for details.
+**Agent Manager** refers to a feature inside `packages/strata-vscode/` (extension code in `src/agent-manager/`, webview in `webview-ui/agent-manager/`). It is not a standalone product. See the extension's `AGENTS.md` for details.
 
 ## Monorepo Structure
 
@@ -42,17 +42,17 @@ Turborepo + Bun workspaces. The packages you'll work with most:
 
 | Package                    | Name                       | Purpose                                                                                    |
 | -------------------------- | -------------------------- | ------------------------------------------------------------------------------------------ |
-| `packages/opencode/`       | `@kilocode/cli`            | Core CLI -- agents, tools, sessions, server, TUI. This is where most work happens.         |
-| `packages/sdk/js/`         | `@kilocode/sdk`            | Auto-generated TypeScript SDK (client for the server API). Do not edit `src/gen/` by hand. |
-| `packages/kilo-vscode/`    | `kilo-code`                | VS Code extension with sidebar chat + Agent Manager. See its own `AGENTS.md` for details.  |
-| `packages/kilo-gateway/`   | `@kilocode/kilo-gateway`   | Kilo auth, provider routing, API integration                                               |
-| `packages/kilo-telemetry/` | `@kilocode/kilo-telemetry` | PostHog analytics + OpenTelemetry                                                          |
-| `packages/kilo-i18n/`      | `@kilocode/kilo-i18n`      | Internationalization / translations                                                        |
-| `packages/kilo-ui/`        | `@kilocode/kilo-ui`        | SolidJS component library shared by the extension webview and `packages/app/`              |
-| `packages/app/`            | `@opencode-ai/app`         | Shared SolidJS web UI for desktop app and `kilo web`                                       |
+| `packages/opencode/`       | `@stratacode/cli`            | Core CLI -- agents, tools, sessions, server, TUI. This is where most work happens.         |
+| `packages/sdk/js/`         | `@stratacode/sdk`            | Auto-generated TypeScript SDK (client for the server API). Do not edit `src/gen/` by hand. |
+| `packages/strata-vscode/`    | `strata-code`                | VS Code extension with sidebar chat + Agent Manager. See its own `AGENTS.md` for details.  |
+| `packages/strata-gateway/`   | `@stratacode/strata-gateway`   | Strata auth, provider routing, API integration                                               |
+| `packages/strata-telemetry/` | `@stratacode/strata-telemetry` | PostHog analytics + OpenTelemetry                                                          |
+| `packages/strata-i18n/`      | `@stratacode/strata-i18n`      | Internationalization / translations                                                        |
+| `packages/strata-ui/`        | `@stratacode/strata-ui`        | SolidJS component library shared by the extension webview and `packages/app/`              |
+| `packages/app/`            | `@opencode-ai/app`         | Shared SolidJS web UI for desktop app and `strata web`                                       |
 | `packages/desktop/`        | `@opencode-ai/desktop`     | Tauri desktop app shell                                                                    |
 | `packages/util/`           | `@opencode-ai/util`        | Shared utilities (error, path, retry, slug, etc.)                                          |
-| `packages/plugin/`         | `@kilocode/plugin`         | Plugin/tool interface definitions                                                          |
+| `packages/plugin/`         | `@stratacode/plugin`         | Plugin/tool interface definitions                                                          |
 
 ## Style Guide
 
@@ -171,7 +171,7 @@ Tests MUST test actual implementation, do not duplicate logic into a test.
 
 ## Commit Conventions
 
-[Conventional Commits](https://www.conventionalcommits.org/) with scopes matching packages: `vscode`, `cli`, `agent-manager`, `sdk`, `ui`, `i18n`, `kilo-docs`, `gateway`, `telemetry`, `desktop`. Omit scope when spanning multiple packages.
+[Conventional Commits](https://www.conventionalcommits.org/) with scopes matching packages: `vscode`, `cli`, `agent-manager`, `sdk`, `ui`, `i18n`, `strata-docs`, `gateway`, `telemetry`, `desktop`. Omit scope when spanning multiple packages.
 
 ## Changesets
 
@@ -187,60 +187,60 @@ PR descriptions should be 2-3 lines covering **what** changed and **why**. Focus
 
 - When creating a GitHub issue for the VS Code extension or JetBrains plugin, use the repo's existing issue templates in `.github/ISSUE_TEMPLATE/`. Pick the matching template (`Bug report`, `Feature Request`, or `Question`) instead of opening a blank issue.
 - Do not add platform-specific title prefixes such as `[JetBrains]`, `[Jetbrains]`, `[JB]`, `[VS Code]`, `[VSCode]`, or similar. Use a plain, descriptive title.
-- Always add VS Code extension issues to the GitHub project `VS Code Extension`: https://github.com/orgs/Kilo-Org/projects/25
-- Always add JetBrains plugin issues to the GitHub project `Jetbrains Plugin`: https://github.com/orgs/Kilo-Org/projects/39
+- Always add VS Code extension issues to the GitHub project `VS Code Extension`: https://github.com/orgs/Strata-Org/projects/25
+- Always add JetBrains plugin issues to the GitHub project `Jetbrains Plugin`: https://github.com/orgs/Strata-Org/projects/39
 - When using `gh`, prefer `gh issue create --template "..." --project "..."` with the matching project title.
 - If project assignment fails because `gh` is missing the required scope, run `gh auth refresh -s project` and retry.
 
 ## Fork Merge Process
 
-Kilo CLI is a fork of [opencode](https://github.com/anomalyco/opencode).
+Strata CLI is a fork of [opencode](https://github.com/anomalyco/opencode).
 
-**Very important**: when planning or coding, update shared files with OpenCode as last resort! Everything is shared code from OpenCode, except folders that contain `kilo` in the name or have a parent directory that contains `kilo` in the name. Example of kilo specific folders: `packages/opencode/src/kilocode/` and `packages/kilo-docs/`. Always look for ways to implement your feature or fix in a way that minimizes changes to shared code.
+**Very important**: when planning or coding, update shared files with OpenCode as last resort! Everything is shared code from OpenCode, except folders that contain `strata` in the name or have a parent directory that contains `strata` in the name. Example of strata specific folders: `packages/opencode/src/stratacode/` and `packages/strata-docs/`. Always look for ways to implement your feature or fix in a way that minimizes changes to shared code.
 
 ### Minimizing Merge Conflicts
 
 We regularly merge upstream changes from opencode. To minimize merge conflicts and keep the sync process smooth:
 
-1. **Prefer `kilocode` directories** - Place Kilo-specific code in dedicated directories whenever possible:
-   - `packages/opencode/src/kilocode/` - Kilo-specific source code
-   - `packages/opencode/test/kilocode/` - Kilo-specific tests
-   - `packages/kilo-gateway/` - The Kilo Gateway package
+1. **Prefer `stratacode` directories** - Place Strata-specific code in dedicated directories whenever possible:
+   - `packages/opencode/src/stratacode/` - Strata-specific source code
+   - `packages/opencode/test/stratacode/` - Strata-specific tests
+   - `packages/strata-gateway/` - The Strata Gateway package
 
 2. **Minimize changes to shared files** - When you must modify files that exist in upstream opencode, keep changes as small and isolated as possible.
 
-3. **Use `kilocode_change` markers** - When modifying shared code, mark your changes with `kilocode_change` comments so they can be easily identified during merges.
-   Do not use these markers in files within directories with kilo in the name
+3. **Use `stratacode_change` markers** - When modifying shared code, mark your changes with `stratacode_change` comments so they can be easily identified during merges.
+   Do not use these markers in files within directories with strata in the name
 
 4. **Avoid restructuring upstream code** - Don't refactor or reorganize code that comes from opencode unless absolutely necessary.
 
-5. **Mirror new config keys to the cloud schema** - When adding a `kilocode_change` key to `Config.Info` in `packages/opencode/src/config/config.ts`, also add the matching JSON Schema entry in `apps/web/src/app/config.json/extras.ts` in the [cloud repo](https://github.com/Kilo-Org/cloud). See [CLI Config Schema](packages/kilo-docs/pages/contributing/architecture/config-schema.md) for the step-by-step.
+5. **Mirror new config keys to the cloud schema** - When adding a `stratacode_change` key to `Config.Info` in `packages/opencode/src/config/config.ts`, also add the matching JSON Schema entry in `apps/web/src/app/config.json/extras.ts` in the [cloud repo](https://github.com/Strata-Org/cloud). See [CLI Config Schema](packages/strata-docs/pages/contributing/architecture/config-schema.md) for the step-by-step.
 
 The goal is to keep our diff from upstream as small as possible, making regular merges straightforward and reducing the risk of conflicts.
 
-### Kilocode Change Markers
+### Stratacode Change Markers
 
-To minimize merge conflicts when syncing with upstream, mark Kilo Code-specific changes in shared code with `kilocode_change` comments.
+To minimize merge conflicts when syncing with upstream, mark Strata Code-specific changes in shared code with `stratacode_change` comments.
 
 **Single line:**
 
 ```typescript
-const value = 42 // kilocode_change
+const value = 42 // stratacode_change
 ```
 
 **Multi-line:**
 
 ```typescript
-// kilocode_change start
+// stratacode_change start
 const foo = 1
 const bar = 2
-// kilocode_change end
+// stratacode_change end
 ```
 
 **New files:**
 
 ```typescript
-// kilocode_change - new file
+// stratacode_change - new file
 ```
 
 <!-- prettier-ignore -->
@@ -248,22 +248,22 @@ const bar = 2
 
 <!-- prettier-ignore -->
 ```tsx
-{/* kilocode_change */}
+{/* stratacode_change */}
 ```
 
 <!-- prettier-ignore -->
 ```tsx
-{/* kilocode_change start */}
+{/* stratacode_change start */}
 <MyComponent />
-{/* kilocode_change end */}
+{/* stratacode_change end */}
 ```
 
 #### When markers are NOT needed
 
-Code in these paths is Kilo Code-specific and does NOT need `kilocode_change` markers:
+Code in these paths is Strata Code-specific and does NOT need `stratacode_change` markers:
 
-- `packages/opencode/src/kilocode/` - All files in this directory
-- `packages/opencode/test/kilocode/` - All test files for kilocode
-- Any other path containing `kilocode` in filename or directory name
+- `packages/opencode/src/stratacode/` - All files in this directory
+- `packages/opencode/test/stratacode/` - All test files for stratacode
+- Any other path containing `stratacode` in filename or directory name
 
-These paths are entirely Kilo Code additions and won't conflict with upstream.
+These paths are entirely Strata Code additions and won't conflict with upstream.

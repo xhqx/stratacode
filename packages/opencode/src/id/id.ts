@@ -7,7 +7,7 @@ const prefixes = {
   message: "msg",
   permission: "per",
   question: "que",
-  suggestion: "sug", // kilocode_change
+  suggestion: "sug", // stratacode_change
   user: "usr",
   part: "prt",
   pty: "pty",

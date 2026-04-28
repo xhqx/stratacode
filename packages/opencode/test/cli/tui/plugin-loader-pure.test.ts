@@ -32,10 +32,10 @@ test("skips external tui plugins in pure mode", async () => {
     },
   })
 
-  const pure = process.env.KILO_PURE
-  const meta = process.env.KILO_PLUGIN_META_FILE
-  process.env.KILO_PURE = "1"
-  process.env.KILO_PLUGIN_META_FILE = tmp.extra.meta
+  const pure = process.env.STRATA_PURE
+  const meta = process.env.STRATA_PLUGIN_META_FILE
+  process.env.STRATA_PURE = "1"
+  process.env.STRATA_PLUGIN_META_FILE = tmp.extra.meta
 
   const config: TuiConfig.Info = {
     plugin: [[tmp.extra.spec, { marker: tmp.extra.marker }]],
@@ -58,14 +58,14 @@ test("skips external tui plugins in pure mode", async () => {
     cwd.mockRestore()
     wait.mockRestore()
     if (pure === undefined) {
-      delete process.env.KILO_PURE
+      delete process.env.STRATA_PURE
     } else {
-      process.env.KILO_PURE = pure
+      process.env.STRATA_PURE = pure
     }
     if (meta === undefined) {
-      delete process.env.KILO_PLUGIN_META_FILE
+      delete process.env.STRATA_PLUGIN_META_FILE
     } else {
-      process.env.KILO_PLUGIN_META_FILE = meta
+      process.env.STRATA_PLUGIN_META_FILE = meta
     }
   }
 })

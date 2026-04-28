@@ -10,7 +10,7 @@ import { Command } from "../command"
 import { Instance } from "./instance"
 import { Log } from "@/util"
 import { FileWatcher } from "@/file/watcher"
-import { KilocodeBootstrap } from "@/kilocode/bootstrap" // kilocode_change
+import { StratacodeBootstrap } from "@/stratacode/bootstrap" // stratacode_change
 import * as Effect from "effect/Effect"
 import { Config } from "@/config"
 
@@ -20,13 +20,13 @@ export const InstanceBootstrap = Effect.gen(function* () {
   yield* Config.Service.use((svc) => svc.get())
   // Plugin can mutate config so it has to be initialized before anything else.
   yield* Plugin.Service.use((svc) => svc.init())
-  // kilocode_change start - bootstrap Kilo session ingest/remote subscriptions instead of ShareNext
-  yield* Effect.promise(() => KilocodeBootstrap.init()).pipe(Effect.forkDetach)
-  // kilocode_change end
+  // stratacode_change start - bootstrap Strata session ingest/remote subscriptions instead of ShareNext
+  yield* Effect.promise(() => StratacodeBootstrap.init()).pipe(Effect.forkDetach)
+  // stratacode_change end
   yield* Effect.all(
     [
       LSP.Service,
-      // ShareNext.Service, kilocode_change
+      // ShareNext.Service, stratacode_change
       Format.Service,
       File.Service,
       FileWatcher.Service,

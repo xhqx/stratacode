@@ -1,6 +1,6 @@
-# Contributing to Kilo CLI
+# Contributing to Strata CLI
 
-See [the Documentation for details on contributing](https://kilo.ai/docs/contributing).
+See [the Documentation for details on contributing](https://strata.ai/docs/contributing).
 
 ## TL;DR
 
@@ -12,9 +12,9 @@ There are lots of ways to contribute to the project:
 - **Feature Requests:** Suggest new features or improvements
 - **Community Support:** Help other users in the community
 
-The Kilo Community is [on Discord](https://kilo.ai/discord).
+The Strata Community is [on Discord](https://strata.ai/discord).
 
-## Developing Kilo CLI
+## Developing Strata CLI
 
 - **Requirements:** Bun 1.3.10+
 - Install dependencies and start the dev server from the repo root:
@@ -36,26 +36,26 @@ This auto-detects VS Code on macOS, Linux, and Windows. Override with `--app-pat
 
 ### Running against a different directory
 
-By default, `bun dev` runs Kilo CLI in the `packages/opencode` directory. To run it against a different directory or repository:
+By default, `bun dev` runs Strata CLI in the `packages/opencode` directory. To run it against a different directory or repository:
 
 ```bash
 bun dev <directory>
 ```
 
-To run Kilo CLI in the root of the repo itself:
+To run Strata CLI in the root of the repo itself:
 
 ```bash
 bun dev .
 ```
 
-### Running Kilo CLI from any folder
+### Running Strata CLI from any folder
 
-`bin/kilodev` is a self-locating launcher that runs this checkout from wherever you invoke it. Running it with no arguments launches the TUI pointed at the caller's directory; any arguments are forwarded to the CLI unchanged.
+`bin/stratadev` is a self-locating launcher that runs this checkout from wherever you invoke it. Running it with no arguments launches the TUI pointed at the caller's directory; any arguments are forwarded to the CLI unchanged.
 
 One-shot install (recommended). From the repo root:
 
 ```bash
-./bin/kilodev dev-setup
+./bin/stratadev dev-setup
 ```
 
 This detects your shell, shows exactly what it will add, asks for confirmation, writes an idempotent block to your rc file, and saves a timestamped backup of the original. Re-running is safe — it only rewrites when the snippet has changed.
@@ -70,16 +70,16 @@ Useful flags:
 
 Manual alternatives (equivalent, no CLI invocation needed):
 
-- Unix: add `alias kilodev='/path/to/kilocode/bin/kilodev'` to `~/.zshrc` / `~/.bashrc`, or `fish_add_path /path/to/kilocode/bin`.
-- Windows: add `C:\path\to\kilocode\bin` to PATH (System Environment Variables), or add `function kilodev { & "C:\path\to\kilocode\bin\kilodev.cmd" @args }` to `$PROFILE`.
+- Unix: add `alias stratadev='/path/to/stratacode/bin/stratadev'` to `~/.zshrc` / `~/.bashrc`, or `fish_add_path /path/to/stratacode/bin`.
+- Windows: add `C:\path\to\stratacode\bin` to PATH (System Environment Variables), or add `function stratadev { & "C:\path\to\stratacode\bin\stratadev.cmd" @args }` to `$PROFILE`.
 
 Then from anywhere:
 
 ```bash
 cd ~/some/project
-kilodev                      # opens TUI with project = ~/some/project
-kilodev dev-setup --print    # prints the alias line (scripting)
-kilodev run --dir "$PWD" "…" # subcommands pass through; use --dir for run/serve
+stratadev                      # opens TUI with project = ~/some/project
+stratadev dev-setup --print    # prints the alias line (scripting)
+stratadev run --dir "$PWD" "…" # subcommands pass through; use --dir for run/serve
 ```
 
 ### Building a "local" binary
@@ -93,14 +93,14 @@ To compile a standalone executable:
 Then run it with:
 
 ```bash
-./packages/opencode/dist/@kilocode/cli-<platform>/bin/kilo
+./packages/opencode/dist/@stratacode/cli-<platform>/bin/strata
 ```
 
 Replace `<platform>` with your platform (e.g., `darwin-arm64`, `linux-x64`).
 
-### Understanding bun dev vs kilo
+### Understanding bun dev vs strata
 
-During development, `bun dev` is the local equivalent of the built `kilo` command. Both run the same CLI interface:
+During development, `bun dev` is the local equivalent of the built `strata` command. Both run the same CLI interface:
 
 ```bash
 # Development (from project root)
@@ -108,29 +108,29 @@ bun dev --help           # Show all available commands
 bun dev serve            # Start headless API server
 
 # Production
-kilo --help          # Show all available commands
-kilo serve           # Start headless API server
+strata --help          # Show all available commands
+strata serve           # Start headless API server
 ```
 
 ### Testing with a local backend
 
-To point the CLI at a local backend (e.g., a locally running Kilo API server on port 3000), set the `KILO_API_URL` environment variable:
+To point the CLI at a local backend (e.g., a locally running Strata API server on port 3000), set the `STRATA_API_URL` environment variable:
 
 ```bash
-KILO_API_URL=http://localhost:3000 bun dev
+STRATA_API_URL=http://localhost:3000 bun dev
 ```
 
-This redirects all gateway traffic (auth, model listing, provider routing, profile, etc.) to your local server. The default is `https://api.kilo.ai`.
+This redirects all gateway traffic (auth, model listing, provider routing, profile, etc.) to your local server. The default is `https://api.strata.ai`.
 
 There are also optional overrides for other services:
 
 | Variable                  | Default                          | Purpose                                   |
 | ------------------------- | -------------------------------- | ----------------------------------------- |
-| `KILO_API_URL`            | `https://api.kilo.ai`            | Kilo API (gateway, auth, models, profile) |
-| `KILO_SESSION_INGEST_URL` | `https://ingest.kilosessions.ai` | Session export / cloud sync               |
-| `KILO_MODELS_URL`         | `https://models.dev`             | Model metadata                            |
+| `STRATA_API_URL`            | `https://api.strata.ai`            | Strata API (gateway, auth, models, profile) |
+| `STRATA_SESSION_INGEST_URL` | `https://ingest.stratasessions.ai` | Session export / cloud sync               |
+| `STRATA_MODELS_URL`         | `https://models.dev`             | Model metadata                            |
 
-> **VS Code:** The repo includes a "VSCode - Run Extension (Local Backend)" launch config in `.vscode/launch.json` that sets `KILO_API_URL=http://localhost:3000` automatically.
+> **VS Code:** The repo includes a "VSCode - Run Extension (Local Backend)" launch config in `.vscode/launch.json` that sets `STRATA_API_URL=http://localhost:3000` automatically.
 
 ### Pull Request Expectations
 

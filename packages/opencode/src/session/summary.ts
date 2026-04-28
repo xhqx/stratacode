@@ -6,7 +6,7 @@ import { Storage } from "@/storage"
 import * as Session from "./session"
 import { MessageV2 } from "./message-v2"
 import { SessionID, MessageID } from "./schema"
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 
 function unquoteGitPath(input: string) {
   if (!input.startsWith('"')) return input
@@ -136,7 +136,7 @@ export const layer = Layer.effect(
       const next = diffs.map((item) => {
         const file = unquoteGitPath(item.file)
 
-        // kilocode_change start — scrub oversized diffs from stored session_diff
+        // stratacode_change start — scrub oversized diffs from stored session_diff
         const oversized = Buffer.byteLength(item.patch) > Snapshot.MAX_DIFF_SIZE
         if (file === item.file && !oversized) return item
         return {
@@ -144,7 +144,7 @@ export const layer = Layer.effect(
           file,
           patch: oversized ? "" : item.patch,
         }
-        // kilocode_change end
+        // stratacode_change end
       })
       const changed = next.some((item, i) => item.file !== diffs[i]?.file)
       if (changed) yield* storage.write(["session_diff", input.sessionID], next).pipe(Effect.ignore)
@@ -169,9 +169,9 @@ export const DiffInput = z.object({
   messageID: MessageID.zod.optional(),
 })
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const diff = (input: { sessionID: SessionID; messageID?: MessageID }) => runPromise((svc) => svc.diff(input))
-// kilocode_change end
+// stratacode_change end
 
 export * as SessionSummary from "./summary"

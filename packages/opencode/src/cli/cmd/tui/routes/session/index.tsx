@@ -23,9 +23,9 @@ import { Spinner } from "@tui/component/spinner"
 import { selectedForeground, useTheme } from "@tui/context/theme"
 import { BoxRenderable, ScrollBoxRenderable, addDefaultParsers, TextAttributes, RGBA } from "@opentui/core"
 import { Prompt, type PromptRef } from "@tui/component/prompt"
-// kilocode_change start
-import type { AssistantMessage, Part, Provider, ToolPart, UserMessage, TextPart, ReasoningPart } from "@kilocode/sdk/v2"
-// kilocode_change end
+// stratacode_change start
+import type { AssistantMessage, Part, Provider, ToolPart, UserMessage, TextPart, ReasoningPart } from "@stratacode/sdk/v2"
+// stratacode_change end
 import { useLocal } from "@tui/context/local"
 import { Locale } from "@/util"
 import type { Tool } from "@/tool"
@@ -43,7 +43,7 @@ import type { WebSearchTool } from "@/tool/websearch"
 import type { TaskTool } from "@/tool/task"
 import type { QuestionTool } from "@/tool/question"
 import type { SkillTool } from "@/tool/skill"
-import type { SemanticSearchTool } from "@/kilocode/tool/semantic-search" // kilocode_change
+import type { SemanticSearchTool } from "@/stratacode/tool/semantic-search" // stratacode_change
 import { useKeyboard, useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
 import { useSDK } from "@tui/context/sdk"
 import { useCommandDialog } from "@tui/component/dialog-command"
@@ -54,7 +54,7 @@ import { TodoItem } from "../../component/todo-item"
 import { DialogMessage } from "./dialog-message"
 import type { PromptInfo } from "../../component/prompt/history"
 import { DialogConfirm } from "@tui/ui/dialog-confirm"
-import { KiloErrorBlock } from "@/kilocode/components/kilo-error-display" // kilocode_change
+import { StrataErrorBlock } from "@/stratacode/components/strata-error-display" // stratacode_change
 import { DialogTimeline } from "./dialog-timeline"
 import { DialogForkFromTimeline } from "./dialog-fork-from-timeline"
 import { DialogSessionRename } from "../../component/dialog-session-rename"
@@ -75,17 +75,17 @@ import { Filesystem } from "@/util"
 import { Global } from "@/global"
 import { PermissionPrompt } from "./permission"
 import { QuestionPrompt } from "./question"
-import { Suggest } from "@/kilocode/suggestion/tui/render" // kilocode_change
-import { SuggestPrompt } from "@/kilocode/suggestion/tui/prompt" // kilocode_change
-import { NetworkPrompt } from "./network" // kilocode_change
+import { Suggest } from "@/stratacode/suggestion/tui/render" // stratacode_change
+import { SuggestPrompt } from "@/stratacode/suggestion/tui/prompt" // stratacode_change
+import { NetworkPrompt } from "./network" // stratacode_change
 import { DialogExportOptions } from "../../ui/dialog-export-options"
 import * as Model from "../../util/model"
 import { formatTranscript } from "../../util/transcript"
 import { UI } from "@/cli/ui.ts"
 import { useTuiConfig } from "../../context/tui-config"
-import { formatMarkdownTables } from "../../util/markdown" // kilocode_change
-import { bell } from "@/kilocode/bell" // kilocode_change
-import { SessionIndexing } from "@/kilocode/components/session-indexing" // kilocode_change
+import { formatMarkdownTables } from "../../util/markdown" // stratacode_change
+import { bell } from "@/stratacode/bell" // stratacode_change
+import { SessionIndexing } from "@/stratacode/components/session-indexing" // stratacode_change
 import { getScrollAcceleration } from "../../util/scroll"
 import { TuiPluginRuntime } from "../../plugin"
 import { DialogGoUpsell } from "../../component/dialog-go-upsell"
@@ -144,7 +144,7 @@ export function Session() {
     if (session()?.parentID) return []
     return children().flatMap((x) => sync.data.question[x.id] ?? [])
   })
-  // kilocode_change start
+  // stratacode_change start
   const suggestions = createMemo(() => {
     if (session()?.parentID) return []
     return children().flatMap((x) => sync.data.suggestion[x.id] ?? [])
@@ -157,10 +157,10 @@ export function Session() {
   const nonBlockingQuestions = createMemo(() => questions().filter((q) => q.blocking === false))
   const question = createMemo(() => blockingQuestions()[0] ?? nonBlockingQuestions()[0])
   const blockingSuggestions = createMemo(() => suggestions().filter((s) => s.blocking !== false))
-  // kilocode_change start - footer overlay only hosts blocking suggestions now;
+  // stratacode_change start - footer overlay only hosts blocking suggestions now;
   // non-blocking ones render inline at the tool-part slot via `SuggestBar`.
   const blockingSuggestion = createMemo(() => blockingSuggestions()[0])
-  // kilocode_change end
+  // stratacode_change end
   const visible = createMemo(
     () =>
       !session()?.parentID &&
@@ -191,9 +191,9 @@ export function Session() {
   const lastAssistant = createMemo(() => {
     return messages().findLast((x) => x.role === "assistant")
   })
-  // kilocode_change end
+  // stratacode_change end
 
-  // kilocode_change start - ring terminal bell on task completion
+  // stratacode_change start - ring terminal bell on task completion
   createEffect(
     on(
       () => [route.sessionID, sync.data.session_status?.[route.sessionID]?.type] as const,
@@ -203,9 +203,9 @@ export function Session() {
       },
     ),
   )
-  // kilocode_change end
+  // stratacode_change end
 
-  // kilocode_change start - ring terminal bell when input is needed
+  // stratacode_change start - ring terminal bell when input is needed
   createEffect(
     on(
       () => [route.sessionID, permissions().length] as const,
@@ -226,14 +226,14 @@ export function Session() {
   )
   createEffect(
     on(
-      () => [route.sessionID, suggestions().length + network().length] as const, // kilocode_change
+      () => [route.sessionID, suggestions().length + network().length] as const, // stratacode_change
       ([id, len], prev) => {
         if (!prev || prev[0] !== id) return
         if (len > prev[1] && bellEnabled()) bell()
       },
     ),
   )
-  // kilocode_change end
+  // stratacode_change end
 
   const dimensions = useTerminalDimensions()
   const [sidebar, setSidebar] = kv.signal<"auto" | "hide">("sidebar", "auto")
@@ -246,7 +246,7 @@ export function Session() {
   const [showScrollbar, setShowScrollbar] = kv.signal("scrollbar_visible", false)
   const [diffWrapMode] = kv.signal<"word" | "none">("diff_wrap_mode", "word")
   const [_animationsEnabled, _setAnimationsEnabled] = kv.signal("animations_enabled", true)
-  const [bellEnabled, _setBellEnabled] = kv.signal("bell_enabled", true) // kilocode_change - terminal bell toggle (toggled via kv.set in app.tsx command)
+  const [bellEnabled, _setBellEnabled] = kv.signal("bell_enabled", true) // stratacode_change - terminal bell toggle (toggled via kv.set in app.tsx command)
   const [showGenericToolOutput, setShowGenericToolOutput] = kv.signal("generic_tool_output_visibility", false)
 
   const wide = createMemo(() => dimensions().width > 120)
@@ -311,7 +311,7 @@ export function Session() {
     if (part.state.status !== "completed") return
     if (part.id === lastSwitch) return
 
-    // kilocode_change - plan_exit no longer switches agent; PlanFollowup handles it
+    // stratacode_change - plan_exit no longer switches agent; PlanFollowup handles it
     if (part.tool === "plan_enter") {
       local.agent.set("plan")
       lastSwitch = part.id
@@ -354,19 +354,19 @@ export function Session() {
 
   createEffect(() => {
     const title = Locale.truncate(session()?.title ?? "", 50)
-    // kilocode_change start
+    // stratacode_change start
     return exit.message.set(
       [
         ``,
         `  ██ ▄█▀ ██ ██     ▄████▄  ${UI.Style.TEXT_DIM}${title}${UI.Style.TEXT_NORMAL}`,
-        `  ████   ██ ██     ██  ██  ${UI.Style.TEXT_DIM}kilo -s ${session()?.id}${UI.Style.TEXT_NORMAL}`,
+        `  ████   ██ ██     ██  ██  ${UI.Style.TEXT_DIM}strata -s ${session()?.id}${UI.Style.TEXT_NORMAL}`,
         `  ██ ▀█▄ ██ ██████ ▀████▀  `,
       ].join("\n"),
     )
-    // kilocode_change end
+    // stratacode_change end
   })
 
-  // kilocode_change start - double ctrl+c to exit for child sessions
+  // stratacode_change start - double ctrl+c to exit for child sessions
   const [exitPress, setExitPress] = createSignal(0)
   useKeyboard((evt) => {
     if (!session()?.parentID) return
@@ -381,7 +381,7 @@ export function Session() {
       exit()
     }
   })
-  // kilocode_change end
+  // stratacode_change end
 
   // Helper: Find next visible message boundary in direction
   const findNextVisibleMessage = (direction: "next" | "prev"): string | null => {
@@ -1160,13 +1160,13 @@ export function Session() {
               scrollAcceleration={scrollAcceleration()}
             >
               <box height={1} />
-              {/* kilocode_change start */}
+              {/* stratacode_change start */}
               <Show when={session()?.parentID && messages().length === 0}>
                 <box paddingLeft={3}>
                   <text fg={theme.textMuted}>↳ Initializing...</text>
                 </box>
               </Show>
-              {/* kilocode_change end */}
+              {/* stratacode_change end */}
               <For each={messages()}>
                 {(message, index) => (
                   <Switch>
@@ -1267,7 +1267,7 @@ export function Session() {
               <Show when={permissions().length > 0}>
                 <PermissionPrompt request={permissions()[0]} />
               </Show>
-              {/* kilocode_change start */}
+              {/* stratacode_change start */}
               <Show when={permissions().length === 0 && question()} keyed>
                 {(request) => (
                   <QuestionPrompt
@@ -1278,8 +1278,8 @@ export function Session() {
                 )}
               </Show>
               <Show when={permissions().length === 0 && !question()}>
-                {/* kilocode_change end */}
-                {/* kilocode_change start */}
+                {/* stratacode_change end */}
+                {/* stratacode_change start */}
                 <Show when={blockingSuggestion()} keyed>
                   {(request) => <SuggestPrompt request={request} />}
                 </Show>
@@ -1287,13 +1287,13 @@ export function Session() {
               <Show when={session()?.parentID}>
                 <SubagentFooter />
               </Show>
-              {/* kilocode_change end */}
-              {/* kilocode_change start */}
+              {/* stratacode_change end */}
+              {/* stratacode_change start */}
               <Show when={networkVisible()}>
                 <NetworkPrompt request={network()[0]} />
               </Show>
-              {/* kilocode_change end */}
-              {/* kilocode_change start */}
+              {/* stratacode_change end */}
+              {/* stratacode_change start */}
               <Show when={!session()?.parentID}>
                 <TuiPluginRuntime.Slot
                   name="session_prompt"
@@ -1316,12 +1316,12 @@ export function Session() {
                   />
                 </TuiPluginRuntime.Slot>
               </Show>
-              {/* kilocode_change end */}
+              {/* stratacode_change end */}
             </box>
           </Show>
-          {/* kilocode_change start */}
+          {/* stratacode_change start */}
           <SessionIndexing />
-          {/* kilocode_change end */}
+          {/* stratacode_change end */}
           <Toast />
         </box>
         <Show when={sidebarVisible()}>
@@ -1503,8 +1503,8 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
         </box>
       </Show>
       <Show when={props.message.error && props.message.error.name !== "MessageAbortedError"}>
-        {/* kilocode_change start - Kilo-specific error display */}
-        <KiloErrorBlock
+        {/* stratacode_change start - Strata-specific error display */}
+        <StrataErrorBlock
           error={props.message.error!}
           fallback={
             <box
@@ -1521,7 +1521,7 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
             </box>
           }
         />
-        {/* kilocode_change end */}
+        {/* stratacode_change end */}
       </Show>
       <Switch>
         <Match when={props.last || final() || props.message.error?.name === "MessageAbortedError"}>
@@ -1595,14 +1595,14 @@ function ReasoningPart(props: { last: boolean; part: ReasoningPart; message: Ass
 function TextPart(props: { last: boolean; part: TextPart; message: AssistantMessage }) {
   const ctx = use()
   const { theme, syntax } = useTheme()
-  // kilocode_change start - format markdown tables with fixed-width columns
+  // stratacode_change start - format markdown tables with fixed-width columns
   const content = createMemo(() => formatMarkdownTables(props.part.text.trim()))
-  // kilocode_change end
+  // stratacode_change end
   return (
     <Show when={props.part.text.trim()}>
       <box id={"text-" + props.part.id} paddingLeft={3} marginTop={1} flexShrink={0}>
         <Switch>
-          <Match when={Flag.KILO_EXPERIMENTAL_MARKDOWN}>
+          <Match when={Flag.STRATA_EXPERIMENTAL_MARKDOWN}>
             <markdown
               syntaxStyle={syntax()}
               streaming={true}
@@ -1612,7 +1612,7 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
               bg={theme.background}
             />
           </Match>
-          <Match when={!Flag.KILO_EXPERIMENTAL_MARKDOWN}>
+          <Match when={!Flag.STRATA_EXPERIMENTAL_MARKDOWN}>
             <code
               filetype="markdown"
               drawUnstyledText={false}
@@ -1680,11 +1680,11 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
         <Match when={props.part.tool === "grep"}>
           <Grep {...toolprops} />
         </Match>
-        {/* kilocode_change start */}
+        {/* stratacode_change start */}
         <Match when={props.part.tool === "semantic_search"}>
           <SemanticSearch {...toolprops} />
         </Match>
-        {/* kilocode_change end */}
+        {/* stratacode_change end */}
         <Match when={props.part.tool === "webfetch"}>
           <WebFetch {...toolprops} />
         </Match>
@@ -1712,7 +1712,7 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
         <Match when={props.part.tool === "question"}>
           <Question {...toolprops} />
         </Match>
-        {/* kilocode_change start */}
+        {/* stratacode_change start */}
         <Match when={props.part.tool === "suggest"}>
           {(() => {
             const pending = createMemo(() => {
@@ -1727,7 +1727,7 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
             return <Suggest {...toolprops} InlineTool={InlineTool} BlockTool={BlockTool} pendingRequest={pending()} />
           })()}
         </Match>
-        {/* kilocode_change end */}
+        {/* stratacode_change end */}
         <Match when={props.part.tool === "skill"}>
           <Skill {...toolprops} />
         </Match>
@@ -2105,7 +2105,7 @@ function WebSearch(props: ToolProps<typeof WebSearchTool>) {
   )
 }
 
-// kilocode_change start
+// stratacode_change start
 function SemanticSearch(props: ToolProps<typeof SemanticSearchTool>) {
   const meta = createMemo(() => props.metadata as { results?: { length: number }[] })
   const args = createMemo(() => props.input as { query?: string; path?: string })
@@ -2120,7 +2120,7 @@ function SemanticSearch(props: ToolProps<typeof SemanticSearchTool>) {
     </InlineTool>
   )
 }
-// kilocode_change end
+// stratacode_change end
 
 function Task(props: ToolProps<typeof TaskTool>) {
   const { navigate } = useRoute()
@@ -2158,7 +2158,7 @@ function Task(props: ToolProps<typeof TaskTool>) {
     if (!props.input.description) return ""
     let content = [`${Locale.titlecase(props.input.subagent_type ?? "General")} Task — ${props.input.description}`]
 
-    // kilocode_change start
+    // stratacode_change start
     if (isRunning()) {
       if (tools().length === 0) {
         content.push(`↳ Starting...`)
@@ -2170,7 +2170,7 @@ function Task(props: ToolProps<typeof TaskTool>) {
         content.push(`↳ ${tools().length} toolcalls`)
       }
     }
-    // kilocode_change end
+    // stratacode_change end
 
     if (props.part.state.status === "completed") {
       content.push(`└ ${tools().length} toolcalls · ${Locale.duration(duration())}`)

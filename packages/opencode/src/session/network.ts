@@ -1,4 +1,4 @@
-// kilocode_change - new file
+// stratacode_change - new file
 import { Context, Effect, Layer } from "effect"
 import { Bus } from "../bus"
 import { BusEvent } from "../bus/bus-event"
@@ -91,7 +91,7 @@ export namespace SessionNetwork {
   }
 
   class StateService extends Context.Service<StateService, { readonly get: () => Effect.Effect<StateShape> }>()(
-    "@kilocode/SessionNetwork.State",
+    "@stratacode/SessionNetwork.State",
   ) {}
 
   const stateLayer = Layer.effect(
@@ -121,7 +121,7 @@ export namespace SessionNetwork {
   export function disconnected(err: unknown) {
     const match = code(err)
     if (match && codes.has(match)) return true
-    // kilocode_change - recognize AbortSignal.timeout() errors
+    // stratacode_change - recognize AbortSignal.timeout() errors
     for (const item of chain(err)) {
       if (item instanceof DOMException && item.name === "TimeoutError") return true
     }
@@ -136,7 +136,7 @@ export namespace SessionNetwork {
   }
 
   export function message(err: unknown) {
-    // kilocode_change - check for timeout first
+    // stratacode_change - check for timeout first
     for (const item of chain(err)) {
       if (item instanceof DOMException && item.name === "TimeoutError") return "Request timed out"
     }
@@ -253,7 +253,7 @@ export namespace SessionNetwork {
         return
       }
       delete s.pending[input.requestID]
-      // kilocode_change start — reconnect failed remote MCP servers after network recovery
+      // stratacode_change start — reconnect failed remote MCP servers after network recovery
       void MCP.status()
         .then((statuses) => {
           for (const [name, s] of Object.entries(statuses)) {
@@ -267,7 +267,7 @@ export namespace SessionNetwork {
         .catch((err) => {
           log.error("failed to get MCP status for reconnect", { err })
         })
-      // kilocode_change end
+      // stratacode_change end
       Bus.publish(Event.Replied, {
         sessionID: req.info.sessionID,
         requestID: req.info.id,

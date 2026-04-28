@@ -10,4 +10,4 @@ export type GlobalEvent = {
 export const GlobalBus = new EventEmitter<{
   event: [GlobalEvent]
 }>()
-GlobalBus.setMaxListeners(50) // kilocode_change — surface warning if SSE listeners accumulate
+GlobalBus.setMaxListeners(50) // stratacode_change — surface warning if SSE listeners accumulate

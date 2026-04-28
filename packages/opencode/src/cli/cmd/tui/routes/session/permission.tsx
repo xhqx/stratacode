@@ -4,7 +4,7 @@ import { Portal, useKeyboard, useRenderer, useTerminalDimensions, type JSX } fro
 import type { TextareaRenderable } from "@opentui/core"
 import { useKeybind } from "../../context/keybind"
 import { useTheme, selectedForeground } from "../../context/theme"
-import type { PermissionRequest } from "@kilocode/sdk/v2"
+import type { PermissionRequest } from "@stratacode/sdk/v2"
 import { useSDK } from "../../context/sdk"
 import { SplitBorder } from "../../component/border"
 import { useSync } from "../../context/sync"
@@ -18,7 +18,7 @@ import { Global } from "@/global"
 import { useDialog } from "../../ui/dialog"
 import { getScrollAcceleration } from "../../util/scroll"
 import { useTuiConfig } from "../../context/tui-config"
-import { ConfigProtection } from "@/kilocode/permission/config-paths" // kilocode_change
+import { ConfigProtection } from "@/stratacode/permission/config-paths" // stratacode_change
 
 type PermissionStage = "permission" | "always" | "reject"
 
@@ -154,7 +154,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
   })
 
   const { theme } = useTheme()
-  const keybind = useKeybind() // kilocode_change
+  const keybind = useKeybind() // stratacode_change
 
   return (
     <Switch>
@@ -164,12 +164,12 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
           body={
             <Switch>
               <Match when={props.request.always.length === 1 && props.request.always[0] === "*"}>
-                {/* kilocode_change */}
+                {/* stratacode_change */}
                 <TextBody title={"This will allow " + props.request.permission + " permanently."} />
               </Match>
               <Match when={true}>
                 <box paddingLeft={1} gap={1}>
-                  {/* kilocode_change */}
+                  {/* stratacode_change */}
                   <text fg={theme.textMuted}>This will allow the following patterns permanently</text>
                   <box>
                     <For each={props.request.always}>
@@ -434,21 +434,21 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
                 </text>
                 <text fg={theme.text}>{current.title}</text>
               </box>
-              {/* // kilocode_change start - explain config file edits always require approval */}
+              {/* // stratacode_change start - explain config file edits always require approval */}
               <Show when={props.request.metadata?.[ConfigProtection.DISABLE_ALWAYS_KEY]}>
                 <box paddingLeft={4} flexShrink={0}>
                   <text fg={theme.textMuted}>Config file edits always require approval</text>
                 </box>
               </Show>
-              {/* // kilocode_change end */}
+              {/* // stratacode_change end */}
             </box>
           )
 
-          // kilocode_change start — hide "Always allow" for config file edits
+          // stratacode_change start — hide "Always allow" for config file edits
           const options: Record<string, string> = props.request.metadata?.[ConfigProtection.DISABLE_ALWAYS_KEY]
             ? { once: "Allow once", reject: "Reject" }
             : { once: "Allow once", always: "Allow always", reject: "Reject" }
-          // kilocode_change end
+          // stratacode_change end
 
           const body = (
             <Prompt
@@ -527,8 +527,8 @@ function RejectPrompt(props: { onConfirm: (message: string) => void; onCancel: (
           <text fg={theme.text}>Reject permission</text>
         </box>
         <box paddingLeft={1}>
-          {/* kilocode_change */}
-          <text fg={theme.textMuted}>Tell Kilo what to do differently</text>
+          {/* stratacode_change */}
+          <text fg={theme.textMuted}>Tell Strata what to do differently</text>
         </box>
       </box>
       <box

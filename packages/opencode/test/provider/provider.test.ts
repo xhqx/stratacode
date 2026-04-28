@@ -14,7 +14,7 @@ import { Env } from "../../src/env"
 import { Effect } from "effect"
 import { AppRuntime } from "../../src/effect/app-runtime"
 import { makeRuntime } from "../../src/effect/run-service"
-import { Auth } from "../../src/auth" // kilocode_change
+import { Auth } from "../../src/auth" // stratacode_change
 
 const env = makeRuntime(Env.Service, Env.defaultLayer)
 const set = (k: string, v: string) => env.runSync((svc) => svc.set(k, v))
@@ -58,7 +58,7 @@ async function defaultModel() {
 
 function paid(providers: Awaited<ReturnType<typeof list>>) {
   const item = providers[ProviderID.make("opencode")]
-  if (!item) return 0 // kilocode_change - Kilo drops opencode provider without apiKey/auth
+  if (!item) return 0 // stratacode_change - Strata drops opencode provider without apiKey/auth
   return Object.values(item.models).filter((model) => model.cost.input > 0).length
 }
 
@@ -68,7 +68,7 @@ test("provider loaded from env variable", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -89,7 +89,7 @@ test("provider loaded from env variable", async () => {
   })
 })
 
-// kilocode_change start
+// stratacode_change start
 test("provider OAuth auth overrides inherited env variable", async () => {
   await Auth.remove("openai")
   await Auth.set("openai", {
@@ -105,7 +105,7 @@ test("provider OAuth auth overrides inherited env variable", async () => {
         await Bun.write(
           path.join(dir, "opencode.json"),
           JSON.stringify({
-            $schema: "https://app.kilo.ai/config.json",
+            $schema: "https://app.strata.ai/config.json",
           }),
         )
       },
@@ -131,7 +131,7 @@ test("provider OAuth auth overrides inherited env variable", async () => {
     await Auth.remove("openai")
   }
 })
-// kilocode_change end
+// stratacode_change end
 
 test("provider loaded from config with apiKey option", async () => {
   await using tmp = await tmpdir({
@@ -139,7 +139,7 @@ test("provider loaded from config with apiKey option", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               options: {
@@ -166,7 +166,7 @@ test("disabled_providers excludes provider", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           disabled_providers: ["anthropic"],
         }),
       )
@@ -190,7 +190,7 @@ test("enabled_providers restricts to only listed providers", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           enabled_providers: ["anthropic"],
         }),
       )
@@ -216,7 +216,7 @@ test("model whitelist filters models for provider", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               whitelist: ["claude-sonnet-4-20250514"],
@@ -247,7 +247,7 @@ test("model blacklist excludes specific models", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               blacklist: ["claude-sonnet-4-20250514"],
@@ -277,7 +277,7 @@ test("custom model alias via config", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -312,7 +312,7 @@ test("custom provider with npm package", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "custom-provider": {
               name: "Custom Provider",
@@ -355,7 +355,7 @@ test("env variable takes precedence, config merges options", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               options: {
@@ -389,7 +389,7 @@ test("getModel returns model for valid provider/model", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -416,7 +416,7 @@ test("getModel throws ModelNotFoundError for invalid model", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -438,7 +438,7 @@ test("getModel throws ModelNotFoundError for invalid provider", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -469,7 +469,7 @@ test("defaultModel returns first available model when no config set", async () =
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -493,7 +493,7 @@ test("defaultModel respects config model setting", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           model: "anthropic/claude-sonnet-4-20250514",
         }),
       )
@@ -518,7 +518,7 @@ test("provider with baseURL from config", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "custom-openai": {
               name: "Custom OpenAI",
@@ -557,7 +557,7 @@ test("model cost defaults to zero when not specified", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "test-provider": {
               name: "Test Provider",
@@ -598,7 +598,7 @@ test("model options are merged from existing model", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -633,7 +633,7 @@ test("provider removed when all models filtered out", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               whitelist: ["nonexistent-model"],
@@ -661,7 +661,7 @@ test("closest finds model by partial match", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -686,7 +686,7 @@ test("closest returns undefined for nonexistent provider", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -706,7 +706,7 @@ test("getModel uses realIdByKey for aliased models", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -744,7 +744,7 @@ test("provider api field sets model api.url", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "custom-api": {
               name: "Custom API",
@@ -783,7 +783,7 @@ test("explicit baseURL overrides api field", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "custom-api": {
               name: "Custom API",
@@ -822,7 +822,7 @@ test("model inherits properties from existing database model", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -858,7 +858,7 @@ test("disabled_providers prevents loading even with env var", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           disabled_providers: ["openai"],
         }),
       )
@@ -882,7 +882,7 @@ test("enabled_providers with empty array allows no providers", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           enabled_providers: [],
         }),
       )
@@ -907,7 +907,7 @@ test("whitelist and blacklist can be combined", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               whitelist: ["claude-sonnet-4-20250514", "claude-opus-4-20250514"],
@@ -940,7 +940,7 @@ test("model modalities default correctly", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "test-provider": {
               name: "Test",
@@ -977,7 +977,7 @@ test("model with custom cost values", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "test-provider": {
               name: "Test",
@@ -1022,7 +1022,7 @@ test("getSmallModel returns appropriate small model", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -1046,7 +1046,7 @@ test("getSmallModel respects config small_model override", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           small_model: "anthropic/claude-sonnet-4-20250514",
         }),
       )
@@ -1087,7 +1087,7 @@ test("multiple providers can be configured simultaneously", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               options: { timeout: 30000 },
@@ -1122,7 +1122,7 @@ test("provider with custom npm package", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "local-llm": {
               name: "Local LLM",
@@ -1164,7 +1164,7 @@ test("model alias name defaults to alias key when id differs", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -1197,7 +1197,7 @@ test("provider with multiple env var options only includes apiKey when single en
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "multi-env": {
               name: "Multi Env Provider",
@@ -1239,7 +1239,7 @@ test("provider with single env var includes apiKey automatically", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "single-env": {
               name: "Single Env Provider",
@@ -1281,7 +1281,7 @@ test("model cost overrides existing cost values", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -1318,7 +1318,7 @@ test("completely new provider not in database can be configured", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "brand-new-provider": {
               name: "Brand New",
@@ -1368,7 +1368,7 @@ test("disabled_providers and enabled_providers interaction", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           // enabled_providers takes precedence - only these are considered
           enabled_providers: ["anthropic", "openai"],
           // Then disabled_providers filters from the enabled set
@@ -1402,7 +1402,7 @@ test("model with tool_call false", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "no-tools": {
               name: "No Tools Provider",
@@ -1437,7 +1437,7 @@ test("model defaults tool_call to true when not specified", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "default-tools": {
               name: "Default Tools Provider",
@@ -1472,7 +1472,7 @@ test("model headers are preserved", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "headers-provider": {
               name: "Headers Provider",
@@ -1515,7 +1515,7 @@ test("provider env fallback - second env var used if first missing", async () =>
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "fallback-env": {
               name: "Fallback Env Provider",
@@ -1555,7 +1555,7 @@ test("getModel returns consistent results", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -1581,7 +1581,7 @@ test("provider name defaults to id when not in database", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "my-custom-id": {
               // no name specified
@@ -1616,7 +1616,7 @@ test("ModelNotFoundError includes suggestions for typos", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -1644,7 +1644,7 @@ test("ModelNotFoundError for provider includes suggestions", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -1672,7 +1672,7 @@ test("getProvider returns undefined for nonexistent provider", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -1692,7 +1692,7 @@ test("getProvider returns provider info", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -1716,7 +1716,7 @@ test("closest returns undefined when no partial match found", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -1739,7 +1739,7 @@ test("closest checks multiple query terms in order", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -1764,7 +1764,7 @@ test("model limit defaults to zero when not specified", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "no-limit": {
               name: "No Limit Provider",
@@ -1801,7 +1801,7 @@ test("provider options are deeply merged", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               options: {
@@ -1838,7 +1838,7 @@ test("custom model inherits npm package from models.dev provider config", async 
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             openai: {
               models: {
@@ -1874,7 +1874,7 @@ test("custom model inherits api.url from models.dev provider", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             openrouter: {
               models: {
@@ -2017,7 +2017,7 @@ test("model variants are generated for reasoning models", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
         }),
       )
     },
@@ -2044,7 +2044,7 @@ test("model variants can be disabled via config", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -2082,7 +2082,7 @@ test("model variants can be customized via config", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -2123,7 +2123,7 @@ test("disabled key is stripped from variant config", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -2163,7 +2163,7 @@ test("all variants can be disabled via config", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -2200,7 +2200,7 @@ test("variant config merges with generated variants", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             anthropic: {
               models: {
@@ -2240,7 +2240,7 @@ test("variants filtered in second pass for database models", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             openai: {
               models: {
@@ -2278,7 +2278,7 @@ test("custom model with variants enabled and disabled", async () => {
       await Bun.write(
         path.join(dir, "opencode.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           provider: {
             "custom-reasoning": {
               name: "Custom Reasoning Provider",
@@ -2530,12 +2530,12 @@ test("plugin config providers persist after instance dispose", async () => {
   expect(first[ProviderID.make("demo")]).toBeDefined()
   expect(first[ProviderID.make("demo")].models[ModelID.make("chat")]).toBeDefined()
 
-  // kilocode_change start
+  // stratacode_change start
   await Instance.provide({
     directory: tmp.path,
     fn: () => Instance.dispose(),
   })
-  // kilocode_change end
+  // stratacode_change end
 
   const second = await Instance.provide({
     directory: tmp.path,

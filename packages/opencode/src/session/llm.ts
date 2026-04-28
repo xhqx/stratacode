@@ -19,14 +19,14 @@ import { Bus } from "@/bus"
 import { Wildcard } from "@/util"
 import { SessionID } from "@/session/schema"
 import { Auth } from "@/auth"
-// kilocode_change start
-import { Telemetry } from "@kilocode/kilo-telemetry"
-import { DEFAULT_HEADERS } from "@/kilocode/const"
-import { getKiloProjectId } from "@/kilocode/project-id"
-import { HEADER_PROJECTID, HEADER_MACHINEID, HEADER_TASKID } from "@kilocode/kilo-gateway"
-import { Identity } from "@kilocode/kilo-telemetry"
+// stratacode_change start
+import { Telemetry } from "@stratacode/strata-telemetry"
+import { DEFAULT_HEADERS } from "@/stratacode/const"
+import { getStrataProjectId } from "@/stratacode/project-id"
+import { HEADER_PROJECTID, HEADER_MACHINEID, HEADER_TASKID } from "@stratacode/strata-gateway"
+import { Identity } from "@stratacode/strata-telemetry"
 import { makeRuntime } from "@/effect/run-service"
-// kilocode_change end
+// stratacode_change end
 import { Installation } from "@/installation"
 import { InstallationVersion } from "@/installation/version"
 import { EffectBridge } from "@/effect"
@@ -60,7 +60,7 @@ export type Event = Result["fullStream"] extends AsyncIterable<infer T> ? T : ne
 
 export interface Interface {
   readonly stream: (input: StreamInput) => Stream.Stream<Event, unknown>
-  readonly raw: (input: StreamRequest) => Effect.Effect<Result> // kilocode_change - raw streamText result for Kilo helpers
+  readonly raw: (input: StreamRequest) => Effect.Effect<Result> // stratacode_change - raw streamText result for Strata helpers
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/LLM") {}
@@ -108,9 +108,9 @@ const live: Layer.Layer<
       const system: string[] = []
       system.push(
         [
-          // kilocode_change start - soul defines core identity and personality
+          // stratacode_change start - soul defines core identity and personality
           ...(isOpenaiOauth ? [] : [SystemPrompt.soul()]),
-          // kilocode_change end
+          // stratacode_change end
           // use agent prompt otherwise provider prompt
           ...(input.agent.prompt ? [input.agent.prompt] : SystemPrompt.provider(input.model)),
           // any custom prompt passed into this call
@@ -153,9 +153,9 @@ const live: Layer.Layer<
         mergeDeep(variant),
       )
       if (isOpenaiOauth) {
-        // kilocode_change start - prepend soul to instructions
+        // stratacode_change start - prepend soul to instructions
         options.instructions = SystemPrompt.soul() + "\n" + system.join("\n")
-        // kilocode_change end
+        // stratacode_change end
       }
 
       const isWorkflow = language instanceof GitLabWorkflowLanguageModel
@@ -207,15 +207,15 @@ const live: Layer.Layer<
         },
       )
 
-      // kilocode_change start - resolve project ID and machine ID for kilo provider
-      const isKilo = input.model.api.npm === "@kilocode/kilo-gateway"
-      const kiloProjectId = yield* isKilo
-        ? Effect.promise(() => getKiloProjectId().catch(() => undefined))
+      // stratacode_change start - resolve project ID and machine ID for strata provider
+      const isStrata = input.model.api.npm === "@stratacode/strata-gateway"
+      const strataProjectId = yield* isStrata
+        ? Effect.promise(() => getStrataProjectId().catch(() => undefined))
         : Effect.succeed(undefined)
-      const machineId = yield* isKilo
+      const machineId = yield* isStrata
         ? Effect.promise(() => Identity.getMachineId().catch(() => undefined))
         : Effect.succeed(undefined)
-      // kilocode_change end
+      // stratacode_change end
 
       const tools = resolveTools(input)
 
@@ -391,25 +391,25 @@ const live: Layer.Layer<
         maxOutputTokens: params.maxOutputTokens,
         abortSignal: input.abort,
         headers: {
-          ...(input.model.providerID.startsWith("kilo") // kilocode_change
+          ...(input.model.providerID.startsWith("strata") // stratacode_change
             ? {
-                "x-kilo-project": Instance.project.id,
-                "x-kilo-session": input.sessionID,
-                "x-kilo-request": input.user.id,
-                "x-kilo-client": Flag.KILO_CLIENT,
+                "x-strata-project": Instance.project.id,
+                "x-strata-session": input.sessionID,
+                "x-strata-request": input.user.id,
+                "x-strata-client": Flag.STRATA_CLIENT,
               }
             : {
                 "x-session-affinity": input.sessionID,
                 ...(input.parentSessionID ? { "x-parent-session-id": input.parentSessionID } : {}),
                 "User-Agent": `opencode/${InstallationVersion}`,
-                ...(input.model.providerID !== "anthropic" ? DEFAULT_HEADERS : undefined), // kilocode_change
+                ...(input.model.providerID !== "anthropic" ? DEFAULT_HEADERS : undefined), // stratacode_change
               }),
-          // kilocode_change start - headers for kilo provider
-          ...(isKilo && input.agent.name ? { "x-kilocode-mode": input.agent.name.toLowerCase() } : {}),
-          ...(isKilo && kiloProjectId ? { [HEADER_PROJECTID]: kiloProjectId } : {}),
-          ...(isKilo && machineId ? { [HEADER_MACHINEID]: machineId } : {}),
-          ...(isKilo ? { [HEADER_TASKID]: input.sessionID } : {}),
-          // kilocode_change end
+          // stratacode_change start - headers for strata provider
+          ...(isStrata && input.agent.name ? { "x-stratacode-mode": input.agent.name.toLowerCase() } : {}),
+          ...(isStrata && strataProjectId ? { [HEADER_PROJECTID]: strataProjectId } : {}),
+          ...(isStrata && machineId ? { [HEADER_MACHINEID]: machineId } : {}),
+          ...(isStrata ? { [HEADER_TASKID]: input.sessionID } : {}),
+          // stratacode_change end
           ...input.model.headers,
           ...headers,
         },
@@ -430,14 +430,14 @@ const live: Layer.Layer<
             },
           ],
         }),
-        // kilocode_change start - enable telemetry by default with custom PostHog tracer
+        // stratacode_change start - enable telemetry by default with custom PostHog tracer
         experimental_telemetry: {
           isEnabled: cfg.experimental?.openTelemetry !== false,
           recordInputs: false,
           recordOutputs: false,
           tracer: Telemetry.getTracer() ?? undefined,
         },
-        // kilocode_change end
+        // stratacode_change end
       })
     })
 
@@ -457,7 +457,7 @@ const live: Layer.Layer<
         ),
       )
 
-    // kilocode_change - expose raw streamText result for Kilo helpers; Effect.orDie collapses AuthError into a defect
+    // stratacode_change - expose raw streamText result for Strata helpers; Effect.orDie collapses AuthError into a defect
     return Service.of({ stream, raw: (input) => run(input).pipe(Effect.orDie) })
   }),
 )
@@ -473,12 +473,12 @@ export const defaultLayer = Layer.suspend(() =>
   ),
 )
 
-// kilocode_change start - keep raw async stream wrapper for Kilo callsites during Effect migration
+// stratacode_change start - keep raw async stream wrapper for Strata callsites during Effect migration
 const runtime = makeRuntime(Service, defaultLayer)
 export async function stream(input: StreamRequest) {
   return runtime.runPromise((svc) => svc.raw(input), { signal: input.abort })
 }
-// kilocode_change end
+// stratacode_change end
 
 function resolveTools(input: Pick<StreamInput, "tools" | "agent" | "permission" | "user">) {
   const disabled = Permission.disabled(

@@ -8,7 +8,7 @@
     "declaration": true,
     "moduleResolution": "nodenext",
     "lib": ["es2022", "dom", "dom.iterable"],
-    "types": ["node"] // kilocode_change
+    "types": ["node"] // stratacode_change
   },
   "include": ["src"]
 }

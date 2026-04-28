@@ -683,7 +683,7 @@
         fill="currentColor"
       ></path>
     </symbol>
-    <symbol viewBox="0 0 24 24" fill="none" id="kilo">
+    <symbol viewBox="0 0 24 24" fill="none" id="strata">
       <path d="M5 3v18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path>
       <path
         d="M17.5 4.5 9.5 12l8 7.5"

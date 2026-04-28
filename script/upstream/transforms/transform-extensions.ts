@@ -1,15 +1,15 @@
 #!/usr/bin/env bun
 /**
- * Transform extension files (Zed, etc.) with Kilo branding
+ * Transform extension files (Zed, etc.) with Strata branding
  *
  * This script handles extension configuration files by transforming
- * OpenCode references to Kilo.
+ * OpenCode references to Strata.
  */
 
 import { $ } from "bun"
 import { info, success, warn, debug } from "../utils/logger"
 import { defaultConfig } from "../utils/config"
-import { oursHasKilocodeChanges } from "../utils/git"
+import { oursHasStratacodeChanges } from "../utils/git"
 
 export interface ExtensionTransformResult {
   file: string
@@ -35,19 +35,19 @@ const EXTENSION_REPLACEMENTS: ExtensionReplacement[] = [
   // TOML files (Zed extension)
   {
     pattern: /name\s*=\s*"opencode"/g,
-    replacement: 'name = "kilo"',
+    replacement: 'name = "strata"',
     description: "Extension name",
     fileTypes: [".toml"],
   },
   {
     pattern: /id\s*=\s*"opencode"/g,
-    replacement: 'id = "kilo"',
+    replacement: 'id = "strata"',
     description: "Extension ID",
     fileTypes: [".toml"],
   },
   {
     pattern: /description\s*=\s*"OpenCode[^"]*"/g,
-    replacement: 'description = "Kilo - AI coding assistant"',
+    replacement: 'description = "Strata - AI coding assistant"',
     description: "Extension description",
     fileTypes: [".toml"],
   },
@@ -55,45 +55,45 @@ const EXTENSION_REPLACEMENTS: ExtensionReplacement[] = [
   // GitHub/Repository references
   {
     pattern: /repository\s*=\s*"[^"]*anomalyco\/opencode[^"]*"/g,
-    replacement: 'repository = "https://github.com/Kilo-Org/kilocode"',
+    replacement: 'repository = "https://github.com/Strata-Org/stratacode"',
     description: "Repository URL",
     fileTypes: [".toml"],
   },
   {
     pattern: /github\.com\/anomalyco\/opencode/g,
-    replacement: "github.com/Kilo-Org/kilocode",
+    replacement: "github.com/Strata-Org/stratacode",
     description: "GitHub URL",
   },
   {
     pattern: /anomalyco\/opencode/g,
-    replacement: "Kilo-Org/kilocode",
+    replacement: "Strata-Org/stratacode",
     description: "GitHub repo",
   },
 
   // Binary/command references
   {
     pattern: /command\s*=\s*"opencode"/g,
-    replacement: 'command = "kilo"',
+    replacement: 'command = "strata"',
     description: "Command name",
     fileTypes: [".toml"],
   },
 
-  // Generic OpenCode -> Kilo in strings
+  // Generic OpenCode -> Strata in strings
   {
     pattern: /"OpenCode"/g,
-    replacement: '"Kilo"',
+    replacement: '"Strata"',
     description: "Product name",
   },
 
   // Environment variables
   {
     pattern: /_EXTENSION_OPENCODE_/g,
-    replacement: "_EXTENSION_KILO_",
+    replacement: "_EXTENSION_STRATA_",
     description: "Extension env var",
   },
   {
     pattern: /OpenCode\s+language\s+server/gi,
-    replacement: "Kilo language server",
+    replacement: "Strata language server",
     description: "Language server name",
   },
 ]
@@ -165,9 +165,9 @@ export async function transformExtensionFile(
     return { file, action: "transformed", replacements: 0, dryRun: true }
   }
 
-  // If our version has kilocode_change markers, flag for manual resolution
-  if (await oursHasKilocodeChanges(file)) {
-    warn(`${file} has kilocode_change markers — skipping auto-transform, needs manual resolution`)
+  // If our version has stratacode_change markers, flag for manual resolution
+  if (await oursHasStratacodeChanges(file)) {
+    warn(`${file} has stratacode_change markers — skipping auto-transform, needs manual resolution`)
     return { file, action: "flagged", replacements: 0, dryRun: false }
   }
 

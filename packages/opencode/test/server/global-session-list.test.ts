@@ -9,22 +9,22 @@ import { Session as SessionNs } from "../../src/session"
 import { Log } from "../../src/util"
 import { resetDatabase } from "../fixture/db"
 import { tmpdir } from "../fixture/fixture"
-import { RemoteSender } from "../../src/kilo-sessions/remote-sender" // kilocode_change
+import { RemoteSender } from "../../src/strata-sessions/remote-sender" // stratacode_change
 
-// kilocode_change start
+// stratacode_change start
 beforeEach(() => {
   spyOn(RemoteSender, "create").mockReturnValue({ handle() {}, dispose() {} })
 })
-// kilocode_change end
+// stratacode_change end
 
 void Log.init({ print: false })
 
-// kilocode_change start
+// stratacode_change start
 afterEach(async () => {
   mock.restore()
   await resetDatabase()
 })
-// kilocode_change end
+// stratacode_change end
 
 function run<A, E>(fx: Effect.Effect<A, E, SessionNs.Service>) {
   return Effect.runPromise(fx.pipe(Effect.provide(SessionNs.defaultLayer)))
@@ -120,7 +120,7 @@ describe("session.listGlobal", () => {
     expect(ids).not.toContain(second.id)
   })
 
-  // kilocode_change start - project-family filter across worktrees (stale .git/kilo project ID)
+  // stratacode_change start - project-family filter across worktrees (stale .git/strata project ID)
   test("filters by project family across worktrees when project IDs drift", async () => {
     await using first = await tmpdir({ git: true })
     await using second = await tmpdir({ git: true })
@@ -135,14 +135,14 @@ describe("session.listGlobal", () => {
         fn: async () => svc.create({ title: "worktree-session" }),
       })
 
-      // Now write a stale project ID to .git/kilo — this overrides the root's cached ID
-      await Bun.write(path.join(first.path, ".git", "kilo"), "stale-project-id")
+      // Now write a stale project ID to .git/strata — this overrides the root's cached ID
+      await Bun.write(path.join(first.path, ".git", "strata"), "stale-project-id")
 
       const root = await Instance.provide({
         directory: first.path,
         fn: async () => svc.create({ title: "root-session" }),
       })
-      await Bun.file(path.join(first.path, ".git", "kilo")).delete()
+      await Bun.file(path.join(first.path, ".git", "strata")).delete()
       const other = await Instance.provide({
         directory: second.path,
         fn: async () => svc.create({ title: "other-session" }),
@@ -160,5 +160,5 @@ describe("session.listGlobal", () => {
       await $`git worktree remove ${worktree}`.cwd(first.path).quiet().nothrow()
     }
   })
-  // kilocode_change end
+  // stratacode_change end
 })

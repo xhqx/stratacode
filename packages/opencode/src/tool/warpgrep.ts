@@ -1,21 +1,21 @@
 import z from "zod"
 import { Effect } from "effect"
 import * as Tool from "./tool"
-import { WarpGrepClient } from "@morphllm/morphsdk/tools/warp-grep/client" // kilocode_change
+import { WarpGrepClient } from "@morphllm/morphsdk/tools/warp-grep/client" // stratacode_change
 import { Instance } from "../project/instance"
 import { Bus } from "../bus"
 import { TuiEvent } from "../cli/cmd/tui/event"
 import DESCRIPTION from "./warpgrep.txt"
 
-// FREE_PERIOD_TODO: Remove KILO_WARPGREP_PROXY_URL constant and the proxy
+// FREE_PERIOD_TODO: Remove STRATA_WARPGREP_PROXY_URL constant and the proxy
 // fallback below. After the free period ends, require MORPH_API_KEY and
 // return an error when it is missing.
-const KILO_WARPGREP_PROXY_URL = "https://api.kilo.ai/api/gateway"
+const STRATA_WARPGREP_PROXY_URL = "https://api.strata.ai/api/gateway"
 
 const Parameters = z.object({
   query: z
     .string()
-    .describe("Search query describing what code you are looking for. Be specific and descriptive for best results."), // kilocode_change
+    .describe("Search query describing what code you are looking for. Be specific and descriptive for best results."), // stratacode_change
 })
 
 export const CodebaseSearchTool = Tool.define(
@@ -38,8 +38,8 @@ export const CodebaseSearchTool = Tool.define(
           // FREE_PERIOD_TODO: Remove proxy fallback — require apiKey, error if missing:
           //   if (!apiKey) return { title: ..., output: "Set MORPH_API_KEY to use codebase search.", metadata: {} }
           const client = new WarpGrepClient({
-            morphApiKey: apiKey ?? "kilo-free",
-            ...(apiKey ? {} : { morphApiUrl: KILO_WARPGREP_PROXY_URL }),
+            morphApiKey: apiKey ?? "strata-free",
+            ...(apiKey ? {} : { morphApiUrl: STRATA_WARPGREP_PROXY_URL }),
             timeout: 60_000,
           })
 
@@ -55,7 +55,7 @@ export const CodebaseSearchTool = Tool.define(
             // from the proxy (401/402/429) will surface here. The message below
             // tells the user exactly what to do.
             const isAuthOrRateLimit =
-              result.error && /401|402|429|rate.limit|free.period|unauthorized/i.test(result.error) // kilocode_change
+              result.error && /401|402|429|rate.limit|free.period|unauthorized/i.test(result.error) // stratacode_change
             const apiKeyMsg =
               "Codebase search unavailable: free period ended. Set MORPH_API_KEY to continue. Get your key at https://www.morphllm.com/"
             if (isAuthOrRateLimit) {
@@ -76,7 +76,7 @@ export const CodebaseSearchTool = Tool.define(
           }
 
           const MAX_OUTPUT_CHARS = 45_000
-          const fullOutput = result.contexts.map((c) => `### ${c.file}\n\`\`\`\n${c.content}\n\`\`\``).join("\n\n") // kilocode_change
+          const fullOutput = result.contexts.map((c) => `### ${c.file}\n\`\`\`\n${c.content}\n\`\`\``).join("\n\n") // stratacode_change
 
           let output: string
           if (fullOutput.length > MAX_OUTPUT_CHARS) {

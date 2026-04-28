@@ -1,7 +1,7 @@
 ---
 mode: primary
 hidden: true
-model: kilo/minimax/minimax-m2.5
+model: strata/minimax/minimax-m2.5
 color: "#44BA81"
 tools:
   "*": false
@@ -56,11 +56,11 @@ Examples:
 
 #### vscode
 
-Use for issues related to the VS Code extension in `packages/kilo-vscode/`.
+Use for issues related to the VS Code extension in `packages/strata-vscode/`.
 
 #### gateway
 
-Use for issues related to the Kilo Gateway in `packages/kilo-gateway/`.
+Use for issues related to the Strata Gateway in `packages/strata-gateway/`.
 
 When assigning to people here are the following rules:
 
@@ -83,14 +83,14 @@ Use for issues about cloud agent behavior or infrastructure.
 Core (`packages/opencode/...`):
 
 - kevinvandijk
-- marius-kilocode
+- marius-stratacode
 - catrielmuller
 
-VSCode Extension (`packages/kilo-vscode/...`):
+VSCode Extension (`packages/strata-vscode/...`):
 
 - markijbema
 
-Kilo Gateway (`packages/kilo-gateway/...`):
+Strata Gateway (`packages/strata-gateway/...`):
 
 - jrf0110
 

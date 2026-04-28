@@ -3,7 +3,7 @@ import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process"
 import { formatPatch, structuredPatch } from "diff"
 import path from "path"
 import z from "zod"
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import * as CrossSpawnSpawner from "@/effect/cross-spawn-spawner"
 import { InstanceState } from "@/effect"
 import { AppFileSystem } from "@opencode-ai/shared/filesystem"
@@ -11,8 +11,8 @@ import { Hash } from "@opencode-ai/shared/util/hash"
 import { Config } from "../config"
 import { Global } from "../global"
 import { Log } from "../util"
-import { Flag } from "@/flag/flag" // kilocode_change
-import { DiffFull } from "../kilocode/snapshot/diff-full" // kilocode_change
+import { Flag } from "@/flag/flag" // stratacode_change
+import { DiffFull } from "../stratacode/snapshot/diff-full" // stratacode_change
 import { withStatics } from "@/util/schema"
 import { zod } from "@/util/effect-zod"
 
@@ -33,12 +33,12 @@ export const FileDiff = Schema.Struct({
   .pipe(withStatics((s) => ({ zod: zod(s) })))
 export type FileDiff = typeof FileDiff.Type
 
-// kilocode_change start - lightweight FileDiff without `patch` for session.summary.diffs (keeps DB payload small)
+// stratacode_change start - lightweight FileDiff without `patch` for session.summary.diffs (keeps DB payload small)
 export const SummaryFileDiff = FileDiff.mapFields(Struct.omit(["patch"]))
   .annotate({ identifier: "SnapshotSummaryFileDiff" })
   .pipe(withStatics((s) => ({ zod: zod(s) })))
 export type SummaryFileDiff = typeof SummaryFileDiff.Type
-// kilocode_change end
+// stratacode_change end
 
 const log = Log.create({ service: "snapshot" })
 const prune = "7.days"
@@ -52,11 +52,11 @@ interface GitResult {
   readonly stderr: string
 }
 
-// kilocode_change start
+// stratacode_change start
 export const MAX_DIFF_SIZE = 256 * 1024
 const cache = new Map<string, Promise<FileDiff[]>>()
 const max = 100
-// kilocode_change end
+// stratacode_change end
 
 type State = Omit<Interface, "init">
 
@@ -197,9 +197,9 @@ export const layer: Layer.Layer<
 
         const enabled = Effect.fnUntraced(function* () {
           if (state.vcs !== "git") return false
-          // kilocode_change start - ACP guard: disable snapshots for ACP clients
-          if (Flag.KILO_CLIENT === "acp") return false
-          // kilocode_change end
+          // stratacode_change start - ACP guard: disable snapshots for ACP clients
+          if (Flag.STRATA_CLIENT === "acp") return false
+          // stratacode_change end
           return (yield* config.get()).snapshot !== false
         })
 
@@ -722,7 +722,7 @@ export const layer: Layer.Layer<
               const patch = (file: string, before: string, after: string) =>
                 formatPatch(structuredPatch(file, file, before, after, "", "", { context: Number.MAX_SAFE_INTEGER }))
 
-              // kilocode_change start — route patches through git (DiffFull.batch) instead of the
+              // stratacode_change start — route patches through git (DiffFull.batch) instead of the
               // JS Myers implementation. Upstream Myers loop below is kept as dead code so our
               // diff from upstream stays minimal and future merges don't conflict.
               for (let i = 0; i < rows.length; i += step) {
@@ -744,7 +744,7 @@ export const layer: Layer.Layer<
                 }
               }
               return result
-              // kilocode_change end
+              // stratacode_change end
 
               for (let i = 0; i < rows.length; i += step) {
                 const run = rows.slice(i, i + step)
@@ -805,7 +805,7 @@ export const layer: Layer.Layer<
         return yield* InstanceState.useEffect(state, (s) => s.diff(hash))
       }),
       diffFull: Effect.fn("Snapshot.diffFull")(function* (from: string, to: string) {
-        // kilocode_change start - cache full diffs at the service boundary
+        // stratacode_change start - cache full diffs at the service boundary
         if (from === to) return []
         const key = `${from}:${to}`
         const hit = cache.get(key)
@@ -823,7 +823,7 @@ export const layer: Layer.Layer<
         )
         cache.set(key, pending)
         return yield* Effect.promise(() => pending)
-        // kilocode_change end
+        // stratacode_change end
       }),
     })
   }),
@@ -835,7 +835,7 @@ export const defaultLayer = layer.pipe(
   Layer.provide(Config.defaultLayer),
 )
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const track = () => runPromise((svc) => svc.track())
 export const patch = (hash: string) => runPromise((svc) => svc.patch(hash))
@@ -845,6 +845,6 @@ export const diff = (hash: string) => runPromise((svc) => svc.diff(hash))
 export const diffFull = (from: string, to: string) => runPromise((svc) => svc.diffFull(from, to))
 export const cleanup = () => runPromise((svc) => svc.cleanup())
 export const init = () => runPromise((svc) => svc.init())
-// kilocode_change end
+// stratacode_change end
 
 export * as Snapshot from "."

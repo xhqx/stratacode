@@ -125,7 +125,7 @@ export const McpListCommand = cmd({
 
         if (servers.length === 0) {
           prompts.log.warn("No MCP servers configured")
-          prompts.outro("Add servers with: kilo mcp add") // kilocode_change
+          prompts.outro("Add servers with: strata mcp add") // stratacode_change
           return
         }
 
@@ -198,7 +198,7 @@ export const McpAuthCommand = cmd({
 
         if (servers.length === 0) {
           prompts.log.warn("No OAuth-capable MCP servers configured")
-          prompts.log.info("Remote MCP servers support OAuth by default. Add a remote server in kilo.json:") // kilocode_change
+          prompts.log.info("Remote MCP servers support OAuth by default. Add a remote server in strata.json:") // stratacode_change
           prompts.log.info(`
   "mcp": {
     "my-server": {
@@ -410,21 +410,21 @@ export const McpLogoutCommand = cmd({
 })
 
 async function resolveConfigPath(baseDir: string, global = false) {
-  // kilocode_change start - prefer kilo.json/.kilo over opencode.json/.opencode
-  // Check for existing config files (prefer .jsonc over .json, check .kilo/ and .opencode/ subdirectory too)
+  // stratacode_change start - prefer strata.json/.strata over opencode.json/.opencode
+  // Check for existing config files (prefer .jsonc over .json, check .strata/ and .opencode/ subdirectory too)
   const candidates = [
-    path.join(baseDir, "kilo.json"),
-    path.join(baseDir, "kilo.jsonc"),
+    path.join(baseDir, "strata.json"),
+    path.join(baseDir, "strata.jsonc"),
     path.join(baseDir, "opencode.json"),
     path.join(baseDir, "opencode.jsonc"),
   ]
 
   if (!global) {
     candidates.push(
-      path.join(baseDir, ".kilo", "kilo.json"),
-      path.join(baseDir, ".kilo", "kilo.jsonc"),
-      path.join(baseDir, ".kilo", "opencode.json"),
-      path.join(baseDir, ".kilo", "opencode.jsonc"),
+      path.join(baseDir, ".strata", "strata.json"),
+      path.join(baseDir, ".strata", "strata.jsonc"),
+      path.join(baseDir, ".strata", "opencode.json"),
+      path.join(baseDir, ".strata", "opencode.jsonc"),
       path.join(baseDir, ".opencode", "opencode.json"),
       path.join(baseDir, ".opencode", "opencode.jsonc"),
     )
@@ -436,9 +436,9 @@ async function resolveConfigPath(baseDir: string, global = false) {
     }
   }
 
-  // Default to kilo.json if none exist
-  return path.join(baseDir, "kilo.json")
-  // kilocode_change end
+  // Default to strata.json if none exist
+  return path.join(baseDir, "strata.json")
+  // stratacode_change end
 }
 
 async function addMcpToConfig(name: string, mcpConfig: ConfigMCP.Info, configPath: string) {
@@ -524,7 +524,7 @@ export const McpAddCommand = cmd({
         if (type === "local") {
           const command = await prompts.text({
             message: "Enter command to run",
-            placeholder: "e.g., kilo x @modelcontextprotocol/server-filesystem", // kilocode_change
+            placeholder: "e.g., strata x @modelcontextprotocol/server-filesystem", // stratacode_change
             validate: (x) => (x && x.length > 0 ? undefined : "Required"),
           })
           if (prompts.isCancel(command)) throw new UI.CancelledError()
@@ -713,7 +713,7 @@ export const McpDebugCommand = cmd({
               params: {
                 protocolVersion: "2024-11-05",
                 capabilities: {},
-                clientInfo: { name: "kilo-debug", version: InstallationVersion }, // kilocode_change
+                clientInfo: { name: "strata-debug", version: InstallationVersion }, // stratacode_change
               },
               id: 1,
             }),
@@ -761,7 +761,7 @@ export const McpDebugCommand = cmd({
 
             try {
               const client = new Client({
-                name: "kilo-debug", // kilocode_change
+                name: "strata-debug", // stratacode_change
                 version: InstallationVersion,
               })
               await client.connect(transport)

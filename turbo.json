@@ -1,7 +1,7 @@
 {
   "$schema": "https://v2-8-13.turborepo.dev/schema.json",
-  "globalEnv": ["CI", "KILO_DISABLE_SHARE"],
-  "globalPassThroughEnv": ["CI", "KILO_DISABLE_SHARE"],
+  "globalEnv": ["CI", "STRATA_DISABLE_SHARE"],
+  "globalPassThroughEnv": ["CI", "STRATA_DISABLE_SHARE"],
   "tasks": {
     "typecheck": {
       "dependsOn": ["^typecheck"]
@@ -10,12 +10,12 @@
       "dependsOn": [],
       "outputs": ["dist/**"]
     },
-    "@kilocode/cli#test": {
+    "@stratacode/cli#test": {
       "dependsOn": ["^build"],
       "outputs": [],
       "passThroughEnv": ["*"]
     },
-    "@kilocode/cli#test:ci": {
+    "@stratacode/cli#test:ci": {
       "dependsOn": ["^build"],
       "outputs": [".artifacts/unit/junit.xml"],
       "passThroughEnv": ["*"]
@@ -24,13 +24,13 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
-    "@kilocode/kilo-docs#build": {
+    "@stratacode/strata-docs#build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**"],
       "env": ["POSTHOG_API_KEY", "FREE_TIER_AMOUNT", "NEXT_PUBLIC_POSTHOG_KEY", "NEXT_PUBLIC_POSTHOG_HOST"]
     },
-    "@kilocode/kilo-jetbrains#build": {
-      "dependsOn": ["@kilocode/cli#build"],
+    "@stratacode/strata-jetbrains#build": {
+      "dependsOn": ["@stratacode/cli#build"],
       "outputs": ["build/distributions/**"]
     },
     "@opencode-ai/app#test:ci": {

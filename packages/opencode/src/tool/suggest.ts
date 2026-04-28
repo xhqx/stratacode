@@ -1,2 +1,2 @@
-// kilocode_change - new file
-export { SuggestTool } from "../kilocode/suggestion/tool"
+// stratacode_change - new file
+export { SuggestTool } from "../stratacode/suggestion/tool"

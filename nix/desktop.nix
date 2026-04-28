@@ -21,11 +21,11 @@
   openssl,
   webkitgtk_4_1,
   gst_all_1,
-  kilo,
+  strata,
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
-  pname = "kilo-desktop";
-  inherit (kilo)
+  pname = "strata-desktop";
+  inherit (strata)
     version
     src
     node_modules
@@ -72,7 +72,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     patchShebangs packages/desktop/node_modules
 
     mkdir -p packages/desktop/src-tauri/sidecars
-    cp ${kilo}/bin/kilo packages/desktop/src-tauri/sidecars/kilo-cli-${stdenv.hostPlatform.rust.rustcTarget}
+    cp ${strata}/bin/strata packages/desktop/src-tauri/sidecars/strata-cli-${stdenv.hostPlatform.rust.rustcTarget}
   '';
 
   # see publish-tauri job in .github/workflows/publish.yml
@@ -86,15 +86,15 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # should be removed once binary is renamed or decided otherwise
   # darwin output is a .app bundle so no conflict
   postFixup = lib.optionalString stdenv.hostPlatform.isLinux ''
-    mv $out/bin/Kilo $out/bin/kilo-desktop
-    sed -i 's|^Exec=Kilo$|Exec=kilo-desktop|' $out/share/applications/Kilo.desktop
+    mv $out/bin/Strata $out/bin/strata-desktop
+    sed -i 's|^Exec=Strata$|Exec=strata-desktop|' $out/share/applications/Strata.desktop
   '';
 
   meta = {
-    description = "Kilo Desktop App";
-    homepage = "https://kilo.ai";
+    description = "Strata Desktop App";
+    homepage = "https://strata.ai";
     license = lib.licenses.mit;
-    mainProgram = "kilo-desktop";
-    inherit (kilo.meta) platforms;
+    mainProgram = "strata-desktop";
+    inherit (strata.meta) platforms;
   };
 })

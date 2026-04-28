@@ -2,4 +2,4 @@
 
 import { $ } from "bun"
 
-await $`bun run --conditions=browser ./src/kilocode/generate-cli-docs.ts`.cwd("packages/opencode")
+await $`bun run --conditions=browser ./src/stratacode/generate-cli-docs.ts`.cwd("packages/opencode")

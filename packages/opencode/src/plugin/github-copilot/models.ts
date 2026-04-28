@@ -1,5 +1,5 @@
 import { z } from "zod"
-import type { Model } from "@kilocode/sdk/v2"
+import type { Model } from "@stratacode/sdk/v2"
 
 export const schema = z.object({
   data: z.array(

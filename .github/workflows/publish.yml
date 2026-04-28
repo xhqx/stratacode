@@ -38,7 +38,7 @@ permissions:
 jobs:
   version:
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: github.repository == 'Kilo-Org/kilocode'
+    if: github.repository == 'Strata-Org/stratacode'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -46,14 +46,14 @@ jobs:
 
       - uses: ./.github/actions/setup-bun
 
-      # kilocode_change start - install deps for version script workspace resolution
+      # stratacode_change start - install deps for version script workspace resolution
       - name: Install dependencies
         run: bun install
 
-      - name: Install Kilo
+      - name: Install Strata
         if: inputs.bump || inputs.version
-        run: bun i -g @kilocode/cli
-      # kilocode_change end
+        run: bun i -g @stratacode/cli
+      # stratacode_change end
 
       - id: version
         run: |
@@ -61,11 +61,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          KILO_BUMP: ${{ inputs.bump }}
-          KILO_VERSION: ${{ inputs.version }}
-          KILO_PRE_RELEASE: ${{ inputs.pre_release }}
-          KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
-          KILO_ORG_ID: ${{ secrets.KILO_ORG_ID }}
+          STRATA_BUMP: ${{ inputs.bump }}
+          STRATA_VERSION: ${{ inputs.version }}
+          STRATA_PRE_RELEASE: ${{ inputs.pre_release }}
+          STRATA_API_KEY: ${{ secrets.STRATA_API_KEY }}
+          STRATA_ORG_ID: ${{ secrets.STRATA_ORG_ID }}
     outputs:
       version: ${{ steps.version.outputs.version }}
       release: ${{ steps.version.outputs.release }}
@@ -74,7 +74,7 @@ jobs:
   build-cli:
     needs: version
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: github.repository == 'Kilo-Org/kilocode'
+    if: github.repository == 'Strata-Org/stratacode'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -87,15 +87,15 @@ jobs:
         run: |
           ./packages/opencode/script/build.ts
         env:
-          KILO_VERSION: ${{ needs.version.outputs.version }}
-          KILO_RELEASE: ${{ needs.version.outputs.release }}
-          KILO_PRE_RELEASE: ${{ inputs.pre_release }}
+          STRATA_VERSION: ${{ needs.version.outputs.version }}
+          STRATA_RELEASE: ${{ needs.version.outputs.release }}
+          STRATA_PRE_RELEASE: ${{ inputs.pre_release }}
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: kilo-cli
+          name: strata-cli
           path: packages/opencode/dist
 
     outputs:
@@ -104,7 +104,7 @@ jobs:
   build-vscode:
     needs: build-cli
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: github.repository == 'Kilo-Org/kilocode'
+    if: github.repository == 'Strata-Org/stratacode'
     steps:
       - uses: actions/checkout@v3
 
@@ -120,22 +120,22 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: kilo-cli
+          name: strata-cli
           path: packages/opencode/dist
 
       - name: Build VSIX packages
         run: bun script/build.ts
-        working-directory: ./packages/kilo-vscode
+        working-directory: ./packages/strata-vscode
         env:
           CLI_DIST_DIR: ../../packages/opencode/dist
-          KILO_VERSION: ${{ needs.build-cli.outputs.version }}
-          KILO_PRE_RELEASE: ${{ inputs.pre_release }}
+          STRATA_VERSION: ${{ needs.build-cli.outputs.version }}
+          STRATA_PRE_RELEASE: ${{ inputs.pre_release }}
           GH_REPO: ${{ github.repository }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: kilo-vscode
-          path: packages/kilo-vscode/out
+          name: strata-vscode
+          path: packages/strata-vscode/out
 
   # build-tauri:
   #   needs:
@@ -214,7 +214,7 @@ jobs:
   #         cd packages/desktop
   #         bun ./scripts/prepare.ts
   #       env:
-  #         KILO_VERSION: ${{ needs.version.outputs.version }}
+  #         STRATA_VERSION: ${{ needs.version.outputs.version }}
   #         GITHUB_TOKEN: ${{ steps.committer.outputs.token }}
   #         RUST_TARGET: ${{ matrix.settings.target }}
   #         GH_TOKEN: ${{ github.token }}
@@ -253,7 +253,7 @@ jobs:
   #         APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
   #         APPLE_API_KEY_PATH: ${{ runner.temp }}/apple-api-key.p8
 
-  # kilocode_change start
+  # stratacode_change start
   # Run smoke tests against CLI assets uploaded to the draft GitHub release
   # before publishing the release and package artifacts.
   smoke-test:
@@ -261,12 +261,12 @@ jobs:
     needs:
       - version
       - build-cli
-    if: github.repository == 'Kilo-Org/kilocode'
+    if: github.repository == 'Strata-Org/stratacode'
     uses: ./.github/workflows/smoke-test.yml
     with:
       cli_version: ${{ needs.version.outputs.version }}
     secrets: inherit
-  # kilocode_change end
+  # stratacode_change end
   publish:
     needs:
       - version
@@ -305,20 +305,20 @@ jobs:
         id: committer
         uses: ./.github/actions/setup-git-committer
         with:
-          # kilocode_change start
-          kilo-maintainer-app-id: ${{ secrets.KILO_MAINTAINER_APP_ID }}
-          kilo-maintainer-app-secret: ${{ secrets.KILO_MAINTAINER_APP_SECRET }}
-          # kilocode_change end
+          # stratacode_change start
+          strata-maintainer-app-id: ${{ secrets.STRATA_MAINTAINER_APP_ID }}
+          strata-maintainer-app-secret: ${{ secrets.STRATA_MAINTAINER_APP_SECRET }}
+          # stratacode_change end
 
       - uses: actions/download-artifact@v4
         with:
-          name: kilo-cli
+          name: strata-cli
           path: packages/opencode/dist
 
       - uses: actions/download-artifact@v4
         with:
-          name: kilo-vscode
-          path: packages/kilo-vscode/out
+          name: strata-vscode
+          path: packages/strata-vscode/out
 
       - name: Cache apt packages (AUR)
         uses: actions/cache@v4
@@ -335,15 +335,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.AUR_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          git config --global user.email "kilo-maintainer[bot]@users.noreply.github.com"
-          git config --global user.name "kilo-maintainer[bot]"
+          git config --global user.email "strata-maintainer[bot]@users.noreply.github.com"
+          git config --global user.name "strata-maintainer[bot]"
           ssh-keyscan -H aur.archlinux.org >> ~/.ssh/known_hosts || true
 
       - run: ./script/publish.ts
         env:
-          KILO_VERSION: ${{ needs.version.outputs.version }}
-          KILO_RELEASE: ${{ needs.version.outputs.release }}
-          KILO_PRE_RELEASE: ${{ inputs.pre_release }}
+          STRATA_VERSION: ${{ needs.version.outputs.version }}
+          STRATA_RELEASE: ${{ needs.version.outputs.release }}
+          STRATA_PRE_RELEASE: ${{ inputs.pre_release }}
           GH_REPO: ${{ github.repository }}
           AUR_KEY: ${{ secrets.AUR_KEY }}
           GITHUB_TOKEN: ${{ steps.committer.outputs.token }}

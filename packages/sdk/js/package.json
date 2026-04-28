@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@kilocode/sdk",
+  "name": "@stratacode/sdk",
   "version": "7.2.26",
   "type": "module",
   "license": "MIT",
@@ -34,7 +34,7 @@
   "peerDependencies": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/Kilo-Org/kilocode",
+    "url": "https://github.com/Strata-Org/stratacode",
     "directory": "packages/sdk/js"
   }
 }

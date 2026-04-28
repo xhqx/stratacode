@@ -1,4 +1,4 @@
-// kilocode_change - new file
+// stratacode_change - new file
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import { $ } from "bun"
 import path from "path"
@@ -7,7 +7,7 @@ import { Instance } from "../../src/project/instance"
 import { Log } from "../../src/util"
 import { resetDatabase } from "../fixture/db"
 import { tmpdir } from "../fixture/fixture"
-import { RemoteSender } from "../../src/kilo-sessions/remote-sender"
+import { RemoteSender } from "../../src/strata-sessions/remote-sender"
 
 beforeEach(() => {
   spyOn(RemoteSender, "create").mockReturnValue({ handle() {}, dispose() {} })
@@ -43,20 +43,20 @@ describe("experimental.session.list", () => {
           fn: async () => Session.create({ title: "worktree-session" }),
         })
 
-        // Now write a stale project ID to .git/kilo — this overrides the root's cached ID
-        await Bun.write(path.join(first.path, ".git", "kilo"), "stale-project-id")
+        // Now write a stale project ID to .git/strata — this overrides the root's cached ID
+        await Bun.write(path.join(first.path, ".git", "strata"), "stale-project-id")
 
         const root = await Instance.provide({
           directory: first.path,
           fn: async () => ({
             app: Server.Default().app,
             project: await Server.Default().app.request("/project/current", {
-              headers: { "x-kilo-directory": first.path },
+              headers: { "x-strata-directory": first.path },
             }),
             session: await Session.create({ title: "root-session" }),
           }),
         })
-        await Bun.file(path.join(first.path, ".git", "kilo")).delete()
+        await Bun.file(path.join(first.path, ".git", "strata")).delete()
 
         await Instance.provide({
           directory: second.path,
@@ -68,7 +68,7 @@ describe("experimental.session.list", () => {
         const response = await app.request(
           `/experimental/session?projectID=${encodeURIComponent(project.id)}&roots=true&worktrees=true`,
           {
-            headers: { "x-kilo-directory": first.path },
+            headers: { "x-strata-directory": first.path },
           },
         )
 
@@ -117,7 +117,7 @@ describe("experimental.session.list", () => {
           fn: async () => ({
             app: Server.Default().app,
             project: await Server.Default().app.request("/project/current", {
-              headers: { "x-kilo-directory": first.path },
+              headers: { "x-strata-directory": first.path },
             }),
             session: await Session.create({ title: "root-session" }),
           }),
@@ -136,7 +136,7 @@ describe("experimental.session.list", () => {
         const response = await app.request(
           `/experimental/session?projectID=${encodeURIComponent(project.id)}&roots=true&worktrees=true&directory=${encodeURIComponent(first.path)}`,
           {
-            headers: { "x-kilo-directory": first.path },
+            headers: { "x-strata-directory": first.path },
           },
         )
 

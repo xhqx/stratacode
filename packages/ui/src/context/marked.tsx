@@ -1,22 +1,22 @@
 import { marked } from "marked"
-// kilocode_change: marked-shiki highlighted code blocks synchronously during
+// stratacode_change: marked-shiki highlighted code blocks synchronously during
 // parse, freezing the main thread on session switches with many code blocks
 // (issue #6221 / PR #7102). We render plain <pre><code data-lang="..."> here
 // and hand off to deferredHighlight() in markdown.tsx for progressive Shiki.
 // This import was re-added by an upstream merge; removing it restores the
 // two-pass rendering design.
 import katex from "katex"
-// kilocode_change start: import types for double-dollar math extension
+// stratacode_change start: import types for double-dollar math extension
 import type { MarkedExtension, TokenizerAndRendererExtension } from "marked"
-// kilocode_change end
+// stratacode_change end
 import { bundledLanguages, type BundledLanguage } from "shiki"
-import { parseFilePath } from "../file-path" // kilocode_change
+import { parseFilePath } from "../file-path" // stratacode_change
 import { createSimpleContext } from "./helper"
 import { getSharedHighlighter, registerCustomTheme, ThemeRegistrationResolved } from "@pierre/diffs"
 
-registerCustomTheme("Kilo", () => {
+registerCustomTheme("Strata", () => {
   return Promise.resolve({
-    name: "Kilo",
+    name: "Strata",
     colors: {
       "editor.background": "var(--color-background-stronger)",
       "editor.foreground": "var(--text-base)",
@@ -384,10 +384,10 @@ registerCustomTheme("Kilo", () => {
   } as unknown as ThemeRegistrationResolved)
 })
 
-// kilocode_change start: double-dollar-only math rules for marked.
+// stratacode_change start: double-dollar-only math rules for marked.
 const BLOCK = /^\$\$\n((?:\\[^]|[^\\])+?)\n\$\$(?:\n|$)/
 const INLINE = /^\$\$(?!\$)((?:\\.|[^\\\n])*?(?:\\.|[^\\\n$]))\$\$/
-// kilocode_change end
+// stratacode_change end
 
 function renderMathInText(text: string): string {
   let result = text
@@ -405,7 +405,7 @@ function renderMathInText(text: string): string {
     }
   })
 
-  // kilocode_change: removed single-dollar inline math ($...$) rendering.
+  // stratacode_change: removed single-dollar inline math ($...$) rendering.
   // Single $ is far more common as a currency symbol in agent responses
   // (e.g. $93K, $307K) than as a LaTeX delimiter. Only $$...$$ is supported.
 
@@ -435,7 +435,7 @@ async function highlightCodeBlocks(html: string): Promise<string> {
   if (matches.length === 0) return html
 
   const highlighter = await getSharedHighlighter({
-    themes: ["Kilo"],
+    themes: ["Strata"],
     langs: [],
     preferredHighlighter: "shiki-wasm",
   })
@@ -460,7 +460,7 @@ async function highlightCodeBlocks(html: string): Promise<string> {
 
     const highlighted = highlighter.codeToHtml(code, {
       lang: language,
-      theme: "Kilo",
+      theme: "Strata",
       tabindex: false,
     })
     result = result.replace(fullMatch, () => highlighted)
@@ -471,9 +471,9 @@ async function highlightCodeBlocks(html: string): Promise<string> {
 
 export type NativeMarkdownParser = (markdown: string) => Promise<string>
 
-// kilocode_change: parseFilePath imported from ../file-path
+// stratacode_change: parseFilePath imported from ../file-path
 
-// kilocode_change start: highlight cache for deferred highlighting
+// stratacode_change start: highlight cache for deferred highlighting
 
 /** FNV-1a hash — lightweight alternative to storing full source code in DOM attributes. */
 export function fnv1a(s: string): string {
@@ -547,7 +547,7 @@ export async function deferredHighlight(
     return
   }
 
-  const highlighter = await getSharedHighlighter({ themes: ["Kilo"], langs: [] })
+  const highlighter = await getSharedHighlighter({ themes: ["Strata"], langs: [] })
 
   for (const block of blocks) {
     // Short-circuit if the container is unmounted or the caller cancelled this run
@@ -584,7 +584,7 @@ export async function deferredHighlight(
               resolve()
               return
             }
-            const html = highlighter.codeToHtml(code, { lang: language, theme: "Kilo", tabindex: false })
+            const html = highlighter.codeToHtml(code, { lang: language, theme: "Strata", tabindex: false })
             touchHighlightCache(cacheKey, html)
             // Note: data-highlighted is NOT set on `block` here because
             // replaceWithHighlighted replaces the parent <pre> entirely — the
@@ -620,12 +620,12 @@ export async function deferredHighlight(
     onComplete?.()
   }
 }
-// kilocode_change end
+// stratacode_change end
 
 export const { use: useMarked, provider: MarkedProvider } = createSimpleContext({
   name: "Marked",
   init: (props: { nativeParser?: NativeMarkdownParser }) => {
-    // kilocode_change start: two-pass parser — first pass skips Shiki highlighting
+    // stratacode_change start: two-pass parser — first pass skips Shiki highlighting
     // to avoid blocking the main thread with Oniguruma WASM regex (issue #6221).
     // Code blocks render as plain <pre><code data-lang="..."> immediately.
     // The Markdown component calls deferredHighlight() after DOM paint.
@@ -636,7 +636,7 @@ export const { use: useMarked, provider: MarkedProvider } = createSimpleContext(
             const titleAttr = title ? ` title="${title}"` : ""
             return `<a href="${href}"${titleAttr} class="external-link" target="_blank" rel="noopener noreferrer">${text}</a>`
           },
-          // kilocode_change start
+          // stratacode_change start
           codespan({ text }) {
             const file = parseFilePath(text)
             const escaped = text
@@ -666,10 +666,10 @@ export const { use: useMarked, provider: MarkedProvider } = createSimpleContext(
             const attr = safe ? ` class="language-${safe}" data-lang="${safe}"` : ' data-lang="text"'
             return `<pre><code${attr}>${escaped}</code></pre>`
           },
-          // kilocode_change end
+          // stratacode_change end
         },
       },
-      // kilocode_change start: enable only double-dollar math.
+      // stratacode_change start: enable only double-dollar math.
       // Single $ is far more common as a currency symbol in agent responses
       // (e.g. $93K, $307K) than as a LaTeX delimiter. Avoid registering the
       // marked-katex-extension inline tokenizer because Marked falls through
@@ -717,13 +717,13 @@ export const { use: useMarked, provider: MarkedProvider } = createSimpleContext(
           } satisfies TokenizerAndRendererExtension,
         ],
       } satisfies MarkedExtension,
-      // kilocode_change end
-      // kilocode_change: markedShiki removed — the custom `code` renderer
+      // stratacode_change end
+      // stratacode_change: markedShiki removed — the custom `code` renderer
       // above returns plain <pre><code data-lang="..."> and markdown.tsx
       // calls deferredHighlight() after paint. Running Shiki inside parse
       // blocks the main thread on session switches (issue #6221).
     )
-    // kilocode_change end
+    // stratacode_change end
 
     if (props.nativeParser) {
       const nativeParser = props.nativeParser

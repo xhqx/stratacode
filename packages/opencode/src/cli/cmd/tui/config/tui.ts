@@ -19,7 +19,7 @@ import { makeRuntime } from "@/effect/runtime"
 import { Filesystem, Log } from "@/util"
 import { ConfigVariable } from "@/config/variable"
 import { Npm } from "@/npm"
-import { KilocodeDefaultPlugins } from "@/kilocode/config/default-plugins" // kilocode_change
+import { StratacodeDefaultPlugins } from "@/stratacode/config/default-plugins" // stratacode_change
 
 const log = Log.create({ service: "tui.config" })
 
@@ -92,11 +92,11 @@ async function mergeFile(acc: Acc, file: string, ctx: { directory: string }) {
 
 const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: string }) {
   // Every config dir we may read from: global config dir, any `.opencode`
-  // folders between cwd and home, and KILO_CONFIG_DIR.
+  // folders between cwd and home, and STRATA_CONFIG_DIR.
   const directories = yield* ConfigPaths.directories(ctx.directory)
   yield* Effect.promise(() => migrateTuiConfig({ directories, cwd: ctx.directory }))
 
-  const projectFiles = Flag.KILO_DISABLE_PROJECT_CONFIG ? [] : yield* ConfigPaths.files("tui", ctx.directory)
+  const projectFiles = Flag.STRATA_DISABLE_PROJECT_CONFIG ? [] : yield* ConfigPaths.files("tui", ctx.directory)
 
   const acc: Acc = {
     result: {},
@@ -107,9 +107,9 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
     yield* Effect.promise(() => mergeFile(acc, file, ctx)).pipe(Effect.orDie)
   }
 
-  // 2. Explicit KILO_TUI_CONFIG override, if set.
-  if (Flag.KILO_TUI_CONFIG) {
-    const configFile = Flag.KILO_TUI_CONFIG
+  // 2. Explicit STRATA_TUI_CONFIG override, if set.
+  if (Flag.STRATA_TUI_CONFIG) {
+    const configFile = Flag.STRATA_TUI_CONFIG
     yield* Effect.promise(() => mergeFile(acc, configFile, ctx)).pipe(Effect.orDie)
     log.debug("loaded custom tui config", { path: configFile })
   }
@@ -119,18 +119,18 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
     yield* Effect.promise(() => mergeFile(acc, file, ctx)).pipe(Effect.orDie)
   }
 
-  // 4. `.opencode` directories (and KILO_CONFIG_DIR) discovered while
+  // 4. `.opencode` directories (and STRATA_CONFIG_DIR) discovered while
   // walking up the tree. Also returned below so callers can install plugin
   // dependencies from each location.
-  // kilocode_change start - also load tui.json from .kilo/.kilocode
+  // stratacode_change start - also load tui.json from .strata/.stratacode
   const dirs = unique(directories).filter(
     (dir) =>
-      dir.endsWith(".kilo") || dir.endsWith(".kilocode") || dir.endsWith(".opencode") || dir === Flag.KILO_CONFIG_DIR,
+      dir.endsWith(".strata") || dir.endsWith(".stratacode") || dir.endsWith(".opencode") || dir === Flag.STRATA_CONFIG_DIR,
   )
-  // kilocode_change end
+  // stratacode_change end
 
   for (const dir of dirs) {
-    // if (!dir.endsWith(".opencode") && dir !== Flag.KILO_CONFIG_DIR) continue // kilocode_change
+    // if (!dir.endsWith(".opencode") && dir !== Flag.STRATA_CONFIG_DIR) continue // stratacode_change
     for (const file of ConfigPaths.fileInDirectory(dir, "tui")) {
       yield* Effect.promise(() => mergeFile(acc, file, ctx)).pipe(Effect.orDie)
     }
@@ -147,9 +147,9 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
   }
   acc.result.keybinds = ConfigKeybinds.Keybinds.parse(keybinds)
 
-  // kilocode_change start — inject Kilo default plugins to keep TUI aligned with server config
-  KilocodeDefaultPlugins.apply(acc.result, { disabled: Flag.KILO_DISABLE_DEFAULT_PLUGINS, log })
-  // kilocode_change end
+  // stratacode_change start — inject Strata default plugins to keep TUI aligned with server config
+  StratacodeDefaultPlugins.apply(acc.result, { disabled: Flag.STRATA_DISABLE_DEFAULT_PLUGINS, log })
+  // stratacode_change end
 
   return {
     config: acc.result,
@@ -170,7 +170,7 @@ export const layer = Layer.effect(
           .install(dir, {
             add: [
               {
-                name: "@kilocode/plugin",
+                name: "@stratacode/plugin",
                 version: InstallationLocal ? undefined : InstallationVersion,
               },
             ],

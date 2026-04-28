@@ -1,6 +1,6 @@
-// kilocode_change start - use Kilo-specific tips component
-export { Tips } from "@/kilocode/components/tips"
-// kilocode_change end
+// stratacode_change start - use Strata-specific tips component
+export { Tips } from "@/stratacode/components/tips"
+// stratacode_change end
 
 import { For } from "solid-js"
 import { DEFAULT_THEMES, useTheme } from "@tui/context/theme"
@@ -146,7 +146,7 @@ const TIPS = [
   "Press {highlight}Ctrl+X S{/highlight} or {highlight}/status{/highlight} to see system status info",
   "Enable {highlight}scroll_acceleration{/highlight} in {highlight}tui.json{/highlight} for smooth macOS-style scrolling",
   "Toggle username display in chat via command palette ({highlight}Ctrl+P{/highlight})",
-  "Run {highlight}docker run -it --rm ghcr.io/kilo-org/kilo{/highlight} for containerized use",
+  "Run {highlight}docker run -it --rm ghcr.io/strata-org/strata{/highlight} for containerized use",
   "Use {highlight}/connect{/highlight} with OpenCode Zen for curated, tested models",
   "Commit your project's {highlight}AGENTS.md{/highlight} file to Git for team sharing",
   "Use {highlight}/review{/highlight} to review uncommitted changes, branches, or PRs",

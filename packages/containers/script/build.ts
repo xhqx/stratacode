@@ -7,7 +7,7 @@ import { fileURLToPath } from "url"
 const rootDir = fileURLToPath(new URL("../../..", import.meta.url))
 process.chdir(rootDir)
 
-const reg = process.env.REGISTRY ?? "ghcr.io/kilo-org" // kilocode_change
+const reg = process.env.REGISTRY ?? "ghcr.io/strata-org" // stratacode_change
 const tag = process.env.TAG ?? "24.04"
 const push = process.argv.includes("--push") || process.env.PUSH === "1"
 
@@ -22,13 +22,13 @@ const images = ["base", "bun-node", "rust", "tauri-linux", "publish"]
 const setup = async () => {
   if (!push) return
   const list = await $`docker buildx ls`.text()
-  // kilocode_change start
-  if (list.includes("kilo")) {
-    await $`docker buildx use kilo`
+  // stratacode_change start
+  if (list.includes("strata")) {
+    await $`docker buildx use strata`
     return
   }
-  await $`docker buildx create --name kilo --use`
-  // kilocode_change end
+  await $`docker buildx create --name strata --use`
+  // stratacode_change end
 }
 
 await setup()

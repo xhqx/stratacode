@@ -4,19 +4,19 @@ import { useKeyboard } from "@opentui/solid"
 import type { TextareaRenderable } from "@opentui/core"
 import { useKeybind } from "../../context/keybind"
 import { selectedForeground, tint, useTheme } from "../../context/theme"
-import type { QuestionAnswer, QuestionRequest } from "@kilocode/sdk/v2"
+import type { QuestionAnswer, QuestionRequest } from "@stratacode/sdk/v2"
 import { useSDK } from "../../context/sdk"
 import { SplitBorder } from "../../component/border"
 import { useTextareaKeybindings } from "../../component/textarea-keybindings"
 import { useDialog } from "../../ui/dialog"
 
-// kilocode_change start
+// stratacode_change start
 export function QuestionPrompt(props: {
   request: QuestionRequest
   nonBlocking?: boolean
   inputFocused?: () => boolean
 }) {
-  // kilocode_change end
+  // stratacode_change end
   const sdk = useSDK()
   const { theme } = useTheme()
   const keybind = useKeybind()
@@ -132,9 +132,9 @@ export function QuestionPrompt(props: {
     // Skip processing if a dialog (e.g., command palette) is open
     if (dialog.stack.length > 0) return
 
-    // kilocode_change start - avoid intrusive key capture for non-blocking review suggestions
+    // stratacode_change start - avoid intrusive key capture for non-blocking review suggestions
     if (props.nonBlocking && props.inputFocused?.()) return
-    // kilocode_change end
+    // stratacode_change end
 
     // When editing custom answer textarea
     if (store.editing && !confirm()) {

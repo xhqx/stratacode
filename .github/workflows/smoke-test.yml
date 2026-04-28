@@ -1,5 +1,5 @@
-# kilocode_change - new file
-# Standalone smoke test — checks out kilo-bench and runs a small set of
+# stratacode_change - new file
+# Standalone smoke test — checks out strata-bench and runs a small set of
 # Harbor eval tasks against the latest published CLI (or a specific version).
 #
 # Tasks:  hello-world (~$0.01), log-summary-date-ranges (~$0.13)
@@ -10,9 +10,9 @@
 #   - workflow_call: from publish.yml after draft release assets are uploaded
 #
 # Required secrets:
-#   KILO_API_KEY         — Kilo Gateway key
-#   KILO_ORG_ID          — Kilo org ID
-#   BENCH_GITHUB_TOKEN   — PAT with contents:read on Kilo-Org/kilo-bench (private repo)
+#   STRATA_API_KEY         — Strata Gateway key
+#   STRATA_ORG_ID          — Strata org ID
+#   BENCH_GITHUB_TOKEN   — PAT with contents:read on Strata-Org/strata-bench (private repo)
 
 name: smoke-test
 
@@ -43,13 +43,13 @@ jobs:
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 30
     env:
-      KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
-      KILO_ORG_ID: ${{ secrets.KILO_ORG_ID }}
+      STRATA_API_KEY: ${{ secrets.STRATA_API_KEY }}
+      STRATA_ORG_ID: ${{ secrets.STRATA_ORG_ID }}
     steps:
-      - name: Checkout kilo-bench
+      - name: Checkout strata-bench
         uses: actions/checkout@v4
         with:
-          repository: Kilo-Org/kilo-bench
+          repository: Strata-Org/strata-bench
           token: ${{ secrets.BENCH_GITHUB_TOKEN }}
 
       - name: Install uv
@@ -65,8 +65,8 @@ jobs:
 
       - name: Validate API key
         run: |
-          if [[ -z "$KILO_API_KEY" ]]; then
-            echo "::error::KILO_API_KEY secret is not set."
+          if [[ -z "$STRATA_API_KEY" ]]; then
+            echo "::error::STRATA_API_KEY secret is not set."
             exit 1
           fi
 
@@ -88,9 +88,9 @@ jobs:
           # The tag_name filter yields at most one release and one asset,
           # so --jq returns a single URL without needing head/pipefail games.
           URL=$(gh api "repos/${{ github.repository }}/releases" \
-            --jq ".[] | select(.tag_name == \"v${VERSION}\") | .assets[] | select(.name == \"kilo-linux-x64.tar.gz\") | .url")
+            --jq ".[] | select(.tag_name == \"v${VERSION}\") | .assets[] | select(.name == \"strata-linux-x64.tar.gz\") | .url")
           if [[ -z "$URL" ]]; then
-            echo "::error::asset kilo-linux-x64.tar.gz not found for v${VERSION}"
+            echo "::error::asset strata-linux-x64.tar.gz not found for v${VERSION}"
             exit 1
           fi
           echo "cli_url=$URL" >> "$GITHUB_OUTPUT"
@@ -98,21 +98,21 @@ jobs:
 
       - name: Run smoke test — hello-world
         env:
-          KILO_CLI_URL: ${{ steps.cli.outputs.cli_url }}
-          KILO_CLI_GITHUB_TOKEN: ${{ github.token }}
+          STRATA_CLI_URL: ${{ steps.cli.outputs.cli_url }}
+          STRATA_CLI_GITHUB_TOKEN: ${{ github.token }}
         run: |
           ./scripts/run_eval.sh \
-            -m kilo/anthropic/claude-sonnet-4.6 \
+            -m strata/anthropic/claude-sonnet-4.6 \
             -d hello-world \
             --job-name smoke-test-hello-world
 
       - name: Run smoke test — log-summary-date-ranges
         env:
-          KILO_CLI_URL: ${{ steps.cli.outputs.cli_url }}
-          KILO_CLI_GITHUB_TOKEN: ${{ github.token }}
+          STRATA_CLI_URL: ${{ steps.cli.outputs.cli_url }}
+          STRATA_CLI_GITHUB_TOKEN: ${{ github.token }}
         run: |
           ./scripts/run_eval.sh \
-            -m kilo/anthropic/claude-sonnet-4.6 \
+            -m strata/anthropic/claude-sonnet-4.6 \
             -d terminal-bench-sample \
             -t "log-summary-date-ranges" \
             --job-name smoke-test-log-summary

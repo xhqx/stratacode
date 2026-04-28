@@ -1,4 +1,4 @@
-import type { AuthOAuthResult, Hooks } from "@kilocode/plugin"
+import type { AuthOAuthResult, Hooks } from "@stratacode/plugin"
 import { NamedError } from "@opencode-ai/shared/util/error"
 import { Auth } from "@/auth"
 import { InstanceState } from "@/effect"
@@ -9,11 +9,11 @@ import { ProviderID } from "./schema"
 import { Array as Arr, Effect, Layer, Record, Result, Context, Schema } from "effect"
 import z from "zod"
 
-// kilocode_change start
-import { Telemetry } from "@kilocode/kilo-telemetry"
+// stratacode_change start
+import { Telemetry } from "@stratacode/strata-telemetry"
 import { ModelCache } from "./model-cache"
 import { Instance } from "@/project/instance"
-// kilocode_change end
+// stratacode_change end
 
 const When = Schema.Struct({
   key: Schema.String,
@@ -227,8 +227,8 @@ export const layer: Layer.Layer<Service, never, Auth.Service | Plugin.Service> =
         })
       }
 
-      // kilocode_change start - Update telemetry identity on Kilo auth
-      if (input.providerID === "kilo") {
+      // stratacode_change start - Update telemetry identity on Strata auth
+      if (input.providerID === "strata") {
         const info = yield* auth.get(input.providerID)
         if (info) {
           const token = info.type === "oauth" ? info.access : info.type === "api" ? info.key : null
@@ -239,7 +239,7 @@ export const layer: Layer.Layer<Service, never, Auth.Service | Plugin.Service> =
       Telemetry.trackAuthSuccess(input.providerID)
       ModelCache.clear(input.providerID)
       yield* Effect.promise(() => Instance.disposeAll())
-      // kilocode_change end
+      // stratacode_change end
     })
 
     return Service.of({ methods, authorize, callback })

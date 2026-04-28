@@ -64,11 +64,11 @@ function prepareServerEnv(password: string) {
   const env = {
     ...process.env,
     ...shellEnv,
-    KILO_EXPERIMENTAL_ICON_DISCOVERY: "true",
-    KILO_EXPERIMENTAL_FILEWATCHER: "true",
-    KILO_CLIENT: "desktop",
-    KILO_SERVER_USERNAME: "opencode",
-    KILO_SERVER_PASSWORD: password,
+    STRATA_EXPERIMENTAL_ICON_DISCOVERY: "true",
+    STRATA_EXPERIMENTAL_FILEWATCHER: "true",
+    STRATA_CLIENT: "desktop",
+    STRATA_SERVER_USERNAME: "opencode",
+    STRATA_SERVER_PASSWORD: password,
     XDG_STATE_HOME: app.getPath("userData"),
   }
   Object.assign(process.env, env)

@@ -3,8 +3,8 @@ import { Effect, Layer, Record, Result, Schema, Context } from "effect"
 import { zod } from "@/util/effect-zod"
 import { Global } from "../global"
 import { AppFileSystem } from "@opencode-ai/shared/filesystem"
-import { Telemetry } from "@kilocode/kilo-telemetry" // kilocode_change
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { Telemetry } from "@stratacode/strata-telemetry" // stratacode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 
 export const OAUTH_DUMMY_KEY = "opencode-oauth-dummy-key"
 
@@ -58,9 +58,9 @@ export const layer = Layer.effect(
     const decode = Schema.decodeUnknownOption(Info)
 
     const all = Effect.fn("Auth.all")(function* () {
-      if (process.env.KILO_AUTH_CONTENT) {
+      if (process.env.STRATA_AUTH_CONTENT) {
         try {
-          return JSON.parse(process.env.KILO_AUTH_CONTENT)
+          return JSON.parse(process.env.STRATA_AUTH_CONTENT)
         } catch (err) {}
       }
 
@@ -89,12 +89,12 @@ export const layer = Layer.effect(
       delete data[norm]
       yield* fsys.writeJson(file, data, 0o600).pipe(Effect.mapError(fail("Failed to write auth data")))
 
-      // kilocode_change start - Track logout and reset telemetry identity for Kilo
-      if (key === "kilo") {
+      // stratacode_change start - Track logout and reset telemetry identity for Strata
+      if (key === "strata") {
         yield* Effect.promise(() => Telemetry.updateIdentity(null))
       }
       Telemetry.trackAuthLogout(key)
-      // kilocode_change end
+      // stratacode_change end
     })
 
     return Service.of({ get, all, set, remove })
@@ -103,12 +103,12 @@ export const layer = Layer.effect(
 
 export const defaultLayer = layer.pipe(Layer.provide(AppFileSystem.defaultLayer))
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const get = (providerID: string) => runPromise((svc) => svc.get(providerID))
 export const all = () => runPromise((svc) => svc.all())
 export const set = (key: string, info: Info) => runPromise((svc) => svc.set(key, info))
 export const remove = (key: string) => runPromise((svc) => svc.remove(key))
-// kilocode_change end
+// stratacode_change end
 
 export * as Auth from "."

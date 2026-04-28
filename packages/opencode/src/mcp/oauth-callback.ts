@@ -12,9 +12,9 @@ let currentPath = OAUTH_CALLBACK_PATH
 const HTML_SUCCESS = `<!DOCTYPE html>
 <html>
 <head>
-  <!-- kilocode_change start -->
-  <title>Kilo - Authorization Successful</title>
-  <!-- kilocode_change end -->
+  <!-- stratacode_change start -->
+  <title>Strata - Authorization Successful</title>
+  <!-- stratacode_change end -->
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; color: #eee; }
     .container { text-align: center; padding: 2rem; }
@@ -25,9 +25,9 @@ const HTML_SUCCESS = `<!DOCTYPE html>
 <body>
   <div class="container">
     <h1>Authorization Successful</h1>
-    <!-- kilocode_change start -->
-    <p>You can close this window and return to Kilo.</p>
-    <!-- kilocode_change end -->
+    <!-- stratacode_change start -->
+    <p>You can close this window and return to Strata.</p>
+    <!-- stratacode_change end -->
   </div>
   <script>setTimeout(() => window.close(), 2000);</script>
 </body>
@@ -36,9 +36,9 @@ const HTML_SUCCESS = `<!DOCTYPE html>
 const HTML_ERROR = (error: string) => `<!DOCTYPE html>
 <html>
 <head>
-  <!-- kilocode_change start -->
-  <title>Kilo - Authorization Failed</title>
-  <!-- kilocode_change end -->
+  <!-- stratacode_change start -->
+  <title>Strata - Authorization Failed</title>
+  <!-- stratacode_change end -->
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; color: #eee; }
     .container { text-align: center; padding: 2rem; }
@@ -167,7 +167,7 @@ export async function ensureRunning(redirectUri?: string): Promise<void> {
 
   server = createServer(handleRequest)
   await new Promise<void>((resolve, reject) => {
-    // kilocode_change start - EADDRINUSE can still fire when another process
+    // stratacode_change start - EADDRINUSE can still fire when another process
     // races us between isPortInUse() and listen() (notably across parallel
     // bun test subprocesses). Treat it as "another instance owns the port",
     // matching the isPortInUse() branch above instead of crashing.
@@ -182,9 +182,9 @@ export async function ensureRunning(redirectUri?: string): Promise<void> {
       reject(err)
     }
     server!.on("error", onError)
-    // kilocode_change end
+    // stratacode_change end
     server!.listen(currentPort, () => {
-      server!.off("error", onError) // kilocode_change
+      server!.off("error", onError) // stratacode_change
       log.info("oauth callback server started", { port: currentPort, path: currentPath })
       resolve()
     })

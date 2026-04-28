@@ -10,7 +10,7 @@ import {
 } from "./shared"
 import { ConfigPlugin } from "@/config/plugin"
 import { InstallationVersion } from "@/installation/version"
-import { isIndexingPlugin } from "@kilocode/kilo-indexing/detect" // kilocode_change
+import { isIndexingPlugin } from "@stratacode/strata-indexing/detect" // stratacode_change
 
 export namespace PluginLoader {
   // A normalized plugin declaration derived from config before any filesystem or npm work happens.
@@ -142,7 +142,7 @@ export namespace PluginLoader {
 
     // Deprecated plugin packages are silently ignored because they are now built in.
     if (plan.deprecated) return
-    if (isIndexingPlugin(candidate.plan.spec)) return // kilocode_change
+    if (isIndexingPlugin(candidate.plan.spec)) return // stratacode_change
     report?.start?.(candidate, retry)
 
     const resolved = await resolve(plan, kind)

@@ -1,5 +1,5 @@
 {
-  description = "Kilo development flake";
+  description = "Strata development flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -21,15 +21,15 @@
       devShells = forEachSystem (pkgs: {
         default =
           let
-            kilo-dev = pkgs.writeShellScriptBin "kilo-dev" ''
-                cd "$KILO_ROOT"
+            strata-dev = pkgs.writeShellScriptBin "strata-dev" ''
+                cd "$STRATA_ROOT"
               exec ${pkgs.bun}/bin/bun dev "$@"
             '';
 
-            kilo-install-bin = pkgs.writeShellScriptBin "kilo-install" ''
+            strata-install-bin = pkgs.writeShellScriptBin "strata-install" ''
               set -euo pipefail
 
-              CACHE_DIR="$HOME/.cache/kilo-nix"
+              CACHE_DIR="$HOME/.cache/strata-nix"
               VERSION="''${1:-latest}"
 
               # Platform detection
@@ -85,16 +85,16 @@
 
               # Build filename and URL
               target="$os-$arch$needs_baseline$is_musl"
-              filename="kilo-$target$ext"
+              filename="strata-$target$ext"
 
               if [ "$VERSION" = "latest" ]; then
-                url="https://github.com/Kilo-Org/kilocode/releases/latest/download/$filename"
-                echo "Installing latest version of kilo..." >&2
+                url="https://github.com/Strata-Org/stratacode/releases/latest/download/$filename"
+                echo "Installing latest version of strata..." >&2
               else
                 # Strip leading 'v' if present
                 VERSION="''${VERSION#v}"
-                url="https://github.com/Kilo-Org/kilocode/releases/download/v''${VERSION}/$filename"
-                echo "Installing kilo version $VERSION..." >&2
+                url="https://github.com/Strata-Org/stratacode/releases/download/v''${VERSION}/$filename"
+                echo "Installing strata version $VERSION..." >&2
               fi
 
               # Create cache directory
@@ -106,8 +106,8 @@
 
               echo "Downloading from $url..." >&2
               if ! ${pkgs.curl}/bin/curl -fsSL -o "$tmp_dir/$filename" "$url"; then
-                echo "Error: Failed to download kilo from $url" >&2
-                echo "Please check your internet connection or visit https://github.com/Kilo-Org/kilocode/releases" >&2
+                echo "Error: Failed to download strata from $url" >&2
+                echo "Please check your internet connection or visit https://github.com/Strata-Org/stratacode/releases" >&2
                 exit 1
               fi
 
@@ -120,33 +120,33 @@
               fi
 
               # Install the binary
-              KILO_BIN="$CACHE_DIR/kilo"
-              mv "$tmp_dir/kilo" "$KILO_BIN"
-              chmod +x "$KILO_BIN"
+              STRATA_BIN="$CACHE_DIR/strata"
+              mv "$tmp_dir/strata" "$STRATA_BIN"
+              chmod +x "$STRATA_BIN"
 
               # Get the installed version
-              installed_version=$("$KILO_BIN" --version 2>/dev/null || echo "unknown")
-              echo "Successfully installed kilo $installed_version to $KILO_BIN" >&2
+              installed_version=$("$STRATA_BIN" --version 2>/dev/null || echo "unknown")
+              echo "Successfully installed strata $installed_version to $STRATA_BIN" >&2
             '';
 
-            kilo-bin = pkgs.writeShellScriptBin "kilo" ''
+            strata-bin = pkgs.writeShellScriptBin "strata" ''
               set -euo pipefail
 
-              CACHE_DIR="$HOME/.cache/kilo-nix"
-              KILO_BIN="$CACHE_DIR/kilo"
+              CACHE_DIR="$HOME/.cache/strata-nix"
+              STRATA_BIN="$CACHE_DIR/strata"
 
-              if [ ! -f "$KILO_BIN" ]; then
-                echo "Error: kilo is not installed in the cache." >&2
-                echo "Please run 'kilo-install' first to download and install kilo." >&2
+              if [ ! -f "$STRATA_BIN" ]; then
+                echo "Error: strata is not installed in the cache." >&2
+                echo "Please run 'strata-install' first to download and install strata." >&2
                 echo "" >&2
                 echo "Examples:" >&2
-                echo "  kilo-install          # Install latest version" >&2
-                echo "  kilo-install 1.0.180  # Install specific version" >&2
+                echo "  strata-install          # Install latest version" >&2
+                echo "  strata-install 1.0.180  # Install specific version" >&2
                 exit 1
               fi
 
               # Execute the cached binary with all arguments
-              exec "$KILO_BIN" "$@"
+              exec "$STRATA_BIN" "$@"
             '';
           in
           pkgs.mkShell {
@@ -169,9 +169,9 @@
                 ripgrep
                 jetbrains.jdk
                 jdk21
-                kilo-dev
-                kilo-install-bin
-                kilo-bin
+                strata-dev
+                strata-install-bin
+                strata-bin
               ]
               ++ lib.optionals stdenv.isLinux [
                 libX11
@@ -183,7 +183,7 @@
                 freetype
               ];
             shellHook = ''
-              export KILO_ROOT="$PWD"
+              export STRATA_ROOT="$PWD"
               export PLAYWRIGHT_BROWSERS_PATH="${pkgs.playwright-driver.browsers}"
               export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
             ''
@@ -229,16 +229,16 @@
           node_modules = pkgs.callPackage ./nix/node_modules.nix {
             inherit rev;
           };
-          kilo = pkgs.callPackage ./nix/kilo.nix {
+          strata = pkgs.callPackage ./nix/strata.nix {
             inherit node_modules;
           };
           desktop = pkgs.callPackage ./nix/desktop.nix {
-            inherit kilo;
+            inherit strata;
           };
         in
         {
-          default = kilo;
-          inherit kilo desktop;
+          default = strata;
+          inherit strata desktop;
           # Updater derivation with fakeHash - build fails and reveals correct hash
           node_modules_updater = node_modules.override {
             hash = pkgs.lib.fakeHash;

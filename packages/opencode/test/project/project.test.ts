@@ -94,8 +94,8 @@ describe("Project.fromDirectory", () => {
     expect(project.vcs).toBe("git")
     expect(project.worktree).toBe(tmp.path)
 
-    const kiloFile = path.join(tmp.path, ".git", "kilo")
-    expect(await Bun.file(kiloFile).exists()).toBe(true)
+    const strataFile = path.join(tmp.path, ".git", "strata")
+    expect(await Bun.file(strataFile).exists()).toBe(true)
   })
 
   test("returns global for non-git directory", async () => {
@@ -189,7 +189,7 @@ describe("Project.fromDirectory with worktrees", () => {
       expect(wt.id).toBe(main.id)
 
       // Cache should live in the common .git dir, not the worktree's .git file
-      const cache = path.join(tmp.path, ".git", "kilo")
+      const cache = path.join(tmp.path, ".git", "strata")
       const exists = await Bun.file(cache).exists()
       expect(exists).toBe(true)
     } finally {
@@ -533,8 +533,8 @@ describe("Project.fromDirectory with bare repos", () => {
       expect(project.id).not.toBe(ProjectID.global)
       expect(project.worktree).toBe(barePath)
 
-      const correctCache = path.join(barePath, "kilo") // kilocode_change
-      const wrongCache = path.join(parentDir, ".git", "kilo") // kilocode_change
+      const correctCache = path.join(barePath, "strata") // stratacode_change
+      const wrongCache = path.join(parentDir, ".git", "strata") // stratacode_change
 
       expect(await Bun.file(correctCache).exists()).toBe(true)
       expect(await Bun.file(wrongCache).exists()).toBe(false)
@@ -564,11 +564,11 @@ describe("Project.fromDirectory with bare repos", () => {
 
       expect(projA.id).not.toBe(projB.id)
 
-      // kilocode_change start
-      const cacheA = path.join(bareA, "kilo")
-      const cacheB = path.join(bareB, "kilo")
-      const wrongCache = path.join(parentDir, ".git", "kilo")
-      // kilocode_change end
+      // stratacode_change start
+      const cacheA = path.join(bareA, "strata")
+      const cacheB = path.join(bareB, "strata")
+      const wrongCache = path.join(parentDir, ".git", "strata")
+      // stratacode_change end
 
       expect(await Bun.file(cacheA).exists()).toBe(true)
       expect(await Bun.file(cacheB).exists()).toBe(true)
@@ -594,7 +594,7 @@ describe("Project.fromDirectory with bare repos", () => {
       expect(project.id).not.toBe(ProjectID.global)
       expect(project.worktree).toBe(barePath)
 
-      const correctCache = path.join(barePath, "kilo") // kilocode_change
+      const correctCache = path.join(barePath, "strata") // stratacode_change
       expect(await Bun.file(correctCache).exists()).toBe(true)
     } finally {
       await $`rm -rf ${barePath} ${worktreePath}`.quiet().nothrow()

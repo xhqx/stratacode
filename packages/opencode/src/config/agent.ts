@@ -11,10 +11,10 @@ import { configEntryNameFromPath } from "./entry-name"
 import * as ConfigMarkdown from "./markdown"
 import { ConfigModelID } from "./model-id"
 import { ConfigPermission } from "./permission"
-// kilocode_change start
-import { KilocodeConfig } from "@/kilocode/config/config"
+// stratacode_change start
+import { StratacodeConfig } from "@/stratacode/config/config"
 import type { Warning } from "./config"
-// kilocode_change end
+// stratacode_change end
 
 const log = Log.create({ service: "config" })
 
@@ -27,7 +27,7 @@ const Color = Schema.Union([
 
 const AgentSchema = Schema.StructWithRest(
   Schema.Struct({
-    model: Schema.optional(Schema.NullOr(ConfigModelID)), // kilocode_change - nullable for delete sentinel
+    model: Schema.optional(Schema.NullOr(ConfigModelID)), // stratacode_change - nullable for delete sentinel
     variant: Schema.optional(Schema.String).annotate({
       description: "Default model variant for this agent (applies only when using the agent's configured model).",
     }),
@@ -111,9 +111,9 @@ export const Info = zod(AgentSchema).transform(normalize).meta({ ref: "AgentConf
 >
 export type Info = z.infer<typeof Info>
 
-// kilocode_change start
+// stratacode_change start
 export async function load(dir: string, warnings?: Warning[]) {
-  // kilocode_change end
+  // stratacode_change end
   const result: Record<string, Info> = {}
   for (const item of await Glob.scan("{agent,agents}/**/*.md", {
     cwd: dir,
@@ -125,7 +125,7 @@ export async function load(dir: string, warnings?: Warning[]) {
       const message = ConfigMarkdown.FrontmatterError.isInstance(err)
         ? err.data.message
         : `Failed to parse agent ${item}`
-      // kilocode_change start
+      // stratacode_change start
       if (warnings) warnings.push({ path: item, message })
       try {
         const { Session } = await import("@/session")
@@ -135,22 +135,22 @@ export async function load(dir: string, warnings?: Warning[]) {
       }
       log.error("failed to load agent", { agent: item, err })
       return undefined
-      // kilocode_change end
+      // stratacode_change end
     })
     if (!md) continue
 
-    // kilocode_change start
+    // stratacode_change start
     const patterns = [
-      "/.kilo/agent/",
-      "/.kilo/agents/",
-      "/.kilocode/agent/",
-      "/.kilocode/agents/",
+      "/.strata/agent/",
+      "/.strata/agents/",
+      "/.stratacode/agent/",
+      "/.stratacode/agents/",
       "/.opencode/agent/",
       "/.opencode/agents/",
       "/agent/",
       "/agents/",
     ]
-    // kilocode_change end
+    // stratacode_change end
     const name = configEntryNameFromPath(item, patterns)
 
     const config = {
@@ -163,16 +163,16 @@ export async function load(dir: string, warnings?: Warning[]) {
       result[config.name] = parsed.data
       continue
     }
-    // kilocode_change start
-    await KilocodeConfig.handleInvalid("agent", item, parsed.error.issues, parsed.error, warnings)
-    // kilocode_change end
+    // stratacode_change start
+    await StratacodeConfig.handleInvalid("agent", item, parsed.error.issues, parsed.error, warnings)
+    // stratacode_change end
   }
   return result
 }
 
-// kilocode_change start
+// stratacode_change start
 export async function loadMode(dir: string, warnings?: Warning[]) {
-  // kilocode_change end
+  // stratacode_change end
   const result: Record<string, Info> = {}
   for (const item of await Glob.scan("{mode,modes}/*.md", {
     cwd: dir,
@@ -184,7 +184,7 @@ export async function loadMode(dir: string, warnings?: Warning[]) {
       const message = ConfigMarkdown.FrontmatterError.isInstance(err)
         ? err.data.message
         : `Failed to parse mode ${item}`
-      // kilocode_change start
+      // stratacode_change start
       if (warnings) warnings.push({ path: item, message })
       try {
         const { Session } = await import("@/session")
@@ -194,7 +194,7 @@ export async function loadMode(dir: string, warnings?: Warning[]) {
       }
       log.error("failed to load mode", { mode: item, err })
       return undefined
-      // kilocode_change end
+      // stratacode_change end
     })
     if (!md) continue
 
@@ -211,9 +211,9 @@ export async function loadMode(dir: string, warnings?: Warning[]) {
       }
       continue
     }
-    // kilocode_change start
-    await KilocodeConfig.handleInvalid("agent", item, parsed.error.issues, parsed.error, warnings)
-    // kilocode_change end
+    // stratacode_change start
+    await StratacodeConfig.handleInvalid("agent", item, parsed.error.issues, parsed.error, warnings)
+    // stratacode_change end
   }
   return result
 }

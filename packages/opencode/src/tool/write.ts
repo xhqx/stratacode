@@ -11,11 +11,11 @@ import { FileWatcher } from "../file/watcher"
 import { Format } from "../format"
 import { AppFileSystem } from "@opencode-ai/shared/filesystem"
 import { Instance } from "../project/instance"
-import { trimDiff, buildFileDiff } from "./edit" // kilocode_change
+import { trimDiff, buildFileDiff } from "./edit" // stratacode_change
 import { assertExternalDirectoryEffect } from "./external-directory"
-import { filterDiagnostics } from "./diagnostics" // kilocode_change
-import { ConfigValidation } from "../kilocode/config-validation" // kilocode_change
-import { EncodedIO } from "../kilocode/tool/encoded-io" // kilocode_change
+import { filterDiagnostics } from "./diagnostics" // stratacode_change
+import { ConfigValidation } from "../stratacode/config-validation" // stratacode_change
+import { EncodedIO } from "../stratacode/tool/encoded-io" // stratacode_change
 import * as Bom from "@/util/bom"
 
 const MAX_PROJECT_DIAGNOSTICS_FILES = 5
@@ -42,18 +42,18 @@ export const WriteTool = Tool.define(
           yield* assertExternalDirectoryEffect(ctx, filepath)
 
           const exists = yield* fs.existsSafe(filepath)
-          // kilocode_change start - encoding-aware read; Encoding.read strips UTF-8 BOMs so
+          // stratacode_change start - encoding-aware read; Encoding.read strips UTF-8 BOMs so
           // derive the BOM flag from the detected encoding label instead of the decoded text.
           const pre = exists ? yield* EncodedIO.read(filepath) : { text: "", encoding: "utf-8" }
           const source = { bom: pre.encoding === "utf-8-bom", text: pre.text, encoding: pre.encoding }
-          // kilocode_change end
+          // stratacode_change end
           const next = Bom.split(params.content)
           const desiredBom = source.bom || next.bom
           const contentOld = source.text
           const contentNew = next.text
 
           const diff = trimDiff(createTwoFilesPatch(filepath, filepath, contentOld, contentNew))
-          const filediff = buildFileDiff(filepath, contentOld, contentNew) // kilocode_change
+          const filediff = buildFileDiff(filepath, contentOld, contentNew) // stratacode_change
           yield* ctx.ask({
             permission: "edit",
             patterns: [path.relative(Instance.worktree, filepath)],
@@ -61,11 +61,11 @@ export const WriteTool = Tool.define(
             metadata: {
               filepath,
               diff,
-              filediff, // kilocode_change
+              filediff, // stratacode_change
             },
           })
 
-          yield* EncodedIO.write(filepath, Bom.join(contentNew, desiredBom), source.encoding) // kilocode_change - encoding-aware write (mkdirs) replaces fs.writeWithDirs
+          yield* EncodedIO.write(filepath, Bom.join(contentNew, desiredBom), source.encoding) // stratacode_change - encoding-aware write (mkdirs) replaces fs.writeWithDirs
           if (yield* format.file(filepath)) {
             yield* Bom.syncFile(fs, filepath, desiredBom)
           }
@@ -92,16 +92,16 @@ export const WriteTool = Tool.define(
             projectDiagnosticsCount++
             output += `\n\nLSP errors detected in other files:\n${block}`
           }
-          output += yield* Effect.promise(() => ConfigValidation.check(filepath)) // kilocode_change
+          output += yield* Effect.promise(() => ConfigValidation.check(filepath)) // stratacode_change
 
           return {
             title: path.relative(Instance.worktree, filepath),
             metadata: {
-              diagnostics: filterDiagnostics(diagnostics, [normalizedFilepath]), // kilocode_change
+              diagnostics: filterDiagnostics(diagnostics, [normalizedFilepath]), // stratacode_change
               filepath,
               exists: exists,
-              diff, // kilocode_change
-              filediff, // kilocode_change
+              diff, // stratacode_change
+              filediff, // stratacode_change
             },
             output,
           }

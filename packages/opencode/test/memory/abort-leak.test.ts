@@ -13,9 +13,9 @@ const getHeapMB = () => {
 }
 
 describe("memory: abort controller leak", () => {
-  // kilocode_change start - TODO(#8990): skip flaky test on Linux CI
+  // stratacode_change start - TODO(#8990): skip flaky test on Linux CI
   test.skip("webfetch does not leak memory over many invocations", async () => {
-    // kilocode_change end
+    // stratacode_change end
     // Measure the abort-timed fetch path in a fresh process so shared tool
     // runtime state does not dominate the heap signal.
     const proc = Bun.spawn({
@@ -46,12 +46,12 @@ describe("memory: abort controller leak", () => {
     console.log(`After ${ITERATIONS} fetches: ${result.after.toFixed(2)} MB`)
     console.log(`Growth: ${result.growth.toFixed(2)} MB`)
 
-    // kilocode_change start
+    // stratacode_change start
     // Memory growth should be well below the old closure pattern (~0.5MB/req = ~25MB).
     // Windows Bun has higher per-fetch heap overhead (~13MB observed), so use a
     // threshold that still catches the leak but accommodates platform variance.
     expect(result.growth).toBeLessThan(20)
-    // kilocode_change end
+    // stratacode_change end
   }, 60000)
 
   test("compare closure vs bind pattern directly", async () => {

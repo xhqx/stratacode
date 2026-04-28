@@ -1,4 +1,4 @@
-import type { Hooks, PluginInput } from "@kilocode/plugin"
+import type { Hooks, PluginInput } from "@stratacode/plugin"
 import { Log } from "../util"
 import { Installation } from "../installation"
 import { InstallationVersion } from "../installation/version"
@@ -147,9 +147,9 @@ async function refreshAccessToken(refreshToken: string): Promise<TokenResponse> 
 const HTML_SUCCESS = `<!doctype html>
 <html>
   <head>
-    <!-- kilocode_change start -->
-    <title>Kilo - Codex Authorization Successful</title>
-    <!-- kilocode_change end -->
+    <!-- stratacode_change start -->
+    <title>Strata - Codex Authorization Successful</title>
+    <!-- stratacode_change end -->
     <style>
       body {
         font-family:
@@ -180,9 +180,9 @@ const HTML_SUCCESS = `<!doctype html>
   <body>
     <div class="container">
       <h1>Authorization Successful</h1>
-      <!-- kilocode_change start -->
-      <p>You can close this window and return to Kilo.</p>
-      <!-- kilocode_change end -->
+      <!-- stratacode_change start -->
+      <p>You can close this window and return to Strata.</p>
+      <!-- stratacode_change end -->
     </div>
     <script>
       setTimeout(() => window.close(), 2000)
@@ -193,9 +193,9 @@ const HTML_SUCCESS = `<!doctype html>
 const HTML_ERROR = (error: string) => `<!doctype html>
 <html>
   <head>
-    <!-- kilocode_change start -->
-    <title>Kilo - Codex Authorization Failed</title>
-    <!-- kilocode_change end -->
+    <!-- stratacode_change start -->
+    <title>Strata - Codex Authorization Failed</title>
+    <!-- stratacode_change end -->
     <style>
       body {
         font-family:

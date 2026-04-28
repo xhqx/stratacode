@@ -28,12 +28,12 @@ import { EventRoutes } from "./event"
 import { SyncRoutes } from "./sync"
 import { InstanceMiddleware } from "./middleware"
 import { jsonRequest } from "./trace"
-import { register as registerKiloRoutes } from "@/kilocode/server/instance" // kilocode_change
+import { register as registerStrataRoutes } from "@/stratacode/server/instance" // stratacode_change
 
 export const InstanceRoutes = (upgrade: UpgradeWebSocket): Hono => {
   const app = new Hono()
 
-  if (Flag.KILO_EXPERIMENTAL_HTTPAPI) {
+  if (Flag.STRATA_EXPERIMENTAL_HTTPAPI) {
     const handler = ExperimentalHttpApiServer.webHandler().handler
     const context = Context.empty() as Context.Context<unknown>
     app.get("/question", (c) => handler(c.req.raw, context))
@@ -51,7 +51,7 @@ export const InstanceRoutes = (upgrade: UpgradeWebSocket): Hono => {
     app.get("/project/current", (c) => handler(c.req.raw, context))
   }
 
-  const full = app // kilocode_change
+  const full = app // stratacode_change
   full
     .route("/project", ProjectRoutes())
     .route("/pty", PtyRoutes(upgrade))
@@ -298,5 +298,5 @@ export const InstanceRoutes = (upgrade: UpgradeWebSocket): Hono => {
         }),
     )
 
-  return registerKiloRoutes(full) // kilocode_change
+  return registerStrataRoutes(full) // stratacode_change
 }

@@ -75,7 +75,7 @@ export const EventRoutes = () =>
 
         stream.onAbort(stop)
 
-        // kilocode_change start
+        // stratacode_change start
         // On Windows, stream.onAbort() may never fire after a client disconnects
         // (delayed TCP RST detection via IOCP). Without this try/catch, the
         // GlobalBus listener, heartbeat interval, and AsyncQueue stay alive
@@ -95,7 +95,7 @@ export const EventRoutes = () =>
         } finally {
           stop()
         }
-        // kilocode_change end
+        // stratacode_change end
       })
     },
   )

@@ -63,7 +63,7 @@ const ready = () =>
   Effect.runPromise(Config.Service.use((svc) => svc.waitForDependencies()).pipe(Effect.scoped, Effect.provide(layer)))
 
 // Get managed config directory from environment (set in preload.ts)
-const managedConfigDir = process.env.KILO_TEST_MANAGED_CONFIG_DIR!
+const managedConfigDir = process.env.STRATA_TEST_MANAGED_CONFIG_DIR!
 
 beforeEach(async () => {
   await clear(true)
@@ -74,12 +74,12 @@ afterEach(async () => {
   await clear(true)
 })
 
-async function writeManagedSettings(settings: object, filename = "kilo.json") {
+async function writeManagedSettings(settings: object, filename = "strata.json") {
   await fs.mkdir(managedConfigDir, { recursive: true })
   await Filesystem.write(path.join(managedConfigDir, filename), JSON.stringify(settings))
 }
 
-async function writeConfig(dir: string, config: object, name = "kilo.json") {
+async function writeConfig(dir: string, config: object, name = "strata.json") {
   await Filesystem.write(path.join(dir, name), JSON.stringify(config))
 }
 
@@ -126,7 +126,7 @@ test("loads JSON config file", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         model: "test/model",
         username: "testuser",
       })
@@ -221,10 +221,10 @@ test("loads JSONC config file", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, "kilo.jsonc"),
+        path.join(dir, "strata.jsonc"),
         `{
         // This is a comment
-        "$schema": "https://app.kilo.ai/config.json",
+        "$schema": "https://app.strata.ai/config.json",
         "model": "test/model",
         "username": "testuser"
       }`,
@@ -247,14 +247,14 @@ test("jsonc overrides json in the same directory", async () => {
       await writeConfig(
         dir,
         {
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           model: "base",
           username: "base",
         },
-        "kilo.jsonc",
+        "strata.jsonc",
       )
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         model: "override",
       })
     },
@@ -269,20 +269,20 @@ test("jsonc overrides json in the same directory", async () => {
   })
 })
 
-test("prefers .kilo directory config over legacy .kilocode", async () => {
+test("prefers .strata directory config over legacy .stratacode", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, ".kilocode", "kilo.json"),
+        path.join(dir, ".stratacode", "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           model: "legacy/model",
         }),
       )
       await Filesystem.write(
-        path.join(dir, ".kilo", "kilo.json"),
+        path.join(dir, ".strata", "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           model: "new/model",
         }),
       )
@@ -306,7 +306,7 @@ test("handles environment variable substitution", async () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await writeConfig(dir, {
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           username: "{env:TEST_VAR}",
         })
       },
@@ -336,7 +336,7 @@ test("preserves env variables when adding $schema to config", async () => {
       init: async (dir) => {
         // Config without $schema - should trigger auto-add
         await Filesystem.write(
-          path.join(dir, "kilo.json"),
+          path.join(dir, "strata.json"),
           JSON.stringify({
             username: "{env:PRESERVE_VAR}",
           }),
@@ -350,7 +350,7 @@ test("preserves env variables when adding $schema to config", async () => {
         expect(config.username).toBe("secret_value")
 
         // Read the file to verify the env variable was preserved
-        const content = await Filesystem.readText(path.join(tmp.path, "kilo.json"))
+        const content = await Filesystem.readText(path.join(tmp.path, "strata.json"))
         expect(content).toContain("{env:PRESERVE_VAR}")
         expect(content).not.toContain("secret_value")
         expect(content).toContain("$schema")
@@ -366,7 +366,7 @@ test("preserves env variables when adding $schema to config", async () => {
 })
 
 test("resolves env templates in account config with account token", async () => {
-  const originalControlToken = process.env["KILO_CONSOLE_TOKEN"]
+  const originalControlToken = process.env["STRATA_CONSOLE_TOKEN"]
 
   const fakeAccount = Layer.mock(Account.Service)({
     active: () =>
@@ -396,7 +396,7 @@ test("resolves env templates in account config with account token", async () => 
     config: () =>
       Effect.succeed(
         Option.some({
-          provider: { opencode: { options: { apiKey: "{env:KILO_CONSOLE_TOKEN}" } } },
+          provider: { opencode: { options: { apiKey: "{env:STRATA_CONSOLE_TOKEN}" } } },
         }),
       ),
     token: () => Effect.succeed(Option.some(AccessToken.make("st_test_token"))),
@@ -422,9 +422,9 @@ test("resolves env templates in account config with account token", async () => 
     ).pipe(Effect.scoped, Effect.provide(layer), Effect.provide(Npm.defaultLayer), Effect.runPromise)
   } finally {
     if (originalControlToken !== undefined) {
-      process.env["KILO_CONSOLE_TOKEN"] = originalControlToken
+      process.env["STRATA_CONSOLE_TOKEN"] = originalControlToken
     } else {
-      delete process.env["KILO_CONSOLE_TOKEN"]
+      delete process.env["STRATA_CONSOLE_TOKEN"]
     }
   }
 })
@@ -434,7 +434,7 @@ test("handles file inclusion substitution", async () => {
     init: async (dir) => {
       await Filesystem.write(path.join(dir, "included.txt"), "test-user")
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         username: "{file:included.txt}",
       })
     },
@@ -453,7 +453,7 @@ test("handles file inclusion with replacement tokens", async () => {
     init: async (dir) => {
       await Filesystem.write(path.join(dir, "included.md"), "const out = await Bun.$`echo hi`")
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         username: "{file:included.md}",
       })
     },
@@ -471,7 +471,7 @@ test("validates config schema and reports warning on invalid fields", async () =
   await using tmp = await tmpdir({
     init: async (dir) => {
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         invalid_field: "should cause error",
       })
     },
@@ -479,7 +479,7 @@ test("validates config schema and reports warning on invalid fields", async () =
   await Instance.provide({
     directory: tmp.path,
     fn: async () => {
-      // kilocode_change - invalid schema surfaces as warnings, not a throw
+      // stratacode_change - invalid schema surfaces as warnings, not a throw
       await load()
       const warnings = await Config.warnings()
       expect(warnings.length).toBeGreaterThan(0)
@@ -490,13 +490,13 @@ test("validates config schema and reports warning on invalid fields", async () =
 test("reports warning for invalid JSON", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      await Filesystem.write(path.join(dir, "kilo.json"), "{ invalid json }")
+      await Filesystem.write(path.join(dir, "strata.json"), "{ invalid json }")
     },
   })
   await Instance.provide({
     directory: tmp.path,
     fn: async () => {
-      // kilocode_change - invalid JSON surfaces as a warning, not a throw
+      // stratacode_change - invalid JSON surfaces as a warning, not a throw
       await load()
       const warnings = await Config.warnings()
       expect(warnings.length).toBeGreaterThan(0)
@@ -508,7 +508,7 @@ test("handles agent configuration", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         agent: {
           test_agent: {
             model: "test/model",
@@ -538,7 +538,7 @@ test("treats agent variant as model-scoped setting (not provider option)", async
   await using tmp = await tmpdir({
     init: async (dir) => {
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         agent: {
           test_agent: {
             model: "openai/gpt-5.2",
@@ -569,7 +569,7 @@ test("handles command configuration", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         command: {
           test_command: {
             template: "test template",
@@ -597,9 +597,9 @@ test("migrates autoshare to share field", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           autoshare: true,
         }),
       )
@@ -619,9 +619,9 @@ test("migrates mode field to agent field", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           mode: {
             test_mode: {
               model: "test/model",
@@ -647,10 +647,10 @@ test("migrates mode field to agent field", async () => {
   })
 })
 
-test("loads config from .kilo directory", async () => {
+test("loads config from .strata directory", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      const opencodeDir = path.join(dir, ".kilo")
+      const opencodeDir = path.join(dir, ".strata")
       await fs.mkdir(opencodeDir, { recursive: true })
       const agentDir = path.join(opencodeDir, "agent")
       await fs.mkdir(agentDir, { recursive: true })
@@ -679,10 +679,10 @@ Test agent prompt`,
   })
 })
 
-test("loads agents from .kilo/agents (plural)", async () => {
+test("loads agents from .strata/agents (plural)", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      const opencodeDir = path.join(dir, ".kilo")
+      const opencodeDir = path.join(dir, ".strata")
       await fs.mkdir(opencodeDir, { recursive: true })
 
       const agentsDir = path.join(opencodeDir, "agents")
@@ -730,10 +730,10 @@ Nested agent prompt`,
   })
 })
 
-test("loads commands from .kilo/command (singular)", async () => {
+test("loads commands from .strata/command (singular)", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      const opencodeDir = path.join(dir, ".kilo")
+      const opencodeDir = path.join(dir, ".strata")
       await fs.mkdir(opencodeDir, { recursive: true })
 
       const commandDir = path.join(opencodeDir, "command")
@@ -775,10 +775,10 @@ Nested command template`,
   })
 })
 
-test("loads commands from .kilo/commands (plural)", async () => {
+test("loads commands from .strata/commands (plural)", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      const opencodeDir = path.join(dir, ".kilo")
+      const opencodeDir = path.join(dir, ".strata")
       await fs.mkdir(opencodeDir, { recursive: true })
 
       const commandsDir = path.join(opencodeDir, "commands")
@@ -820,18 +820,18 @@ Nested command template`,
   })
 })
 
-test("prefers .kilo commands over legacy .kilocode commands", async () => {
+test("prefers .strata commands over legacy .stratacode commands", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, ".kilocode", "command", "hello.md"),
+        path.join(dir, ".stratacode", "command", "hello.md"),
         `---
 description: Legacy command
 ---
 Hello from legacy command`,
       )
       await Filesystem.write(
-        path.join(dir, ".kilo", "command", "hello.md"),
+        path.join(dir, ".strata", "command", "hello.md"),
         `---
 description: New command
 ---
@@ -878,7 +878,7 @@ test("gets config directories", async () => {
   })
 })
 
-test("does not try to install dependencies in read-only KILO_CONFIG_DIR", async () => {
+test("does not try to install dependencies in read-only STRATA_CONFIG_DIR", async () => {
   if (process.platform === "win32") return
 
   await using tmp = await tmpdir<string>({
@@ -895,8 +895,8 @@ test("does not try to install dependencies in read-only KILO_CONFIG_DIR", async 
     },
   })
 
-  const prev = process.env.KILO_CONFIG_DIR
-  process.env.KILO_CONFIG_DIR = tmp.extra
+  const prev = process.env.STRATA_CONFIG_DIR
+  process.env.STRATA_CONFIG_DIR = tmp.extra
 
   try {
     await Instance.provide({
@@ -906,12 +906,12 @@ test("does not try to install dependencies in read-only KILO_CONFIG_DIR", async 
       },
     })
   } finally {
-    if (prev === undefined) delete process.env.KILO_CONFIG_DIR
-    else process.env.KILO_CONFIG_DIR = prev
+    if (prev === undefined) delete process.env.STRATA_CONFIG_DIR
+    else process.env.STRATA_CONFIG_DIR = prev
   }
 })
 
-test("installs dependencies in writable KILO_CONFIG_DIR", async () => {
+test("installs dependencies in writable STRATA_CONFIG_DIR", async () => {
   await using tmp = await tmpdir<string>({
     init: async (dir) => {
       const cfg = path.join(dir, "configdir")
@@ -920,8 +920,8 @@ test("installs dependencies in writable KILO_CONFIG_DIR", async () => {
     },
   })
 
-  const prev = process.env.KILO_CONFIG_DIR
-  process.env.KILO_CONFIG_DIR = tmp.extra
+  const prev = process.env.STRATA_CONFIG_DIR
+  process.env.STRATA_CONFIG_DIR = tmp.extra
 
   const noopNpm = Layer.mock(Npm.Service)({
     install: () => Effect.void,
@@ -956,8 +956,8 @@ test("installs dependencies in writable KILO_CONFIG_DIR", async () => {
     expect(await Filesystem.exists(path.join(tmp.extra, ".gitignore"))).toBe(true)
     expect(await Filesystem.readText(path.join(tmp.extra, ".gitignore"))).toContain("package-lock.json")
   } finally {
-    if (prev === undefined) delete process.env.KILO_CONFIG_DIR
-    else process.env.KILO_CONFIG_DIR = prev
+    if (prev === undefined) delete process.env.STRATA_CONFIG_DIR
+    else process.env.STRATA_CONFIG_DIR = prev
   }
 })
 
@@ -993,8 +993,8 @@ test("resolves scoped npm plugins in config", async () => {
       await Filesystem.write(path.join(pluginDir, "index.js"), "export default {}\n")
 
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
-        JSON.stringify({ $schema: "https://app.kilo.ai/config.json", plugin: ["@scope/plugin"] }, null, 2),
+        path.join(dir, "strata.json"),
+        JSON.stringify({ $schema: "https://app.strata.ai/config.json", plugin: ["@scope/plugin"] }, null, 2),
       )
     },
   })
@@ -1012,25 +1012,25 @@ test("resolves scoped npm plugins in config", async () => {
 test("merges plugin arrays from global and local configs", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      // Create a nested project structure with local .kilo config
+      // Create a nested project structure with local .strata config
       const projectDir = path.join(dir, "project")
-      const opencodeDir = path.join(projectDir, ".kilo")
+      const opencodeDir = path.join(projectDir, ".strata")
       await fs.mkdir(opencodeDir, { recursive: true })
 
       // Global config with plugins
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           plugin: ["global-plugin-1", "global-plugin-2"],
         }),
       )
 
-      // Local .kilo config with different plugins
+      // Local .strata config with different plugins
       await Filesystem.write(
-        path.join(opencodeDir, "kilo.json"),
+        path.join(opencodeDir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           plugin: ["local-plugin-1"],
         }),
       )
@@ -1058,7 +1058,7 @@ test("merges plugin arrays from global and local configs", async () => {
 test("does not error when only custom agent is a subagent", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      const opencodeDir = path.join(dir, ".kilo")
+      const opencodeDir = path.join(dir, ".strata")
       await fs.mkdir(opencodeDir, { recursive: true })
       const agentDir = path.join(opencodeDir, "agent")
       await fs.mkdir(agentDir, { recursive: true })
@@ -1091,21 +1091,21 @@ test("merges instructions arrays from global and local configs", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       const projectDir = path.join(dir, "project")
-      const opencodeDir = path.join(projectDir, ".kilo")
+      const opencodeDir = path.join(projectDir, ".strata")
       await fs.mkdir(opencodeDir, { recursive: true })
 
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           instructions: ["global-instructions.md", "shared-rules.md"],
         }),
       )
 
       await Filesystem.write(
-        path.join(opencodeDir, "kilo.json"),
+        path.join(opencodeDir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           instructions: ["local-instructions.md"],
         }),
       )
@@ -1130,21 +1130,21 @@ test("deduplicates duplicate instructions from global and local configs", async 
   await using tmp = await tmpdir({
     init: async (dir) => {
       const projectDir = path.join(dir, "project")
-      const opencodeDir = path.join(projectDir, ".kilo")
+      const opencodeDir = path.join(projectDir, ".strata")
       await fs.mkdir(opencodeDir, { recursive: true })
 
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           instructions: ["duplicate.md", "global-only.md"],
         }),
       )
 
       await Filesystem.write(
-        path.join(opencodeDir, "kilo.json"),
+        path.join(opencodeDir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           instructions: ["duplicate.md", "local-only.md"],
         }),
       )
@@ -1171,25 +1171,25 @@ test("deduplicates duplicate instructions from global and local configs", async 
 test("deduplicates duplicate plugins from global and local configs", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      // Create a nested project structure with local .kilo config
+      // Create a nested project structure with local .strata config
       const projectDir = path.join(dir, "project")
-      const opencodeDir = path.join(projectDir, ".kilo")
+      const opencodeDir = path.join(projectDir, ".strata")
       await fs.mkdir(opencodeDir, { recursive: true })
 
       // Global config with plugins
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           plugin: ["duplicate-plugin", "global-plugin-1"],
         }),
       )
 
-      // Local .kilo config with some overlapping plugins
+      // Local .strata config with some overlapping plugins
       await Filesystem.write(
-        path.join(opencodeDir, "kilo.json"),
+        path.join(opencodeDir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           plugin: ["duplicate-plugin", "local-plugin-1"],
         }),
       )
@@ -1271,9 +1271,9 @@ test("migrates legacy tools config to permissions - allow", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           agent: {
             test: {
               tools: {
@@ -1302,9 +1302,9 @@ test("migrates legacy tools config to permissions - deny", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           agent: {
             test: {
               tools: {
@@ -1333,9 +1333,9 @@ test("migrates legacy write tool to edit permission", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           agent: {
             test: {
               tools: {
@@ -1359,13 +1359,13 @@ test("migrates legacy write tool to edit permission", async () => {
 })
 
 // Managed settings tests
-// Note: preload.ts sets KILO_TEST_MANAGED_CONFIG which Global.Path.managedConfig uses
+// Note: preload.ts sets STRATA_TEST_MANAGED_CONFIG which Global.Path.managedConfig uses
 
 test("managed settings override user settings", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         model: "user/model",
         share: "auto",
         username: "testuser",
@@ -1374,7 +1374,7 @@ test("managed settings override user settings", async () => {
   })
 
   await writeManagedSettings({
-    $schema: "https://app.kilo.ai/config.json",
+    $schema: "https://app.strata.ai/config.json",
     model: "managed/model",
     share: "disabled",
   })
@@ -1394,7 +1394,7 @@ test("managed settings override project settings", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         autoupdate: true,
         disabled_providers: [],
       })
@@ -1402,7 +1402,7 @@ test("managed settings override project settings", async () => {
   })
 
   await writeManagedSettings({
-    $schema: "https://app.kilo.ai/config.json",
+    $schema: "https://app.strata.ai/config.json",
     autoupdate: false,
     disabled_providers: ["openai"],
   })
@@ -1421,7 +1421,7 @@ test("missing managed settings file is not an error", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await writeConfig(dir, {
-        $schema: "https://app.kilo.ai/config.json",
+        $schema: "https://app.strata.ai/config.json",
         model: "user/model",
       })
     },
@@ -1440,9 +1440,9 @@ test("migrates legacy edit tool to edit permission", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           agent: {
             test: {
               tools: {
@@ -1469,9 +1469,9 @@ test("migrates legacy patch tool to edit permission", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           agent: {
             test: {
               tools: {
@@ -1498,9 +1498,9 @@ test("migrates mixed legacy tools config", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           agent: {
             test: {
               tools: {
@@ -1533,9 +1533,9 @@ test("merges legacy tools with existing permission config", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           agent: {
             test: {
               permission: {
@@ -1572,7 +1572,7 @@ test("permission config canonicalises known keys first, preserves rest-key inser
   // sorts wildcards before specifics before iterating. See the
   // "fromConfig - specific key beats wildcard regardless of JSON key order"
   // test in test/permission/next.test.ts for the behavioural guarantee.
-  // kilocode_change start — isolate from global config to prevent cross-test contamination
+  // stratacode_change start — isolate from global config to prevent cross-test contamination
   // (migrateBashPermission may write permission.bash to a global config file created by other
   // test files running in parallel, which mergeDeep then prepends to the project permission keys)
   await using globalTmp = await tmpdir()
@@ -1580,13 +1580,13 @@ test("permission config canonicalises known keys first, preserves rest-key inser
   ;(Global.Path as { config: string }).config = globalTmp.path
   await clear(true)
   try {
-    // kilocode_change end
+    // stratacode_change end
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Filesystem.write(
-          path.join(dir, "kilo.json"), // kilocode_change
+          path.join(dir, "strata.json"), // stratacode_change
           JSON.stringify({
-            $schema: "https://app.kilo.ai/config.json", // kilocode_change
+            $schema: "https://app.strata.ai/config.json", // stratacode_change
             permission: {
               "*": "deny",
               edit: "ask",
@@ -1624,12 +1624,12 @@ test("permission config canonicalises known keys first, preserves rest-key inser
         ])
       },
     })
-    // kilocode_change start
+    // stratacode_change start
   } finally {
     ;(Global.Path as { config: string }).config = prev
     await clear(true)
   }
-  // kilocode_change end
+  // stratacode_change end
 })
 
 // MCP config merging tests
@@ -1637,12 +1637,12 @@ test("permission config canonicalises known keys first, preserves rest-key inser
 test("project config can override MCP server enabled status", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      // kilocode_change start — base config in .json, override in .jsonc (jsonc loads second and wins)
+      // stratacode_change start — base config in .json, override in .jsonc (jsonc loads second and wins)
       // Simulates a base config with disabled MCP
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           mcp: {
             jira: {
               type: "remote",
@@ -1659,9 +1659,9 @@ test("project config can override MCP server enabled status", async () => {
       )
       // Override config enables just jira
       await Filesystem.write(
-        path.join(dir, "kilo.jsonc"),
+        path.join(dir, "strata.jsonc"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           mcp: {
             jira: {
               type: "remote",
@@ -1671,7 +1671,7 @@ test("project config can override MCP server enabled status", async () => {
           },
         }),
       )
-      // kilocode_change end
+      // stratacode_change end
     },
   })
   await Instance.provide({
@@ -1697,12 +1697,12 @@ test("project config can override MCP server enabled status", async () => {
 test("MCP config deep merges preserving base config properties", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      // kilocode_change start — base config in .json, override in .jsonc (jsonc loads second and wins)
+      // stratacode_change start — base config in .json, override in .jsonc (jsonc loads second and wins)
       // Base config with full MCP definition
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           mcp: {
             myserver: {
               type: "remote",
@@ -1716,11 +1716,11 @@ test("MCP config deep merges preserving base config properties", async () => {
         }),
       )
       // Override just enables it, should preserve other properties
-      // kilocode_change end
+      // stratacode_change end
       await Filesystem.write(
-        path.join(dir, "kilo.jsonc"),
+        path.join(dir, "strata.jsonc"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           mcp: {
             myserver: {
               type: "remote",
@@ -1748,14 +1748,14 @@ test("MCP config deep merges preserving base config properties", async () => {
   })
 })
 
-test("local .kilo config can override MCP from project config", async () => {
+test("local .strata config can override MCP from project config", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       // Project config with disabled MCP
       await Filesystem.write(
-        path.join(dir, "kilo.json"),
+        path.join(dir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           mcp: {
             docs: {
               type: "remote",
@@ -1765,13 +1765,13 @@ test("local .kilo config can override MCP from project config", async () => {
           },
         }),
       )
-      // Local .kilo directory config enables it
-      const opencodeDir = path.join(dir, ".kilo")
+      // Local .strata directory config enables it
+      const opencodeDir = path.join(dir, ".strata")
       await fs.mkdir(opencodeDir, { recursive: true })
       await Filesystem.write(
-        path.join(opencodeDir, "kilo.json"),
+        path.join(opencodeDir, "strata.json"),
         JSON.stringify({
-          $schema: "https://app.kilo.ai/config.json",
+          $schema: "https://app.strata.ai/config.json",
           mcp: {
             docs: {
               type: "remote",
@@ -1907,7 +1907,7 @@ test("wellknown URL with trailing slash is normalized", async () => {
 describe("resolvePluginSpec", () => {
   test("keeps package specs unchanged", async () => {
     await using tmp = await tmpdir()
-    const file = path.join(tmp.path, "kilo.json") // kilocode_change
+    const file = path.join(tmp.path, "strata.json") // stratacode_change
     expect(await ConfigPlugin.resolvePluginSpec("oh-my-opencode@2.4.3", file)).toBe("oh-my-opencode@2.4.3")
     expect(await ConfigPlugin.resolvePluginSpec("@scope/pkg", file)).toBe("@scope/pkg")
   })
@@ -1935,7 +1935,7 @@ describe("resolvePluginSpec", () => {
       },
     })
 
-    const file = path.join(tmp.path, "kilo.json") // kilocode_change
+    const file = path.join(tmp.path, "strata.json") // stratacode_change
     const hit = await ConfigPlugin.resolvePluginSpec("./plugin.ts", file)
     expect(ConfigPlugin.pluginSpecifier(hit)).toBe(pathToFileURL(path.join(tmp.path, "plugin.ts")).href)
   })
@@ -1954,7 +1954,7 @@ describe("resolvePluginSpec", () => {
       },
     })
 
-    const file = path.join(tmp.path, "kilo.json") // kilocode_change
+    const file = path.join(tmp.path, "strata.json") // stratacode_change
     const hit = await ConfigPlugin.resolvePluginSpec("./plugin", file)
     expect(ConfigPlugin.pluginSpecifier(hit)).toBe(pathToFileURL(path.join(tmp.path, "plugin")).href)
   })
@@ -1997,7 +1997,7 @@ describe("deduplicatePluginOrigins", () => {
   })
 
   test("keeps path plugins separate from package plugins", () => {
-    const plugins = ["oh-my-opencode@2.4.3", "file:///project/.kilo/plugin/oh-my-opencode.js"]
+    const plugins = ["oh-my-opencode@2.4.3", "file:///project/.strata/plugin/oh-my-opencode.js"]
 
     const result = dedupe(plugins)
 
@@ -2005,11 +2005,11 @@ describe("deduplicatePluginOrigins", () => {
   })
 
   test("deduplicates direct path plugins by exact spec", () => {
-    const plugins = ["file:///project/.kilo/plugin/demo.ts", "file:///project/.kilo/plugin/demo.ts"]
+    const plugins = ["file:///project/.strata/plugin/demo.ts", "file:///project/.strata/plugin/demo.ts"]
 
     const result = dedupe(plugins)
 
-    expect(result).toEqual(["file:///project/.kilo/plugin/demo.ts"])
+    expect(result).toEqual(["file:///project/.strata/plugin/demo.ts"])
   })
 
   test("preserves order of remaining plugins", () => {
@@ -2024,14 +2024,14 @@ describe("deduplicatePluginOrigins", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         const projectDir = path.join(dir, "project")
-        const opencodeDir = path.join(projectDir, ".kilo")
+        const opencodeDir = path.join(projectDir, ".strata")
         const pluginDir = path.join(opencodeDir, "plugin")
         await fs.mkdir(pluginDir, { recursive: true })
 
         await Filesystem.write(
-          path.join(dir, "kilo.json"),
+          path.join(dir, "strata.json"),
           JSON.stringify({
-            $schema: "https://app.kilo.ai/config.json",
+            $schema: "https://app.strata.ai/config.json",
             plugin: ["my-plugin@1.0.0"],
           }),
         )
@@ -2053,19 +2053,19 @@ describe("deduplicatePluginOrigins", () => {
   })
 })
 
-describe("KILO_DISABLE_PROJECT_CONFIG", () => {
+describe("STRATA_DISABLE_PROJECT_CONFIG", () => {
   test("skips project config files when flag is set", async () => {
-    const originalEnv = process.env["KILO_DISABLE_PROJECT_CONFIG"]
-    process.env["KILO_DISABLE_PROJECT_CONFIG"] = "true"
+    const originalEnv = process.env["STRATA_DISABLE_PROJECT_CONFIG"]
+    process.env["STRATA_DISABLE_PROJECT_CONFIG"] = "true"
 
     try {
       await using tmp = await tmpdir({
         init: async (dir) => {
           // Create a project config that would normally be loaded
           await Filesystem.write(
-            path.join(dir, "kilo.json"),
+            path.join(dir, "strata.json"),
             JSON.stringify({
-              $schema: "https://app.kilo.ai/config.json",
+              $schema: "https://app.strata.ai/config.json",
               model: "project/model",
               username: "project-user",
             }),
@@ -2083,23 +2083,23 @@ describe("KILO_DISABLE_PROJECT_CONFIG", () => {
       })
     } finally {
       if (originalEnv === undefined) {
-        delete process.env["KILO_DISABLE_PROJECT_CONFIG"]
+        delete process.env["STRATA_DISABLE_PROJECT_CONFIG"]
       } else {
-        process.env["KILO_DISABLE_PROJECT_CONFIG"] = originalEnv
+        process.env["STRATA_DISABLE_PROJECT_CONFIG"] = originalEnv
       }
     }
   })
 
-  test("skips project .kilo/ directories when flag is set", async () => {
-    // kilocode_change - test .kilo/ directory (the test body writes to .kilo/command/)
-    const originalEnv = process.env["KILO_DISABLE_PROJECT_CONFIG"]
-    process.env["KILO_DISABLE_PROJECT_CONFIG"] = "true"
+  test("skips project .strata/ directories when flag is set", async () => {
+    // stratacode_change - test .strata/ directory (the test body writes to .strata/command/)
+    const originalEnv = process.env["STRATA_DISABLE_PROJECT_CONFIG"]
+    process.env["STRATA_DISABLE_PROJECT_CONFIG"] = "true"
 
     try {
       await using tmp = await tmpdir({
         init: async (dir) => {
-          // Create a .kilo directory with a command
-          const opencodeDir = path.join(dir, ".kilo", "command")
+          // Create a .strata directory with a command
+          const opencodeDir = path.join(dir, ".strata", "command")
           await fs.mkdir(opencodeDir, { recursive: true })
           await Filesystem.write(path.join(opencodeDir, "test-cmd.md"), "# Test Command\nThis is a test command.")
         },
@@ -2108,23 +2108,23 @@ describe("KILO_DISABLE_PROJECT_CONFIG", () => {
         directory: tmp.path,
         fn: async () => {
           const directories = await listDirs()
-          // Project .kilo should NOT be in directories list  // kilocode_change
+          // Project .strata should NOT be in directories list  // stratacode_change
           const hasProjectOpencode = directories.some((d) => d.startsWith(tmp.path))
           expect(hasProjectOpencode).toBe(false)
         },
       })
     } finally {
       if (originalEnv === undefined) {
-        delete process.env["KILO_DISABLE_PROJECT_CONFIG"]
+        delete process.env["STRATA_DISABLE_PROJECT_CONFIG"]
       } else {
-        process.env["KILO_DISABLE_PROJECT_CONFIG"] = originalEnv
+        process.env["STRATA_DISABLE_PROJECT_CONFIG"] = originalEnv
       }
     }
   })
 
   test("still loads global config when flag is set", async () => {
-    const originalEnv = process.env["KILO_DISABLE_PROJECT_CONFIG"]
-    process.env["KILO_DISABLE_PROJECT_CONFIG"] = "true"
+    const originalEnv = process.env["STRATA_DISABLE_PROJECT_CONFIG"]
+    process.env["STRATA_DISABLE_PROJECT_CONFIG"] = "true"
 
     try {
       await using tmp = await tmpdir()
@@ -2139,29 +2139,29 @@ describe("KILO_DISABLE_PROJECT_CONFIG", () => {
       })
     } finally {
       if (originalEnv === undefined) {
-        delete process.env["KILO_DISABLE_PROJECT_CONFIG"]
+        delete process.env["STRATA_DISABLE_PROJECT_CONFIG"]
       } else {
-        process.env["KILO_DISABLE_PROJECT_CONFIG"] = originalEnv
+        process.env["STRATA_DISABLE_PROJECT_CONFIG"] = originalEnv
       }
     }
   })
 
   test("skips relative instructions with warning when flag is set but no config dir", async () => {
-    const originalDisable = process.env["KILO_DISABLE_PROJECT_CONFIG"]
-    const originalConfigDir = process.env["KILO_CONFIG_DIR"]
+    const originalDisable = process.env["STRATA_DISABLE_PROJECT_CONFIG"]
+    const originalConfigDir = process.env["STRATA_CONFIG_DIR"]
 
     try {
       // Ensure no config dir is set
-      delete process.env["KILO_CONFIG_DIR"]
-      process.env["KILO_DISABLE_PROJECT_CONFIG"] = "true"
+      delete process.env["STRATA_CONFIG_DIR"]
+      process.env["STRATA_DISABLE_PROJECT_CONFIG"] = "true"
 
       await using tmp = await tmpdir({
         init: async (dir) => {
           // Create a config with relative instruction path
           await Filesystem.write(
-            path.join(dir, "kilo.json"),
+            path.join(dir, "strata.json"),
             JSON.stringify({
-              $schema: "https://app.kilo.ai/config.json",
+              $schema: "https://app.strata.ai/config.json",
               instructions: ["./CUSTOM.md"],
             }),
           )
@@ -2184,30 +2184,30 @@ describe("KILO_DISABLE_PROJECT_CONFIG", () => {
       })
     } finally {
       if (originalDisable === undefined) {
-        delete process.env["KILO_DISABLE_PROJECT_CONFIG"]
+        delete process.env["STRATA_DISABLE_PROJECT_CONFIG"]
       } else {
-        process.env["KILO_DISABLE_PROJECT_CONFIG"] = originalDisable
+        process.env["STRATA_DISABLE_PROJECT_CONFIG"] = originalDisable
       }
       if (originalConfigDir === undefined) {
-        delete process.env["KILO_CONFIG_DIR"]
+        delete process.env["STRATA_CONFIG_DIR"]
       } else {
-        process.env["KILO_CONFIG_DIR"] = originalConfigDir
+        process.env["STRATA_CONFIG_DIR"] = originalConfigDir
       }
     }
   })
 
-  test("KILO_CONFIG_DIR still works when flag is set", async () => {
-    const originalDisable = process.env["KILO_DISABLE_PROJECT_CONFIG"]
-    const originalConfigDir = process.env["KILO_CONFIG_DIR"]
+  test("STRATA_CONFIG_DIR still works when flag is set", async () => {
+    const originalDisable = process.env["STRATA_DISABLE_PROJECT_CONFIG"]
+    const originalConfigDir = process.env["STRATA_CONFIG_DIR"]
 
     try {
       await using configDirTmp = await tmpdir({
         init: async (dir) => {
           // Create config in the custom config dir
           await Filesystem.write(
-            path.join(dir, "kilo.json"),
+            path.join(dir, "strata.json"),
             JSON.stringify({
-              $schema: "https://app.kilo.ai/config.json",
+              $schema: "https://app.strata.ai/config.json",
               model: "configdir/model",
             }),
           )
@@ -2218,47 +2218,47 @@ describe("KILO_DISABLE_PROJECT_CONFIG", () => {
         init: async (dir) => {
           // Create config in project (should be ignored)
           await Filesystem.write(
-            path.join(dir, "kilo.json"),
+            path.join(dir, "strata.json"),
             JSON.stringify({
-              $schema: "https://app.kilo.ai/config.json",
+              $schema: "https://app.strata.ai/config.json",
               model: "project/model",
             }),
           )
         },
       })
 
-      process.env["KILO_DISABLE_PROJECT_CONFIG"] = "true"
-      process.env["KILO_CONFIG_DIR"] = configDirTmp.path
+      process.env["STRATA_DISABLE_PROJECT_CONFIG"] = "true"
+      process.env["STRATA_CONFIG_DIR"] = configDirTmp.path
 
       await Instance.provide({
         directory: projectTmp.path,
         fn: async () => {
           const config = await load()
-          // Should load from KILO_CONFIG_DIR, not project
+          // Should load from STRATA_CONFIG_DIR, not project
           expect(config.model).toBe("configdir/model")
         },
       })
     } finally {
       if (originalDisable === undefined) {
-        delete process.env["KILO_DISABLE_PROJECT_CONFIG"]
+        delete process.env["STRATA_DISABLE_PROJECT_CONFIG"]
       } else {
-        process.env["KILO_DISABLE_PROJECT_CONFIG"] = originalDisable
+        process.env["STRATA_DISABLE_PROJECT_CONFIG"] = originalDisable
       }
       if (originalConfigDir === undefined) {
-        delete process.env["KILO_CONFIG_DIR"]
+        delete process.env["STRATA_CONFIG_DIR"]
       } else {
-        process.env["KILO_CONFIG_DIR"] = originalConfigDir
+        process.env["STRATA_CONFIG_DIR"] = originalConfigDir
       }
     }
   })
 })
 
-describe("KILO_CONFIG_CONTENT token substitution", () => {
-  test("substitutes {env:} tokens in KILO_CONFIG_CONTENT", async () => {
-    const originalEnv = process.env["KILO_CONFIG_CONTENT"]
+describe("STRATA_CONFIG_CONTENT token substitution", () => {
+  test("substitutes {env:} tokens in STRATA_CONFIG_CONTENT", async () => {
+    const originalEnv = process.env["STRATA_CONFIG_CONTENT"]
     const originalTestVar = process.env["TEST_CONFIG_VAR"]
     process.env["TEST_CONFIG_VAR"] = "test_api_key_12345"
-    process.env["KILO_CONFIG_CONTENT"] = JSON.stringify({
+    process.env["STRATA_CONFIG_CONTENT"] = JSON.stringify({
       $schema: "https://opencode.ai/config.json",
       username: "{env:TEST_CONFIG_VAR}",
     })
@@ -2274,9 +2274,9 @@ describe("KILO_CONFIG_CONTENT token substitution", () => {
       })
     } finally {
       if (originalEnv !== undefined) {
-        process.env["KILO_CONFIG_CONTENT"] = originalEnv
+        process.env["STRATA_CONFIG_CONTENT"] = originalEnv
       } else {
-        delete process.env["KILO_CONFIG_CONTENT"]
+        delete process.env["STRATA_CONFIG_CONTENT"]
       }
       if (originalTestVar !== undefined) {
         process.env["TEST_CONFIG_VAR"] = originalTestVar
@@ -2286,14 +2286,14 @@ describe("KILO_CONFIG_CONTENT token substitution", () => {
     }
   })
 
-  test("substitutes {file:} tokens in KILO_CONFIG_CONTENT", async () => {
-    const originalEnv = process.env["KILO_CONFIG_CONTENT"]
+  test("substitutes {file:} tokens in STRATA_CONFIG_CONTENT", async () => {
+    const originalEnv = process.env["STRATA_CONFIG_CONTENT"]
 
     try {
       await using tmp = await tmpdir({
         init: async (dir) => {
           await Filesystem.write(path.join(dir, "api_key.txt"), "secret_key_from_file")
-          process.env["KILO_CONFIG_CONTENT"] = JSON.stringify({
+          process.env["STRATA_CONFIG_CONTENT"] = JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             username: "{file:./api_key.txt}",
           })
@@ -2308,9 +2308,9 @@ describe("KILO_CONFIG_CONTENT token substitution", () => {
       })
     } finally {
       if (originalEnv !== undefined) {
-        process.env["KILO_CONFIG_CONTENT"] = originalEnv
+        process.env["STRATA_CONFIG_CONTENT"] = originalEnv
       } else {
-        delete process.env["KILO_CONFIG_CONTENT"]
+        delete process.env["STRATA_CONFIG_CONTENT"]
       }
     }
   })

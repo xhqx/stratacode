@@ -3,7 +3,7 @@ import { animate, type AnimationPlaybackControls } from "motion"
 import { useI18n } from "../context/i18n"
 import { createStore } from "solid-js/store"
 import { Collapsible } from "./collapsible"
-import { Icon, type IconProps } from "./icon" // kilocode_change: added Icon
+import { Icon, type IconProps } from "./icon" // stratacode_change: added Icon
 import { TextShimmer } from "./text-shimmer"
 
 export type TriggerTitle = {
@@ -120,7 +120,7 @@ export function BasicTool(props: BasicToolProps) {
 
   const handleOpenChange = (value: boolean) => {
     if (pending()) return
-    if (props.hideDetails) return // kilocode_change
+    if (props.hideDetails) return // stratacode_change
     if (props.locked && !value) return
     setState("open", value)
   }
@@ -132,11 +132,11 @@ export function BasicTool(props: BasicToolProps) {
       data-hide-details={props.hideDetails ? "true" : undefined}
     >
       <div data-slot="basic-tool-tool-trigger-content">
-        {/* kilocode_change start */}
+        {/* stratacode_change start */}
         <span data-slot="basic-tool-icon">
           <Icon name={props.icon} size="small" />
         </span>
-        {/* kilocode_change end */}
+        {/* stratacode_change end */}
         <div data-slot="basic-tool-tool-info">
           <Switch>
             <Match when={isTriggerTitle(props.trigger) && props.trigger}>

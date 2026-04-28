@@ -1,2 +1,2 @@
-// kilocode_change - new file
-export { SuggestionRoutes } from "@/kilocode/suggestion/routes"
+// stratacode_change - new file
+export { SuggestionRoutes } from "@/stratacode/suggestion/routes"

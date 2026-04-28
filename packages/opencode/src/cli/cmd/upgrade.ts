@@ -7,7 +7,7 @@ import { InstallationVersion } from "../../installation/version"
 
 export const UpgradeCommand = {
   command: "upgrade [target]",
-  describe: "upgrade kilo to the latest or a specific version", // kilocode_change
+  describe: "upgrade strata to the latest or a specific version", // stratacode_change
   builder: (yargs: Argv) => {
     return yargs
       .positional("target", {
@@ -29,7 +29,7 @@ export const UpgradeCommand = {
     const detectedMethod = await AppRuntime.runPromise(Installation.Service.use((svc) => svc.method()))
     const method = (args.method as Installation.Method) ?? detectedMethod
     if (method === "unknown") {
-      prompts.log.error(`kilo is installed to ${process.execPath} and may be managed by a package manager`) // kilocode_change
+      prompts.log.error(`strata is installed to ${process.execPath} and may be managed by a package manager`) // stratacode_change
       const install = await prompts.select({
         message: "Install anyways?",
         options: [
@@ -49,7 +49,7 @@ export const UpgradeCommand = {
       : await AppRuntime.runPromise(Installation.Service.use((svc) => svc.latest()))
 
     if (InstallationVersion === target) {
-      prompts.log.warn(`kilo upgrade skipped: ${target} is already installed`) // kilocode_change
+      prompts.log.warn(`strata upgrade skipped: ${target} is already installed`) // stratacode_change
       prompts.outro("Done")
       return
     }
@@ -63,7 +63,7 @@ export const UpgradeCommand = {
     if (err) {
       spinner.stop("Upgrade failed", 1)
       if (err instanceof Installation.UpgradeFailedError) {
-        // kilocode_change start - removed choco special case
+        // stratacode_change start - removed choco special case
         prompts.log.error(err.stderr)
         // necessary because choco only allows install/upgrade in elevated terminals
         // if (method === "choco" && err.stderr.includes("not running from an elevated command shell")) {
@@ -71,7 +71,7 @@ export const UpgradeCommand = {
         // } else {
         //   prompts.log.error(err.stderr)
         // }
-        // kilocode_change end
+        // stratacode_change end
       } else if (err instanceof Error) prompts.log.error(err.message)
       prompts.outro("Done")
       return

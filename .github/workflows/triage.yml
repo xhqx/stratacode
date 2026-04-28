@@ -6,7 +6,7 @@ on:
 
 jobs:
   triage:
-    if: github.repository == 'Kilo-Org/kilocode'
+    if: github.repository == 'Strata-Org/stratacode'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
@@ -20,19 +20,19 @@ jobs:
       - name: Setup Bun
         uses: ./.github/actions/setup-bun
 
-      - name: Setup Kilo
-        uses: ./.github/actions/setup-kilo
+      - name: Setup Strata
+        uses: ./.github/actions/setup-strata
 
       - name: Triage issue
         env:
-          KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
-          KILO_ORG_ID: ${{ secrets.KILO_ORG_ID }}
+          STRATA_API_KEY: ${{ secrets.STRATA_API_KEY }}
+          STRATA_ORG_ID: ${{ secrets.STRATA_ORG_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          kilo run --agent triage "The following issue was just opened, triage it:
+          strata run --agent triage "The following issue was just opened, triage it:
 
           Title: $ISSUE_TITLE
 

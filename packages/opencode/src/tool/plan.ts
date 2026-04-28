@@ -6,7 +6,7 @@ import { Session } from "../session"
 import { Instance } from "../project/instance"
 import EXIT_DESCRIPTION from "./plan-exit.txt"
 
-// kilocode_change start - simplified plan_exit: readiness signal only, no user prompt
+// stratacode_change start - simplified plan_exit: readiness signal only, no user prompt
 export const PlanExitTool = Tool.define(
   "plan_exit",
   Effect.gen(function* () {
@@ -28,4 +28,4 @@ export const PlanExitTool = Tool.define(
     }
   }),
 )
-// kilocode_change end
+// stratacode_change end

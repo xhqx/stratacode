@@ -10,7 +10,7 @@ const theme = fileURLToPath(new URL("./public/oc-theme-preload.js", import.meta.
  */
 export default [
   {
-    name: "kilo-desktop:config",
+    name: "strata-desktop:config",
     config() {
       return {
         resolve: {

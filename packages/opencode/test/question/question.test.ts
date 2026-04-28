@@ -83,7 +83,7 @@ test("ask - adds to pending list", async () => {
   })
 })
 
-// kilocode_change start - review follow-up uses non-blocking question prompts
+// stratacode_change start - review follow-up uses non-blocking question prompts
 test("ask - preserves blocking flag", async () => {
   await using tmp = await tmpdir({ git: true })
   await Instance.provide({
@@ -109,7 +109,7 @@ test("ask - preserves blocking flag", async () => {
     },
   })
 })
-// kilocode_change end
+// stratacode_change end
 
 // reply tests
 

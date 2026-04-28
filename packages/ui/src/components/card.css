@@ -1,4 +1,4 @@
-/* kilocode_change start — restore main's card visual style (border + background) while keeping upstream layout selectors */
+/* stratacode_change start — restore main's card visual style (border + background) while keeping upstream layout selectors */
 [data-component="card"] {
   width: 100%;
   display: flex;
@@ -102,4 +102,4 @@
     letter-spacing: var(--letter-spacing-normal);
   }
 }
-/* kilocode_change end */
+/* stratacode_change end */

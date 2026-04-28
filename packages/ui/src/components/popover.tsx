@@ -52,7 +52,7 @@ export function Popover<T extends ValidComponent = "div">(props: PopoverProps<T>
     triggerRef: undefined as HTMLElement | undefined,
     dismiss: null as "escape" | "outside" | null,
     uncontrolledOpen: local.defaultOpen ?? false,
-    ready: true, // kilocode_change
+    ready: true, // stratacode_change
   })
 
   const controlled = () => local.open !== undefined

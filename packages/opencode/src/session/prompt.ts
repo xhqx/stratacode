@@ -1,18 +1,18 @@
 import path from "path"
 import os from "os"
 import fs from "fs/promises"
-import { KiloSessionPrompt } from "@/kilocode/session/prompt" // kilocode_change
-import { KiloSessionPromptQueue } from "@/kilocode/session/prompt-queue" // kilocode_change
-import { KiloSession } from "@/kilocode/session" // kilocode_change
-import { KiloCostPropagation } from "@/kilocode/session/cost-propagation" // kilocode_change
-import { Suggestion } from "@/kilocode/suggestion" // kilocode_change
-import { Question } from "@/question" // kilocode_change
+import { StrataSessionPrompt } from "@/stratacode/session/prompt" // stratacode_change
+import { StrataSessionPromptQueue } from "@/stratacode/session/prompt-queue" // stratacode_change
+import { StrataSession } from "@/stratacode/session" // stratacode_change
+import { StrataCostPropagation } from "@/stratacode/session/cost-propagation" // stratacode_change
+import { Suggestion } from "@/stratacode/suggestion" // stratacode_change
+import { Question } from "@/question" // stratacode_change
 import z from "zod"
 import { SessionID, MessageID, PartID } from "./schema"
 import { MessageV2 } from "./message-v2"
 import { Log } from "../util"
 import { SessionRevert } from "./revert"
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import * as Session from "./session"
 import { Agent } from "../agent/agent"
 import { Provider } from "../provider"
@@ -70,8 +70,8 @@ IMPORTANT:
 
 const STRUCTURED_OUTPUT_SYSTEM_PROMPT = `IMPORTANT: The user has requested structured output. You MUST use the StructuredOutput tool to provide your final response. Do NOT respond with plain text - you MUST call the StructuredOutput tool with your answer formatted according to the schema.`
 
-// kilocode_change
-export const shouldAskPlanFollowup = KiloSessionPrompt.shouldAskPlanFollowup
+// stratacode_change
+export const shouldAskPlanFollowup = StrataSessionPrompt.shouldAskPlanFollowup
 
 const log = Log.create({ service: "session.prompt" })
 const elog = EffectLogger.create({ service: "session.prompt" })
@@ -127,8 +127,8 @@ export const layer = Layer.effect(
 
     const cancel = Effect.fn("SessionPrompt.cancel")(function* (sessionID: SessionID) {
       yield* elog.info("cancel", { sessionID })
-      yield* KiloSessionPromptQueue.cancel(sessionID) // kilocode_change - drop queued follow-up loops on abort
-      KiloSessionPrompt.abortPlanFollowup(sessionID) // kilocode_change - abort pending plan-followup handover work
+      yield* StrataSessionPromptQueue.cancel(sessionID) // stratacode_change - drop queued follow-up loops on abort
+      StrataSessionPrompt.abortPlanFollowup(sessionID) // stratacode_change - abort pending plan-followup handover work
       yield* state.cancel(sessionID)
     })
 
@@ -236,21 +236,21 @@ export const layer = Layer.effect(
       const userMessage = input.messages.findLast((msg) => msg.info.role === "user")
       if (!userMessage) return input.messages
 
-      if (!Flag.KILO_EXPERIMENTAL_PLAN_MODE) {
-        // kilocode_change start - inject plan file path so agent writes to .kilo/plans/
+      if (!Flag.STRATA_EXPERIMENTAL_PLAN_MODE) {
+        // stratacode_change start - inject plan file path so agent writes to .strata/plans/
         yield* Effect.promise(() =>
-          KiloSessionPrompt.insertPlanReminders({ agent: input.agent, session: input.session, userMessage }),
+          StrataSessionPrompt.insertPlanReminders({ agent: input.agent, session: input.session, userMessage }),
         )
-        // kilocode_change end
+        // stratacode_change end
         const wasPlan = input.messages.some((msg) => msg.info.role === "assistant" && msg.info.agent === "plan")
         if (wasPlan && input.agent.name === "code") {
-          // kilocode_change - renamed from "build" to "code"
+          // stratacode_change - renamed from "build" to "code"
           userMessage.parts.push({
             id: PartID.ascending(),
             messageID: userMessage.info.id,
             sessionID: userMessage.info.sessionID,
             type: "text",
-            text: CODE_SWITCH, // kilocode_change - renamed from BUILD_SWITCH to CODE_SWITCH
+            text: CODE_SWITCH, // stratacode_change - renamed from BUILD_SWITCH to CODE_SWITCH
             synthetic: true,
           })
         }
@@ -266,7 +266,7 @@ export const layer = Layer.effect(
           messageID: userMessage.info.id,
           sessionID: userMessage.info.sessionID,
           type: "text",
-          text: `${CODE_SWITCH}\n\nA plan file exists at ${plan}. You should execute on the plan defined within it`, // kilocode_change - renamed from BUILD_SWITCH to CODE_SWITCH
+          text: `${CODE_SWITCH}\n\nA plan file exists at ${plan}. You should execute on the plan defined within it`, // stratacode_change - renamed from BUILD_SWITCH to CODE_SWITCH
           synthetic: true,
         })
         userMessage.parts.push(part)
@@ -599,12 +599,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
 
       let error: Error | undefined
       const taskAbort = new AbortController()
-      // kilocode_change start - shared reader for the child session id written by task.ts ctx.metadata (#6321)
+      // stratacode_change start - shared reader for the child session id written by task.ts ctx.metadata (#6321)
       const childID = () => {
         const meta = part.state.status !== "pending" ? part.state.metadata : undefined
         return (meta as { sessionId?: string } | undefined)?.sessionId
       }
-      // kilocode_change end
+      // stratacode_change end
       const result = yield* taskTool
         .execute(taskArgs, {
           agent: task.agent,
@@ -643,12 +643,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               taskAbort.abort()
               assistantMessage.finish = "tool-calls"
               assistantMessage.time.completed = Date.now()
-              // kilocode_change start - propagate partial subagent cost on cancel (#6321)
+              // stratacode_change start - propagate partial subagent cost on cancel (#6321)
               const cid = childID()
               if (cid) {
-                assistantMessage.cost = yield* KiloCostPropagation.childCost(sessions, SessionID.make(cid))
+                assistantMessage.cost = yield* StrataCostPropagation.childCost(sessions, SessionID.make(cid))
               }
-              // kilocode_change end
+              // stratacode_change end
               yield* sessions.updateMessage(assistantMessage)
               if (part.state.status === "running") {
                 yield* sessions.updatePart({
@@ -681,12 +681,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
 
       assistantMessage.finish = "tool-calls"
       assistantMessage.time.completed = Date.now()
-      // kilocode_change start - include subagent total cost on the wrapper message (#6321)
+      // stratacode_change start - include subagent total cost on the wrapper message (#6321)
       const cid = result?.metadata?.sessionId ?? childID()
       if (cid) {
-        assistantMessage.cost = yield* KiloCostPropagation.childCost(sessions, SessionID.make(cid))
+        assistantMessage.cost = yield* StrataCostPropagation.childCost(sessions, SessionID.make(cid))
       }
-      // kilocode_change end
+      // stratacode_change end
       yield* sessions.updateMessage(assistantMessage)
 
       if (result && part.state.status === "running") {
@@ -729,7 +729,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         time: { created: Date.now() },
         agent: lastUser.agent,
         model: lastUser.model,
-        editorContext: lastUser.editorContext, // kilocode_change — preserve editor context
+        editorContext: lastUser.editorContext, // stratacode_change — preserve editor context
       }
       yield* sessions.updateMessage(summaryUserMsg)
       yield* sessions.updatePart({
@@ -980,7 +980,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         },
         system: input.system,
         format: input.format,
-        editorContext: input.editorContext, // kilocode_change
+        editorContext: input.editorContext, // stratacode_change
       }
 
       yield* Effect.addFinalizer(() => instruction.clear(info.id))
@@ -1173,7 +1173,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
 
               if (part.mime === "application/x-directory") {
                 const args = { filePath: filepath }
-                const exit = yield* execRead(args, { includeDirectoryFiles: true }).pipe(Effect.exit) // kilocode_change inline folder files
+                const exit = yield* execRead(args, { includeDirectoryFiles: true }).pipe(Effect.exit) // stratacode_change inline folder files
                 if (Exit.isFailure(exit)) {
                   const error = Cause.squash(exit.cause)
                   log.error("failed to read directory", { error })
@@ -1307,7 +1307,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       function* (input: PromptInput) {
         const session = yield* sessions.get(input.sessionID)
         yield* revert.cleanup(session)
-        // kilocode_change start - persist queued prompts immediately while serializing each follow-up loop
+        // stratacode_change start - persist queued prompts immediately while serializing each follow-up loop
         const message = yield* createUserMessage(input)
         yield* sessions.touch(input.sessionID)
 
@@ -1320,7 +1320,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           yield* sessions.setPermission({ sessionID: session.id, permission: permissions })
         }
 
-        // kilocode_change start — unblock tools waiting on user input so any in-flight
+        // stratacode_change start — unblock tools waiting on user input so any in-flight
         // handle.process can return. Adding a new user message is the signal that any
         // pending tool prompt is superseded, so we dismiss even on the noReply path.
         // Critically we never cancel the in-flight fiber here — that would abort the
@@ -1331,19 +1331,19 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         yield* Effect.promise(() => Suggestion.dismissAll(input.sessionID))
         yield* Effect.promise(() => Question.dismissAll(input.sessionID))
         if (input.noReply === true) return message
-        return yield* KiloSessionPromptQueue.enqueue(
+        return yield* StrataSessionPromptQueue.enqueue(
           input.sessionID,
           message.info.id,
           loop({ sessionID: input.sessionID }),
           lastAssistant(input.sessionID),
         )
-        // kilocode_change end
+        // stratacode_change end
       },
     )
-    // kilocode_change end
+    // stratacode_change end
 
     const lastAssistant = Effect.fnUntraced(function* (sessionID: SessionID) {
-      // kilocode_change start - retry when cancel races before shellImpl writes messages
+      // stratacode_change start - retry when cancel races before shellImpl writes messages
       for (let attempt = 0; attempt < 10; attempt++) {
         const match = yield* sessions.findMessage(sessionID, (m) => m.info.role !== "user")
         if (Option.isSome(match)) return match.value
@@ -1351,19 +1351,19 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         if (msgs.length > 0) return msgs[0]
         yield* Effect.sleep("50 millis")
       }
-      // kilocode_change end
+      // stratacode_change end
       throw new Error("Impossible")
     })
 
-    // kilocode_change — mutable close-reason per session, set by runLoop and read by loop
-    const closeReasons = new Map<string, KiloSession.CloseReason>()
+    // stratacode_change — mutable close-reason per session, set by runLoop and read by loop
+    const closeReasons = new Map<string, StrataSession.CloseReason>()
 
     const runLoop: (sessionID: SessionID) => Effect.Effect<MessageV2.WithParts> = Effect.fn("SessionPrompt.run")(
       function* (sessionID: SessionID) {
-        // kilocode_change — cache environment details per turn (prompt caching)
-        const envCache: KiloSessionPrompt.EnvCache = {}
-        closeReasons.delete(sessionID) // kilocode_change
-        let compactionAttempts = 0 // kilocode_change - cap compaction attempts per turn to avoid infinite loops
+        // stratacode_change — cache environment details per turn (prompt caching)
+        const envCache: StrataSessionPrompt.EnvCache = {}
+        closeReasons.delete(sessionID) // stratacode_change
+        let compactionAttempts = 0 // stratacode_change - cap compaction attempts per turn to avoid infinite loops
         const ctx = yield* InstanceState.context
         const slog = elog.with({ sessionID })
         let structured: unknown | undefined
@@ -1375,7 +1375,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           yield* slog.info("loop", { step })
 
           let msgs = yield* MessageV2.filterCompactedEffect(sessionID)
-          msgs = KiloSessionPromptQueue.scope(sessionID, msgs) // kilocode_change - hide later queued prompts
+          msgs = StrataSessionPromptQueue.scope(sessionID, msgs) // stratacode_change - hide later queued prompts
 
           let lastUser: MessageV2.User | undefined
           let lastAssistant: MessageV2.Assistant | undefined
@@ -1407,15 +1407,15 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             lastAssistant?.finish &&
             !["tool-calls"].includes(lastAssistant.finish) &&
             !hasToolCalls &&
-            lastAssistant.parentID === lastUser.id && // kilocode_change - unrelated later assistants do not answer this turn
+            lastAssistant.parentID === lastUser.id && // stratacode_change - unrelated later assistants do not answer this turn
             lastUser.id < lastAssistant.id
           ) {
-            // kilocode_change start - ask follow-up when plan_exit tool was called
+            // stratacode_change start - ask follow-up when plan_exit tool was called
             const action = yield* Effect.promise((signal) =>
-              KiloSessionPrompt.askPlanFollowup({ sessionID, messages: msgs, abort: signal }),
+              StrataSessionPrompt.askPlanFollowup({ sessionID, messages: msgs, abort: signal }),
             )
             if (action === "continue") continue
-            // kilocode_change end
+            // stratacode_change end
             yield* slog.info("exiting loop")
             break
           }
@@ -1445,13 +1445,13 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               auto: task.auto,
               overflow: task.overflow,
             })
-            // kilocode_change start - compaction.process only returns "stop" after
+            // stratacode_change start - compaction.process only returns "stop" after
             // setting ContextOverflowError on the summary message; surface as turn error
             if (result === "stop") {
               closeReasons.set(sessionID, "error")
               break
             }
-            // kilocode_change end
+            // stratacode_change end
             continue
           }
 
@@ -1460,8 +1460,8 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             lastFinished.summary !== true &&
             (yield* compaction.isOverflow({ tokens: lastFinished.tokens, model }))
           ) {
-            // kilocode_change start
-            const guard = KiloSessionPrompt.guardCompactionAttempt({
+            // stratacode_change start
+            const guard = StrataSessionPrompt.guardCompactionAttempt({
               sessionID,
               attempts: compactionAttempts,
               closeReasons,
@@ -1475,7 +1475,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               break
             }
             compactionAttempts++
-            // kilocode_change end
+            // stratacode_change end
             yield* compaction.create({ sessionID, agent: lastUser.agent, model: lastUser.model, auto: true })
             continue
           }
@@ -1560,12 +1560,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
 
             yield* plugin.trigger("experimental.chat.messages.transform", {}, { messages: msgs })
 
-            // kilocode_change — ephemerally inject dynamic editor context into last user message
-            KiloSessionPrompt.injectEditorContext({ msgs, lastUser, sessionID, cache: envCache })
+            // stratacode_change — ephemerally inject dynamic editor context into last user message
+            StrataSessionPrompt.injectEditorContext({ msgs, lastUser, sessionID, cache: envCache })
 
             const [skills, env, instructions, modelMsgs] = yield* Effect.all([
               sys.skills(agent),
-              Effect.sync(() => sys.environment(model, lastUser.editorContext)), // kilocode_change
+              Effect.sync(() => sys.environment(model, lastUser.editorContext)), // stratacode_change
               instruction.system().pipe(Effect.orDie),
               MessageV2.toModelMessagesEffect(msgs, model),
             ])
@@ -1604,15 +1604,15 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               }
             }
 
-            // kilocode_change start
+            // stratacode_change start
             if (result === "stop") {
               if (handle.message.error) closeReasons.set(sessionID, "error")
               return "break" as const
             }
-            // kilocode_change end
+            // stratacode_change end
             if (result === "compact") {
-              // kilocode_change start
-              const guard = KiloSessionPrompt.guardCompactionAttempt({
+              // stratacode_change start
+              const guard = StrataSessionPrompt.guardCompactionAttempt({
                 sessionID,
                 attempts: compactionAttempts,
                 closeReasons,
@@ -1624,7 +1624,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 return "break" as const
               }
               compactionAttempts++
-              // kilocode_change end
+              // stratacode_change end
               yield* compaction.create({
                 sessionID,
                 agent: lastUser.agent,
@@ -1633,15 +1633,15 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 overflow: !handle.message.finish,
               })
             }
-            // kilocode_change start — break out so a newer queued prompt can take over
+            // stratacode_change start — break out so a newer queued prompt can take over
             // instead of starting another LLM step for the now-superseded turn. The
             // current handle.process has fully drained (tokens + inline tool calls) by
             // the time we get here, so nothing is cut off.
-            if (KiloSessionPromptQueue.hasFollowup(sessionID)) {
+            if (StrataSessionPromptQueue.hasFollowup(sessionID)) {
               closeReasons.set(sessionID, "interrupted")
               return "break" as const
             }
-            // kilocode_change end
+            // stratacode_change end
             return "continue" as const
           }).pipe(Effect.ensuring(instruction.clear(handle.message.id)))
           if (outcome === "break") break
@@ -1656,14 +1656,14 @@ NOTE: At any point in time through this workflow you should feel free to ask the
     const loop: (input: z.infer<typeof LoopInput>) => Effect.Effect<MessageV2.WithParts> = Effect.fn(
       "SessionPrompt.loop",
     )(function* (input: z.infer<typeof LoopInput>) {
-      // kilocode_change start
-      yield* bus.publish(KiloSession.Event.TurnOpen, { sessionID: input.sessionID })
+      // stratacode_change start
+      yield* bus.publish(StrataSession.Event.TurnOpen, { sessionID: input.sessionID })
       return yield* Effect.onExit(
         state.ensureRunning(input.sessionID, lastAssistant(input.sessionID), runLoop(input.sessionID)),
         Effect.fnUntraced(function* (exit) {
-          yield* bus.publish(KiloSession.Event.TurnClose, {
+          yield* bus.publish(StrataSession.Event.TurnClose, {
             sessionID: input.sessionID,
-            reason: KiloSessionPrompt.resolveCloseReason({
+            reason: StrataSessionPrompt.resolveCloseReason({
               sessionID: input.sessionID,
               closeReasons,
               exit,
@@ -1671,7 +1671,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           })
         }),
       )
-      // kilocode_change end
+      // stratacode_change end
     })
 
     const shell: (input: ShellInput) => Effect.Effect<MessageV2.WithParts> = Effect.fn("SessionPrompt.shell")(
@@ -1855,7 +1855,7 @@ export const PromptInput = z.object({
   format: MessageV2.Format.zod.optional(),
   system: z.string().optional(),
   variant: z.string().optional(),
-  // kilocode_change start
+  // stratacode_change start
   editorContext: z
     .object({
       visibleFiles: z.array(z.string()).optional(),
@@ -1864,7 +1864,7 @@ export const PromptInput = z.object({
       shell: z.string().optional(),
     })
     .optional(),
-  // kilocode_change end
+  // stratacode_change end
   parts: z.array(
     z.discriminatedUnion("type", [
       MessageV2.TextPartInput.zod as unknown as z.ZodObject<any>,
@@ -1967,11 +1967,11 @@ const argsRegex = /(?:\[Image\s+\d+\]|"[^"]*"|'[^']*'|[^\s"']+)/gi
 const placeholderRegex = /\$(\d+)/g
 const quoteTrimRegex = /^["']|["']$/g
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const prompt = (input: PromptInput) => runPromise((svc) => svc.prompt(input))
 export const loop = (input: z.infer<typeof LoopInput>) => runPromise((svc) => svc.loop(input))
 export const cancel = (sessionID: SessionID) => runPromise((svc) => svc.cancel(sessionID))
-// kilocode_change end
+// stratacode_change end
 
 export * as SessionPrompt from "./prompt"

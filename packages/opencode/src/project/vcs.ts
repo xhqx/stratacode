@@ -8,7 +8,7 @@ import { AppFileSystem } from "@opencode-ai/shared/filesystem"
 import { FileWatcher } from "@/file/watcher"
 import { Git } from "@/git"
 import { Log } from "@/util"
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import z from "zod"
 
 const log = Log.create({ service: "vcs" })
@@ -227,8 +227,8 @@ export const defaultLayer = layer.pipe(
   Layer.provide(Bus.layer),
 )
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const branch = () => runPromise((svc) => svc.branch())
 export const defaultBranch = () => runPromise((svc) => svc.defaultBranch())
-// kilocode_change end
+// stratacode_change end

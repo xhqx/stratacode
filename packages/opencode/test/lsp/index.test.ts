@@ -4,15 +4,15 @@ import fs from "fs/promises"
 import { Effect, Layer } from "effect"
 import { LSP } from "../../src/lsp"
 import { LSPServer } from "../../src/lsp"
-import * as launch from "../../src/lsp/launch" // kilocode_change - spy on spawn
+import * as launch from "../../src/lsp/launch" // stratacode_change - spy on spawn
 import * as CrossSpawnSpawner from "../../src/effect/cross-spawn-spawner"
 import { provideTmpdirInstance, tmpdir } from "../fixture/fixture"
 import { testEffect } from "../lib/effect"
 import { Instance, type InstanceContext } from "../../src/project/instance"
-import { Flag } from "../../src/flag/flag" // kilocode_change
-import { TsCheck } from "../../src/kilocode/ts-check" // kilocode_change
+import { Flag } from "../../src/flag/flag" // stratacode_change
+import { TsCheck } from "../../src/stratacode/ts-check" // stratacode_change
 
-// kilocode_change - Typescript.spawn ignores ctx, so a cast is fine here.
+// stratacode_change - Typescript.spawn ignores ctx, so a cast is fine here.
 const fakeCtx = {} as InstanceContext
 
 const it = testEffect(Layer.mergeAll(LSP.defaultLayer, CrossSpawnSpawner.defaultLayer))
@@ -63,14 +63,14 @@ describe("lsp.spawn", () => {
     ),
   )
 
-  // kilocode_change start - enable flag so spawn() is reached past the TsClient short-circuit
+  // stratacode_change start - enable flag so spawn() is reached past the TsClient short-circuit
   it.live("would spawn builtin LSP for files inside instance when lsp is true", () =>
     provideTmpdirInstance(
       (dir) =>
         LSP.Service.use((lsp) =>
           Effect.gen(function* () {
-            const saved = Flag.KILO_EXPERIMENTAL_LSP_TOOL
-            Flag.KILO_EXPERIMENTAL_LSP_TOOL = true
+            const saved = Flag.STRATA_EXPERIMENTAL_LSP_TOOL
+            Flag.STRATA_EXPERIMENTAL_LSP_TOOL = true
             const spy = spyOn(LSPServer.Typescript, "spawn").mockResolvedValue(undefined)
 
             try {
@@ -81,7 +81,7 @@ describe("lsp.spawn", () => {
               })
               expect(spy).toHaveBeenCalledTimes(1)
             } finally {
-              Flag.KILO_EXPERIMENTAL_LSP_TOOL = saved
+              Flag.STRATA_EXPERIMENTAL_LSP_TOOL = saved
               spy.mockRestore()
             }
           }),
@@ -95,8 +95,8 @@ describe("lsp.spawn", () => {
       (dir) =>
         LSP.Service.use((lsp) =>
           Effect.gen(function* () {
-            const saved = Flag.KILO_EXPERIMENTAL_LSP_TOOL
-            Flag.KILO_EXPERIMENTAL_LSP_TOOL = true
+            const saved = Flag.STRATA_EXPERIMENTAL_LSP_TOOL
+            Flag.STRATA_EXPERIMENTAL_LSP_TOOL = true
             const spy = spyOn(LSPServer.Typescript, "spawn").mockResolvedValue(undefined)
 
             try {
@@ -107,7 +107,7 @@ describe("lsp.spawn", () => {
               })
               expect(spy).toHaveBeenCalledTimes(1)
             } finally {
-              Flag.KILO_EXPERIMENTAL_LSP_TOOL = saved
+              Flag.STRATA_EXPERIMENTAL_LSP_TOOL = saved
               spy.mockRestore()
             }
           }),
@@ -121,12 +121,12 @@ describe("lsp.spawn", () => {
       },
     ),
   )
-  // kilocode_change end
+  // stratacode_change end
 
-  // kilocode_change start - Typescript spawn is gated behind KILO_EXPERIMENTAL_LSP_TOOL.
-  test("spawns tsgo LSP when KILO_EXPERIMENTAL_LSP_TOOL is enabled", async () => {
-    const saved = Flag.KILO_EXPERIMENTAL_LSP_TOOL
-    Flag.KILO_EXPERIMENTAL_LSP_TOOL = true
+  // stratacode_change start - Typescript spawn is gated behind STRATA_EXPERIMENTAL_LSP_TOOL.
+  test("spawns tsgo LSP when STRATA_EXPERIMENTAL_LSP_TOOL is enabled", async () => {
+    const saved = Flag.STRATA_EXPERIMENTAL_LSP_TOOL
+    Flag.STRATA_EXPERIMENTAL_LSP_TOOL = true
     await using tmp = await tmpdir()
 
     const spawnSpy = spyOn(launch, "spawn").mockImplementation(
@@ -148,21 +148,21 @@ describe("lsp.spawn", () => {
         },
       })
     } finally {
-      Flag.KILO_EXPERIMENTAL_LSP_TOOL = saved
+      Flag.STRATA_EXPERIMENTAL_LSP_TOOL = saved
       spawnSpy.mockRestore()
       tsgoSpy.mockRestore()
     }
   })
 
-  test("Typescript.spawn returns undefined when KILO_EXPERIMENTAL_LSP_TOOL is off", async () => {
-    const saved = Flag.KILO_EXPERIMENTAL_LSP_TOOL
-    Flag.KILO_EXPERIMENTAL_LSP_TOOL = false
+  test("Typescript.spawn returns undefined when STRATA_EXPERIMENTAL_LSP_TOOL is off", async () => {
+    const saved = Flag.STRATA_EXPERIMENTAL_LSP_TOOL
+    Flag.STRATA_EXPERIMENTAL_LSP_TOOL = false
     try {
       const result = await LSPServer.Typescript.spawn("/tmp/any", fakeCtx)
       expect(result).toBeUndefined()
     } finally {
-      Flag.KILO_EXPERIMENTAL_LSP_TOOL = saved
+      Flag.STRATA_EXPERIMENTAL_LSP_TOOL = saved
     }
   })
-  // kilocode_change end
+  // stratacode_change end
 })

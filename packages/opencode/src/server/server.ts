@@ -16,7 +16,7 @@ import { GlobalRoutes } from "./routes/global"
 import { WorkspaceRouterMiddleware } from "./workspace"
 import { InstanceMiddleware } from "./routes/instance/middleware"
 import { WorkspaceRoutes } from "./routes/control/workspace"
-import * as KiloServer from "@/kilocode/server/server" // kilocode_change
+import * as StrataServer from "@/stratacode/server/server" // stratacode_change
 
 // @ts-ignore This global is needed to prevent ai-sdk from logging warnings to stdout https://github.com/vercel/ai/blob/2dc67e0ef538307f21368db32d5a12345d98831b/packages/ai/src/logger/log-warnings.ts#L85
 globalThis.AI_SDK_LOG_WARNINGS = false
@@ -45,10 +45,10 @@ function create(opts: { cors?: string[] }) {
 
   const runtime = adapter.create(app)
 
-  if (Flag.KILO_WORKSPACE_ID) {
+  if (Flag.STRATA_WORKSPACE_ID) {
     return {
       app: app
-        .use(InstanceMiddleware(Flag.KILO_WORKSPACE_ID ? WorkspaceID.make(Flag.KILO_WORKSPACE_ID) : undefined))
+        .use(InstanceMiddleware(Flag.STRATA_WORKSPACE_ID ? WorkspaceID.make(Flag.STRATA_WORKSPACE_ID) : undefined))
         .use(FenceMiddleware)
         .route("/", InstanceRoutes(runtime.upgradeWebSocket)),
       runtime,
@@ -80,9 +80,9 @@ export async function openapi() {
   const result = await generateSpecs(app, {
     documentation: {
       info: {
-        title: KiloServer.DOC_TITLE, // kilocode_change
+        title: StrataServer.DOC_TITLE, // stratacode_change
         version: "1.0.0",
-        description: KiloServer.DOC_DESCRIPTION, // kilocode_change
+        description: StrataServer.DOC_DESCRIPTION, // stratacode_change
       },
       openapi: "3.1.1",
     },

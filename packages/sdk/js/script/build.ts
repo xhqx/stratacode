@@ -25,7 +25,7 @@ await createClient({
     },
     {
       name: "@hey-api/sdk",
-      instance: "KiloClient",
+      instance: "StrataClient",
       exportFromIndex: false,
       auth: false,
       paramsStructure: "flat",

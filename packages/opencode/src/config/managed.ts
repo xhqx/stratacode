@@ -23,16 +23,16 @@ const PLIST_META = new Set([
 function systemManagedConfigDir(): string {
   switch (process.platform) {
     case "darwin":
-      return "/Library/Application Support/kilo" // kilocode_change
+      return "/Library/Application Support/strata" // stratacode_change
     case "win32":
-      return path.join(process.env.ProgramData || "C:\\ProgramData", "kilo") // kilocode_change
+      return path.join(process.env.ProgramData || "C:\\ProgramData", "strata") // stratacode_change
     default:
-      return "/etc/kilo" // kilocode_change
+      return "/etc/strata" // stratacode_change
   }
 }
 
 export function managedConfigDir() {
-  return process.env.KILO_TEST_MANAGED_CONFIG_DIR || systemManagedConfigDir()
+  return process.env.STRATA_TEST_MANAGED_CONFIG_DIR || systemManagedConfigDir()
 }
 
 export function parseManagedPlist(json: string): string {

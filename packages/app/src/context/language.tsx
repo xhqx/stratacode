@@ -6,9 +6,9 @@ import { Persist, persisted } from "@/utils/persist"
 import { dict as en } from "@/i18n/en"
 import { dict as uiEn } from "@opencode-ai/ui/i18n/en"
 
-// kilocode_change start
-import { dict as kiloEn } from "@kilocode/kilo-i18n/en"
-// kilocode_change end
+// stratacode_change start
+import { dict as strataEn } from "@stratacode/strata-i18n/en"
+// stratacode_change end
 
 export type Locale =
   | "en"
@@ -30,7 +30,7 @@ export type Locale =
   | "nl"
   | "tr"
 
-type RawDictionary = typeof en & typeof uiEn & typeof kiloEn // kilocode_change
+type RawDictionary = typeof en & typeof uiEn & typeof strataEn // stratacode_change
 type Dictionary = i18n.Flatten<RawDictionary>
 type Source = { dict: Record<string, string> }
 
@@ -102,7 +102,7 @@ const LABEL_KEY: Record<Locale, keyof Dictionary> = {
   tr: "language.tr",
 }
 
-const base = i18n.flatten({ ...en, ...uiEn, ...kiloEn }) as Dictionary // kilocode_change
+const base = i18n.flatten({ ...en, ...uiEn, ...strataEn }) as Dictionary // stratacode_change
 const dicts = new Map<Locale, Dictionary>([["en", base]])
 
 const merge = (app: Promise<Source>, ui: Promise<Source>) =>

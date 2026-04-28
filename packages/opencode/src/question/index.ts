@@ -7,8 +7,8 @@ import { zod } from "@/util/effect-zod"
 import { Log } from "@/util"
 import { withStatics } from "@/util/schema"
 import { QuestionID } from "./schema"
-import { makeRuntime } from "@/effect/run-service" // kilocode_change
-import { KiloQuestion } from "@/kilocode/question" // kilocode_change
+import { makeRuntime } from "@/effect/run-service" // stratacode_change
+import { StrataQuestion } from "@/stratacode/question" // stratacode_change
 
 const log = Log.create({ service: "question" })
 
@@ -21,7 +21,7 @@ export class Option extends Schema.Class<Option>("QuestionOption")({
   description: Schema.String.annotate({
     description: "Explanation of choice",
   }),
-  // kilocode_change start - optional i18n keys so clients can translate while still
+  // stratacode_change start - optional i18n keys so clients can translate while still
   // replying with the canonical English label (backend matches on `label`).
   labelKey: Schema.optional(Schema.String).annotate({
     description: "Optional i18n key for the label; clients translate and still reply with `label`",
@@ -29,7 +29,7 @@ export class Option extends Schema.Class<Option>("QuestionOption")({
   descriptionKey: Schema.optional(Schema.String).annotate({
     description: "Optional i18n key for the description",
   }),
-  // kilocode_change end
+  // stratacode_change end
 }) {
   static readonly zod = zod(this)
 }
@@ -47,14 +47,14 @@ const base = {
   multiple: Schema.optional(Schema.Boolean).annotate({
     description: "Allow selecting multiple choices",
   }),
-  // kilocode_change start - optional i18n keys for question text and header
+  // stratacode_change start - optional i18n keys for question text and header
   questionKey: Schema.optional(Schema.String).annotate({
     description: "Optional i18n key for the question text; clients fall back to `question` when missing",
   }),
   headerKey: Schema.optional(Schema.String).annotate({
     description: "Optional i18n key for the header; clients fall back to `header` when missing",
   }),
-  // kilocode_change end
+  // stratacode_change end
 }
 
 export class Info extends Schema.Class<Info>("QuestionInfo")({
@@ -84,7 +84,7 @@ export class Request extends Schema.Class<Request>("QuestionRequest")({
     description: "Questions to ask",
   }),
   blocking: Schema.optional(Schema.Boolean).annotate({
-    // kilocode_change
+    // stratacode_change
     description: "Whether this question blocks prompt input (default: true)",
   }),
   tool: Schema.optional(Tool),
@@ -143,13 +143,13 @@ export interface Interface {
   readonly ask: (input: {
     sessionID: SessionID
     questions: ReadonlyArray<Info>
-    blocking?: boolean // kilocode_change
+    blocking?: boolean // stratacode_change
     tool?: Tool
   }) => Effect.Effect<ReadonlyArray<Answer>, RejectedError>
   readonly reply: (input: { requestID: QuestionID; answers: ReadonlyArray<Answer> }) => Effect.Effect<void>
   readonly reject: (requestID: QuestionID) => Effect.Effect<void>
   readonly list: () => Effect.Effect<ReadonlyArray<Request>>
-  readonly dismissAll: (sessionID: SessionID) => Effect.Effect<void> // kilocode_change
+  readonly dismissAll: (sessionID: SessionID) => Effect.Effect<void> // stratacode_change
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/Question") {}
@@ -180,7 +180,7 @@ export const layer = Layer.effect(
     const ask = Effect.fn("Question.ask")(function* (input: {
       sessionID: SessionID
       questions: ReadonlyArray<Info>
-      blocking?: boolean // kilocode_change
+      blocking?: boolean // stratacode_change
       tool?: Tool
     }) {
       const pending = (yield* InstanceState.get(state)).pending
@@ -192,13 +192,13 @@ export const layer = Layer.effect(
         id,
         sessionID: input.sessionID,
         questions: input.questions,
-        blocking: input.blocking, // kilocode_change
+        blocking: input.blocking, // stratacode_change
         tool: input.tool,
       })
 
-      // kilocode_change start
-      yield* KiloQuestion.guardFollowup(input.sessionID, () => new RejectedError())
-      // kilocode_change end
+      // stratacode_change start
+      yield* StrataQuestion.guardFollowup(input.sessionID, () => new RejectedError())
+      // stratacode_change end
 
       pending.set(id, { info, deferred })
       yield* bus.publish(Event.Asked, info)
@@ -252,28 +252,28 @@ export const layer = Layer.effect(
       return Array.from(pending.values(), (x) => x.info)
     })
 
-    // kilocode_change start - body lives in @/kilocode/question/KiloQuestion.makeDismissAll
-    const dismissAll = KiloQuestion.makeDismissAll({
+    // stratacode_change start - body lives in @/stratacode/question/StrataQuestion.makeDismissAll
+    const dismissAll = StrataQuestion.makeDismissAll({
       state,
       publishRejected: (entry) =>
         bus.publish(Event.Rejected, { sessionID: entry.info.sessionID, requestID: entry.info.id }),
       makeError: () => new RejectedError(),
     })
-    // kilocode_change end
+    // stratacode_change end
 
-    return Service.of({ ask, reply, reject, list, dismissAll }) // kilocode_change
+    return Service.of({ ask, reply, reject, list, dismissAll }) // stratacode_change
   }),
 )
 
 export const defaultLayer = layer.pipe(Layer.provide(Bus.layer))
 
-// kilocode_change start - legacy promise helpers for Kilo callsites
+// stratacode_change start - legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 export const list = () => runPromise((svc) => svc.list())
 export const ask = (input: Parameters<Interface["ask"]>[0]) => runPromise((svc) => svc.ask(input))
 export const reply = (input: Parameters<Interface["reply"]>[0]) => runPromise((svc) => svc.reply(input))
 export const reject = (requestID: QuestionID) => runPromise((svc) => svc.reject(requestID))
 export const dismissAll = (sessionID: string) => runPromise((svc) => svc.dismissAll(SessionID.make(sessionID)))
-// kilocode_change end
+// stratacode_change end
 
 export * as Question from "."

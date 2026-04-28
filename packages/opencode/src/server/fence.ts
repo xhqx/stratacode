@@ -5,7 +5,7 @@ import { Workspace } from "@/control-plane/workspace"
 import type { WorkspaceID } from "@/control-plane/schema"
 import { Log } from "@/util"
 
-const HEADER = "x-kilo-sync"
+const HEADER = "x-strata-sync"
 type State = Record<string, number>
 const log = Log.create({ service: "fence" })
 

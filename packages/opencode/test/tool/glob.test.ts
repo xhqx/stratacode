@@ -34,7 +34,7 @@ const ctx = {
   ask: () => Effect.void,
 }
 
-// kilocode_change - skip on windows: address windows ci failures #9496
+// stratacode_change - skip on windows: address windows ci failures #9496
 const unix = process.platform !== "win32" ? it.live : it.live.skip
 
 describe("tool.glob", () => {
@@ -84,7 +84,7 @@ describe("tool.glob", () => {
     ),
   )
 
-  // kilocode_change start - absolute glob patterns outside the project
+  // stratacode_change start - absolute glob patterns outside the project
   unix("supports absolute glob patterns outside the project", () =>
     provideTmpdirInstance(
       (_dir) =>
@@ -108,5 +108,5 @@ describe("tool.glob", () => {
       { git: true },
     ),
   )
-  // kilocode_change end
+  // stratacode_change end
 })

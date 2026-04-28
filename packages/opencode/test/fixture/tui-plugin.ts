@@ -1,4 +1,4 @@
-import { createKiloClient } from "@kilocode/sdk/v2"
+import { createStrataClient } from "@stratacode/sdk/v2"
 import { RGBA, type CliRenderer } from "@opentui/core"
 import { createPluginKeybind } from "../../src/cli/cmd/tui/context/plugin-keybinds"
 import type { HostPluginApi } from "../../src/cli/cmd/tui/plugin/slots"
@@ -113,7 +113,7 @@ export function createTuiPluginApi(opts: Opts = {}): HostPluginApi {
   const kv: Record<string, unknown> = {}
   const count = opts.count
   const ctrl = new AbortController()
-  const own = createKiloClient({
+  const own = createStrataClient({
     baseUrl: "http://localhost:4096",
   })
   const fallback = () => own

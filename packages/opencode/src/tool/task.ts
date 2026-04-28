@@ -8,8 +8,8 @@ import { Agent } from "../agent/agent"
 import type { SessionPrompt } from "../session/prompt"
 import { Config } from "../config"
 import { Effect } from "effect"
-import { KiloTask } from "../kilocode/tool/task" // kilocode_change
-import { KiloCostPropagation } from "../kilocode/session/cost-propagation" // kilocode_change
+import { StrataTask } from "../stratacode/tool/task" // stratacode_change
+import { StrataCostPropagation } from "../stratacode/session/cost-propagation" // stratacode_change
 
 export interface TaskPromptOps {
   cancel(sessionID: SessionID): void
@@ -58,18 +58,18 @@ export const TaskTool = Tool.define(
       if (!next) {
         return yield* Effect.fail(new Error(`Unknown agent type: ${params.subagent_type} is not a valid agent type`))
       }
-      // kilocode_change start — reject primary agents; only subagent/all modes allowed
-      KiloTask.validate(next, params.subagent_type)
-      // kilocode_change end
+      // stratacode_change start — reject primary agents; only subagent/all modes allowed
+      StrataTask.validate(next, params.subagent_type)
+      // stratacode_change end
 
       const canTask = next.permission.some((rule) => rule.permission === id)
       const canTodo = next.permission.some((rule) => rule.permission === "todowrite")
 
-      // kilocode_change start — inherit edit/bash/MCP restrictions from calling agent
+      // stratacode_change start — inherit edit/bash/MCP restrictions from calling agent
       const caller = yield* agent.get(ctx.agent)
       const parent = yield* Effect.promise(() => Session.get(SessionID.make(ctx.sessionID)))
-      const rules = KiloTask.inherited({ caller, session: parent, mcp: cfg.mcp })
-      // kilocode_change end
+      const rules = StrataTask.inherited({ caller, session: parent, mcp: cfg.mcp })
+      // stratacode_change end
 
       const taskID = params.task_id
       const session = taskID
@@ -104,31 +104,31 @@ export const TaskTool = Tool.define(
               action: "allow" as const,
               permission: item,
             })) ?? []),
-            // kilocode_change start — deny task + propagate caller restrictions
-            ...KiloTask.permissions(rules),
-            // kilocode_change end
+            // stratacode_change start — deny task + propagate caller restrictions
+            ...StrataTask.permissions(rules),
+            // stratacode_change end
           ],
         }))
 
       const msg = yield* Effect.sync(() => MessageV2.get({ sessionID: ctx.sessionID, messageID: ctx.messageID }))
       if (msg.info.role !== "assistant") return yield* Effect.fail(new Error("Not an assistant message"))
 
-      // kilocode_change start — prefer user's CLI-saved pick for this subagent
-      const saved = yield* KiloTask.resolveModel(next.name)
+      // stratacode_change start — prefer user's CLI-saved pick for this subagent
+      const saved = yield* StrataTask.resolveModel(next.name)
       const model = saved ??
         next.model ?? {
           modelID: msg.info.modelID,
           providerID: msg.info.providerID,
         }
       const variant = saved?.variant ?? (saved ? undefined : next.variant)
-      // kilocode_change end
+      // stratacode_change end
 
       yield* ctx.metadata({
         title: params.description,
         metadata: {
           sessionId: nextSession.id,
           model,
-          variant, // kilocode_change
+          variant, // stratacode_change
         },
       })
 
@@ -142,12 +142,12 @@ export const TaskTool = Tool.define(
       }
 
       return yield* Effect.acquireUseRelease(
-        // kilocode_change start - snapshot child cost so we propagate only the delta on resume (#6321)
+        // stratacode_change start - snapshot child cost so we propagate only the delta on resume (#6321)
         Effect.gen(function* () {
           ctx.abort.addEventListener("abort", cancel)
-          return yield* KiloCostPropagation.childCost(sessions, nextSession.id)
+          return yield* StrataCostPropagation.childCost(sessions, nextSession.id)
         }),
-        // kilocode_change end
+        // stratacode_change end
         () =>
           Effect.gen(function* () {
             const parts = yield* ops.resolvePromptParts(params.prompt)
@@ -158,7 +158,7 @@ export const TaskTool = Tool.define(
                 modelID: model.modelID,
                 providerID: model.providerID,
               },
-              variant, // kilocode_change
+              variant, // stratacode_change
               agent: next.name,
               tools: {
                 ...(canTodo ? {} : { todowrite: false }),
@@ -173,7 +173,7 @@ export const TaskTool = Tool.define(
               metadata: {
                 sessionId: nextSession.id,
                 model,
-                variant, // kilocode_change
+                variant, // stratacode_change
               },
               output: [
                 `task_id: ${nextSession.id} (for resuming to continue this task if needed)`,
@@ -184,14 +184,14 @@ export const TaskTool = Tool.define(
               ].join("\n"),
             }
           }),
-        // kilocode_change start - propagate subagent cost delta to parent on every exit path (#6321)
+        // stratacode_change start - propagate subagent cost delta to parent on every exit path (#6321)
         (costBefore) =>
           Effect.gen(function* () {
             ctx.abort.removeEventListener("abort", cancel)
-            const costAfter = yield* KiloCostPropagation.childCost(sessions, nextSession.id)
-            yield* KiloCostPropagation.propagate(sessions, ctx.sessionID, ctx.messageID, costAfter - costBefore)
+            const costAfter = yield* StrataCostPropagation.childCost(sessions, nextSession.id)
+            yield* StrataCostPropagation.propagate(sessions, ctx.sessionID, ctx.messageID, costAfter - costBefore)
           }),
-        // kilocode_change end
+        // stratacode_change end
       )
     })
 

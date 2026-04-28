@@ -1,5 +1,5 @@
 interface ImportMetaEnv {
-  readonly KILO_CHANNEL: string
+  readonly STRATA_CHANNEL: string
 }
 
 interface ImportMeta {

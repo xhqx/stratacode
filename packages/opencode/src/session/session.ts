@@ -8,7 +8,7 @@ import { type ProviderMetadata, type LanguageModelUsage } from "ai"
 import { Flag } from "../flag/flag"
 import { InstallationVersion } from "../installation/version"
 
-import { Database, NotFoundError, eq, and, gte, isNull, desc, like } from "../storage" // kilocode_change - listGlobal delegated to KiloSession
+import { Database, NotFoundError, eq, and, gte, isNull, desc, like } from "../storage" // stratacode_change - listGlobal delegated to StrataSession
 import { SyncEvent } from "../sync"
 import { PartTable, SessionTable } from "./session.sql"
 import { Storage } from "@/storage"
@@ -26,11 +26,11 @@ import type { Provider } from "@/provider"
 import { Permission } from "@/permission"
 import { Global } from "@/global"
 import { Effect, Layer, Option, Context } from "effect"
-// kilocode_change start - legacy promise helpers + kilocode extensions
+// stratacode_change start - legacy promise helpers + stratacode extensions
 import { makeRuntime } from "@/effect/run-service"
-import { KiloSession, kiloSessionFork } from "@/kilocode/session"
+import { StrataSession, strataSessionFork } from "@/stratacode/session"
 import { fn } from "@/util/fn"
-// kilocode_change end
+// stratacode_change end
 
 const log = Log.create({ service: "session" })
 
@@ -130,7 +130,7 @@ export const Info = z
         additions: z.number(),
         deletions: z.number(),
         files: z.number(),
-        diffs: Snapshot.SummaryFileDiff.zod.array().optional(), // kilocode_change
+        diffs: Snapshot.SummaryFileDiff.zod.array().optional(), // stratacode_change
       })
       .optional(),
     share: z
@@ -174,7 +174,7 @@ export type ProjectInfo = z.output<typeof ProjectInfo>
 
 export const GlobalInfo = Info.extend({
   project: ProjectInfo.nullable(),
-  worktreeName: z.string().optional(), // kilocode_change - basename of the specific worktree directory
+  worktreeName: z.string().optional(), // stratacode_change - basename of the specific worktree directory
 }).meta({
   ref: "GlobalSession",
 })
@@ -185,7 +185,7 @@ export const CreateInput = z
     parentID: SessionID.zod.optional(),
     title: z.string().optional(),
     permission: Info.shape.permission,
-    platform: z.string().optional(), // kilocode_change - per-session platform override for telemetry attribution
+    platform: z.string().optional(), // stratacode_change - per-session platform override for telemetry attribution
     workspaceID: WorkspaceID.zod.optional(),
   })
   .optional()
@@ -255,15 +255,15 @@ export const Event = {
       error: z.lazy(() => (MessageV2.Assistant.zod as unknown as z.ZodObject<any>).shape.error),
     }),
   ),
-  // kilocode_change start
-  TurnOpen: KiloSession.Event.TurnOpen,
-  TurnClose: KiloSession.Event.TurnClose,
-  // kilocode_change end
+  // stratacode_change start
+  TurnOpen: StrataSession.Event.TurnOpen,
+  TurnClose: StrataSession.Event.TurnClose,
+  // stratacode_change end
 }
 
 export function plan(input: { slug: string; time: { created: number } }) {
   const base = Instance.project.vcs
-    ? path.join(Instance.worktree, ".kilo", "plans") // kilocode_change
+    ? path.join(Instance.worktree, ".strata", "plans") // stratacode_change
     : path.join(Global.Path.data, "plans")
   return path.join(base, [input.time.created, input.slug].join("-") + ".md")
 }
@@ -272,7 +272,7 @@ export const getUsage = (input: {
   model: Provider.Model
   usage: LanguageModelUsage
   metadata?: ProviderMetadata
-  provider?: Provider.Info // kilocode_change
+  provider?: Provider.Info // stratacode_change
 }) => {
   const safe = (value: number) => {
     if (!Number.isFinite(value)) return 0
@@ -318,14 +318,14 @@ export const getUsage = (input: {
     },
   }
 
-  // kilocode_change start - Use provider-reported cost when available for OpenRouter/Kilo
-  const reported = KiloSession.providerCost({
+  // stratacode_change start - Use provider-reported cost when available for OpenRouter/Strata
+  const reported = StrataSession.providerCost({
     metadata: input.metadata,
     provider: input.provider,
     providerID: input.model.providerID,
   })
   if (reported !== undefined) return { cost: safe(reported), tokens }
-  // kilocode_change end
+  // stratacode_change end
 
   const costInfo =
     input.model.cost?.experimentalOver200K && tokens.input + tokens.cache.read > 200_000
@@ -358,7 +358,7 @@ export interface Interface {
     parentID?: SessionID
     title?: string
     permission?: Permission.Ruleset
-    platform?: string // kilocode_change - per-session platform override for telemetry attribution
+    platform?: string // stratacode_change - per-session platform override for telemetry attribution
     workspaceID?: WorkspaceID
   }) => Effect.Effect<Info>
   readonly fork: (input: { sessionID: SessionID; messageID?: MessageID }) => Effect.Effect<Info>
@@ -442,7 +442,7 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service> =
 
       yield* Effect.sync(() => SyncEvent.run(Event.Created, { sessionID: result.id, info: result }))
 
-      if (!Flag.KILO_EXPERIMENTAL_WORKSPACES) {
+      if (!Flag.STRATA_EXPERIMENTAL_WORKSPACES) {
         // This only exist for backwards compatibility. We should not be
         // manually publishing this event; it is a sync event now
         yield* bus.publish(Event.Updated, {
@@ -460,7 +460,7 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service> =
       return fromRow(row)
     })
 
-    // kilocode_change start - scope by project_id when instance context is available
+    // stratacode_change start - scope by project_id when instance context is available
     const children = Effect.fn("Session.children")(function* (parentID: SessionID) {
       const ctx = yield* Effect.try({ try: () => Instance.current, catch: () => undefined }).pipe(Effect.option)
       const conditions = [eq(SessionTable.parent_id, parentID)]
@@ -474,7 +474,7 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service> =
       )
       return rows.map(fromRow)
     })
-    // kilocode_change end
+    // stratacode_change end
 
     const remove: Interface["remove"] = Effect.fnUntraced(function* (sessionID: SessionID) {
       try {
@@ -493,15 +493,15 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service> =
           Effect.catchCause(() => Effect.succeed(false)),
         )
 
-        // kilocode_change start
-        yield* Effect.promise(() => KiloSession.removeSession(sessionID)).pipe(Effect.ignore)
-        KiloSession.clearPlatformOverride(sessionID)
+        // stratacode_change start
+        yield* Effect.promise(() => StrataSession.removeSession(sessionID)).pipe(Effect.ignore)
+        StrataSession.clearPlatformOverride(sessionID)
         if (hasInstance) {
           void Promise.all([import("@/effect/app-runtime"), import("./run-state")]).then(([app, run]) =>
             app.AppRuntime.runPromise(run.SessionRunState.Service.use((svc) => svc.cancel(sessionID))).catch(() => {}),
           )
         }
-        // kilocode_change end
+        // stratacode_change end
         yield* Effect.sync(() => {
           SyncEvent.run(Event.Deleted, { sessionID, info: session }, { publish: hasInstance })
           SyncEvent.remove(sessionID)
@@ -513,22 +513,22 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service> =
 
     const updateMessage = <T extends MessageV2.Info>(msg: T): Effect.Effect<T> =>
       Effect.gen(function* () {
-        // kilocode_change start - ignore FK errors when session was deleted while processor was still running
+        // stratacode_change start - ignore FK errors when session was deleted while processor was still running
         yield* Effect.sync(() =>
-          KiloSession.runSyncSafe(
+          StrataSession.runSyncSafe(
             () => SyncEvent.run(MessageV2.Event.Updated, { sessionID: msg.sessionID, info: msg }),
             { type: "message update", id: msg.id, sessionID: msg.sessionID },
           ),
         )
-        // kilocode_change end
+        // stratacode_change end
         return msg
       }).pipe(Effect.withSpan("Session.updateMessage"))
 
     const updatePart = <T extends MessageV2.Part>(part: T): Effect.Effect<T> =>
       Effect.gen(function* () {
-        // kilocode_change start - ignore FK errors when session was deleted while processor was still running
+        // stratacode_change start - ignore FK errors when session was deleted while processor was still running
         yield* Effect.sync(() =>
-          KiloSession.runSyncSafe(
+          StrataSession.runSyncSafe(
             () =>
               SyncEvent.run(MessageV2.Event.PartUpdated, {
                 sessionID: part.sessionID,
@@ -538,7 +538,7 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service> =
             { type: "part update", id: part.id, sessionID: part.sessionID },
           ),
         )
-        // kilocode_change end
+        // stratacode_change end
         return part
       }).pipe(Effect.withSpan("Session.updatePart"))
 
@@ -569,7 +569,7 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service> =
       parentID?: SessionID
       title?: string
       permission?: Permission.Ruleset
-      platform?: string // kilocode_change - per-session platform override for telemetry attribution
+      platform?: string // stratacode_change - per-session platform override for telemetry attribution
       workspaceID?: WorkspaceID
     }) {
       const directory = yield* InstanceState.directory
@@ -579,13 +579,13 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service> =
         directory,
         title: input?.title,
         permission: input?.permission,
-        workspaceID: input?.workspaceID ?? workspace, // kilocode_change - allow explicit override
+        workspaceID: input?.workspaceID ?? workspace, // stratacode_change - allow explicit override
       })
-      // kilocode_change start - store platform override for session ingest
+      // stratacode_change start - store platform override for session ingest
       if (input?.platform) {
-        KiloSession.setPlatformOverride(session.id, input.platform)
+        StrataSession.setPlatformOverride(session.id, input.platform)
       }
-      // kilocode_change end
+      // stratacode_change end
       return session
     })
 
@@ -766,18 +766,18 @@ export function* list(input?: {
   limit?: number
 }) {
   const project = Instance.project
-  const conditions = KiloSession.filters({ projectID: project.id, directory: input?.directory }) // kilocode_change
+  const conditions = StrataSession.filters({ projectID: project.id, directory: input?.directory }) // stratacode_change
 
   if (input?.workspaceID) {
     conditions.push(eq(SessionTable.workspace_id, input.workspaceID))
   }
-  // kilocode_change start - directory filtering handled by KiloSession.filters above
-  // if (!Flag.KILO_EXPERIMENTAL_WORKSPACES) {
+  // stratacode_change start - directory filtering handled by StrataSession.filters above
+  // if (!Flag.STRATA_EXPERIMENTAL_WORKSPACES) {
   //   if (input?.directory) {
   //     conditions.push(eq(SessionTable.directory, input.directory))
   //   }
   // }
-  // kilocode_change end
+  // stratacode_change end
 
   if (input?.roots) {
     conditions.push(isNull(SessionTable.parent_id))
@@ -805,7 +805,7 @@ export function* list(input?: {
   }
 }
 
-// kilocode_change start - delegate to KiloSession.listGlobal (adds projectID worktree family + directories[])
+// stratacode_change start - delegate to StrataSession.listGlobal (adds projectID worktree family + directories[])
 export function* listGlobal(input?: {
   projectID?: string
   directory?: string
@@ -817,15 +817,15 @@ export function* listGlobal(input?: {
   limit?: number
   archived?: boolean
 }) {
-  yield* KiloSession.listGlobal<GlobalInfo>({ ...input, fromRow })
+  yield* StrataSession.listGlobal<GlobalInfo>({ ...input, fromRow })
 }
-// kilocode_change end
+// stratacode_change end
 
-// kilocode_change start - keep legacy promise helpers for Kilo callsites
+// stratacode_change start - keep legacy promise helpers for Strata callsites
 const { runPromise } = makeRuntime(Service, defaultLayer)
 
 export const create = fn(CreateInput, (input) => runPromise((svc) => svc.create(input)))
-export const fork = kiloSessionFork
+export const fork = strataSessionFork
 export const get = fn(GetInput, (id) => runPromise((svc) => svc.get(id)))
 export const setTitle = fn(SetTitleInput, (input) => runPromise((svc) => svc.setTitle(input)))
 export const setArchived = fn(SetArchivedInput, (input) => runPromise((svc) => svc.setArchived(input)))
@@ -837,7 +837,7 @@ export const messages = fn(MessagesInput, (input) => runPromise((svc) => svc.mes
 export const children = fn(ChildrenInput, (id) => runPromise((svc) => svc.children(id)))
 export const remove = fn(RemoveInput, (id) => runPromise((svc) => svc.remove(id)))
 export async function updateMessage<T extends MessageV2.Info>(msg: T): Promise<T> {
-  MessageV2.Info.zod.parse(msg) // kilocode_change
+  MessageV2.Info.zod.parse(msg) // stratacode_change
   return runPromise((svc) => svc.updateMessage(msg))
 }
 
@@ -851,7 +851,7 @@ export const removePart = fn(
 )
 
 export async function updatePart<T extends MessageV2.Part>(part: T): Promise<T> {
-  MessageV2.Part.zod.parse(part) // kilocode_change
+  MessageV2.Part.zod.parse(part) // stratacode_change
   return runPromise((svc) => svc.updatePart(part))
 }
 
@@ -865,4 +865,4 @@ export const updatePartDelta = fn(
   }),
   (input) => runPromise((svc) => svc.updatePartDelta(input)),
 )
-// kilocode_change end
+// stratacode_change end

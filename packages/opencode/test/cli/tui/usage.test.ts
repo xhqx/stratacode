@@ -1,6 +1,6 @@
-// kilocode_change - new file
+// stratacode_change - new file
 import { describe, expect, test } from "bun:test"
-import type { AssistantMessage, Message, UserMessage } from "@kilocode/sdk/v2"
+import type { AssistantMessage, Message, UserMessage } from "@stratacode/sdk/v2"
 import { formatCount, getUsage } from "../../../src/cli/cmd/tui/routes/session/usage"
 
 function assistant(id: string, input: number, output: number, read: number): AssistantMessage {

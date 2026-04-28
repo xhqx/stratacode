@@ -91,19 +91,19 @@ export const rpc = {
 
     await Instance.disposeAll()
     if (server) await server.stop(true)
-    // kilocode_change start - Clear the Rpc message channel so the worker's event loop can drain and
+    // stratacode_change start - Clear the Rpc message channel so the worker's event loop can drain and
     // exit naturally. Without this, the active onmessage handle keeps the
     // worker alive even after all async work is done.
     onmessage = null
-    // kilocode_change end
+    // stratacode_change end
   },
 }
 
 Rpc.listen(rpc)
 
 function getAuthorizationHeader(): string | undefined {
-  const password = Flag.KILO_SERVER_PASSWORD
+  const password = Flag.STRATA_SERVER_PASSWORD
   if (!password) return undefined
-  const username = Flag.KILO_SERVER_USERNAME ?? "kilo" // kilocode_change
+  const username = Flag.STRATA_SERVER_USERNAME ?? "strata" // stratacode_change
   return `Basic ${btoa(`${username}:${password}`)}`
 }

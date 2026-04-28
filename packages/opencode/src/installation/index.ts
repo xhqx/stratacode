@@ -54,7 +54,7 @@ export const Info = z
   })
 export type Info = z.infer<typeof Info>
 
-export const USER_AGENT = `kilo/${InstallationChannel}/${InstallationVersion}/${Flag.KILO_CLIENT}` // kilocode_change
+export const USER_AGENT = `strata/${InstallationChannel}/${InstallationVersion}/${Flag.STRATA_CLIENT}` // stratacode_change
 
 export function isPreview() {
   return InstallationChannel !== "latest"
@@ -133,18 +133,18 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
       )
 
       const getBrewFormula = Effect.fnUntraced(function* () {
-        // kilocode_change start
-        const tapFormula = yield* text(["brew", "list", "--formula", "Kilo-Org/tap/kilo"])
-        if (tapFormula.includes("kilo")) return "Kilo-Org/tap/kilo"
-        const coreFormula = yield* text(["brew", "list", "--formula", "kilo"])
-        if (coreFormula.includes("kilo")) return "kilo"
-        return "kilo"
-        // kilocode_change end
+        // stratacode_change start
+        const tapFormula = yield* text(["brew", "list", "--formula", "Strata-Org/tap/strata"])
+        if (tapFormula.includes("strata")) return "Strata-Org/tap/strata"
+        const coreFormula = yield* text(["brew", "list", "--formula", "strata"])
+        if (coreFormula.includes("strata")) return "strata"
+        return "strata"
+        // stratacode_change end
       })
 
       const upgradeCurl = Effect.fnUntraced(
         function* (target: string) {
-          const response = yield* httpOk.execute(HttpClientRequest.get("https://kilo.ai/install")) // kilocode_change
+          const response = yield* httpOk.execute(HttpClientRequest.get("https://strata.ai/install")) // stratacode_change
           const body = yield* response.text
           const bodyBytes = new TextEncoder().encode(body)
           const proc = ChildProcess.make("bash", [], {
@@ -165,7 +165,7 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
       )
 
       const methodImpl = Effect.fn("Installation.method")(function* () {
-        if (process.execPath.includes(path.join(".kilo", "bin"))) return "curl" as Method // kilocode_change
+        if (process.execPath.includes(path.join(".strata", "bin"))) return "curl" as Method // stratacode_change
         if (process.execPath.includes(path.join(".local", "bin"))) return "curl" as Method
         const exec = process.execPath.toLowerCase()
 
@@ -174,11 +174,11 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
           { name: "yarn", command: () => text(["yarn", "global", "list"]) },
           { name: "pnpm", command: () => text(["pnpm", "list", "-g", "--depth=0"]) },
           { name: "bun", command: () => text(["bun", "pm", "ls", "-g"]) },
-          // kilocode_change start
-          { name: "brew", command: () => text(["brew", "list", "--formula", "kilo"]) },
-          { name: "scoop", command: () => text(["scoop", "list", "kilo"]) },
-          { name: "choco", command: () => text(["choco", "list", "--limit-output", "kilo"]) },
-          // kilocode_change end
+          // stratacode_change start
+          { name: "brew", command: () => text(["brew", "list", "--formula", "strata"]) },
+          { name: "scoop", command: () => text(["scoop", "list", "strata"]) },
+          { name: "choco", command: () => text(["choco", "list", "--limit-output", "strata"]) },
+          // stratacode_change end
         ]
 
         checks.sort((a, b) => {
@@ -192,7 +192,7 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
         for (const check of checks) {
           const output = yield* check.command()
           const installedName =
-            check.name === "brew" || check.name === "choco" || check.name === "scoop" ? "kilo" : "kilo" // kilocode_change
+            check.name === "brew" || check.name === "choco" || check.name === "scoop" ? "strata" : "strata" // stratacode_change
           if (output.includes(installedName)) {
             return check.name
           }
@@ -212,8 +212,8 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
             return info.formulae[0].versions.stable
           }
           const response = yield* httpOk.execute(
-            HttpClientRequest.get("https://formulae.brew.sh/api/formula/kilo.json").pipe(
-              // kilocode_change
+            HttpClientRequest.get("https://formulae.brew.sh/api/formula/strata.json").pipe(
+              // stratacode_change
               HttpClientRequest.acceptJson,
             ),
           )
@@ -227,7 +227,7 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
           const registry = reg.endsWith("/") ? reg.slice(0, -1) : reg
           const channel = InstallationChannel
           const response = yield* httpOk.execute(
-            HttpClientRequest.get(`${registry}/@kilocode/cli/${channel}`).pipe(HttpClientRequest.acceptJson), // kilocode_change
+            HttpClientRequest.get(`${registry}/@stratacode/cli/${channel}`).pipe(HttpClientRequest.acceptJson), // stratacode_change
           )
           const data = yield* HttpClientResponse.schemaBodyJson(NpmPackage)(response)
           return data.version
@@ -236,7 +236,7 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
         if (detectedMethod === "choco") {
           const response = yield* httpOk.execute(
             HttpClientRequest.get(
-              "https://community.chocolatey.org/api/v2/Packages?$filter=Id%20eq%20%27kilo%27%20and%20IsLatestVersion&$select=Version", // kilocode_change
+              "https://community.chocolatey.org/api/v2/Packages?$filter=Id%20eq%20%27strata%27%20and%20IsLatestVersion&$select=Version", // stratacode_change
             ).pipe(HttpClientRequest.setHeaders({ Accept: "application/json;odata=verbose" })),
           )
           const data = yield* HttpClientResponse.schemaBodyJson(ChocoPackage)(response)
@@ -246,7 +246,7 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
         if (detectedMethod === "scoop") {
           const response = yield* httpOk.execute(
             HttpClientRequest.get(
-              "https://raw.githubusercontent.com/ScoopInstaller/Main/master/bucket/kilo.json", // kilocode_change
+              "https://raw.githubusercontent.com/ScoopInstaller/Main/master/bucket/strata.json", // stratacode_change
             ).pipe(HttpClientRequest.setHeaders({ Accept: "application/json" })),
           )
           const data = yield* HttpClientResponse.schemaBodyJson(ScoopManifest)(response)
@@ -254,8 +254,8 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
         }
 
         const response = yield* httpOk.execute(
-          HttpClientRequest.get("https://api.github.com/repos/Kilo-Org/kilocode/releases/latest").pipe(
-            // kilocode_change
+          HttpClientRequest.get("https://api.github.com/repos/Strata-Org/stratacode/releases/latest").pipe(
+            // stratacode_change
             HttpClientRequest.acceptJson,
           ),
         )
@@ -270,24 +270,24 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
             result = yield* upgradeCurl(target)
             break
           case "npm":
-            result = yield* run(["npm", "install", "-g", `@kilocode/cli@${target}`]) // kilocode_change
+            result = yield* run(["npm", "install", "-g", `@stratacode/cli@${target}`]) // stratacode_change
             break
           case "pnpm":
-            result = yield* run(["pnpm", "install", "-g", `@kilocode/cli@${target}`]) // kilocode_change
+            result = yield* run(["pnpm", "install", "-g", `@stratacode/cli@${target}`]) // stratacode_change
             break
           case "bun":
-            result = yield* run(["bun", "install", "-g", `@kilocode/cli@${target}`]) // kilocode_change
+            result = yield* run(["bun", "install", "-g", `@stratacode/cli@${target}`]) // stratacode_change
             break
           case "brew": {
             const formula = yield* getBrewFormula()
             const env = { HOMEBREW_NO_AUTO_UPDATE: "1" }
             if (formula.includes("/")) {
-              const tap = yield* run(["brew", "tap", "Kilo-Org/tap"], { env }) // kilocode_change
+              const tap = yield* run(["brew", "tap", "Strata-Org/tap"], { env }) // stratacode_change
               if (tap.code !== 0) {
                 result = tap
                 break
               }
-              const repo = yield* text(["brew", "--repo", "Kilo-Org/tap"]) // kilocode_change
+              const repo = yield* text(["brew", "--repo", "Strata-Org/tap"]) // stratacode_change
               const dir = repo.trim()
               if (dir) {
                 const pull = yield* run(["git", "pull", "--ff-only"], { cwd: dir, env })
@@ -301,10 +301,10 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
             break
           }
           case "choco":
-            result = yield* run(["choco", "upgrade", "kilo", `--version=${target}`, "-y"]) // kilocode_change
+            result = yield* run(["choco", "upgrade", "strata", `--version=${target}`, "-y"]) // stratacode_change
             break
           case "scoop":
-            result = yield* run(["scoop", "install", `kilo@${target}`]) // kilocode_change
+            result = yield* run(["scoop", "install", `strata@${target}`]) // stratacode_change
             break
           default:
             return yield* new UpgradeFailedError({ stderr: `Unknown method: ${m}` })

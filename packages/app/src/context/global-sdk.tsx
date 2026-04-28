@@ -1,4 +1,4 @@
-import type { Event } from "@kilocode/sdk/v2/client"
+import type { Event } from "@stratacode/sdk/v2/client"
 import { createSimpleContext } from "@opencode-ai/ui/context"
 import { createGlobalEmitter } from "@solid-primitives/event-bus"
 import { makeEventListener } from "@solid-primitives/event-listener"

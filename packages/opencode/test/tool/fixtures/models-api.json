@@ -23995,13 +23995,13 @@
       }
     }
   },
-  "kilo": {
-    "id": "kilo",
-    "env": ["KILO_API_KEY"],
+  "strata": {
+    "id": "strata",
+    "env": ["STRATA_API_KEY"],
     "npm": "@ai-sdk/openai-compatible",
-    "api": "https://api.kilo.ai/api/gateway",
-    "name": "Kilo Gateway",
-    "doc": "https://kilo.ai",
+    "api": "https://api.strata.ai/api/gateway",
+    "name": "Strata Gateway",
+    "doc": "https://strata.ai",
     "models": {
       "giga-potato": {
         "id": "giga-potato",
@@ -26487,9 +26487,9 @@
         "cost": { "input": 0.017, "output": 0.11 },
         "limit": { "context": 131000, "output": 32768 }
       },
-      "kilo/auto": {
-        "id": "kilo/auto",
-        "name": "Kilo: Auto",
+      "strata/auto": {
+        "id": "strata/auto",
+        "name": "Strata: Auto",
         "attachment": true,
         "reasoning": true,
         "tool_call": true,
@@ -26501,9 +26501,9 @@
         "cost": { "input": 5, "output": 25 },
         "limit": { "context": 1000000, "output": 128000 }
       },
-      "kilo/auto-free": {
-        "id": "kilo/auto-free",
-        "name": "Deprecated Kilo Auto Free",
+      "strata/auto-free": {
+        "id": "strata/auto-free",
+        "name": "Deprecated Strata Auto Free",
         "attachment": false,
         "reasoning": true,
         "tool_call": true,
@@ -26515,9 +26515,9 @@
         "cost": { "input": 0, "output": 0 },
         "limit": { "context": 204800, "output": 131072 }
       },
-      "kilo/auto-small": {
-        "id": "kilo/auto-small",
-        "name": "Deprecated Kilo Auto Small",
+      "strata/auto-small": {
+        "id": "strata/auto-small",
+        "name": "Deprecated Strata Auto Small",
         "attachment": true,
         "reasoning": true,
         "tool_call": true,
@@ -26977,9 +26977,9 @@
         "cost": { "input": 0.1, "output": 0.2 },
         "limit": { "context": 128000, "output": 2048 }
       },
-      "kilo-auto/free": {
-        "id": "kilo-auto/free",
-        "name": "Kilo Auto Free",
+      "strata-auto/free": {
+        "id": "strata-auto/free",
+        "name": "Strata Auto Free",
         "attachment": false,
         "reasoning": true,
         "tool_call": true,
@@ -26991,9 +26991,9 @@
         "cost": { "input": 0, "output": 0 },
         "limit": { "context": 204800, "output": 131072 }
       },
-      "kilo-auto/balanced": {
-        "id": "kilo-auto/balanced",
-        "name": "Kilo Auto Balanced",
+      "strata-auto/balanced": {
+        "id": "strata-auto/balanced",
+        "name": "Strata Auto Balanced",
         "attachment": false,
         "reasoning": true,
         "tool_call": true,
@@ -27005,9 +27005,9 @@
         "cost": { "input": 0.6, "output": 3 },
         "limit": { "context": 204800, "output": 131072 }
       },
-      "kilo-auto/small": {
-        "id": "kilo-auto/small",
-        "name": "Kilo Auto Small",
+      "strata-auto/small": {
+        "id": "strata-auto/small",
+        "name": "Strata Auto Small",
         "attachment": true,
         "reasoning": true,
         "tool_call": true,
@@ -27019,9 +27019,9 @@
         "cost": { "input": 0.05, "output": 0.4 },
         "limit": { "context": 400000, "output": 128000 }
       },
-      "kilo-auto/frontier": {
-        "id": "kilo-auto/frontier",
-        "name": "Kilo Auto Frontier",
+      "strata-auto/frontier": {
+        "id": "strata-auto/frontier",
+        "name": "Strata Auto Frontier",
         "attachment": true,
         "reasoning": true,
         "tool_call": true,

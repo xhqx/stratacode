@@ -39,13 +39,13 @@ export function ide() {
 }
 
 export function alreadyInstalled() {
-  return process.env["KILO_CALLER"] === "vscode" || process.env["KILO_CALLER"] === "vscode-insiders"
+  return process.env["STRATA_CALLER"] === "vscode" || process.env["STRATA_CALLER"] === "vscode-insiders"
 }
 
-// kilocode_change start - Kilo's VS Code extension bundles the CLI; auto-install from CLI is not applicable
+// stratacode_change start - Strata's VS Code extension bundles the CLI; auto-install from CLI is not applicable
 export async function install(_ide: (typeof SUPPORTED_IDES)[number]["name"]) {
   throw new AlreadyInstalledError({})
 }
-// kilocode_change end
+// stratacode_change end
 
 export * as Ide from "."

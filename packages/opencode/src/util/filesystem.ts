@@ -1,9 +1,9 @@
 import { chmod, mkdir, readFile, stat as statFile, writeFile } from "fs/promises"
 import { createWriteStream, existsSync, statSync } from "fs"
 import { realpathSync } from "fs"
-// kilocode_change start - harden containment checks
+// stratacode_change start - harden containment checks
 import { dirname, isAbsolute, join, relative, resolve as pathResolve, sep, win32 } from "path"
-// kilocode_change end
+// stratacode_change end
 import { Readable } from "stream"
 import { pipeline } from "stream/promises"
 import { Glob } from "@opencode-ai/shared/util/glob"
@@ -164,10 +164,10 @@ export function overlaps(a: string, b: string) {
 }
 
 export function contains(parent: string, child: string) {
-  // kilocode_change start - reject cross-drive and escaped relative paths
+  // stratacode_change start - reject cross-drive and escaped relative paths
   const rel = relative(parent, child)
   return rel === "" || (!isAbsolute(rel) && rel !== ".." && !rel.startsWith(`..${sep}`))
-  // kilocode_change end
+  // stratacode_change end
 }
 
 export async function findUp(

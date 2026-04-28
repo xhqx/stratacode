@@ -69,9 +69,9 @@ describe("util.process", () => {
   })
 
   test("merges environment overrides", async () => {
-    const out = await Process.run(node('process.stdout.write(process.env.KILO_TEST ?? "")'), {
+    const out = await Process.run(node('process.stdout.write(process.env.STRATA_TEST ?? "")'), {
       env: {
-        KILO_TEST: "set",
+        STRATA_TEST: "set",
       },
     })
     expect(out.stdout.toString()).toBe("set")
@@ -80,15 +80,15 @@ describe("util.process", () => {
   test("uses shell in run on Windows", async () => {
     if (process.platform !== "win32") return
 
-    const out = await Process.run(["set", "KILO_TEST_SHELL"], {
+    const out = await Process.run(["set", "STRATA_TEST_SHELL"], {
       shell: true,
       env: {
-        KILO_TEST_SHELL: "ok",
+        STRATA_TEST_SHELL: "ok",
       },
     })
 
     expect(out.code).toBe(0)
-    expect(out.stdout.toString()).toContain("KILO_TEST_SHELL=ok")
+    expect(out.stdout.toString()).toContain("STRATA_TEST_SHELL=ok")
   })
 
   test("runs cmd scripts with spaces on Windows without shell", async () => {

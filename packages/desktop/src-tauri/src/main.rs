@@ -74,5 +74,5 @@ fn main() {
         }
     }
 
-    kilo_lib::run()
+    strata_lib::run()
 }

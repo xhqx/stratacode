@@ -61,37 +61,37 @@ import type {
   GlobalUpgradeErrors,
   GlobalUpgradeResponses,
   InstanceDisposeResponses,
-  KiloClawChatCredentialsResponses,
-  KiloClawStatusResponses,
-  KiloCloudSessionGetErrors,
-  KiloCloudSessionGetResponses,
-  KiloCloudSessionImportErrors,
-  KiloCloudSessionImportResponses,
-  KiloCloudSessionsErrors,
-  KiloCloudSessionsResponses,
-  KilocodeHeapSnapshotErrors,
-  KilocodeHeapSnapshotResponses,
-  KilocodeRemoveAgentErrors,
-  KilocodeRemoveAgentResponses,
-  KilocodeRemoveSkillErrors,
-  KilocodeRemoveSkillResponses,
-  KilocodeSessionImportMessageErrors,
-  KilocodeSessionImportMessageResponses,
-  KilocodeSessionImportPartErrors,
-  KilocodeSessionImportPartResponses,
-  KilocodeSessionImportProjectErrors,
-  KilocodeSessionImportProjectResponses,
-  KilocodeSessionImportSessionErrors,
-  KilocodeSessionImportSessionResponses,
-  KiloFimErrors,
-  KiloFimResponses,
-  KiloModesResponses,
-  KiloNotificationsErrors,
-  KiloNotificationsResponses,
-  KiloOrganizationSetErrors,
-  KiloOrganizationSetResponses,
-  KiloProfileErrors,
-  KiloProfileResponses,
+  StrataClawChatCredentialsResponses,
+  StrataClawStatusResponses,
+  StrataCloudSessionGetErrors,
+  StrataCloudSessionGetResponses,
+  StrataCloudSessionImportErrors,
+  StrataCloudSessionImportResponses,
+  StrataCloudSessionsErrors,
+  StrataCloudSessionsResponses,
+  StratacodeHeapSnapshotErrors,
+  StratacodeHeapSnapshotResponses,
+  StratacodeRemoveAgentErrors,
+  StratacodeRemoveAgentResponses,
+  StratacodeRemoveSkillErrors,
+  StratacodeRemoveSkillResponses,
+  StratacodeSessionImportMessageErrors,
+  StratacodeSessionImportMessageResponses,
+  StratacodeSessionImportPartErrors,
+  StratacodeSessionImportPartResponses,
+  StratacodeSessionImportProjectErrors,
+  StratacodeSessionImportProjectResponses,
+  StratacodeSessionImportSessionErrors,
+  StratacodeSessionImportSessionResponses,
+  StrataFimErrors,
+  StrataFimResponses,
+  StrataModesResponses,
+  StrataNotificationsErrors,
+  StrataNotificationsResponses,
+  StrataOrganizationSetErrors,
+  StrataOrganizationSetResponses,
+  StrataProfileErrors,
+  StrataProfileResponses,
   LspStatusResponses,
   McpAddErrors,
   McpAddResponses,
@@ -295,7 +295,7 @@ class HeyApiRegistry<T> {
   get(key?: string): T {
     const instance = this.instances.get(key ?? this.defaultKey)
     if (!instance) {
-      throw new Error(`No SDK client found. Create one with "new KiloClient()" to fix this error.`)
+      throw new Error(`No SDK client found. Create one with "new StrataClient()" to fix this error.`)
     }
     return instance
   }
@@ -309,7 +309,7 @@ export class Config extends HeyApiClient {
   /**
    * Get global configuration
    *
-   * Retrieve the current global Kilo configuration settings and preferences.
+   * Retrieve the current global Strata configuration settings and preferences.
    */
   public get<ThrowOnError extends boolean = false>(options?: Options<never, ThrowOnError>) {
     return (options?.client ?? this.client).get<GlobalConfigGetResponses, unknown, ThrowOnError>({
@@ -321,7 +321,7 @@ export class Config extends HeyApiClient {
   /**
    * Update global configuration
    *
-   * Update global Kilo configuration settings and preferences.
+   * Update global Strata configuration settings and preferences.
    */
   public update<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -347,7 +347,7 @@ export class Global extends HeyApiClient {
   /**
    * Get health
    *
-   * Get health information about the Kilo server.
+   * Get health information about the Strata server.
    */
   public health<ThrowOnError extends boolean = false>(options?: Options<never, ThrowOnError>) {
     return (options?.client ?? this.client).get<GlobalHealthResponses, unknown, ThrowOnError>({
@@ -359,7 +359,7 @@ export class Global extends HeyApiClient {
   /**
    * Get global events
    *
-   * Subscribe to global events from the Kilo system using server-sent events.
+   * Subscribe to global events from the Strata system using server-sent events.
    */
   public event<ThrowOnError extends boolean = false>(options?: Options<never, ThrowOnError>) {
     return (options?.client ?? this.client).sse.get<GlobalEventResponses, unknown, ThrowOnError>({
@@ -371,7 +371,7 @@ export class Global extends HeyApiClient {
   /**
    * Dispose instance
    *
-   * Clean up and dispose all Kilo instances, releasing all resources.
+   * Clean up and dispose all Strata instances, releasing all resources.
    */
   public dispose<ThrowOnError extends boolean = false>(options?: Options<never, ThrowOnError>) {
     return (options?.client ?? this.client).post<GlobalDisposeResponses, unknown, ThrowOnError>({
@@ -381,9 +381,9 @@ export class Global extends HeyApiClient {
   }
 
   /**
-   * Upgrade kilo
+   * Upgrade strata
    *
-   * Upgrade kilo to the specified version or latest if not specified.
+   * Upgrade strata to the specified version or latest if not specified.
    */
   public upgrade<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -515,7 +515,7 @@ export class App extends HeyApiClient {
   /**
    * List agents
    *
-   * Get a list of all available AI agents in the Kilo system.
+   * Get a list of all available AI agents in the Strata system.
    */
   public agents<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -545,7 +545,7 @@ export class App extends HeyApiClient {
   /**
    * List skills
    *
-   * Get a list of all available skills in the Kilo system.
+   * Get a list of all available skills in the Strata system.
    */
   public skills<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -862,7 +862,7 @@ export class Console extends HeyApiClient {
   /**
    * Switch active Console org
    *
-   * Persist a new active Console account/org selection for the current local Kilo state.
+   * Persist a new active Console account/org selection for the current local Strata state.
    */
   public switchOrg<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -903,7 +903,7 @@ export class Session extends HeyApiClient {
   /**
    * List sessions
    *
-   * Get a list of all Kilo sessions across projects, sorted by most recently updated. Archived sessions are excluded by default.
+   * Get a list of all Strata sessions across projects, sorted by most recently updated. Archived sessions are excluded by default.
    */
   public list<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -1005,7 +1005,7 @@ export class Project extends HeyApiClient {
   /**
    * List all projects
    *
-   * Get a list of projects that have been opened with Kilo.
+   * Get a list of projects that have been opened with Strata.
    */
   public list<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -1035,7 +1035,7 @@ export class Project extends HeyApiClient {
   /**
    * Get current project
    *
-   * Retrieve the currently active project that Kilo is working with.
+   * Retrieve the currently active project that Strata is working with.
    */
   public current<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -1149,7 +1149,7 @@ export class Pty extends HeyApiClient {
   /**
    * List PTY sessions
    *
-   * Get a list of all active pseudo-terminal (PTY) sessions managed by Kilo.
+   * Get a list of all active pseudo-terminal (PTY) sessions managed by Strata.
    */
   public list<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -1368,7 +1368,7 @@ export class Config2 extends HeyApiClient {
   /**
    * Get configuration
    *
-   * Retrieve the current Kilo configuration settings and preferences.
+   * Retrieve the current Strata configuration settings and preferences.
    */
   public get<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -1398,7 +1398,7 @@ export class Config2 extends HeyApiClient {
   /**
    * Update configuration
    *
-   * Update Kilo configuration settings and preferences.
+   * Update Strata configuration settings and preferences.
    */
   public update<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -1804,7 +1804,7 @@ export class Session2 extends HeyApiClient {
   /**
    * List sessions
    *
-   * Get a list of all Kilo sessions, sorted by most recently updated.
+   * Get a list of all Strata sessions, sorted by most recently updated.
    */
   public list<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -1842,7 +1842,7 @@ export class Session2 extends HeyApiClient {
   /**
    * Create session
    *
-   * Create a new Kilo session for interacting with AI assistants and managing conversations.
+   * Create a new Strata session for interacting with AI assistants and managing conversations.
    */
   public create<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -1949,7 +1949,7 @@ export class Session2 extends HeyApiClient {
   /**
    * Get session
    *
-   * Retrieve detailed information about a specific Kilo session.
+   * Retrieve detailed information about a specific Strata session.
    */
   public get<ThrowOnError extends boolean = false>(
     parameters: {
@@ -4441,7 +4441,7 @@ export class Instance extends HeyApiClient {
   /**
    * Dispose instance
    *
-   * Clean up and dispose the current Kilo instance, releasing all resources.
+   * Clean up and dispose the current Strata instance, releasing all resources.
    */
   public dispose<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -4473,7 +4473,7 @@ export class Path extends HeyApiClient {
   /**
    * Get paths
    *
-   * Retrieve the current working directory and related path information for the Kilo instance.
+   * Retrieve the current working directory and related path information for the Strata instance.
    */
   public get<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -4569,7 +4569,7 @@ export class Command extends HeyApiClient {
   /**
    * List commands
    *
-   * Get a list of all available commands in the Kilo system.
+   * Get a list of all available commands in the Strata system.
    */
   public list<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -4864,7 +4864,7 @@ export class Telemetry extends HeyApiClient {
   /**
    * Capture telemetry event
    *
-   * Forward a telemetry event to PostHog via kilo-telemetry.
+   * Forward a telemetry event to PostHog via strata-telemetry.
    */
   public capture<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -5134,11 +5134,11 @@ export class SessionImport extends HeyApiClient {
       ],
     )
     return (options?.client ?? this.client).post<
-      KilocodeSessionImportProjectResponses,
-      KilocodeSessionImportProjectErrors,
+      StratacodeSessionImportProjectResponses,
+      StratacodeSessionImportProjectErrors,
       ThrowOnError
     >({
-      url: "/kilocode/session-import/project",
+      url: "/stratacode/session-import/project",
       ...options,
       ...params,
       headers: {
@@ -5229,11 +5229,11 @@ export class SessionImport extends HeyApiClient {
       ],
     )
     return (options?.client ?? this.client).post<
-      KilocodeSessionImportSessionResponses,
-      KilocodeSessionImportSessionErrors,
+      StratacodeSessionImportSessionResponses,
+      StratacodeSessionImportSessionErrors,
       ThrowOnError
     >({
-      url: "/kilocode/session-import/session",
+      url: "/stratacode/session-import/session",
       ...options,
       ...params,
       headers: {
@@ -5321,11 +5321,11 @@ export class SessionImport extends HeyApiClient {
       ],
     )
     return (options?.client ?? this.client).post<
-      KilocodeSessionImportMessageResponses,
-      KilocodeSessionImportMessageErrors,
+      StratacodeSessionImportMessageResponses,
+      StratacodeSessionImportMessageErrors,
       ThrowOnError
     >({
-      url: "/kilocode/session-import/message",
+      url: "/stratacode/session-import/message",
       ...options,
       ...params,
       headers: {
@@ -5453,11 +5453,11 @@ export class SessionImport extends HeyApiClient {
       ],
     )
     return (options?.client ?? this.client).post<
-      KilocodeSessionImportPartResponses,
-      KilocodeSessionImportPartErrors,
+      StratacodeSessionImportPartResponses,
+      StratacodeSessionImportPartErrors,
       ThrowOnError
     >({
-      url: "/kilocode/session-import/part",
+      url: "/stratacode/session-import/part",
       ...options,
       ...params,
       headers: {
@@ -5494,18 +5494,18 @@ export class Heap extends HeyApiClient {
       ],
     )
     return (options?.client ?? this.client).post<
-      KilocodeHeapSnapshotResponses,
-      KilocodeHeapSnapshotErrors,
+      StratacodeHeapSnapshotResponses,
+      StratacodeHeapSnapshotErrors,
       ThrowOnError
     >({
-      url: "/kilocode/heap/snapshot",
+      url: "/stratacode/heap/snapshot",
       ...options,
       ...params,
     })
   }
 }
 
-export class Kilocode extends HeyApiClient {
+export class Stratacode extends HeyApiClient {
   /**
    * Remove a skill
    *
@@ -5531,9 +5531,9 @@ export class Kilocode extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).post<KilocodeRemoveSkillResponses, KilocodeRemoveSkillErrors, ThrowOnError>(
+    return (options?.client ?? this.client).post<StratacodeRemoveSkillResponses, StratacodeRemoveSkillErrors, ThrowOnError>(
       {
-        url: "/kilocode/skill/remove",
+        url: "/stratacode/skill/remove",
         ...options,
         ...params,
         headers: {
@@ -5570,9 +5570,9 @@ export class Kilocode extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).post<KilocodeRemoveAgentResponses, KilocodeRemoveAgentErrors, ThrowOnError>(
+    return (options?.client ?? this.client).post<StratacodeRemoveAgentResponses, StratacodeRemoveAgentErrors, ThrowOnError>(
       {
-        url: "/kilocode/agent/remove",
+        url: "/stratacode/agent/remove",
         ...options,
         ...params,
         headers: {
@@ -5597,9 +5597,9 @@ export class Kilocode extends HeyApiClient {
 
 export class Organization extends HeyApiClient {
   /**
-   * Update Kilo Gateway organization
+   * Update Strata Gateway organization
    *
-   * Switch to a different Kilo Gateway organization
+   * Switch to a different Strata Gateway organization
    */
   public set<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -5621,9 +5621,9 @@ export class Organization extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).post<KiloOrganizationSetResponses, KiloOrganizationSetErrors, ThrowOnError>(
+    return (options?.client ?? this.client).post<StrataOrganizationSetResponses, StrataOrganizationSetErrors, ThrowOnError>(
       {
-        url: "/kilo/organization",
+        url: "/strata/organization",
         ...options,
         ...params,
         headers: {
@@ -5640,7 +5640,7 @@ export class Session3 extends HeyApiClient {
   /**
    * Get cloud session
    *
-   * Fetch full session data from the Kilo cloud for preview
+   * Fetch full session data from the Strata cloud for preview
    */
   public get<ThrowOnError extends boolean = false>(
     parameters: {
@@ -5662,8 +5662,8 @@ export class Session3 extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).get<KiloCloudSessionGetResponses, KiloCloudSessionGetErrors, ThrowOnError>({
-      url: "/kilo/cloud/session/{id}",
+    return (options?.client ?? this.client).get<StrataCloudSessionGetResponses, StrataCloudSessionGetErrors, ThrowOnError>({
+      url: "/strata/cloud/session/{id}",
       ...options,
       ...params,
     })
@@ -5695,11 +5695,11 @@ export class Session3 extends HeyApiClient {
       ],
     )
     return (options?.client ?? this.client).post<
-      KiloCloudSessionImportResponses,
-      KiloCloudSessionImportErrors,
+      StrataCloudSessionImportResponses,
+      StrataCloudSessionImportErrors,
       ThrowOnError
     >({
-      url: "/kilo/cloud/session/import",
+      url: "/strata/cloud/session/import",
       ...options,
       ...params,
       headers: {
@@ -5720,9 +5720,9 @@ export class Cloud extends HeyApiClient {
 
 export class Claw extends HeyApiClient {
   /**
-   * Get KiloClaw instance status
+   * Get StrataClaw instance status
    *
-   * Fetch the user's KiloClaw instance status via the KiloClaw worker
+   * Fetch the user's StrataClaw instance status via the StrataClaw worker
    */
   public status<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -5742,17 +5742,17 @@ export class Claw extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).get<KiloClawStatusResponses, unknown, ThrowOnError>({
-      url: "/kilo/claw/status",
+    return (options?.client ?? this.client).get<StrataClawStatusResponses, unknown, ThrowOnError>({
+      url: "/strata/claw/status",
       ...options,
       ...params,
     })
   }
 
   /**
-   * Get KiloClaw chat credentials
+   * Get StrataClaw chat credentials
    *
-   * Fetch Stream Chat credentials for the user's KiloClaw instance
+   * Fetch Stream Chat credentials for the user's StrataClaw instance
    */
   public chatCredentials<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -5772,19 +5772,19 @@ export class Claw extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).get<KiloClawChatCredentialsResponses, unknown, ThrowOnError>({
-      url: "/kilo/claw/chat-credentials",
+    return (options?.client ?? this.client).get<StrataClawChatCredentialsResponses, unknown, ThrowOnError>({
+      url: "/strata/claw/chat-credentials",
       ...options,
       ...params,
     })
   }
 }
 
-export class Kilo extends HeyApiClient {
+export class Strata extends HeyApiClient {
   /**
-   * Get Kilo Gateway profile
+   * Get Strata Gateway profile
    *
-   * Fetch user profile and organizations from Kilo Gateway
+   * Fetch user profile and organizations from Strata Gateway
    */
   public profile<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -5804,8 +5804,8 @@ export class Kilo extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).get<KiloProfileResponses, KiloProfileErrors, ThrowOnError>({
-      url: "/kilo/profile",
+    return (options?.client ?? this.client).get<StrataProfileResponses, StrataProfileErrors, ThrowOnError>({
+      url: "/strata/profile",
       ...options,
       ...params,
     })
@@ -5834,8 +5834,8 @@ export class Kilo extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).get<KiloModesResponses, unknown, ThrowOnError>({
-      url: "/kilo/modes",
+    return (options?.client ?? this.client).get<StrataModesResponses, unknown, ThrowOnError>({
+      url: "/strata/modes",
       ...options,
       ...params,
     })
@@ -5844,7 +5844,7 @@ export class Kilo extends HeyApiClient {
   /**
    * FIM completion
    *
-   * Proxy a Fill-in-the-Middle completion request to the Kilo Gateway
+   * Proxy a Fill-in-the-Middle completion request to the Strata Gateway
    */
   public fim<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -5874,8 +5874,8 @@ export class Kilo extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).sse.post<KiloFimResponses, KiloFimErrors, ThrowOnError>({
-      url: "/kilo/fim",
+    return (options?.client ?? this.client).sse.post<StrataFimResponses, StrataFimErrors, ThrowOnError>({
+      url: "/strata/fim",
       ...options,
       ...params,
       headers: {
@@ -5887,9 +5887,9 @@ export class Kilo extends HeyApiClient {
   }
 
   /**
-   * Get Kilo notifications
+   * Get Strata notifications
    *
-   * Fetch notifications from Kilo Gateway for CLI display
+   * Fetch notifications from Strata Gateway for CLI display
    */
   public notifications<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -5909,8 +5909,8 @@ export class Kilo extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).get<KiloNotificationsResponses, KiloNotificationsErrors, ThrowOnError>({
-      url: "/kilo/notifications",
+    return (options?.client ?? this.client).get<StrataNotificationsResponses, StrataNotificationsErrors, ThrowOnError>({
+      url: "/strata/notifications",
       ...options,
       ...params,
     })
@@ -5919,7 +5919,7 @@ export class Kilo extends HeyApiClient {
   /**
    * Get cloud sessions
    *
-   * Fetch cloud CLI sessions from Kilo API
+   * Fetch cloud CLI sessions from Strata API
    */
   public cloudSessions<ThrowOnError extends boolean = false>(
     parameters?: {
@@ -5945,8 +5945,8 @@ export class Kilo extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).get<KiloCloudSessionsResponses, KiloCloudSessionsErrors, ThrowOnError>({
-      url: "/kilo/cloud-sessions",
+    return (options?.client ?? this.client).get<StrataCloudSessionsResponses, StrataCloudSessionsErrors, ThrowOnError>({
+      url: "/strata/cloud-sessions",
       ...options,
       ...params,
     })
@@ -5968,12 +5968,12 @@ export class Kilo extends HeyApiClient {
   }
 }
 
-export class KiloClient extends HeyApiClient {
-  public static readonly __registry = new HeyApiRegistry<KiloClient>()
+export class StrataClient extends HeyApiClient {
+  public static readonly __registry = new HeyApiRegistry<StrataClient>()
 
   constructor(args?: { client?: Client; key?: string }) {
     super(args)
-    KiloClient.__registry.set(this, args?.key)
+    StrataClient.__registry.set(this, args?.key)
   }
 
   private _global?: Global
@@ -6136,13 +6136,13 @@ export class KiloClient extends HeyApiClient {
     return (this._enhancePrompt ??= new EnhancePrompt({ client: this.client }))
   }
 
-  private _kilocode?: Kilocode
-  get kilocode(): Kilocode {
-    return (this._kilocode ??= new Kilocode({ client: this.client }))
+  private _stratacode?: Stratacode
+  get stratacode(): Stratacode {
+    return (this._stratacode ??= new Stratacode({ client: this.client }))
   }
 
-  private _kilo?: Kilo
-  get kilo(): Kilo {
-    return (this._kilo ??= new Kilo({ client: this.client }))
+  private _strata?: Strata
+  get strata(): Strata {
+    return (this._strata ??= new Strata({ client: this.client }))
   }
 }

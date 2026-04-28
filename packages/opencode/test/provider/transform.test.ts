@@ -2206,7 +2206,7 @@ describe("ProviderTransform.variants", () => {
       expect(Object.keys(result)).toEqual(["none", "minimal", "low", "medium", "high", "xhigh"])
     })
 
-    // kilocode_change start
+    // stratacode_change start
     test("mercury-2 returns OPENAI_EFFORTS with reasoning", () => {
       const model = createMockModel({
         id: "openrouter/inception/mercury-2",
@@ -2222,7 +2222,7 @@ describe("ProviderTransform.variants", () => {
       expect(result.low).toEqual({ reasoning: { effort: "low" } })
       expect(result.high).toEqual({ reasoning: { effort: "high" } })
     })
-    // kilocode_change end
+    // stratacode_change end
 
     test("grok-4 returns empty object", () => {
       const model = createMockModel({
@@ -2255,17 +2255,17 @@ describe("ProviderTransform.variants", () => {
     })
   })
 
-  // kilocode_change start
-  describe("@kilocode/kilo-gateway", () => {
+  // stratacode_change start
+  describe("@stratacode/strata-gateway", () => {
     test("claude models return empty variants (reasoning disabled)", () => {
       const model = createMockModel({
-        id: "kilo/anthropic/claude-sonnet-4",
-        providerID: "kilo",
+        id: "strata/anthropic/claude-sonnet-4",
+        providerID: "strata",
         capabilities: { reasoning: false },
         api: {
           id: "anthropic/claude-sonnet-4",
-          url: "https://gateway.kilo.ai",
-          npm: "@kilocode/kilo-gateway",
+          url: "https://gateway.strata.ai",
+          npm: "@stratacode/strata-gateway",
         },
       })
       const result = ProviderTransform.variants(model)
@@ -2274,13 +2274,13 @@ describe("ProviderTransform.variants", () => {
 
     test("anthropic models in api.id return empty variants (reasoning disabled)", () => {
       const model = createMockModel({
-        id: "kilo/anthropic/claude-opus-4",
-        providerID: "kilo",
+        id: "strata/anthropic/claude-opus-4",
+        providerID: "strata",
         capabilities: { reasoning: false },
         api: {
           id: "anthropic/claude-opus-4",
-          url: "https://gateway.kilo.ai",
-          npm: "@kilocode/kilo-gateway",
+          url: "https://gateway.strata.ai",
+          npm: "@stratacode/strata-gateway",
         },
       })
       const result = ProviderTransform.variants(model)
@@ -2289,12 +2289,12 @@ describe("ProviderTransform.variants", () => {
 
     test("gpt models return OPENAI_EFFORTS with reasoning", () => {
       const model = createMockModel({
-        id: "kilo/openai/gpt-5",
-        providerID: "kilo",
+        id: "strata/openai/gpt-5",
+        providerID: "strata",
         api: {
           id: "openai/gpt-5",
-          url: "https://gateway.kilo.ai",
-          npm: "@kilocode/kilo-gateway",
+          url: "https://gateway.strata.ai",
+          npm: "@stratacode/strata-gateway",
         },
       })
       const result = ProviderTransform.variants(model)
@@ -2304,12 +2304,12 @@ describe("ProviderTransform.variants", () => {
 
     test("gemini-3 models return OPENAI_EFFORTS with reasoning and encrypted content", () => {
       const model = createMockModel({
-        id: "kilo/google/gemini-3-pro",
-        providerID: "kilo",
+        id: "strata/google/gemini-3-pro",
+        providerID: "strata",
         api: {
           id: "google/gemini-3-pro",
-          url: "https://gateway.kilo.ai",
-          npm: "@kilocode/kilo-gateway",
+          url: "https://gateway.strata.ai",
+          npm: "@stratacode/strata-gateway",
         },
       })
       const result = ProviderTransform.variants(model)
@@ -2318,12 +2318,12 @@ describe("ProviderTransform.variants", () => {
 
     test("non-qualifying models return empty object", () => {
       const model = createMockModel({
-        id: "kilo/meta/llama-4",
-        providerID: "kilo",
+        id: "strata/meta/llama-4",
+        providerID: "strata",
         api: {
           id: "meta/llama-4",
-          url: "https://gateway.kilo.ai",
-          npm: "@kilocode/kilo-gateway",
+          url: "https://gateway.strata.ai",
+          npm: "@stratacode/strata-gateway",
         },
       })
       const result = ProviderTransform.variants(model)
@@ -2332,12 +2332,12 @@ describe("ProviderTransform.variants", () => {
 
     test("grok-3-mini returns low and high with reasoning", () => {
       const model = createMockModel({
-        id: "kilo/x-ai/grok-3-mini",
-        providerID: "kilo",
+        id: "strata/x-ai/grok-3-mini",
+        providerID: "strata",
         api: {
           id: "x-ai/grok-3-mini",
-          url: "https://gateway.kilo.ai",
-          npm: "@kilocode/kilo-gateway",
+          url: "https://gateway.strata.ai",
+          npm: "@stratacode/strata-gateway",
         },
       })
       const result = ProviderTransform.variants(model)
@@ -2348,12 +2348,12 @@ describe("ProviderTransform.variants", () => {
 
     test("codex models return OPENAI_EFFORTS with object-based reasoning format", () => {
       const model = createMockModel({
-        id: "kilo/openai/gpt-5.2-codex",
-        providerID: "kilo",
+        id: "strata/openai/gpt-5.2-codex",
+        providerID: "strata",
         api: {
           id: "openai/gpt-5.2-codex",
-          url: "https://gateway.kilo.ai",
-          npm: "@kilocode/kilo-gateway",
+          url: "https://gateway.strata.ai",
+          npm: "@stratacode/strata-gateway",
         },
       })
       const result = ProviderTransform.variants(model)
@@ -2363,20 +2363,20 @@ describe("ProviderTransform.variants", () => {
       expect(result.xhigh).toEqual({ reasoning: { effort: "xhigh" } })
     })
 
-    // kilocode_change start
-    test("mercury-2 uses server-provided variants from kilo gateway", () => {
+    // stratacode_change start
+    test("mercury-2 uses server-provided variants from strata gateway", () => {
       const serverVariants = {
         low: { reasoningEffort: "low" },
         medium: { reasoningEffort: "medium" },
         high: { reasoningEffort: "high" },
       }
       const model = createMockModel({
-        id: "kilo/inception/mercury-2",
-        providerID: "kilo",
+        id: "strata/inception/mercury-2",
+        providerID: "strata",
         api: {
           id: "inception/mercury-2",
-          url: "https://gateway.kilo.ai",
-          npm: "@kilocode/kilo-gateway",
+          url: "https://gateway.strata.ai",
+          npm: "@stratacode/strata-gateway",
         },
         variants: serverVariants,
       })
@@ -2384,9 +2384,9 @@ describe("ProviderTransform.variants", () => {
       expect(result).toEqual(serverVariants)
       expect(Object.keys(result)).toEqual(["low", "medium", "high"])
     })
-    // kilocode_change end
+    // stratacode_change end
   })
-  // kilocode_change end
+  // stratacode_change end
 
   describe("@ai-sdk/gateway", () => {
     test("anthropic sonnet 4.6 models return adaptive thinking options", () => {
@@ -2657,7 +2657,7 @@ describe("ProviderTransform.variants", () => {
     })
   })
 
-  // kilocode_change start
+  // stratacode_change start
   describe("@ai-sdk/azure", () => {
     test("gpt-5.4 includes xhigh", () => {
       const model = createMockModel({
@@ -2679,7 +2679,7 @@ describe("ProviderTransform.variants", () => {
       })
     })
   })
-  // kilocode_change end
+  // stratacode_change end
 
   describe("@ai-sdk/cerebras", () => {
     test("returns WIDELY_SUPPORTED_EFFORTS with reasoningEffort", () => {
@@ -2784,7 +2784,7 @@ describe("ProviderTransform.variants", () => {
       expect(result.high).toEqual({ reasoningEffort: "high" })
     })
 
-    // kilocode_change start
+    // stratacode_change start
     test("mercury-2 returns WIDELY_SUPPORTED_EFFORTS with reasoningEffort", () => {
       const model = createMockModel({
         id: "inception/mercury-2",
@@ -2800,7 +2800,7 @@ describe("ProviderTransform.variants", () => {
       expect(result.low).toEqual({ reasoningEffort: "low" })
       expect(result.high).toEqual({ reasoningEffort: "high" })
     })
-    // kilocode_change end
+    // stratacode_change end
   })
 
   describe("@ai-sdk/azure", () => {
@@ -3342,17 +3342,17 @@ describe("ProviderTransform.variants", () => {
     })
   })
 
-  // kilocode_change start
+  // stratacode_change start
   describe("ProviderTransform.smallOptions", () => {
-    describe("@kilocode/kilo-gateway", () => {
+    describe("@stratacode/strata-gateway", () => {
       test("claude models return reasoningEffort minimal", () => {
         const model = createMockModel({
-          id: "kilo/anthropic/claude-sonnet-4",
-          providerID: "kilo",
+          id: "strata/anthropic/claude-sonnet-4",
+          providerID: "strata",
           api: {
             id: "anthropic/claude-sonnet-4",
-            url: "https://gateway.kilo.ai",
-            npm: "@kilocode/kilo-gateway",
+            url: "https://gateway.strata.ai",
+            npm: "@stratacode/strata-gateway",
           },
         })
         const result = ProviderTransform.smallOptions(model)
@@ -3361,12 +3361,12 @@ describe("ProviderTransform.variants", () => {
 
       test("non-claude models use reasoningEffort format", () => {
         const model = createMockModel({
-          id: "kilo/openai/gpt-4",
-          providerID: "kilo",
+          id: "strata/openai/gpt-4",
+          providerID: "strata",
           api: {
             id: "openai/gpt-4",
-            url: "https://gateway.kilo.ai",
-            npm: "@kilocode/kilo-gateway",
+            url: "https://gateway.strata.ai",
+            npm: "@stratacode/strata-gateway",
           },
         })
         const result = ProviderTransform.smallOptions(model)
@@ -3375,12 +3375,12 @@ describe("ProviderTransform.variants", () => {
 
       test("google models disable reasoning", () => {
         const model = createMockModel({
-          id: "kilo/google/gemini-2.0-flash",
-          providerID: "kilo",
+          id: "strata/google/gemini-2.0-flash",
+          providerID: "strata",
           api: {
             id: "google/gemini-2.0-flash",
-            url: "https://gateway.kilo.ai",
-            npm: "@kilocode/kilo-gateway",
+            url: "https://gateway.strata.ai",
+            npm: "@stratacode/strata-gateway",
           },
         })
         const result = ProviderTransform.smallOptions(model)
@@ -3427,4 +3427,4 @@ describe("ProviderTransform.variants", () => {
     })
   })
 })
-// kilocode_change end
+// stratacode_change end

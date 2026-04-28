@@ -4,11 +4,11 @@ import type {
   Plugin as PluginInstance,
   PluginModule,
   WorkspaceAdaptor as PluginWorkspaceAdaptor,
-} from "@kilocode/plugin"
+} from "@stratacode/plugin"
 import { Config } from "../config"
 import { Bus } from "../bus"
 import { Log } from "../util"
-import { createKiloClient } from "@kilocode/sdk"
+import { createStrataClient } from "@stratacode/sdk"
 import { Flag } from "../flag/flag"
 import { CodexAuthPlugin } from "./codex"
 import { Session } from "../session"
@@ -25,7 +25,7 @@ import { PluginLoader } from "./loader"
 import { parsePluginSpecifier, readPluginId, readV1Plugin, resolvePluginId } from "./shared"
 import { registerAdaptor } from "@/control-plane/adaptors"
 import type { WorkspaceAdaptor } from "@/control-plane/types"
-import { KiloAuthPlugin } from "@kilocode/kilo-gateway" // kilocode_change
+import { StrataAuthPlugin } from "@stratacode/strata-gateway" // stratacode_change
 
 const log = Log.create({ service: "plugin" })
 
@@ -55,16 +55,16 @@ export interface Interface {
 export class Service extends Context.Service<Service, Interface>()("@opencode/Plugin") {}
 
 // Built-in plugins that are directly imported (not installed from npm)
-// kilocode_change start
+// stratacode_change start
 const INTERNAL_PLUGINS: PluginInstance[] = [
-  KiloAuthPlugin,
+  StrataAuthPlugin,
   CodexAuthPlugin,
   CopilotAuthPlugin,
   GitlabAuthPlugin as unknown as PluginInstance,
   PoeAuthPlugin as unknown as PluginInstance,
   CloudflareWorkersAuthPlugin as unknown as PluginInstance,
   CloudflareAIGatewayAuthPlugin as unknown as PluginInstance,
-] // kilocode_change end
+] // stratacode_change end
 
 function isServerPlugin(value: unknown): value is PluginInstance {
   return typeof value === "function"
@@ -122,12 +122,12 @@ export const layer = Layer.effect(
 
         const { Server } = yield* Effect.promise(() => import("../server/server"))
 
-        const client = createKiloClient({
+        const client = createStrataClient({
           baseUrl: "http://localhost:4096",
           directory: ctx.directory,
-          headers: Flag.KILO_SERVER_PASSWORD
+          headers: Flag.STRATA_SERVER_PASSWORD
             ? {
-                Authorization: `Basic ${Buffer.from(`${Flag.KILO_SERVER_USERNAME ?? "opencode"}:${Flag.KILO_SERVER_PASSWORD}`).toString("base64")}`,
+                Authorization: `Basic ${Buffer.from(`${Flag.STRATA_SERVER_USERNAME ?? "opencode"}:${Flag.STRATA_SERVER_PASSWORD}`).toString("base64")}`,
               }
             : undefined,
           fetch: async (...args) => (await Server.Default()).app.fetch(...args),
@@ -161,8 +161,8 @@ export const layer = Layer.effect(
           if (init._tag === "Some") hooks.push(init.value)
         }
 
-        const plugins = Flag.KILO_PURE ? [] : (cfg.plugin_origins ?? [])
-        if (Flag.KILO_PURE && cfg.plugin_origins?.length) {
+        const plugins = Flag.STRATA_PURE ? [] : (cfg.plugin_origins ?? [])
+        if (Flag.STRATA_PURE && cfg.plugin_origins?.length) {
           log.info("skipping external plugins in pure mode", { count: cfg.plugin_origins.length })
         }
         if (plugins.length) yield* config.waitForDependencies()

@@ -20,10 +20,10 @@ body:
       required: false
 
   - type: input
-    id: kilo-version
+    id: strata-version
     attributes:
-      label: Kilo version
-      description: What version of Kilo are you using?
+      label: Strata version
+      description: What version of Strata are you using?
     validations:
       required: false
 

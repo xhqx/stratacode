@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@kobalte/core": "catalog:",
-    "@kilocode/sdk": "workspace:*",
+    "@stratacode/sdk": "workspace:*",
     "@opencode-ai/ui": "workspace:*",
     "@opencode-ai/shared": "workspace:*",
     "@shikijs/transformers": "3.9.2",
@@ -73,8 +73,8 @@
     "tailwindcss": "catalog:",
     "virtua": "catalog:",
     "zod": "catalog:",
-    "@kilocode/kilo-ui": "workspace:*",
-    "@kilocode/kilo-i18n": "workspace:*"
+    "@stratacode/strata-ui": "workspace:*",
+    "@stratacode/strata-i18n": "workspace:*"
   },
   "peerDependencies": {}
 }

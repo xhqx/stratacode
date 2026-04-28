@@ -9,7 +9,7 @@ import { Ripgrep } from "../../src/file/ripgrep"
 const run = <A>(effect: Effect.Effect<A, unknown, Ripgrep.Service>) =>
   effect.pipe(Effect.provide(Ripgrep.defaultLayer), Effect.runPromise)
 
-// kilocode_change - skip on windows: address windows ci failures #9496
+// stratacode_change - skip on windows: address windows ci failures #9496
 describe.skipIf(process.platform === "win32")("file.ripgrep", () => {
   test("defaults to include hidden", async () => {
     await using tmp = await tmpdir({
@@ -53,21 +53,21 @@ describe.skipIf(process.platform === "win32")("file.ripgrep", () => {
     expect(files.includes(path.join(".opencode", "thing.json"))).toBe(false)
   })
 
-  // kilocode_change start - .kilo directory should also be skipped in tree()
-  test("tree skips .kilo directory files", async () => {
+  // stratacode_change start - .strata directory should also be skipped in tree()
+  test("tree skips .strata directory files", async () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(path.join(dir, "src", "main.ts"), "export {}")
-        await fs.mkdir(path.join(dir, ".kilo"), { recursive: true })
-        await Bun.write(path.join(dir, ".kilo", "config.json"), "{}")
+        await fs.mkdir(path.join(dir, ".strata"), { recursive: true })
+        await Bun.write(path.join(dir, ".strata", "config.json"), "{}")
       },
     })
 
     const result = await run(Ripgrep.Service.use((rg) => rg.tree({ cwd: tmp.path })))
-    expect(result).not.toContain(".kilo")
+    expect(result).not.toContain(".strata")
     expect(result).toContain("src")
   })
-  // kilocode_change end
+  // stratacode_change end
 
   test("search returns empty when nothing matches", async () => {
     await using tmp = await tmpdir({

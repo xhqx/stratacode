@@ -1,4 +1,4 @@
-// kilocode_change start
+// stratacode_change start
 export const logo = {
   left: ["", "", ""],
   right: [
@@ -7,11 +7,11 @@ export const logo = {
     `██ ▀█▄ ██ ██████ ▀████▀   ▀█████ ██████ ██ `,
   ],
 }
-// kilocode_change end
+// stratacode_change end
 
 export const go = {
-  left: ["", "", "", ""], // kilocode_change
-  right: ["", "", "", ""], // kilocode_change
+  left: ["", "", "", ""], // stratacode_change
+  right: ["", "", "", ""], // stratacode_change
 }
 
 export const marks = "_^~,"

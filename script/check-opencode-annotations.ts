@@ -1,28 +1,28 @@
 #!/usr/bin/env bun
 
 /**
- * Verifies that every Kilo-specific change in shared packages/opencode/ files
- * is annotated with a kilocode_change marker.
+ * Verifies that every Strata-specific change in shared packages/opencode/ files
+ * is annotated with a stratacode_change marker.
  *
  * Usage:
  *   bun run script/check-opencode-annotations.ts                  # diff against origin/main
  *   bun run script/check-opencode-annotations.ts --base <ref>     # diff against <ref>
  *
  * A line is "covered" if it:
- *   - contains a kilocode_change marker comment           (inline annotation)
- *   - falls inside a kilocode_change start/end block      (block annotation)
+ *   - contains a stratacode_change marker comment           (inline annotation)
+ *   - falls inside a stratacode_change start/end block      (block annotation)
  *   - is in a file whose first non-empty line is          (whole-file annotation)
- *     // kilocode_change - new file
+ *     // stratacode_change - new file
  *   - is empty / whitespace-only                          (skipped)
  *   - is itself a marker line                             (auto-covered)
  *
  * Both JS (//) and JSX ({/ * ... * /}) comment styles are recognized.
  *
- * Exempt paths (no markers needed — entirely Kilo-specific):
- *   - packages/opencode/src/kilocode/**
- *   - packages/opencode/test/kilocode/**
- *   - Any path containing "kilocode" in directory or filename
- *   - Any path with a directory starting with "kilo-" (e.g. kilo-sessions/)
+ * Exempt paths (no markers needed — entirely Strata-specific):
+ *   - packages/opencode/src/stratacode/**
+ *   - packages/opencode/test/stratacode/**
+ *   - Any path containing "stratacode" in directory or filename
+ *   - Any path with a directory starting with "strata-" (e.g. strata-sessions/)
  */
 
 import { spawnSync } from "node:child_process"
@@ -63,7 +63,7 @@ function isUpstreamMerge() {
 
 function isExempt(file: string) {
   const norm = file.replaceAll("\\", "/").toLowerCase()
-  return norm.split("/").some((part) => part.includes("kilocode") || part.startsWith("kilo-"))
+  return norm.split("/").some((part) => part.includes("stratacode") || part.startsWith("strata-"))
 }
 
 function isSource(file: string) {
@@ -83,8 +83,8 @@ function addedLines(file: string): Set<number> {
   return out
 }
 
-// Matches the start of a kilocode_change marker in both JS (//) and JSX ({/* */}) comments
-const MARKER_PREFIX = /(?:\/\/|\{?\s*\/\*)\s*kilocode_change\b/
+// Matches the start of a stratacode_change marker in both JS (//) and JSX ({/* */}) comments
+const MARKER_PREFIX = /(?:\/\/|\{?\s*\/\*)\s*stratacode_change\b/
 
 function hasMarker(line: string) {
   return MARKER_PREFIX.test(line)
@@ -94,9 +94,9 @@ function coveredLines(text: string): { lines: string[]; covered: Set<number> } {
   const lines = text.split(/\r?\n/)
   const covered = new Set<number>()
 
-  // Whole-file annotation: first non-empty line is "// kilocode_change - new file"
+  // Whole-file annotation: first non-empty line is "// stratacode_change - new file"
   const first = lines.find((x) => x.trim() !== "")
-  if (first?.match(/(?:\/\/|\{?\s*\/\*)\s*kilocode_change\s*-\s*new\s*file\b/)) {
+  if (first?.match(/(?:\/\/|\{?\s*\/\*)\s*stratacode_change\s*-\s*new\s*file\b/)) {
     for (let i = 1; i <= lines.length; i++) covered.add(i)
     return { lines, covered }
   }
@@ -106,13 +106,13 @@ function coveredLines(text: string): { lines: string[]; covered: Set<number> } {
     const n = i + 1
     const line = lines[i] ?? ""
 
-    if (line.match(/(?:\/\/|\{?\s*\/\*)\s*kilocode_change\s+start\b/)) {
+    if (line.match(/(?:\/\/|\{?\s*\/\*)\s*stratacode_change\s+start\b/)) {
       block = true
       covered.add(n)
       continue
     }
 
-    if (line.match(/(?:\/\/|\{?\s*\/\*)\s*kilocode_change\s+end\b/)) {
+    if (line.match(/(?:\/\/|\{?\s*\/\*)\s*stratacode_change\s+end\b/)) {
       covered.add(n)
       block = false
       continue
@@ -163,40 +163,40 @@ for (const file of files) {
 }
 
 if (violations.length === 0) {
-  console.log("All shared opencode changes are annotated with kilocode_change markers.")
+  console.log("All shared opencode changes are annotated with stratacode_change markers.")
   process.exit(0)
 }
 
 console.error(
   [
-    "Unannotated Kilo changes found in shared opencode files:",
+    "Unannotated Strata changes found in shared opencode files:",
     "",
     ...violations,
     "",
-    "Every Kilo-specific change in packages/opencode/ must be annotated.",
+    "Every Strata-specific change in packages/opencode/ must be annotated.",
     "",
     "Inline (single line):",
-    "  const url = Flag.KILO_MODELS_URL || 'https://models.dev' // kilocode_change",
+    "  const url = Flag.STRATA_MODELS_URL || 'https://models.dev' // stratacode_change",
     "",
     "Block (multiple lines):",
-    "  // kilocode_change start",
+    "  // stratacode_change start",
     "  ...",
-    "  // kilocode_change end",
+    "  // stratacode_change end",
     "",
     "JSX/TSX (inside JSX templates):",
-    "  {/* kilocode_change */}",
-    "  {/* kilocode_change start */}",
+    "  {/* stratacode_change */}",
+    "  {/* stratacode_change start */}",
     "  ...",
-    "  {/* kilocode_change end */}",
+    "  {/* stratacode_change end */}",
     "",
     "New file:",
-    "  // kilocode_change - new file",
+    "  // stratacode_change - new file",
     "",
     "Exempt paths (no markers needed):",
-    "  - packages/opencode/src/kilocode/**",
-    "  - packages/opencode/test/kilocode/**",
-    "  - Any path containing 'kilocode' in the directory or filename",
-    "  - Any directory starting with 'kilo-' (e.g. kilo-sessions/)",
+    "  - packages/opencode/src/stratacode/**",
+    "  - packages/opencode/test/stratacode/**",
+    "  - Any path containing 'stratacode' in the directory or filename",
+    "  - Any directory starting with 'strata-' (e.g. strata-sessions/)",
     "",
     "See AGENTS.md for details.",
   ].join("\n"),
