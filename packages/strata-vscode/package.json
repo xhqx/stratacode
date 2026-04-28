@@ -154,6 +154,21 @@
         "category": "Strata Code"
       },
       {
+        "command": "strata-code.new.api.sendMessage",
+        "title": "Send Message to Chat",
+        "category": "Strata Code API"
+      },
+      {
+        "command": "strata-code.new.api.getActiveSession",
+        "title": "Get Active Session",
+        "category": "Strata Code API"
+      },
+      {
+        "command": "strata-code.new.api.focus",
+        "title": "Focus Strata Code",
+        "category": "Strata Code API"
+      },
+      {
         "command": "strata-code.new.agentManager.previousSession",
         "title": "Agent Manager: Previous Session",
         "category": "Strata Code"
@@ -909,6 +924,7 @@
     "@stratacode/strata-indexing": "workspace:*",
     "@stratacode/strata-ui": "workspace:*",
     "@stratacode/sdk": "workspace:*",
+    "@stratacode/vscode-api": "workspace:*",
     "@opencode-ai/ui": "workspace:*",
     "@thisbeyond/solid-dnd": "0.7.5",
     "@xterm/addon-clipboard": "0.2.0",

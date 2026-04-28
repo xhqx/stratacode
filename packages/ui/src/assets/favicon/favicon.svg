@@ -1,7 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512"><svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="512" height="512" fill="#131010"></rect>
-<path d="M320 224V352H192V224H320Z" fill="#5A5858"></path>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M384 416H128V96H384V416ZM320 160H192V352H320V160Z" fill="white"></path>
-</svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
-@media (prefers-color-scheme: dark) { :root { filter: none; } }
-</style></svg>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad_blue" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00A8FF" />
+      <stop offset="100%" stop-color="#3A8DFF" />
+    </linearGradient>
+    <linearGradient id="grad_mid" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3A8DFF" />
+      <stop offset="100%" stop-color="#7B5CFF" />
+    </linearGradient>
+    <linearGradient id="grad_purple" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7B5CFF" />
+      <stop offset="100%" stop-color="#A230ED" />
+    </linearGradient>
+  </defs>
+  <rect x="96" y="128" width="320" height="72" rx="24" fill="url(#grad_blue)" />
+  <rect x="96" y="220" width="320" height="72" rx="24" fill="url(#grad_mid)" />
+  <rect x="96" y="312" width="320" height="72" rx="24" fill="url(#grad_purple)" />
+</svg>

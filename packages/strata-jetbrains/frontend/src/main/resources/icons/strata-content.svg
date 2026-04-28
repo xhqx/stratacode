@@ -1,4 +1,19 @@
-<svg width="64" height="64" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M512 0H0V512H512V0Z" fill="black"/>
-    <path d="M322 377H377V421H307.857L278 391.143V322H322V377ZM421 307.857L391.143 278H322V322L377 322V377H421V307.857ZM234 278H190V322H234V278ZM91 391.143L120.857 421H234V377H135V278H91V391.143ZM371.172 189.999V120.856L341.315 90.9995H278V135H327.172V189.999H278V233.999H421V189.999H371.172ZM135 91H91V233.999H135V184.5H190V233.999H234V184.5L190 140.5H135V91ZM234 91H190V140.5H234V91Z" fill="#FAF74F"/>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad_blue" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00A8FF" />
+      <stop offset="100%" stop-color="#3A8DFF" />
+    </linearGradient>
+    <linearGradient id="grad_mid" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3A8DFF" />
+      <stop offset="100%" stop-color="#7B5CFF" />
+    </linearGradient>
+    <linearGradient id="grad_purple" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7B5CFF" />
+      <stop offset="100%" stop-color="#A230ED" />
+    </linearGradient>
+  </defs>
+  <rect x="96" y="128" width="320" height="72" rx="24" fill="url(#grad_blue)" />
+  <rect x="96" y="220" width="320" height="72" rx="24" fill="url(#grad_mid)" />
+  <rect x="96" y="312" width="320" height="72" rx="24" fill="url(#grad_purple)" />
 </svg>

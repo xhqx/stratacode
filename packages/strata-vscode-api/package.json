@@ -1,0 +1,23 @@
+{
+  "name": "@stratacode/vscode-api",
+  "version": "1.0.0",
+  "description": "Strata Code Plugin API for VS Code Extensions",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.93.0",
+    "typescript": "^5.6.3"
+  }
+}

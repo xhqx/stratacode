@@ -19,12 +19,14 @@ import { registerCodeActions, registerTerminalActions, StrataCodeActionProvider 
 import { registerToggleAutoApprove } from "./commands/toggle-auto-approve"
 import { registerHeapSnapshot } from "./commands/heap-snapshot"
 import { RemoteStatusService } from "./services/RemoteStatusService"
+import { createPluginAPI } from "./plugin-api"
+import type { StrataPluginAPI, SendOptions } from "@stratacode/vscode-api"
 
 // Activated via "onStartupFinished" (package.json) so that commands, code actions, keybindings,
 // autocomplete, commit-message generation, and URI deep links all work immediately — without
 // requiring the user to open a Strata sidebar or panel first. The CLI backend is NOT spawned here;
 // it starts lazily when a webview connects or when ensureBackendForAutocomplete() triggers it.
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
   console.log("Strata Code extension is now active")
 
   const telemetry = TelemetryProxy.getInstance()
@@ -411,6 +413,30 @@ export function activate(context: vscode.ExtensionContext) {
     ),
   )
 
+  // Create plugin API and register commands
+  const api = createPluginAPI({
+    connection: connectionService,
+    sidebar: provider,
+    tabs: tabPanels,
+    agent: agentManagerProvider,
+    version: vscode.extensions.getExtension("stratacode.strata-code")?.packageJSON?.version ?? "unknown",
+  })
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "strata-code.new.api.sendMessage",
+      (text: string, options?: SendOptions) => api.sendMessage({ text, ...options })
+    ),
+    vscode.commands.registerCommand(
+      "strata-code.new.api.getActiveSession",
+      () => api.getActiveSession()
+    ),
+    vscode.commands.registerCommand(
+      "strata-code.new.api.focus",
+      () => api.focus()
+    ),
+  )
+
   // Dispose services when extension deactivates (kills the server)
   context.subscriptions.push({
     dispose: () => {
@@ -420,6 +446,8 @@ export function activate(context: vscode.ExtensionContext) {
       connectionService.dispose()
     },
   })
+
+  return api
 }
 
 export function deactivate() {

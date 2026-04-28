@@ -379,6 +379,16 @@ export interface UpdateConfigMessage {
   config: Partial<Config>
 }
 
+export interface RequestPluginConfigMessage {
+  type: "requestPluginConfig"
+}
+
+export interface SavePluginConfigMessage {
+  type: "savePluginConfig"
+  sectionId: string
+  changes: Record<string, import("@stratacode/vscode-api").JSONValue>
+}
+
 export interface RequestNotificationSettingsMessage {
   type: "requestNotificationSettings"
 }
@@ -1090,6 +1100,14 @@ export type WebviewMessage =
   | AgentManagerTerminalCreateRequest
   | AgentManagerTerminalCloseRequest
   | AgentManagerTerminalResizeRequest
+  | ExecutePluginContributionMessage
+  | RequestPluginConfigMessage
+  | SavePluginConfigMessage
+
+export interface ExecutePluginContributionMessage {
+  type: "executePluginContribution"
+  id: string
+}
 
 // ============================================
 // VS Code API type

@@ -36,6 +36,15 @@ import type {
   MigrationStateMessage,
 } from "./migration"
 
+export interface RenderableUIContribution {
+  id: string
+  placement: "input-toolbar"
+  type: "button"
+  label?: string
+  icon?: string
+  tooltip?: string
+}
+
 // ============================================
 // Messages FROM extension TO webview
 // ============================================
@@ -798,6 +807,36 @@ export interface ContinueInWorktreeProgressMessage {
   error?: string
 }
 
+export interface PluginContributionsLoadedMessage {
+  type: "pluginContributionsLoaded"
+  contributions: RenderableUIContribution[]
+}
+
+export interface RenderablePluginConfigSection {
+  id: string
+  title: string
+  icon?: string
+  fields: import("@stratacode/vscode-api").PluginConfigField[]
+}
+
+export interface PluginConfigLoadedMessage {
+  type: "pluginConfigLoaded"
+  sections: RenderablePluginConfigSection[]
+  values: Record<string, Record<string, import("@stratacode/vscode-api").JSONValue>>
+}
+
+export interface PluginConfigUpdatedMessage {
+  type: "pluginConfigUpdated"
+  sectionId: string
+  values: Record<string, import("@stratacode/vscode-api").JSONValue>
+}
+
+export interface PluginConfigUpdateFailedMessage {
+  type: "pluginConfigUpdateFailed"
+  sectionId: string
+  message: string
+}
+
 export interface RemoteStatusMessage {
   type: "remoteStatus"
   enabled: boolean
@@ -834,6 +873,10 @@ export type ExtensionMessage =
   | DeviceAuthCompleteMessage
   | DeviceAuthFailedMessage
   | DeviceAuthCancelledMessage
+  | PluginContributionsLoadedMessage
+  | PluginConfigLoadedMessage
+  | PluginConfigUpdatedMessage
+  | PluginConfigUpdateFailedMessage
   | NavigateMessage
   | IndexingStatusLoadedMessage
   | ProvidersLoadedMessage

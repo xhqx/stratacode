@@ -1,5 +1,5 @@
-import { Component, createSignal, createEffect, on, Show } from "solid-js"
-import { Icon } from "@stratacode/strata-ui/icon"
+import { Component, createSignal, createEffect, on, Show, For } from "solid-js"
+import { Icon, type IconProps } from "@stratacode/strata-ui/icon"
 import { Tabs } from "@stratacode/strata-ui/tabs"
 import { Button } from "@stratacode/strata-ui/button"
 import { showToast } from "@stratacode/strata-ui/toast"
@@ -23,7 +23,9 @@ import ExperimentalTab from "./ExperimentalTab"
 import LanguageTab from "./LanguageTab"
 import AboutStrataCodeTab from "./AboutStrataCodeTab"
 import IndexingTab from "./IndexingTab"
+import PluginSettingsTab from "./PluginSettingsTab"
 import { useServer } from "../../context/server"
+import { usePluginConfig } from "../../context/plugin-config"
 
 export interface SettingsProps {
   tab?: string
@@ -36,16 +38,44 @@ const Settings: Component<SettingsProps> = (props) => {
   const language = useLanguage()
   const vscode = useVSCode()
   const { isDirty, saving, saveError, saveConfig, discardConfig, features } = useConfig()
+  const pluginConfig = usePluginConfig()
   const session = useSession()
-  const [active, setActive] = createSignal(props.tab ?? "models")
+  
+  // Stale tab handling: if the active tab is a plugin tab but the section no longer exists,
+  // fall back to "models"
+  const activeTab = () => {
+    const tab = props.tab ?? "models"
+    if (tab.startsWith("plugin:")) {
+      const sectionId = tab.replace("plugin:", "")
+      if (!pluginConfig.sections().find(s => s.id === sectionId)) {
+        return "models"
+      }
+    }
+    return tab
+  }
+  
+  const [active, setActive] = createSignal(activeTab())
   const [errorExpanded, setErrorExpanded] = createSignal(false)
 
+  const isAnyDirty = () => isDirty() || pluginConfig.sections().some(s => pluginConfig.isDirty(s.id))
+  const isAnySaving = () => saving() || pluginConfig.sections().some(s => pluginConfig.saving(s.id))
+  const anySaveError = () => saveError() || pluginConfig.sections().map(s => pluginConfig.saveError(s.id)).find(e => e !== null) || null
+
   const busyCount = () => Object.values(session.allStatusMap()).filter((s) => s.type === "busy").length
+
+  const handleSaveAll = () => {
+    if (isDirty()) saveConfig()
+    for (const section of pluginConfig.sections()) {
+      if (pluginConfig.isDirty(section.id)) {
+        pluginConfig.saveSection(section.id)
+      }
+    }
+  }
 
   const handleSave = () => {
     const busy = busyCount()
     if (busy === 0) {
-      saveConfig()
+      handleSaveAll()
       return
     }
     const msg = busy === 1 ? language.t("settings.saveBar.warning.one") : language.t("settings.saveBar.warning.many")
@@ -54,10 +84,19 @@ const Settings: Component<SettingsProps> = (props) => {
       title: msg,
       persistent: true,
       actions: [
-        { label: language.t("settings.saveBar.saveAnyway"), onClick: saveConfig },
+        { label: language.t("settings.saveBar.saveAnyway"), onClick: handleSaveAll },
         { label: language.t("settings.saveBar.cancel"), onClick: "dismiss" },
       ],
     })
+  }
+
+  const handleDiscardAll = () => {
+    discardConfig()
+    for (const section of pluginConfig.sections()) {
+      if (pluginConfig.isDirty(section.id)) {
+        pluginConfig.discardSection(section.id)
+      }
+    }
   }
 
   const open = (scope: "local" | "global") => {
@@ -94,6 +133,26 @@ const Settings: Component<SettingsProps> = (props) => {
   // Sync when the parent changes the tab prop (e.g. via navigate message)
   createEffect(
     on(
+      saveError,
+      (err) => {
+        if (err) setErrorExpanded(true)
+      },
+      { defer: true },
+    ),
+  )
+
+  createEffect(
+    on(
+      () => pluginConfig.sections().map(s => pluginConfig.saveError(s.id)).find(e => e !== null),
+      (err) => {
+        if (err) setErrorExpanded(true)
+      },
+      { defer: true },
+    ),
+  )
+
+  createEffect(
+    on(
       () => props.tab,
       (tab) => {
         if (tab) setActive(tab)
@@ -102,7 +161,7 @@ const Settings: Component<SettingsProps> = (props) => {
   )
 
   createEffect(() => {
-    if (features().indexing || active() !== "indexing") return
+    if (features().indexing || activeTab() !== "indexing") return
     onTabChange("providers")
   })
 
@@ -208,6 +267,32 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="help" />
             <span class="label">{language.t("settings.aboutStrataCode.title")}</span>
           </Tabs.Trigger>
+
+          <Show when={pluginConfig.sections().length > 0}>
+            <div
+              style={{
+                margin: "8px 0 4px",
+                "padding-top": "8px",
+                "border-top": "1px solid var(--border-weak-base)",
+                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                "font-size": "10px",
+                "font-weight": "600",
+                "text-transform": "uppercase",
+                "letter-spacing": "0.5px",
+                "padding-left": "12px",
+              }}
+            >
+              Extensions
+            </div>
+            <For each={pluginConfig.sections()}>
+              {(section) => (
+                <Tabs.Trigger value={`plugin:${section.id}`}>
+                  <Icon name={(section.icon || "settings-gear") as IconProps["name"]} />
+                  <span class="label">{section.title}</span>
+                </Tabs.Trigger>
+              )}
+            </For>
+          </Show>
         </Tabs.List>
 
         <Tabs.Content value="models">
@@ -278,12 +363,21 @@ const Settings: Component<SettingsProps> = (props) => {
             onMigrateClick={props.onMigrateClick}
           />
         </Tabs.Content>
+
+        <For each={pluginConfig.sections()}>
+          {(section) => (
+            <Tabs.Content value={`plugin:${section.id}`}>
+              <h3>{section.title}</h3>
+              <PluginSettingsTab section={section} />
+            </Tabs.Content>
+          )}
+        </For>
       </Tabs>
 
       {/* Save bar — slides in when there are unsaved config changes */}
-      <Show when={isDirty()}>
+      <Show when={isAnyDirty()}>
         <div class="settings-save-bar-wrap">
-          <Show when={saveError()}>
+          <Show when={anySaveError()}>
             {(err) => (
               <div class="settings-save-bar-error">
                 <div
@@ -312,11 +406,11 @@ const Settings: Component<SettingsProps> = (props) => {
           </Show>
           <div class="settings-save-bar">
             <span class="settings-save-bar-label">{language.t("settings.saveBar.unsavedChanges")}</span>
-            <Button variant="ghost" size="small" onClick={discardConfig} disabled={saving()}>
+            <Button variant="ghost" size="small" onClick={handleDiscardAll} disabled={isAnySaving()}>
               {language.t("settings.saveBar.discard")}
             </Button>
-            <Button variant="primary" size="small" onClick={handleSave} disabled={saving()}>
-              {saving() ? language.t("settings.saveBar.saving") : language.t("settings.saveBar.save")}
+            <Button variant="primary" size="small" onClick={handleSave} disabled={isAnySaving()}>
+              {isAnySaving() ? language.t("settings.saveBar.saving") : language.t("settings.saveBar.save")}
             </Button>
           </div>
         </div>

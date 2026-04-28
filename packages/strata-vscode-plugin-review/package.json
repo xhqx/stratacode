@@ -1,0 +1,51 @@
+{
+  "name": "strata-review",
+  "displayName": "Strata Review: Branch Review",
+  "description": "Example Strata Code plugin for reviewing branches",
+  "version": "0.1.0",
+  "publisher": "stratacode",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "extensionDependencies": [
+    "stratacode.strata-code"
+  ],
+  "activationEvents": [
+    "onCommand:strata-review.reviewBranch"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "strata-review.reviewBranch",
+        "title": "Review Current Branch",
+        "category": "Strata Review",
+        "icon": "$(git-compare)"
+      }
+    ],
+    "configuration": {
+      "title": "Strata Review",
+      "properties": {
+        "strata-review.prompt": {
+          "type": "string",
+          "default": "Review the current branch changes and provide feedback.",
+          "description": "Prompt template for branch review"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node"
+  },
+  "dependencies": {
+    "@stratacode/vscode-api": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.4"
+  }
+}

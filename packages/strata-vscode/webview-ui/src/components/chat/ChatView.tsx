@@ -5,7 +5,7 @@
  * Main chat container that combines all chat components
  */
 
-import { type Component, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from "solid-js"
+import { type Component, Show, For, createEffect, createMemo, createSignal, on, onCleanup, onMount } from "solid-js"
 import { Button } from "@stratacode/strata-ui/button"
 import { Icon } from "@stratacode/strata-ui/icon"
 import { Spinner } from "@stratacode/strata-ui/spinner"
@@ -297,6 +297,23 @@ export const ChatView: Component<ChatViewProps> = (props) => {
               </Button>
             </Tooltip>
           </>
+        </Show>
+        <Show when={server.pluginContributions().length > 0}>
+          <For each={server.pluginContributions().filter(c => c.placement === "input-toolbar")}>
+            {(contrib) => (
+              <Tooltip value={contrib.tooltip ?? contrib.label ?? ""} placement="top">
+                <Button
+                  variant="ghost"
+                  size="small"
+                  onClick={() => vscode.postMessage({ type: "executePluginContribution", id: contrib.id })}
+                  aria-label={contrib.label}
+                >
+                  <Show when={contrib.icon}><Icon name={contrib.icon as any} size="small" /></Show>
+                  <Show when={contrib.label}><span>{contrib.label}</span></Show>
+                </Button>
+              </Tooltip>
+            )}
+          </For>
         </Show>
       </div>
     </div>

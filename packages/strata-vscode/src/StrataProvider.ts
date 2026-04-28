@@ -12,6 +12,7 @@ import type {
   Config,
 } from "@stratacode/sdk/v2/client"
 import { type StrataConnectionService, ServerStartupError } from "./services/cli-backend"
+import { pluginRegistry } from "./plugin-api"
 import type { EditorContext, IndexingStatus } from "./services/cli-backend/types"
 import { FileIgnoreController } from "./services/autocomplete/shims/FileIgnoreController"
 import { ChatTextAreaAutocomplete } from "./services/autocomplete/chat-autocomplete/ChatTextAreaAutocomplete"
@@ -184,7 +185,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private syncedChildSessions: Set<string> = new Set()
   /** Tracks the latest status for each session, used to warn before destructive config operations. */
   private sessionStatusMap = new Map<string, SessionStatus["type"]>()
-  /** Per-session directory overrides (e.g., worktree paths registered by AgentManagerProvider). */
+  /** Tracks sessions waiting for a message to complete */
+  private pendingSessions = new Set<string>()
+
+  // Subscriptions directory overrides (e.g., worktree paths registered by AgentManagerProvider). */
   private sessionDirectories = new Map<string, string>()
   /** Project ID for the current workspace, used to filter out sessions from other repositories. */
   private projectID: string | undefined
@@ -247,6 +251,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private diffVirtualProvider: import("./DiffVirtualProvider").DiffVirtualProvider | undefined
   private remoteService: RemoteStatusService | null = null
   private unsubscribeRemote: (() => void) | null = null
+
+  private readonly _onDidRegisterSession = new vscode.EventEmitter<Session>()
+  public readonly onDidRegisterSession = this._onDidRegisterSession.event
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -331,6 +338,20 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     }
   }
 
+  // stratacode_change start
+  private buildPluginConfigLoadedMessage() {
+    const sections = pluginRegistry.getRenderableConfigSections()
+    const values: Record<string, Record<string, import("@stratacode/vscode-api").JSONValue>> = {}
+    for (const section of sections) {
+      values[section.id] = {}
+      for (const field of section.fields) {
+        values[section.id][field.key] = pluginRegistry.getPluginConfigValue(section.id, field.key) ?? field.default ?? null
+      }
+    }
+    return { type: "pluginConfigLoaded" as const, sections, values }
+  }
+  // stratacode_change end
+
   private async syncWebviewState(reason: string): Promise<void> {
     const serverInfo = this.connectionService.getServerInfo()
     console.log("[Strata New] StrataProvider: 🔄 syncWebviewState()", {
@@ -364,6 +385,15 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         workspaceDirectory: this.getProjectDirectory(this.currentSession?.id),
       })
     }
+    
+    // Push plugin UI contributions
+    this.postMessage({
+      type: "pluginContributionsLoaded",
+      contributions: pluginRegistry.getRenderableContributions()
+    })
+
+    // Push plugin config sections
+    this.postMessage(this.buildPluginConfigLoadedMessage())
 
     // Always attempt to fetch+push profile when connected.
     // Profile returns 401 when user isn't logged into Strata Gateway — that's expected.
@@ -473,6 +503,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       type: "sessionCreated",
       session: this.sessionToWebview(session),
     })
+    this._onDidRegisterSession.fire(session)
   }
 
   /**
@@ -612,6 +643,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           this.flushPendingReviewComments()
           this.recoverPendingPrompts()
           this.readyResolvers.splice(0).forEach((r) => r())
+          break
+        case "executePluginContribution":
+          pluginRegistry.executeContribution((message as any).id)
           break
         case "sendMessage": {
           const files = parseMessageFiles(message.files)
@@ -831,8 +865,57 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         case "openSettingsTab":
           if (message.tab === "indexing") {
             await vscode.commands.executeCommand("strata-code.new.openIndexingSettings")
+          } else if (message.tab && message.tab.startsWith("plugin:")) {
+            // Routing for plugin config tabs
+            await vscode.commands.executeCommand("strata-code.new.openSettings", message.tab)
           }
           break
+        case "requestPluginConfig": {
+          this.postMessage(this.buildPluginConfigLoadedMessage())
+          break
+        }
+        case "savePluginConfig": {
+          const { sectionId, changes } = message
+          // Validate sectionId is a registered plugin config section
+          const registered = pluginRegistry.getRenderableConfigSections().find(s => s.id === sectionId)
+          if (!registered) {
+            this.postMessage({
+              type: "pluginConfigUpdateFailed",
+              sectionId,
+              message: `Unknown config section: ${sectionId}`
+            })
+            break
+          }
+          try {
+            const config = vscode.workspace.getConfiguration(sectionId)
+            for (const [key, value] of Object.entries(changes)) {
+              // Only write keys that exist in the registered schema
+              if (!registered.fields.some(f => f.key === key)) {
+                console.warn(`[StrataPluginAPI] Skipping unknown config key: ${sectionId}.${key}`)
+                continue
+              }
+              await config.update(key, value, vscode.ConfigurationTarget.Global)
+            }
+            // Re-read ALL field values so the webview has a complete snapshot
+            const full: Record<string, import("@stratacode/vscode-api").JSONValue> = {}
+            const freshConfig = vscode.workspace.getConfiguration(sectionId)
+            for (const field of registered.fields) {
+              full[field.key] = freshConfig.get(field.key) ?? field.default ?? null
+            }
+            this.postMessage({
+              type: "pluginConfigUpdated",
+              sectionId,
+              values: full
+            })
+          } catch (e) {
+            this.postMessage({
+              type: "pluginConfigUpdateFailed",
+              sectionId,
+              message: e instanceof Error ? e.message : String(e)
+            })
+          }
+          break
+        }
         case "setLanguage":
           await vscode.workspace
             .getConfiguration("strata-code.new")
@@ -2469,7 +2552,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     }
   }
 
-  private async handleSendMessage(
+  public async handleSendMessage(
     text: string,
     messageID?: string,
     sessionID?: string,
@@ -2503,16 +2586,54 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           parts.push({ type: "file", mime: f.mime, url: f.url, filename: f.filename, source: f.source })
         }
       }
+      
+      const sid = resolved!.sid
+      const dir = resolved!.dir
+
+      let isCancelled = false
+      pluginRegistry.onWillSendMessage.fire({
+        sessionId: sid,
+        text,
+        cancel: () => { isCancelled = true }
+      })
+
+      if (isCancelled) {
+        console.warn(`[Strata New] StrataProvider: Message to session ${sid} cancelled by plugin`)
+        this.postMessage({
+          type: "sendMessageFailed",
+          error: "Message cancelled by plugin",
+          text,
+          sessionID: sid,
+          draftID,
+          messageID,
+          files,
+        })
+        return
+      }
+
+      // Gather plugin context providers
+      const contextItems = await pluginRegistry.getContextItems({
+        id: sid,
+        title: "Session", // Title is best-effort here without querying full session info
+        directory: dir
+      })
+
+      for (const item of contextItems) {
+        if (item.type === "text") {
+          parts.push({ type: "text", text: `[Context from ${item.label}]\n${item.content}` })
+        }
+      }
+
       parts.push({ type: "text", text })
 
       const editorContext = await this.gatherEditorContext()
 
       if (messageID) {
-        this.connectionService.recordMessageSessionId(messageID, resolved!.sid)
+        this.connectionService.recordMessageSessionId(messageID, sid)
       }
 
-      const sid = resolved!.sid
-      const dir = resolved!.dir
+      this.pendingSessions.add(sid)
+
       await runWithMessageConfirmation(this.confirmations, messageID, "StrataProvider: Message request", () =>
         this.withRetry(
           () =>
@@ -2976,6 +3097,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     if (event.type === "session.status") {
       const sid = event.properties.sessionID
       this.sessionStatusMap.set(sid, event.properties.status.type)
+      
+      // Check if session transitioned to idle
+      if (event.properties.status.type === "idle" && this.pendingSessions.has(sid)) {
+        this.pendingSessions.delete(sid)
+        pluginRegistry.onDidCompleteMessage.fire({ sessionId: sid })
+      }
+
       const msg = mapSSEEventToWebviewMessage(event, sid)
       if (msg) {
         this.streams.flush(sid)
@@ -3231,6 +3359,11 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       sessionDirectories: this.sessionDirectories,
       workspaceDirectory: this.getRootDirectory(),
     })
+  }
+
+  /** Public accessor for plugin API — resolves workspace directory for a session. */
+  public getWorkspaceDirectoryPublic(sessionId?: string): string {
+    return this.getWorkspaceDirectory(sessionId)
   }
 
   private getContextDirectory(): string {

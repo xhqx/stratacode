@@ -5,7 +5,7 @@
 
 import { createContext, useContext, createSignal, onMount, onCleanup, ParentComponent, Accessor } from "solid-js"
 import { useVSCode } from "./vscode"
-import type { ConnectionState, ServerInfo, ProfileData, DeviceAuthState, ExtensionMessage } from "../types/messages"
+import type { ConnectionState, ServerInfo, ProfileData, DeviceAuthState, ExtensionMessage, RenderableUIContribution } from "../types/messages"
 
 interface ServerContextValue {
   connectionState: Accessor<ConnectionState>
@@ -21,6 +21,7 @@ interface ServerContextValue {
   languageOverride: Accessor<string | undefined>
   workspaceDirectory: Accessor<string>
   gitInstalled: Accessor<boolean>
+  pluginContributions: Accessor<RenderableUIContribution[]>
 }
 
 export const ServerContext = createContext<ServerContextValue>()
@@ -41,6 +42,7 @@ export const ServerProvider: ParentComponent = (props) => {
   const [languageOverride, setLanguageOverride] = createSignal<string | undefined>()
   const [workspaceDirectory, setWorkspaceDirectory] = createSignal<string>("")
   const [gitInstalled, setGitInstalled] = createSignal<boolean>(false)
+  const [pluginContributions, setPluginContributions] = createSignal<RenderableUIContribution[]>([])
 
   const gitSub = vscode.onMessage((m: ExtensionMessage) => {
     if (m.type === "gitStatus") setGitInstalled(m.repo)
@@ -124,6 +126,10 @@ export const ServerProvider: ParentComponent = (props) => {
           console.log("[Strata New] Device auth cancelled")
           setDeviceAuth(initialDeviceAuth)
           break
+
+        case "pluginContributionsLoaded":
+          setPluginContributions(message.contributions)
+          break
       }
     })
 
@@ -161,6 +167,7 @@ export const ServerProvider: ParentComponent = (props) => {
     languageOverride,
     workspaceDirectory,
     gitInstalled,
+    pluginContributions,
   }
 
   return <ServerContext.Provider value={value}>{props.children}</ServerContext.Provider>
