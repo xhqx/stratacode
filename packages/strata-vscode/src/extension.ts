@@ -21,6 +21,7 @@ import { registerHeapSnapshot } from "./commands/heap-snapshot"
 import { RemoteStatusService } from "./services/RemoteStatusService"
 import { createPluginAPI } from "./plugin-api"
 import type { StrataPluginAPI, SendOptions } from "@stratacode/vscode-api"
+import { SelectionTipService } from "./stratacode/selection-tip"
 
 // Activated via "onStartupFinished" (package.json) so that commands, code actions, keybindings,
 // autocomplete, commit-message generation, and URI deep links all work immediately — without
@@ -400,8 +401,12 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
 
   registerHeapSnapshot(context, connectionService)
 
+  // Register selection tip (inline "Add to Chat" hint on selection)
+  const tip = new SelectionTipService(context)
+  context.subscriptions.push(tip)
+
   // Register code actions (editor context menus, terminal context menus, keyboard shortcuts)
-  registerCodeActions(context, provider, agentManagerProvider)
+  registerCodeActions(context, provider, agentManagerProvider, () => tip.recordUsage())
   registerTerminalActions(context, provider, agentManagerProvider)
 
   // Register CodeActionProvider (lightbulb quick fixes)

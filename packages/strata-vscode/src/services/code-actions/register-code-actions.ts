@@ -8,6 +8,7 @@ export function registerCodeActions(
   context: vscode.ExtensionContext,
   provider: StrataProvider,
   agentManager?: AgentManagerProvider,
+  onAddToContext?: () => void,
 ): void {
   const target = () => (agentManager?.isActive() ? agentManager : provider)
 
@@ -62,6 +63,7 @@ export function registerCodeActions(
         selectedText: ctx.selectedText,
       })
       target().postMessage({ type: "appendChatBoxMessage", text: prompt })
+      onAddToContext?.()
     }),
 
     vscode.commands.registerCommand("strata-code.new.focusChatInput", () => {

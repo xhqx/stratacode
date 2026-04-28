@@ -687,11 +687,22 @@
         "key": "ctrl+l",
         "mac": "cmd+l",
         "when": "editorTextFocus && !editorTabMovesFocus && !inSnippetMode && stratacode.autocomplete.enableSmartInlineTaskKeybinding && github.copilot.completions.enabled"
+      },
+      {
+        "command": "strata-code.new.addToContext",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "editorTextFocus && editorHasSelection"
       }
     ],
     "configuration": {
       "title": "Strata Code",
       "properties": {
+        "strata-code.new.showSelectionTip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show an inline hint when selecting code, reminding you of the shortcut to add the selection to Strata chat."
+        },
         "strata-code.new.language": {
           "type": "string",
           "default": "",
