@@ -36,6 +36,7 @@ export const PluginConfigProvider: ParentComponent = (props) => {
   const [saved, setSaved] = createSignal<Record<string, Record<string, JSONValue>>>({})
   const [savingState, setSavingState] = createSignal<Record<string, boolean>>({})
   const [errorState, setErrorState] = createSignal<Record<string, SaveError | null>>({})
+  const timers: Record<string, ReturnType<typeof setTimeout>> = {}
 
   const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
     if (message.type === "pluginConfigLoaded") {
@@ -119,6 +120,7 @@ export const PluginConfigProvider: ParentComponent = (props) => {
   onCleanup(() => {
     unsubReady()
     clearTimeout(fallback)
+    for (const id in timers) clearTimeout(timers[id])
   })
 
   function updateValue(sectionId: string, key: string, value: JSONValue) {
@@ -136,6 +138,9 @@ export const PluginConfigProvider: ParentComponent = (props) => {
     
     // Clear error
     setErrorState(prev => ({ ...prev, [sectionId]: null }))
+    // Auto-save: debounce 600ms per section
+    clearTimeout(timers[sectionId])
+    timers[sectionId] = setTimeout(() => saveSection(sectionId), 600)
   }
 
   function saveSection(sectionId: string) {

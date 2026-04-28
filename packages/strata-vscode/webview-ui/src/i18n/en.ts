@@ -988,8 +988,8 @@ export const dict = {
   "profile.action.logout": "Log Out",
 
   "settings.section.configuration": "Configuration",
-  "settings.agentBehaviour.title": "Agent Behaviour",
-  "settings.autoApprove.title": "Auto-Approve",
+  "settings.agentBehaviour.title": "Agents",
+  "settings.autoApprove.title": "Permissions",
   "settings.browser.title": "Browser",
   "settings.checkpoints.title": "Checkpoints",
   "settings.display.title": "Display",
@@ -1125,6 +1125,7 @@ export const dict = {
     'Telemetry is controlled by VS Code\'s built-in telemetry setting. To disable it, go to Settings > Telemetry > Telemetry Level and set it to "off". Restart VS Code to apply the change.',
   "settings.aboutStrataCode.telemetry.openSettings": "Open Telemetry Settings",
 
+  "settings.agentBehaviour.subtab.models": "Models",
   "settings.agentBehaviour.subtab.modes": "Modes",
   "settings.agentBehaviour.subtab.agents": "Agents",
   "settings.agentBehaviour.subtab.mcpServers": "MCP Servers",
@@ -1526,6 +1527,7 @@ export const dict = {
   "settings.saveBar.discard": "Discard",
   "settings.saveBar.save": "Save",
   "settings.saveBar.saving": "Saving…",
+  "settings.saveBar.saved": "Saved",
   "settings.saveBar.warning.one": "One session is running and will be interrupted",
   "settings.saveBar.warning.many": "Several sessions are running and will be interrupted",
   "settings.saveBar.saveAnyway": "Save anyway",

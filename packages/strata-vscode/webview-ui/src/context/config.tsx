@@ -3,9 +3,9 @@
  * Manages backend configuration state (permissions, agents, providers, etc.)
  * and exposes an updateConfig method to apply partial updates.
  *
- * Changes are accumulated in a local draft and only sent to the extension
- * when saveConfig() is called. This allows batching multiple settings
- * changes into a single write (which triggers disposeAll on the CLI).
+ * Changes are accumulated in a local draft and auto-saved after a 600ms
+ * debounce. This batches rapid edits into a single write (which triggers
+ * disposeAll on the CLI).
  */
 
 import { createContext, useContext, createSignal, onCleanup } from "solid-js"
@@ -40,6 +40,7 @@ export const ConfigProvider: ParentComponent = (props) => {
   const [features, setFeatures] = createSignal<FeatureFlags>({ indexing: false })
   const [loading, setLoading] = createSignal(true)
   const [draft, setDraft] = createSignal<Partial<Config>>({})
+  let timer: ReturnType<typeof setTimeout> | undefined
   const [isDirty, setIsDirty] = createSignal(false)
   // Last config received from the server — used to revert on discard
   const [saved, setSaved] = createSignal<Config>({})
@@ -117,6 +118,7 @@ export const ConfigProvider: ParentComponent = (props) => {
   onCleanup(() => {
     unsubReady()
     clearTimeout(fallback)
+    clearTimeout(timer)
   })
 
   function updateConfig(partial: Partial<Config>) {
@@ -128,6 +130,9 @@ export const ConfigProvider: ParentComponent = (props) => {
     // Clear any stale error from a previous failed save — the user is editing
     // again, so the old error message no longer reflects the current draft.
     setSaveError(null)
+    // Auto-save: debounce 600ms so rapid changes batch into one write
+    clearTimeout(timer)
+    timer = setTimeout(() => saveConfig(), 600)
   }
 
   function saveConfig() {

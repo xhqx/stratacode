@@ -2,12 +2,10 @@ import { Component, createSignal, createEffect, on, Show, For } from "solid-js"
 import { Icon, type IconProps } from "@stratacode/strata-ui/icon"
 import { Tabs } from "@stratacode/strata-ui/tabs"
 import { Button } from "@stratacode/strata-ui/button"
-import { showToast } from "@stratacode/strata-ui/toast"
 import { useVSCode } from "../../context/vscode"
 import { useLanguage } from "../../context/language"
 import { useConfig } from "../../context/config"
-import { useSession } from "../../context/session"
-import ModelsTab from "./ModelsTab"
+
 import ProvidersTab from "./ProvidersTab"
 import AgentBehaviourTab from "./AgentBehaviourTab"
 import AutoApproveTab from "./AutoApproveTab"
@@ -35,21 +33,20 @@ const Settings: Component<SettingsProps> = (props) => {
   const server = useServer()
   const language = useLanguage()
   const vscode = useVSCode()
-  const { isDirty, saving, saveError, saveConfig, discardConfig, features } = useConfig()
+  const { saving, saveError, features } = useConfig()
   const pluginConfig = usePluginConfig()
-  const session = useSession()
   
   // Stale tab handling: if the active tab is a plugin tab but the section no longer exists,
   // fall back to "models". If it is a removed tab, fallback to "agentBehaviour".
   const activeTab = () => {
-    const tab = props.tab ?? "models"
-    if (tab === "autocomplete" || tab === "commitMessage") {
+    const tab = props.tab ?? "agentBehaviour"
+    if (tab === "autocomplete" || tab === "commitMessage" || tab === "models") {
       return "agentBehaviour"
     }
     if (tab.startsWith("plugin:")) {
       const sectionId = tab.replace("plugin:", "")
       if (!pluginConfig.sections().find(s => s.id === sectionId)) {
-        return "models"
+        return "agentBehaviour"
       }
     }
     return tab
@@ -57,48 +54,27 @@ const Settings: Component<SettingsProps> = (props) => {
   
   const [active, setActive] = createSignal(activeTab())
   const [errorExpanded, setErrorExpanded] = createSignal(false)
+  // Brief "Saved" indicator that appears after a successful auto-save
+  const [saved, setSaved] = createSignal(false)
+  let fadeTimer: ReturnType<typeof setTimeout> | undefined
 
-  const isAnyDirty = () => isDirty() || pluginConfig.sections().some(s => pluginConfig.isDirty(s.id))
   const isAnySaving = () => saving() || pluginConfig.sections().some(s => pluginConfig.saving(s.id))
   const anySaveError = () => saveError() || pluginConfig.sections().map(s => pluginConfig.saveError(s.id)).find(e => e !== null) || null
 
-  const busyCount = () => Object.values(session.allStatusMap()).filter((s) => s.type === "busy").length
-
-  const handleSaveAll = () => {
-    if (isDirty()) saveConfig()
-    for (const section of pluginConfig.sections()) {
-      if (pluginConfig.isDirty(section.id)) {
-        pluginConfig.saveSection(section.id)
-      }
-    }
-  }
-
-  const handleSave = () => {
-    const busy = busyCount()
-    if (busy === 0) {
-      handleSaveAll()
-      return
-    }
-    const msg = busy === 1 ? language.t("settings.saveBar.warning.one") : language.t("settings.saveBar.warning.many")
-    showToast({
-      variant: "error",
-      title: msg,
-      persistent: true,
-      actions: [
-        { label: language.t("settings.saveBar.saveAnyway"), onClick: handleSaveAll },
-        { label: language.t("settings.saveBar.cancel"), onClick: "dismiss" },
-      ],
-    })
-  }
-
-  const handleDiscardAll = () => {
-    discardConfig()
-    for (const section of pluginConfig.sections()) {
-      if (pluginConfig.isDirty(section.id)) {
-        pluginConfig.discardSection(section.id)
-      }
-    }
-  }
+  // Show "Saved" briefly after a save completes
+  createEffect(
+    on(
+      isAnySaving,
+      (current, prev) => {
+        if (prev && !current && !anySaveError()) {
+          setSaved(true)
+          clearTimeout(fadeTimer)
+          fadeTimer = setTimeout(() => setSaved(false), 2000)
+        }
+      },
+      { defer: true },
+    ),
+  )
 
   const open = (scope: "local" | "global") => {
     const label =
@@ -205,10 +181,7 @@ const Settings: Component<SettingsProps> = (props) => {
         style={{ flex: 1, overflow: "hidden" }}
       >
         <Tabs.List>
-          <Tabs.Trigger value="models">
-            <Icon name="models" />
-            <span class="label">{language.t("settings.models.title")}</span>
-          </Tabs.Trigger>
+
           <Tabs.Trigger value="providers">
             <Icon name="providers" />
             <span class="label">{language.t("settings.providers.title")}</span>
@@ -288,10 +261,7 @@ const Settings: Component<SettingsProps> = (props) => {
           </Show>
         </Tabs.List>
 
-        <Tabs.Content value="models">
-          <h3>{language.t("settings.models.title")}</h3>
-          <ModelsTab />
-        </Tabs.Content>
+
         <Tabs.Content value="providers">
           <h3>{language.t("settings.providers.title")}</h3>
           <ProvidersTab />
@@ -359,45 +329,59 @@ const Settings: Component<SettingsProps> = (props) => {
         </For>
       </Tabs>
 
-      {/* Save bar — slides in when there are unsaved config changes */}
-      <Show when={isAnyDirty()}>
-        <div class="settings-save-bar-wrap">
-          <Show when={anySaveError()}>
-            {(err) => (
-              <div class="settings-save-bar-error">
-                <div
-                  class="settings-save-bar-error-header"
-                  onClick={() => setErrorExpanded((v) => !v)}
-                  role="button"
-                  aria-expanded={errorExpanded()}
-                >
-                  <span
-                    class={`settings-save-bar-error-chevron${
-                      errorExpanded() ? " settings-save-bar-error-chevron-expanded" : ""
-                    }`}
-                  >
-                    <Icon name="chevron-right" size="small" />
-                  </span>
-                  <span class="settings-save-bar-error-title">
-                    {language.t("settings.saveBar.saveFailed")}:{" "}
-                    <span class="settings-save-bar-error-firstline">{err().message}</span>
-                  </span>
-                </div>
-                <Show when={errorExpanded()}>
-                  <pre class="settings-save-bar-error-details">{err().details ?? err().message}</pre>
-                </Show>
-              </div>
-            )}
-          </Show>
-          <div class="settings-save-bar">
-            <span class="settings-save-bar-label">{language.t("settings.saveBar.unsavedChanges")}</span>
-            <Button variant="ghost" size="small" onClick={handleDiscardAll} disabled={isAnySaving()}>
-              {language.t("settings.saveBar.discard")}
-            </Button>
-            <Button variant="primary" size="small" onClick={handleSave} disabled={isAnySaving()}>
-              {isAnySaving() ? language.t("settings.saveBar.saving") : language.t("settings.saveBar.save")}
-            </Button>
+      {/* Auto-save error panel */}
+      <Show when={anySaveError()}>
+        {(err) => (
+          <div class="settings-save-bar-error" style={{ margin: "0 16px 8px 16px" }}>
+            <div
+              class="settings-save-bar-error-header"
+              onClick={() => setErrorExpanded((v) => !v)}
+              role="button"
+              aria-expanded={errorExpanded()}
+            >
+              <span
+                class={`settings-save-bar-error-chevron${
+                  errorExpanded() ? " settings-save-bar-error-chevron-expanded" : ""
+                }`}
+              >
+                <Icon name="chevron-right" size="small" />
+              </span>
+              <span class="settings-save-bar-error-title">
+                {language.t("settings.saveBar.saveFailed")}:{" "}
+                <span class="settings-save-bar-error-firstline">{err().message}</span>
+              </span>
+            </div>
+            <Show when={errorExpanded()}>
+              <pre class="settings-save-bar-error-details">{err().details ?? err().message}</pre>
+            </Show>
           </div>
+        )}
+      </Show>
+
+      {/* Auto-save status indicator */}
+      <Show when={isAnySaving() || saved() || anySaveError()}>
+        <div
+          class={`settings-autosave-status ${
+            anySaveError()
+              ? "settings-autosave-status-error"
+              : isAnySaving()
+                ? "settings-autosave-status-saving"
+                : "settings-autosave-status-saved"
+          }`}
+        >
+          <span class="settings-autosave-status-icon">
+            <Icon
+              name={anySaveError() ? "close" : isAnySaving() ? "reset" : "circle-check"}
+              size="small"
+            />
+          </span>
+          <span>
+            {anySaveError()
+              ? language.t("settings.saveBar.saveFailed")
+              : isAnySaving()
+                ? language.t("settings.saveBar.saving")
+                : language.t("settings.saveBar.saved")}
+          </span>
         </div>
       </Show>
     </div>

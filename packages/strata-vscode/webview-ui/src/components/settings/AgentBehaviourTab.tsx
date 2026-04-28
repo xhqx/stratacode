@@ -20,7 +20,10 @@ import WorkflowsTab from "./agent-behaviour/WorkflowsTab"
 import { parseImport, MAX_IMPORT_SIZE } from "./mode-io"
 import type { ImportError } from "./mode-io"
 
-type SubtabId = "agents" | "mcpServers" | "rules" | "workflows" | "skills"
+import { parseModelString } from "../../../../src/shared/provider-model"
+import { ModelSelectorBase } from "../shared/ModelSelector"
+
+type SubtabId = "models" | "agents" | "mcpServers" | "rules" | "workflows" | "skills"
 
 interface SubtabConfig {
   id: SubtabId
@@ -28,6 +31,7 @@ interface SubtabConfig {
 }
 
 const subtabs: SubtabConfig[] = [
+  { id: "models", labelKey: "settings.agentBehaviour.subtab.models" },
   { id: "agents", labelKey: "settings.agentBehaviour.subtab.agents" },
   { id: "mcpServers", labelKey: "settings.agentBehaviour.subtab.mcpServers" },
   { id: "rules", labelKey: "settings.agentBehaviour.subtab.rules" },
@@ -51,7 +55,7 @@ const AgentBehaviourTab: Component = () => {
   const session = useSession()
   const dialog = useDialog()
   const vscode = useVSCode()
-  const [activeSubtab, setActiveSubtab] = createSignal<SubtabId>("agents")
+  const [activeSubtab, setActiveSubtab] = createSignal<SubtabId>("models")
   const [newSkillPath, setNewSkillPath] = createSignal("")
   const [newSkillUrl, setNewSkillUrl] = createSignal("")
   const [newInstruction, setNewInstruction] = createSignal("")
@@ -284,6 +288,49 @@ const AgentBehaviourTab: Component = () => {
     }
     input.click()
   }
+
+  function handleModelSelect(configKey: "model" | "small_model") {
+    return (providerID: string, modelID: string) => {
+      if (!providerID || !modelID) {
+        updateConfig({ [configKey]: null })
+        return
+      }
+      updateConfig({ [configKey]: `${providerID}/${modelID}` })
+    }
+  }
+
+  const renderModelsSubtab = () => (
+    <div>
+      <Card>
+        <SettingsRow
+          title={language.t("settings.providers.defaultModel.title")}
+          description={language.t("settings.providers.defaultModel.description")}
+        >
+          <ModelSelectorBase
+            value={parseModelString(config().model ?? undefined)}
+            onSelect={handleModelSelect("model")}
+            placement="bottom-start"
+            allowClear
+            clearLabel={language.t("settings.providers.notSet")}
+          />
+        </SettingsRow>
+        <SettingsRow
+          title={language.t("settings.providers.smallModel.title")}
+          description={language.t("settings.providers.smallModel.description")}
+          last
+        >
+          <ModelSelectorBase
+            value={parseModelString(config().small_model ?? undefined)}
+            onSelect={handleModelSelect("small_model")}
+            placement="bottom-start"
+            allowClear
+            clearLabel={language.t("settings.providers.notSet")}
+            includeAutoSmall
+          />
+        </SettingsRow>
+      </Card>
+    </div>
+  )
 
   const renderAgentsSubtab = () => {
     const view = agentView()
@@ -1078,6 +1125,8 @@ const AgentBehaviourTab: Component = () => {
 
   const renderSubtabContent = () => {
     switch (activeSubtab()) {
+      case "models":
+        return renderModelsSubtab()
       case "agents":
         return renderAgentsSubtab()
       case "mcpServers":
