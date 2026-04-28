@@ -4,7 +4,7 @@ import type { AutocompleteStatusBarStateProps } from "./types"
 import { humanFormatSessionCost, formatTime } from "./statusbar-utils"
 
 const SUPPORTED_PROVIDER_DISPLAY_NAME = "Strata Gateway"
-const SETTINGS_COMMAND = `command:strata-code.new.settingsButtonClicked?${encodeURIComponent(JSON.stringify(["autocomplete"]))}`
+const SETTINGS_COMMAND = `command:strata-code.new.settingsButtonClicked?${encodeURIComponent(JSON.stringify(["agentBehaviour"]))}`
 
 export class AutocompleteStatusBar {
   statusBar: vscode.StatusBarItem

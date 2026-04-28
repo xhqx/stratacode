@@ -218,6 +218,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private initConnectionPromise: Promise<void> | null = null
   private webviewMessageDisposable: vscode.Disposable | null = null
   private autocompleteConfigDisposable: vscode.Disposable | null = null
+  private settingsConfigDisposable: vscode.Disposable | null = null
   private viewStateDisposable: vscode.Disposable | null = null
   private visibilityDisposable: vscode.Disposable | null = null
 
@@ -594,7 +595,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private setupWebviewMessageHandler(webview: vscode.Webview): void {
     this.webviewMessageDisposable?.dispose()
     this.autocompleteConfigDisposable?.dispose()
+    this.settingsConfigDisposable?.dispose()
     this.autocompleteConfigDisposable = watchAutocompleteConfig((msg) => this.postMessage(msg))
+    this.settingsConfigDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("strata-code.new.agents")) {
+        this.fetchAndSendAgents()
+      }
+    })
     this.webviewMessageDisposable = webview.onDidReceiveMessage(async (message) => {
       const intercepted = await interceptMessage(message, {
         workspaceDir: (sid) => this.getWorkspaceDirectory(sid ?? this.currentSession?.id),
@@ -1013,6 +1020,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           this.postMessage({ type: "favoritesLoaded", favorites })
           break
         }
+
         // legacy-migration start
         case "requestLegacyMigrationData":
           void handleRequestLegacyMigrationData(this.migrationCtx)

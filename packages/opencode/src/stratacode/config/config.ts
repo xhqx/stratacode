@@ -14,6 +14,7 @@ import { isRecord } from "@/util/record"
 import { ConfigError } from "../../config/error"
 import { Filesystem } from "@/util"
 import type { Config } from "../../config"
+import { ConfigModelID } from "../../config/model-id"
 import type { ConfigAgent } from "../../config"
 import { ModesMigrator } from "../modes-migrator"
 import { fetchOrganizationModes } from "@stratacode/strata-gateway"
@@ -30,9 +31,15 @@ export namespace StratacodeConfig {
   /** Schema for AI-generated commit message configuration. */
   export const CommitMessageSchema = Schema.optional(
     Schema.Struct({
+      model: Schema.optional(Schema.NullOr(ConfigModelID)).annotate({
+        description: "Model to use for generating the commit message, in the format provider/model.",
+      }),
+      format: Schema.optional(Schema.Literals(["conventional", "simple", "gitmoji"])).annotate({
+        description: "Format style for the commit message. Defaults to conventional.",
+      }),
       prompt: Schema.optional(Schema.String).annotate({
         description:
-          "Custom system prompt for AI commit message generation. When set, replaces the default conventional commits prompt entirely.",
+          "Custom system prompt for AI commit message generation. When set, replaces the default prompt entirely.",
       }),
     }),
   ).annotate({ description: "Configuration for AI-generated commit messages" })

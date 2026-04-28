@@ -247,6 +247,7 @@ export interface RequestMcpStatusMessage {
   type: "requestMcpStatus"
 }
 
+
 export interface ConnectMcpMessage {
   type: "connectMcp"
   name: string

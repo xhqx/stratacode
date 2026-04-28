@@ -1,9 +1,12 @@
-import { Component } from "solid-js"
+import { Component, createSignal, onCleanup } from "solid-js"
+import { Switch } from "@stratacode/strata-ui/switch"
 import { Select } from "@stratacode/strata-ui/select"
 import { TextField } from "@stratacode/strata-ui/text-field"
 import { Card } from "@stratacode/strata-ui/card"
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
+import { useVSCode } from "../../context/vscode"
+import type { ExtensionMessage } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
 
 interface LayoutOption {
@@ -19,6 +22,17 @@ const LAYOUT_OPTIONS: LayoutOption[] = [
 const DisplayTab: Component = () => {
   const { config, updateConfig } = useConfig()
   const language = useLanguage()
+  const vscode = useVSCode()
+
+  const [showTaskTimeline, setShowTaskTimeline] = createSignal(false)
+
+  const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
+    if (message.type === "timelineSettingLoaded") {
+      setShowTaskTimeline(message.visible)
+    }
+  })
+  onCleanup(unsubscribe)
+  vscode.postMessage({ type: "requestTimelineSetting" })
 
   return (
     <div>
@@ -39,7 +53,6 @@ const DisplayTab: Component = () => {
         <SettingsRow
           title={language.t("settings.display.layout.title")}
           description={language.t("settings.display.layout.description")}
-          last
         >
           <Select
             options={LAYOUT_OPTIONS}
@@ -56,6 +69,27 @@ const DisplayTab: Component = () => {
             size="small"
             triggerVariant="settings"
           />
+        </SettingsRow>
+
+        <SettingsRow
+          title={language.t("settings.display.taskTimeline.title")}
+          description={language.t("settings.display.taskTimeline.description")}
+          last
+        >
+          <Switch
+            checked={showTaskTimeline()}
+            onChange={(checked) => {
+              setShowTaskTimeline(checked)
+              vscode.postMessage({
+                type: "updateSetting",
+                key: "showTaskTimeline",
+                value: checked,
+              })
+            }}
+            hideLabel
+          >
+            {language.t("settings.display.taskTimeline.title")}
+          </Switch>
         </SettingsRow>
       </Card>
     </div>

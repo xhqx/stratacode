@@ -48,6 +48,8 @@ export interface ExperimentalConfig {
 
 export interface CommitMessageConfig {
   prompt?: string
+  model?: string | null
+  format?: "conventional" | "simple" | "gitmoji"
 }
 
 export type IndexingProvider =

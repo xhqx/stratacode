@@ -70,6 +70,33 @@ For significant changes, include a detailed body explaining the changes.
 
 Return ONLY the commit message in the conventional format, nothing else.`
 
+const SIMPLE_PROMPT = `You are an expert Git commit message generator. Analyze the provided git diff output and generate a short, simple commit message.
+The message should be a single line, under 72 characters, describing the main change.
+Do not use conventional commits format or gitmoji. Start with a capitalized action verb in the imperative mood (e.g. "Add", "Fix", "Update").
+
+Return ONLY the generated commit message without quotes or markdown blocks.`
+
+const GITMOJI_PROMPT = `You are an expert Git commit message generator that creates commit messages using gitmoji based on staged changes. Analyze the provided git diff output and generate an appropriate commit message.
+
+## Gitmoji Format
+Generate commit messages following this structure:
+\`\`\`
+<emoji> <description>
+\`\`\`
+
+Common gitmojis:
+- 🐛 (bug) Bug fix
+- ✨ (sparkles) New feature
+- 📝 (memo) Documentation
+- ♻️ (recycle) Refactoring
+- 💄 (lipstick) UI/style changes
+- ⚡️ (zap) Performance
+- 🔧 (wrench) Configuration
+
+The description should use imperative mood and start with a capital letter.
+
+Return ONLY the generated commit message without quotes or markdown blocks.`
+
 function buildUserMessage(ctx: GitContext): string {
   const fileList = ctx.files.map((f) => `${f.status} ${f.path}`).join("\n")
   const diffs = ctx.files
@@ -126,10 +153,28 @@ export async function generateCommitMessage(request: CommitMessageRequest): Prom
     files: ctx.files.length,
   })
 
-  const defaultModel = await Provider.defaultModel()
-  const model =
-    (await Provider.getSmallModel(defaultModel.providerID)) ??
-    (await Provider.getModel(defaultModel.providerID, defaultModel.modelID))
+  let targetModel;
+  if (request.model) {
+    const parts = request.model.split("/")
+    const providerID = parts[0] as any
+    const modelID = parts.slice(1).join("/")
+    try {
+      targetModel = await Provider.getModel(providerID, modelID as any)
+    } catch (err) {
+      log.warn("failed to get configured model, falling back to small model", { error: err })
+    }
+  }
+
+  if (!targetModel) {
+    const defaultModel = await Provider.defaultModel()
+    targetModel =
+      (await Provider.getSmallModel(defaultModel.providerID)) ??
+      (await Provider.getModel(defaultModel.providerID, defaultModel.modelID))
+  }
+
+  let systemPrompt = SYSTEM_PROMPT
+  if (request.format === "simple") systemPrompt = SIMPLE_PROMPT
+  if (request.format === "gitmoji") systemPrompt = GITMOJI_PROMPT
 
   const agent: Agent.Info = {
     name: "commit-message",
@@ -137,7 +182,7 @@ export async function generateCommitMessage(request: CommitMessageRequest): Prom
     hidden: true,
     options: {},
     permission: [],
-    prompt: request.prompt || SYSTEM_PROMPT,
+    prompt: request.prompt || systemPrompt,
     temperature: 0.3,
   }
 
@@ -157,8 +202,8 @@ export async function generateCommitMessage(request: CommitMessageRequest): Prom
         sessionID: "commit-message",
         role: "user",
         model: {
-          providerID: model.providerID,
-          modelID: model.id,
+          providerID: targetModel.providerID,
+          modelID: targetModel.id,
         },
         time: {
           created: Date.now(),
@@ -166,7 +211,7 @@ export async function generateCommitMessage(request: CommitMessageRequest): Prom
         },
       } as any,
       tools: {},
-      model,
+      model: targetModel,
       small: true,
       messages: [
         {

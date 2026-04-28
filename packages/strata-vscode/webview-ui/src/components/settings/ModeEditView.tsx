@@ -1,4 +1,4 @@
-import { Component, Show, For, createMemo, createSignal } from "solid-js"
+import { Component, Show, For, createMemo, createSignal, onCleanup } from "solid-js"
 import { TextField } from "@stratacode/strata-ui/text-field"
 import { Switch } from "@stratacode/strata-ui/switch"
 import { Card } from "@stratacode/strata-ui/card"
@@ -8,7 +8,8 @@ import { IconButton } from "@stratacode/strata-ui/icon-button"
 import { useConfig } from "../../context/config"
 import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
-import type { AgentConfig, AgentInfo, PermissionRuleItem } from "../../types/messages"
+import { useVSCode } from "../../context/vscode"
+import type { AgentConfig, AgentInfo, PermissionRuleItem, ExtensionMessage } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
 import { buildExport } from "./mode-io"
 
@@ -22,6 +23,7 @@ const ModeEditView: Component<Props> = (props) => {
   const language = useLanguage()
   const { config, updateConfig } = useConfig()
   const session = useSession()
+  const vscode = useVSCode()
 
   // agent() may be undefined for modes that only exist in the config draft (just
   // created, not yet saved). This is fine — native defaults to false (correct for
@@ -53,6 +55,42 @@ const ModeEditView: Component<Props> = (props) => {
     anchor.download = `${props.name}.agent.json`
     anchor.click()
     URL.revokeObjectURL(url)
+  }
+
+  // --- Autocomplete IDE Settings ---
+  const [enableAutoTrigger, setEnableAutoTrigger] = createSignal(true)
+  const [enableSmartInlineTaskKeybinding, setEnableSmartInlineTaskKeybinding] = createSignal(false)
+  const [enableChatAutocomplete, setEnableChatAutocomplete] = createSignal(false)
+
+  const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
+    if (message.type !== "autocompleteSettingsLoaded") {
+      return
+    }
+    setEnableAutoTrigger(message.settings.enableAutoTrigger)
+    setEnableSmartInlineTaskKeybinding(message.settings.enableSmartInlineTaskKeybinding)
+    setEnableChatAutocomplete(message.settings.enableChatAutocomplete)
+  })
+
+  onCleanup(unsubscribe)
+
+  // We request settings eagerly here. Only the autocomplete settings need this IDE state.
+  vscode.postMessage({ type: "requestAutocompleteSettings" })
+
+  const updateAutocompleteSetting = (
+    key: "enableAutoTrigger" | "enableSmartInlineTaskKeybinding" | "enableChatAutocomplete",
+    value: boolean,
+  ) => {
+    vscode.postMessage({ type: "updateAutocompleteSetting", key, value })
+  }
+
+  // --- Commit Message Settings ---
+  const commitExpanded = createSignal(Boolean(config().commit_message?.prompt))
+
+  const toggleCommitPrompt = (checked: boolean) => {
+    commitExpanded[1](checked)
+    if (!checked) {
+      updateConfig({ commit_message: { prompt: "" } })
+    }
   }
 
   return (
@@ -230,6 +268,85 @@ const ModeEditView: Component<Props> = (props) => {
           </Switch>
         </SettingsRow>
       </Card>
+
+      <Show when={props.name === "autocomplete" && !cfg().disable}>
+        <Card style={{ "margin-bottom": "12px" }}>
+          <SettingsRow
+            title={language.t("settings.autocomplete.autoTrigger.title")}
+            description={language.t("settings.autocomplete.autoTrigger.description")}
+          >
+            <Switch
+              checked={enableAutoTrigger()}
+              onChange={(checked) => updateAutocompleteSetting("enableAutoTrigger", checked)}
+              hideLabel
+            >
+              {language.t("settings.autocomplete.autoTrigger.title")}
+            </Switch>
+          </SettingsRow>
+
+          <SettingsRow
+            title={language.t("settings.autocomplete.smartKeybinding.title")}
+            description={language.t("settings.autocomplete.smartKeybinding.description")}
+          >
+            <Switch
+              checked={enableSmartInlineTaskKeybinding()}
+              onChange={(checked) => updateAutocompleteSetting("enableSmartInlineTaskKeybinding", checked)}
+              hideLabel
+            >
+              {language.t("settings.autocomplete.smartKeybinding.title")}
+            </Switch>
+          </SettingsRow>
+
+          <SettingsRow
+            title={language.t("settings.autocomplete.chatAutocomplete.title")}
+            description={language.t("settings.autocomplete.chatAutocomplete.description")}
+            last
+          >
+            <Switch
+              checked={enableChatAutocomplete()}
+              onChange={(checked) => updateAutocompleteSetting("enableChatAutocomplete", checked)}
+              hideLabel
+            >
+              {language.t("settings.autocomplete.chatAutocomplete.title")}
+            </Switch>
+          </SettingsRow>
+        </Card>
+      </Show>
+
+      <Show when={props.name === "commit" && !cfg().disable}>
+        <Card style={{ "margin-bottom": "12px" }}>
+          <SettingsRow
+            title={language.t("settings.commitMessage.override.title")}
+            description={language.t("settings.commitMessage.override.description")}
+            last={!commitExpanded[0]()}
+          >
+            <Switch checked={commitExpanded[0]()} onChange={toggleCommitPrompt} hideLabel>
+              {language.t("settings.commitMessage.override.title")}
+            </Switch>
+          </SettingsRow>
+
+          <Show when={commitExpanded[0]()}>
+            <div style={{ "padding-top": "8px" }}>
+              <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
+                {language.t("settings.commitMessage.prompt.title")}
+              </div>
+              <div data-slot="settings-row-label-subtitle" style={{ "margin-bottom": "8px" }}>
+                {language.t("settings.commitMessage.prompt.description")}
+              </div>
+              <div style={{ "max-height": "300px", overflow: "auto" }}>
+                <TextField
+                  value={config().commit_message?.prompt ?? ""}
+                  placeholder={language.t("settings.commitMessage.prompt.placeholder")}
+                  multiline
+                  onChange={(val) => {
+                    updateConfig({ commit_message: { prompt: val } })
+                  }}
+                />
+              </div>
+            </div>
+          </Show>
+        </Card>
+      </Show>
 
       {/* Calculated permissions (read-only, collapsible) */}
       <Show when={agent()?.permission} keyed>

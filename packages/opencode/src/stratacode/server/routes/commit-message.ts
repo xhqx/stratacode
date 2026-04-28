@@ -41,7 +41,9 @@ export const CommitMessageRoutes = lazy(() =>
       const body = c.req.valid("json")
       const config = await Config.get()
       const prompt = config.commit_message?.prompt || undefined
-      const result = await generateCommitMessage({ ...body, prompt })
+      const model = config.commit_message?.model || undefined
+      const format = config.commit_message?.format || undefined
+      const result = await generateCommitMessage({ ...body, prompt, model, format })
       return c.json({ message: result.message })
     },
   ),

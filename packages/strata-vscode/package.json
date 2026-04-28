@@ -778,6 +778,7 @@
           "default": false,
           "description": "Enable chat textarea autocomplete"
         },
+
         "strata-code.new.claudeCodeCompat": {
           "type": "boolean",
           "default": false,

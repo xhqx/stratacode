@@ -15,6 +15,8 @@ import PROMPT_DEBUG from "../../agent/prompt/debug.txt"
 import PROMPT_ORCHESTRATOR from "../../agent/prompt/orchestrator.txt"
 import PROMPT_ASK from "../../agent/prompt/ask.txt"
 import PROMPT_EXPLORE from "../../agent/prompt/explore.txt"
+import PROMPT_COMMIT from "./prompt/commit.txt"
+import PROMPT_AUTOCOMPLETE from "./prompt/autocomplete.txt"
 
 // Safe bash commands that don't need user approval.
 // Only commands that cannot execute arbitrary code or subprocesses.
@@ -382,6 +384,53 @@ export function patchAgents(
     ),
     mode: "primary",
     native: true,
+  }
+  
+  // Add commit agent (hidden by default — extension controls visibility)
+  agents.commit = {
+    name: "commit",
+    description: "Generate conventional commit messages from staged changes.",
+    prompt: PROMPT_COMMIT,
+    options: {},
+    permission: Permission.merge(
+      defaults,
+      Permission.fromConfig({
+        "*": "deny",
+        read: "allow",
+        bash: readOnlyBash,
+        grep: "allow",
+        glob: "allow",
+        list: "allow",
+      }),
+      user,
+    ),
+    mode: "primary",
+    native: true,
+    hidden: true,
+  }
+
+  // Add autocomplete agent (hidden by default — extension controls visibility)
+  agents.autocomplete = {
+    name: "autocomplete",
+    description: "Inline code completion assistant.",
+    prompt: PROMPT_AUTOCOMPLETE,
+    options: {},
+    permission: Permission.merge(
+      defaults,
+      Permission.fromConfig({
+        "*": "deny",
+        read: "allow",
+        bash: readOnlyBash,
+        grep: "allow",
+        glob: "allow",
+        list: "allow",
+        semantic_search: "allow",
+      }),
+      user,
+    ),
+    mode: "primary",
+    native: true,
+    hidden: true,
   }
 }
 

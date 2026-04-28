@@ -243,6 +243,8 @@ export interface AppendReviewCommentsMessage {
   autoSend?: boolean
 }
 
+
+
 export interface TriggerTaskMessage {
   type: "triggerTask"
   text: string

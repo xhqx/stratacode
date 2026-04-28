@@ -14,11 +14,9 @@ import AutoApproveTab from "./AutoApproveTab"
 import BrowserTab from "./BrowserTab"
 import CheckpointsTab from "./CheckpointsTab"
 import DisplayTab from "./DisplayTab"
-import AutocompleteTab from "./AutocompleteTab"
 import NotificationsTab from "./NotificationsTab"
 import ContextTab from "./ContextTab"
 
-import CommitMessageTab from "./CommitMessageTab"
 import ExperimentalTab from "./ExperimentalTab"
 import LanguageTab from "./LanguageTab"
 import AboutStrataCodeTab from "./AboutStrataCodeTab"
@@ -42,9 +40,12 @@ const Settings: Component<SettingsProps> = (props) => {
   const session = useSession()
   
   // Stale tab handling: if the active tab is a plugin tab but the section no longer exists,
-  // fall back to "models"
+  // fall back to "models". If it is a removed tab, fallback to "agentBehaviour".
   const activeTab = () => {
     const tab = props.tab ?? "models"
+    if (tab === "autocomplete" || tab === "commitMessage") {
+      return "agentBehaviour"
+    }
     if (tab.startsWith("plugin:")) {
       const sectionId = tab.replace("plugin:", "")
       if (!pluginConfig.sections().find(s => s.id === sectionId)) {
@@ -232,10 +233,6 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="eye" />
             <span class="label">{language.t("settings.display.title")}</span>
           </Tabs.Trigger>
-          <Tabs.Trigger value="autocomplete">
-            <Icon name="code-lines" />
-            <span class="label">{language.t("settings.autocomplete.title")}</span>
-          </Tabs.Trigger>
           <Tabs.Trigger value="notifications">
             <Icon name="circle-check" />
             <span class="label">{language.t("settings.notifications.title")}</span>
@@ -245,10 +242,6 @@ const Settings: Component<SettingsProps> = (props) => {
             <span class="label">{language.t("settings.context.title")}</span>
           </Tabs.Trigger>
 
-          <Tabs.Trigger value="commitMessage">
-            <Icon name="edit" />
-            <span class="label">{language.t("settings.commitMessage.title")}</span>
-          </Tabs.Trigger>
           <Show when={features().indexing}>
             <Tabs.Trigger value="indexing">
               <Icon name="server" />
@@ -323,10 +316,6 @@ const Settings: Component<SettingsProps> = (props) => {
           <h3>{language.t("settings.display.title")}</h3>
           <DisplayTab />
         </Tabs.Content>
-        <Tabs.Content value="autocomplete">
-          <h3>{language.t("settings.autocomplete.title")}</h3>
-          <AutocompleteTab />
-        </Tabs.Content>
         <Tabs.Content value="notifications">
           <h3>{language.t("settings.notifications.title")}</h3>
           <NotificationsTab />
@@ -336,10 +325,6 @@ const Settings: Component<SettingsProps> = (props) => {
           <ContextTab />
         </Tabs.Content>
 
-        <Tabs.Content value="commitMessage">
-          <h3>{language.t("settings.commitMessage.title")}</h3>
-          <CommitMessageTab />
-        </Tabs.Content>
         <Show when={features().indexing}>
           <Tabs.Content value="indexing">
             <h3>{language.t("settings.indexing.title")}</h3>
