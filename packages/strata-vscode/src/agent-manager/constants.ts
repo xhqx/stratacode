@@ -57,8 +57,8 @@ export async function migrateAgentManagerData(root: string, log: (msg: string) =
     // Ensure .strata/ exists
     try {
       await fs.promises.mkdir(target, { recursive: true })
-    } catch {
-      // already exists
+    } catch (err) {
+      log(`mkdir ${target} failed: ${err}`)
     }
 
     for (const item of AGENT_MANAGER_ITEMS) {
@@ -95,7 +95,8 @@ async function exists(filepath: string): Promise<boolean> {
   try {
     await fs.promises.stat(filepath)
     return true
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] constants: stat failed:", err)
     return false
   }
 }
@@ -104,7 +105,8 @@ async function isDirectory(filepath: string): Promise<boolean> {
   try {
     const stat = await fs.promises.stat(filepath)
     return stat.isDirectory()
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] constants: isDirectory failed:", err)
     return false
   }
 }
@@ -126,7 +128,8 @@ async function resolveGitDir(root: string): Promise<string | undefined> {
     if (!match?.[1]) return undefined
     // gitdir points to e.g. /repo/.git/worktrees/foo — go up two levels to /repo/.git
     return path.resolve(path.dirname(gitPath), match[1].trim(), "..", "..")
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] constants: resolveGitDir failed:", err)
     return undefined
   }
 }

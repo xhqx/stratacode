@@ -920,7 +920,8 @@ async function readOAuthCredentials(
   const parsed = (() => {
     try {
       return JSON.parse(raw) as Record<string, unknown>
-    } catch {
+    } catch (err) {
+      console.debug("[Strata] migration: OAuth JSON parse failed:", err)
       return null
     }
   })()
@@ -943,7 +944,8 @@ async function readLegacyProviderProfiles(context: vscode.ExtensionContext): Pro
     const parsed = JSON.parse(raw) as Record<string, unknown>
     if (!parsed.apiConfigs || typeof parsed.apiConfigs !== "object") return null
     return parsed as unknown as LegacyProviderProfiles
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] migration: provider profiles JSON parse failed:", err)
     return null
   }
 }
@@ -959,7 +961,8 @@ async function readLegacyMcpSettings(context: vscode.ExtensionContext): Promise<
     const parsed = JSON.parse(Buffer.from(bytes).toString("utf8")) as Record<string, unknown>
     if (!parsed.mcpServers || typeof parsed.mcpServers !== "object") return null
     return parsed as unknown as LegacyMcpSettings
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] migration: MCP settings JSON parse failed:", err)
     return null
   }
 }
@@ -1032,7 +1035,8 @@ function parseCustomModesYaml(text: string): LegacyCustomMode[] | null {
     try {
       const parsed = JSON.parse(text) as { customModes?: LegacyCustomMode[] }
       return parsed.customModes ?? null
-    } catch {
+    } catch (err) {
+      console.debug("[Strata] migration: custom modes JSON parse failed:", err)
       return null
     }
   })()

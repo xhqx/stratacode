@@ -37,7 +37,8 @@ export function listEnvFiles(dir: string): string[] {
   try {
     const entries = fs.readdirSync(dir, { withFileTypes: true })
     return entries.filter((e) => e.isFile() && isEnvFile(e.name)).map((e) => e.name)
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] env-copy: readdir failed:", err)
     return []
   }
 }

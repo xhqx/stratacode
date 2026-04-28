@@ -152,8 +152,8 @@ export class VscodeHost implements Host {
     try {
       const doc = await vscode.workspace.openTextDocument(path)
       await vscode.window.showTextDocument(doc)
-    } catch {
-      // Silently ignore — file may not exist
+    } catch (err) {
+      console.debug("[Strata] VscodeHost: failed to open document:", err)
     }
   }
 

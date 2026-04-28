@@ -1021,7 +1021,7 @@ export const dict = {
   "settings.indexing.tuning.description": "Advanced search and batching parameter.",
   "settings.experimental.title": "Experimental",
   "settings.language.title": "Language",
-  "settings.aboutStrataCode.title": "About Strata Code",
+  "settings.aboutStrataCode.title": "About",
 
   "session.messages.empty": "Start a conversation by typing a message below.",
   "session.messages.welcome":

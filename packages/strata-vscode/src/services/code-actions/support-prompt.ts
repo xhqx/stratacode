@@ -1,6 +1,12 @@
-type Params = Record<string, string | any[]>
+interface Diagnostic {
+  source?: string
+  message: string
+  code?: string | number | { value: string | number; target: unknown }
+}
 
-function diagnosticText(diagnostics?: any[]) {
+type Params = Record<string, string | Diagnostic[]>
+
+function diagnosticText(diagnostics?: Diagnostic[]) {
   if (!diagnostics?.length) return ""
   return `\nCurrent problems detected:\n${diagnostics
     .map((d) => `- [${d.source || "Error"}] ${d.message}${d.code ? ` (${d.code})` : ""}`)
@@ -9,7 +15,7 @@ function diagnosticText(diagnostics?: any[]) {
 
 function fill(template: string, params: Params): string {
   return template.replace(/\${(.*?)}/g, (_, key) => {
-    if (key === "diagnosticText") return diagnosticText(params["diagnostics"] as any[])
+    if (key === "diagnosticText") return diagnosticText(params["diagnostics"] as Diagnostic[])
     if (key in params) return String(params[key] ?? "")
     return ""
   })

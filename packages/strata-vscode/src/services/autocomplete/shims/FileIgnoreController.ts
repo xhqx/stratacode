@@ -96,8 +96,9 @@ export class FileIgnoreController {
       try {
         resolved = fs.realpathSync(absoluteInput)
         this.cacheRealpath(absoluteInput, resolved)
-      } catch {
+      } catch (err) {
         // Keep unresolved path when file does not exist yet.
+        console.debug("[Strata] FileIgnoreController: realpath failed:", err)
       }
     }
 

@@ -57,7 +57,8 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
         remoteService.setClient(connectionService.getClient())
         console.log("[Strata New] CLI connected, calling remoteService.refresh()")
         remoteService.refresh().catch((err) => console.warn("[Strata New] initial remote refresh failed:", err))
-      } catch {
+      } catch (err) {
+        console.debug("[Strata] Client unavailable during connection:", err)
         remoteService.setClient(null)
       }
       AutocompleteServiceManager.getInstance()?.load()

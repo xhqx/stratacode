@@ -77,7 +77,8 @@ function validated(file: string, dir: string): boolean {
       return target.isFile()
     }
     return lstat.isFile()
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] RunScriptService: validate failed:", err)
     return false
   }
 }

@@ -335,7 +335,8 @@ export class WorktreeManager {
       const raw = await this.git.raw(["worktree", "list", "--porcelain"])
       const normalized = normalizePath(wtPath)
       return parseWorktreeList(raw).some((e) => normalizePath(e.path) === normalized)
-    } catch {
+    } catch (err) {
+      this.log(`worktreeRegistered: list failed: ${err}`)
       return false
     }
   }
@@ -357,7 +358,9 @@ export class WorktreeManager {
   private async removeWorktreeImpl(worktreePath: string, branch?: string): Promise<void> {
     if (!fs.existsSync(worktreePath)) {
       // Directory already gone — just prune stale metadata
-      await this.git.raw(["worktree", "prune", "--expire", "now"]).catch(() => {})
+      await this.git.raw(["worktree", "prune", "--expire", "now"]).catch((err) => {
+        this.log(`worktree prune failed: ${err}`)
+      })
       this.log(`Worktree directory already absent, pruned metadata: ${worktreePath}`)
       if (branch) await this.deleteBranch(branch)
       return
@@ -373,16 +376,20 @@ export class WorktreeManager {
     const temp = path.join(path.dirname(worktreePath), `.strata-delete-${randomUUID()}`)
     try {
       await fs.promises.rename(worktreePath, temp)
-    } catch {
+    } catch (err) {
       // Rename failed (e.g. locked files on Windows) — fall back to force remove
-      this.log(`Rename failed, falling back to force remove: ${worktreePath}`)
-      await this.git.raw(["worktree", "remove", "--force", worktreePath]).catch(() => {})
+      this.log(`Rename failed (${err}), falling back to force remove: ${worktreePath}`)
+      await this.git.raw(["worktree", "remove", "--force", worktreePath]).catch((err) => {
+        this.log(`force remove failed: ${err}`)
+      })
       if (branch) await this.deleteBranch(branch)
       return
     }
 
     // 2. Prune git metadata now that the directory is gone from the expected path
-    await this.git.raw(["worktree", "prune", "--expire", "now"]).catch(() => {})
+    await this.git.raw(["worktree", "prune", "--expire", "now"]).catch((err) => {
+      this.log(`worktree prune failed: ${err}`)
+    })
     this.log(`Removed worktree (rename+prune): ${worktreePath}`)
 
     // 3. Delete the local branch while we still hold the git lock
@@ -398,8 +405,8 @@ export class WorktreeManager {
     try {
       await this.git.raw(["branch", "-D", branch])
       this.log(`Deleted branch: ${branch}`)
-    } catch {
-      this.log(`Failed to delete branch (may still be referenced): ${branch}`)
+    } catch (err) {
+      this.log(`Failed to delete branch (may still be referenced): ${branch}: ${err}`)
     }
   }
 
@@ -418,7 +425,9 @@ export class WorktreeManager {
           }
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        this.log(`cleanupOrphanedTempDirs: readdir failed: ${err}`)
+      })
   }
 
   async discoverWorktrees(): Promise<WorktreeInfo[]> {
@@ -595,8 +604,9 @@ export class WorktreeManager {
     try {
       const stat = await fs.promises.stat(gitFile)
       if (!stat.isFile()) return undefined
-    } catch {
+    } catch (err) {
       // .git path inaccessible — not a valid worktree
+      this.log(`worktreeInfo: .git inaccessible: ${err}`)
       return undefined
     }
 
@@ -745,8 +755,9 @@ export class WorktreeManager {
     try {
       await this.git.raw(["rev-parse", "--verify", `${ref}^{commit}`])
       return true
-    } catch {
+    } catch (err) {
       // ref does not exist
+      this.log(`refExistsLocally: ${ref}: ${err}`)
       return false
     }
   }
@@ -789,8 +800,9 @@ export class WorktreeManager {
     try {
       await execWithShellEnv("git", ["lfs", "version"], { cwd: this.root, timeout: 5000 })
       return true
-    } catch {
+    } catch (err) {
       // git-lfs not installed
+      console.debug("[Strata] WorktreeManager: git-lfs not available:", err)
       return false
     }
   }
@@ -863,7 +875,8 @@ export class WorktreeManager {
     // commit, which is the definitive test for an unborn branch.
     try {
       await this.git.raw(["rev-parse", "--verify", "HEAD"])
-    } catch {
+    } catch (err) {
+      this.log(`HEAD check failed (unborn branch): ${err}`)
       throw new Error("This repository has no commits yet. Create an initial commit before using worktrees.")
     }
 
@@ -1017,8 +1030,9 @@ export class WorktreeManager {
     try {
       await this.gitExec(args)
       return true
-    } catch {
+    } catch (err) {
       // Command failed — caller handles false return
+      this.log(`gitTry failed: ${err}`)
       return false
     }
   }

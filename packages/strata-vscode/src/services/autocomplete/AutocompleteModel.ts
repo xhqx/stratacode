@@ -123,7 +123,8 @@ export class AutocompleteModel {
       const client = await this.connectionService.getClientAsync()
       const result = await client.strata.profile().catch(() => null)
       return (result?.data?.balance?.balance ?? 0) > 0
-    } catch {
+    } catch (err) {
+      console.debug("[Strata] AutocompleteModel: hasBalance failed:", err)
       return false
     }
   }

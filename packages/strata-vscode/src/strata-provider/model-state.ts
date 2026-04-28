@@ -22,7 +22,8 @@ async function resolve(client: StrataClient | null): Promise<string | undefined>
     if (!resp?.data?.state) return undefined
     cached = path.join(resp.data.state, "model.json")
     return cached
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] model-state: path resolve failed:", err)
     return undefined
   }
 }
@@ -36,7 +37,8 @@ async function read(client: StrataClient | null): Promise<Record<string, unknown
     return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
       ? (parsed as Record<string, unknown>)
       : {}
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] model-state: read failed:", err)
     return {}
   }
 }
@@ -49,7 +51,9 @@ function write(client: StrataClient | null, key: string, value: unknown): Promis
     existing[key] = value
     await fs.promises.writeFile(p, JSON.stringify(existing, null, 2))
   })
-  queue = op.catch(() => {})
+  queue = op.catch((err) => {
+    console.debug("[Strata] model-state: write failed:", err)
+  })
   return op
 }
 

@@ -160,8 +160,8 @@ export class MarketplaceInstaller {
 
       try {
         await fs.access(path.join(staging, "SKILL.md"))
-      } catch {
-        console.warn(`Extracted skill ${item.id} missing SKILL.md, rolling back`)
+      } catch (err) {
+        console.warn(`Extracted skill ${item.id} missing SKILL.md, rolling back:`, err)
         await fs.rm(staging, { recursive: true })
         return { success: false, slug: item.id, error: "Extracted archive missing SKILL.md" }
       }
@@ -173,15 +173,15 @@ export class MarketplaceInstaller {
       console.warn(`Failed to install skill ${item.id}:`, err)
       try {
         await fs.rm(staging, { recursive: true })
-      } catch {
-        console.warn(`Failed to clean up staging directory ${staging}`)
+      } catch (err) {
+        console.warn(`Failed to clean up staging directory ${staging}:`, err)
       }
       return { success: false, slug: item.id, error: String(err) }
     } finally {
       try {
         await fs.unlink(tarball)
-      } catch {
-        console.warn(`Failed to clean up temp file ${tarball}`)
+      } catch (err) {
+        console.warn(`Failed to clean up temp file ${tarball}:`, err)
       }
     }
   }

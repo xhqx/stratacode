@@ -182,8 +182,9 @@ export class ServerManager {
       } else {
         proc.kill(signal)
       }
-    } catch {
-      // Process already gone — ignore
+    } catch (err) {
+      // Process already gone — safe to ignore
+      console.debug("[Strata] Process already gone:", err)
     }
   }
 

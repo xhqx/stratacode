@@ -31,11 +31,12 @@ export async function executeVscodeTask(config: SetupTaskConfig): Promise<number
   let execution: vscode.TaskExecution
   try {
     execution = await vscode.tasks.executeTask(task)
-  } catch {
+  } catch (err) {
     // Task type may not be registered in certain VS Code environments
     // (e.g. remote, codespaces, or if package.json contribution is not loaded yet).
     // Return undefined so SetupScriptRunner treats it as a non-fatal skip
     // rather than VS Code surfacing its own error notification.
+    console.debug("[Strata] task-runner: executeTask failed:", err)
     return undefined
   }
 

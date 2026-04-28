@@ -163,7 +163,8 @@ export class BrowserAutomationService implements vscode.Disposable {
       const directory = this.getWorkspaceDirectory()
       const { data: allStatus } = await client.mcp.status({ directory }, { throwOnError: true })
       return allStatus[BrowserAutomationService.MCP_SERVER_NAME] ?? null
-    } catch {
+    } catch (err) {
+      console.debug("[Strata] BrowserAutomation: status fetch failed:", err)
       return null
     }
   }
@@ -171,7 +172,8 @@ export class BrowserAutomationService implements vscode.Disposable {
   private getClient(): StrataClient | null {
     try {
       return this.connectionService.getClient()
-    } catch {
+    } catch (err) {
+      console.debug("[Strata] BrowserAutomation: client unavailable:", err)
       return null
     }
   }

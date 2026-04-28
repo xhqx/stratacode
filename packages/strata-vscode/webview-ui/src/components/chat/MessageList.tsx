@@ -18,7 +18,6 @@ import { useSession } from "../../context/session"
 import { useServer } from "../../context/server"
 import { useLanguage } from "../../context/language"
 import { formatRelativeDate } from "../../utils/date"
-import { FeedbackDialog } from "./FeedbackDialog"
 import { VscodeSessionTurn } from "./VscodeSessionTurn"
 import { RevertBanner } from "./RevertBanner"
 import { AccountSwitcher } from "../shared/AccountSwitcher"
@@ -40,7 +39,7 @@ const StrataLogo = (): JSX.Element => {
   const iconsBaseUri = (window as { ICONS_BASE_URI?: string }).ICONS_BASE_URI || ""
   const isLight =
     document.body.classList.contains("vscode-light") || document.body.classList.contains("vscode-high-contrast-light")
-  const iconFile = isLight ? "strata-light.svg" : "strata-dark.svg"
+  const iconFile = isLight ? "strata-light.png" : "strata-dark.png"
 
   return (
     <div class="strata-logo">
@@ -191,7 +190,6 @@ export const MessageList: Component<MessageListProps> = (props) => {
           </Show>
           <Show when={isEmpty() && !props.readonly}>
             <div class="message-list-empty">
-              <StrataLogo />
               <p class="strata-about-text">{language.t("session.messages.welcome")}</p>
               <Show when={recent().length > 0 && props.onSelectSession}>
                 <div class="recent-sessions">
@@ -212,10 +210,6 @@ export const MessageList: Component<MessageListProps> = (props) => {
                   </Show>
                 </div>
               </Show>
-              <button class="feedback-button" onClick={() => dialog.show(() => <FeedbackDialog />)}>
-                <Icon name="bubble-5" size="small" />
-                {language.t("feedback.button")}
-              </button>
             </div>
           </Show>
           <Show when={!session.loading() && !isEmpty()}>

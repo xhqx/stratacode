@@ -27,7 +27,7 @@ const HEALTH_POLL_INTERVAL_MS = 10_000
  * so we access it via a type assertion.
  */
 async function drainNetworkWaits(client: StrataClient, dir: string) {
-  const net = (client as any).network as
+  const net = (client as unknown as Record<string, unknown>).network as
     | {
         list: (p: { directory: string }) => Promise<{ data?: { id: string }[]; error?: unknown }>
         reject: (p: { requestID: string; directory: string }) => Promise<{ error?: unknown }>
@@ -543,7 +543,8 @@ export class StrataConnectionService {
       })
       clearTimeout(timer)
       return res.ok
-    } catch {
+    } catch (err) {
+      console.debug("[Strata] Health check failed:", err)
       return false
     }
   }

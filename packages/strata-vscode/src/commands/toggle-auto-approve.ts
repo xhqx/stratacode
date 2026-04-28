@@ -81,7 +81,8 @@ export function registerToggleAutoApprove(
 function tryGetClient(connectionService: StrataConnectionService): StrataClient | undefined {
   try {
     return connectionService.getClient()
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] toggleAutoApprove: client unavailable:", err)
     return undefined
   }
 }

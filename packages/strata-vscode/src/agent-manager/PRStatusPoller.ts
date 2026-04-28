@@ -158,7 +158,8 @@ export class PRStatusPoller {
     try {
       await this.shell("gh", ["--version"], { timeout: 5_000 })
       this.ghAvailable = true
-    } catch {
+    } catch (err) {
+      console.debug("[Strata] PRStatusPoller: gh probe failed:", err)
       this.ghAvailable = false
     }
     this.ghProbeTime = Date.now()
@@ -336,7 +337,8 @@ export class PRStatusPoller {
         if (data.headRefOid === head) return parsePRResult(JSON.stringify(data))
       }
       return null
-    } catch {
+    } catch (err) {
+      this.options.log("PR lookup by SHA failed:", err)
       return null
     }
   }
@@ -382,7 +384,8 @@ export class PRStatusPoller {
         total === 0 ? "none" : failed > 0 ? "failure" : pending > 0 ? "pending" : "success"
 
       return { status, total, passed, failed, pending, items }
-    } catch {
+    } catch (err) {
+      this.options.log("Failed to fetch PR checks:", err)
       return { status: "none", total: 0, passed: 0, failed: 0, pending: 0, items: [] }
     }
   }

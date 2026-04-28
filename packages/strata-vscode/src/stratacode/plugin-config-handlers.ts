@@ -1,4 +1,3 @@
-// stratacode_change - new file
 import * as vscode from "vscode"
 import { pluginRegistry } from "../plugin-api/index"
 import type { JSONValue, ContextItem } from "@stratacode/vscode-api"

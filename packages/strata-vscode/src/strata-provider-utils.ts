@@ -159,6 +159,14 @@ export class MessageConfirmation {
       entry.waits.add(done)
     })
   }
+
+  /** Resolve all pending waits and clear tracked IDs. */
+  clear(): void {
+    for (const entry of this.ids.values()) {
+      for (const done of [...entry.waits]) done()
+    }
+    this.ids.clear()
+  }
 }
 
 export async function runWithMessageConfirmation<T>(
@@ -430,17 +438,17 @@ export function mapSSEEventToWebviewMessage(event: Event, sessionID: string | un
     case "session.status": {
       const info = event.properties.status
       // "offline" is not yet in the SDK SessionStatus type (pending SDK regeneration),
-      // so we use string comparison to forward the message field for offline status.
+      // so we use a record cast to forward the message field for offline status.
       const status = info.type as string
       const extra =
-        status === "retry"
+        status === "retry" && info.type === "retry"
           ? {
-              attempt: (info as any).attempt as number,
-              message: (info as any).message as string,
-              next: (info as any).next as number,
+              attempt: info.attempt,
+              message: info.message,
+              next: info.next,
             }
           : status === "offline"
-            ? { message: (info as any).message as string }
+            ? { message: (info as unknown as Record<string, unknown>).message as string }
             : {}
       return {
         type: "sessionStatus" as const,

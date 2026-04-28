@@ -21,7 +21,8 @@ export function kebabToTitleCase(str: string): string {
 function parseResponse(text: string): unknown {
   try {
     return JSON.parse(text)
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] marketplace: JSON parse failed, trying YAML:", err)
     return parseYaml(text)
   }
 }

@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import { ContextRetrievalService } from "../continuedev/core/autocomplete/context/ContextRetrievalService"
 import { VsCodeIde } from "../continuedev/core/vscode-test-harness/src/VSCodeIde"
 import { AutocompleteInput } from "../types"
+import type { AutocompleteInput as ContinueAutocompleteInput } from "../continuedev/core/autocomplete/util/types"
 import { HelperVars } from "../continuedev/core/autocomplete/util/HelperVars"
 import { getAllSnippetsWithoutRace } from "../continuedev/core/autocomplete/snippets/getAllSnippets"
 import { getDefinitionsFromLsp } from "../continuedev/core/vscode-test-harness/src/autocomplete/lsp"
@@ -73,7 +74,7 @@ export async function getProcessedSnippets(
   ignoreController?: Promise<FileIgnoreController>,
 ): Promise<{
   filepathUri: string
-  helper: any
+  helper: HelperVars
   snippetsWithUris: AutocompleteSnippet[]
   workspaceDirs: string[]
 }> {
@@ -93,7 +94,7 @@ export async function getProcessedSnippets(
   }
 
   const modelName = model.getModelName() ?? "codestral"
-  const helper = await HelperVars.create(helperInput as any, DEFAULT_AUTOCOMPLETE_OPTS, modelName, ide)
+  const helper = await HelperVars.create(helperInput as ContinueAutocompleteInput, DEFAULT_AUTOCOMPLETE_OPTS, modelName, ide)
 
   const snippetPayload = await getAllSnippetsWithoutRace({
     helper,
@@ -108,10 +109,11 @@ export async function getProcessedSnippets(
   const accessibleSnippets = await filterSnippetsByAccess(filteredSnippets, ignoreController)
 
   // Convert all snippet filepaths to URIs
-  const snippetsWithUris = accessibleSnippets.map((snippet: any) => ({
-    ...snippet,
-    filepath: snippet.filepath?.startsWith("file://") ? snippet.filepath : vscode.Uri.file(snippet.filepath).toString(),
-  }))
+  const snippetsWithUris: AutocompleteSnippet[] = accessibleSnippets.map((snippet) => {
+    if (!hasFilepath(snippet) || !snippet.filepath) return snippet
+    const uri = snippet.filepath.startsWith("file://") ? snippet.filepath : vscode.Uri.file(snippet.filepath).toString()
+    return { ...snippet, filepath: uri }
+  })
 
   const workspaceDirs = await ide.getWorkspaceDirs()
 

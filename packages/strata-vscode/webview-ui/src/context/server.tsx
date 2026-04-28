@@ -48,11 +48,9 @@ export const ServerProvider: ParentComponent = (props) => {
     if (m.type === "gitStatus") setGitInstalled(m.repo)
   })
 
-  // stratacode_change start
   const pluginSub = vscode.onMessage((m: ExtensionMessage) => {
     if (m.type === "pluginContributionsLoaded") setPluginContributions(m.contributions)
   })
-  // stratacode_change end
 
   onMount(() => {
     const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
@@ -139,7 +137,7 @@ export const ServerProvider: ParentComponent = (props) => {
 
     onCleanup(() => {
       gitSub()
-      pluginSub() // stratacode_change
+      pluginSub()
       unsubscribe()
     })
 

@@ -90,7 +90,8 @@ export class RunController {
         this.opts.error("Working directory is not a directory")
         return
       }
-    } catch {
+    } catch (err) {
+      console.debug("[Strata] RunController: stat failed:", err)
       this.opts.error("Working directory does not exist")
       return
     }

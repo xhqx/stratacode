@@ -13,7 +13,7 @@ import type {
 } from "@stratacode/sdk/v2/client"
 import { type StrataConnectionService, ServerStartupError } from "./services/cli-backend"
 import { pluginRegistry } from "./plugin-api"
-import { buildPluginConfigLoaded, handleSavePluginConfig, applyPluginHooks, markPending, checkCompletion } from "./stratacode/plugin-config-handlers" // stratacode_change
+import { buildPluginConfigLoaded, handleSavePluginConfig, applyPluginHooks, markPending, checkCompletion } from "./stratacode/plugin-config-handlers"
 import type { EditorContext, IndexingStatus } from "./services/cli-backend/types"
 import { FileIgnoreController } from "./services/autocomplete/shims/FileIgnoreController"
 import { ChatTextAreaAutocomplete } from "./services/autocomplete/chat-autocomplete/ChatTextAreaAutocomplete"
@@ -312,7 +312,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private get client(): StrataClient | null {
     try {
       return this.connectionService.getClient()
-    } catch {
+    } catch (err) {
+      console.debug("[Strata] client unavailable:", err)
       return null
     }
   }
@@ -869,7 +870,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           break
         }
         case "savePluginConfig": {
-          // stratacode_change - delegated to extracted handler to keep shared file small
           await handleSavePluginConfig(message.sectionId, message.changes, (msg) => this.postMessage(msg))
           break
         }
@@ -1898,8 +1898,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         await this.fetchAndSendAgents()
         return
       }
-    } catch {
+    } catch (err) {
       // CLI removal failed — agent may be in strata.json instead
+      console.debug("[Strata] CLI removeAgent failed, trying strata.json:", err)
     }
 
     // 2. Try removing from strata.json (handles marketplace-installed modes)
@@ -2548,7 +2549,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       const sid = resolved!.sid
       const dir = resolved!.dir
 
-      // stratacode_change start - plugin lifecycle hooks
       const cancelled = await applyPluginHooks(sid, dir, text, parts)
       if (cancelled) {
         console.warn(`[Strata New] StrataProvider: Message to session ${sid} cancelled by plugin`)
@@ -2563,7 +2563,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         })
         return
       }
-      // stratacode_change end
 
       parts.push({ type: "text", text })
 
@@ -2573,7 +2572,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         this.connectionService.recordMessageSessionId(messageID, sid)
       }
 
-      markPending(sid) // stratacode_change
+      markPending(sid)
 
       await runWithMessageConfirmation(this.confirmations, messageID, "StrataProvider: Message request", () =>
         this.withRetry(
@@ -3038,8 +3037,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     if (event.type === "session.status") {
       const sid = event.properties.sessionID
       this.sessionStatusMap.set(sid, event.properties.status.type)
-      
-      // stratacode_change - plugin completion tracking
       checkCompletion(sid, event.properties.status.type)
 
       const msg = mapSSEEventToWebviewMessage(event, sid)
@@ -3461,6 +3458,14 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.visibilityDisposable?.dispose()
     this.webviewMessageDisposable?.dispose()
     this.autocompleteConfigDisposable?.dispose()
+    this.settingsConfigDisposable?.dispose()
+    this._onDidRegisterSession.dispose()
+    this.loadMessagesAbort?.abort()
+    this.loadMessagesAbort = null
+    for (const controller of this.retryAbortControllers.values()) controller.abort()
+    this.retryAbortControllers.clear()
+    this.confirmations.clear()
+    this.followupListeners.length = 0
     this.streams.dispose()
     this.isWebviewReady = false
     this.promptRecoveryQueued = false
@@ -3469,6 +3474,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.syncedChildSessions.clear()
     this.sessionDirectories.clear()
     this.sessionStatusMap.clear()
+    this.lastReconciledAt.clear()
     this.ignoreController?.dispose()
     this.chatAutocomplete?.dispose()
     ;(this.marketplace?.dispose(), disposeGitChangesTarget())

@@ -1,19 +1,8 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="grad_blue" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#00A8FF" />
-      <stop offset="100%" stop-color="#3A8DFF" />
-    </linearGradient>
-    <linearGradient id="grad_mid" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#3A8DFF" />
-      <stop offset="100%" stop-color="#7B5CFF" />
-    </linearGradient>
-    <linearGradient id="grad_purple" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#7B5CFF" />
-      <stop offset="100%" stop-color="#A230ED" />
-    </linearGradient>
-  </defs>
-  <rect x="96" y="128" width="320" height="72" rx="24" fill="url(#grad_blue)" />
-  <rect x="96" y="220" width="320" height="72" rx="24" fill="url(#grad_mid)" />
-  <rect x="96" y="312" width="320" height="72" rx="24" fill="url(#grad_purple)" />
+  <!-- Left curly brace { -->
+  <path d="M160 48 C120 48, 96 72, 96 112 L96 200 C96 224, 80 240, 48 256 C80 272, 96 288, 96 312 L96 400 C96 440, 120 464, 160 464 L160 408 C136 408, 128 396, 128 384 L128 312 C128 280, 112 264, 80 256 C112 248, 128 232, 128 200 L128 128 C128 116, 136 104, 160 104 Z" fill="#C5C5C5"/>
+  <!-- Right curly brace } -->
+  <path d="M352 48 C392 48, 416 72, 416 112 L416 200 C416 224, 432 240, 464 256 C432 272, 416 288, 416 312 L416 400 C416 440, 392 464, 352 464 L352 408 C376 408, 384 396, 384 384 L384 312 C384 280, 400 264, 432 256 C400 248, 384 232, 384 200 L384 128 C384 116, 376 104, 352 104 Z" fill="#C5C5C5"/>
+  <!-- S letter -->
+  <path d="M316 180 C316 140, 292 120, 256 120 C220 120, 196 144, 196 180 C196 220, 224 236, 256 252 C288 268, 316 284, 316 324 C316 364, 292 392, 256 392 C220 392, 196 368, 196 332 L240 332 C240 348, 244 360, 256 360 C268 360, 272 348, 272 332 C272 296, 244 280, 212 264 C180 248, 152 224, 152 180 C152 136, 184 104, 220 92 C232 88, 244 84, 256 84 C268 84, 280 88, 292 92 C328 104, 360 136, 360 180 Z" fill="#C5C5C5"/>
 </svg>

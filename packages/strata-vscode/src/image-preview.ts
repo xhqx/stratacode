@@ -53,7 +53,8 @@ export function trimEntries<T extends { path: string }>(items: T[], limit = PREV
 function parseBase64(value: string): Uint8Array | null {
   try {
     return Buffer.from(value, "base64")
-  } catch {
+  } catch (err) {
+    console.debug("[Strata] base64 decode failed:", err)
     return null
   }
 }

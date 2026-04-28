@@ -75,8 +75,8 @@
         {
           "id": "strata-code-ActivityBar",
           "title": "Strata Code",
-          "icon": "assets/icons/strata-light.png",
-          "darkIcon": "assets/icons/strata-dark.png"
+          "icon": "assets/icons/strata-activity-v7.svg",
+          "darkIcon": "assets/icons/strata-activity-v7.svg"
         }
       ]
     },

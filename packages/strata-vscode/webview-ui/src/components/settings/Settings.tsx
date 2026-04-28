@@ -311,12 +311,7 @@ const Settings: Component<SettingsProps> = (props) => {
         </Tabs.Content>
         <Tabs.Content value="aboutStrataCode">
           <h3>{language.t("settings.aboutStrataCode.title")}</h3>
-          <AboutStrataCodeTab
-            port={server.serverInfo()?.port ?? null}
-            connectionState={server.connectionState()}
-            extensionVersion={server.extensionVersion()}
-            onMigrateClick={props.onMigrateClick}
-          />
+          <AboutStrataCodeTab />
         </Tabs.Content>
 
         <For each={pluginConfig.sections()}>

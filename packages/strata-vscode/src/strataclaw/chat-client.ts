@@ -47,7 +47,9 @@ export async function connect(creds: ChatCredentials): Promise<ClawChatClient> {
     await channel.watch({ presence: true })
   } catch (err) {
     // Disconnect the user to avoid leaking a partial connection
-    await client.disconnectUser().catch(() => {})
+    await client.disconnectUser().catch((e) => {
+      console.debug("[Strata] chat-client: disconnect failed during cleanup:", e)
+    })
     throw err
   }
 

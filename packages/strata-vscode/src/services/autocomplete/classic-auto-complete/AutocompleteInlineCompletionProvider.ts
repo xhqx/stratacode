@@ -394,8 +394,9 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
           if (!isAccessible) {
             return []
           }
-        } catch {
+        } catch (err) {
           // On error, assume file is ignored
+          console.debug("[Strata] autocomplete: ignore check failed:", err)
           return []
         }
       }
@@ -442,9 +443,10 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
       }
 
       return stringToInlineCompletions(cachedResult?.text ?? "", position)
-    } catch {
+    } catch (err) {
       // only big catch at the top of the call-chain, if anything goes wrong at a lower level
       // do not catch, just let the error cascade
+      console.debug("[Strata] autocomplete: inline completion failed:", err)
       return []
     }
   }

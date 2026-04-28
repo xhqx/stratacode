@@ -47,7 +47,7 @@ If you check config files into version control, make sure they do not contain AP
 
 ### Export and Import
 
-You can export and import settings from the **About Strata Code** tab in the Settings UI:
+You can export and import settings from the **About** tab in the Settings UI:
 
 - **Export**: Saves your global config as a `strata-settings.json` file. Review it before sharing, because config values are exported as-is.
 - **Import**: Loads a previously exported JSON file into the settings draft. Changes are not applied immediately — you can review them and click Save or Discard, just like any manual edit.
