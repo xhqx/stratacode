@@ -105,11 +105,7 @@
         "title": "StrataClaw",
         "icon": "$(comment-discussion)"
       },
-      {
-        "command": "strata-code.new.marketplaceButtonClicked",
-        "title": "Marketplace",
-        "icon": "$(extensions)"
-      },
+
       {
         "command": "strata-code.new.historyButtonClicked",
         "title": "History",
@@ -399,11 +395,7 @@
           "group": "navigation@3",
           "when": "view == strata-code.SidebarProvider"
         },
-        {
-          "command": "strata-code.new.marketplaceButtonClicked",
-          "group": "navigation@4",
-          "when": "view == strata-code.SidebarProvider"
-        },
+
         {
           "command": "strata-code.new.profileButtonClicked",
           "group": "navigation@5",
@@ -430,11 +422,6 @@
         }
       ],
       "editor/title": [
-        {
-          "command": "strata-code.new.openInTab",
-          "group": "navigation",
-          "when": "true"
-        },
         {
           "command": "strata-code.new.plusButtonClicked",
           "group": "navigation@0",

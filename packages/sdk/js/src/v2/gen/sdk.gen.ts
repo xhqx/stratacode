@@ -61,37 +61,6 @@ import type {
   GlobalUpgradeErrors,
   GlobalUpgradeResponses,
   InstanceDisposeResponses,
-  StrataClawChatCredentialsResponses,
-  StrataClawStatusResponses,
-  StrataCloudSessionGetErrors,
-  StrataCloudSessionGetResponses,
-  StrataCloudSessionImportErrors,
-  StrataCloudSessionImportResponses,
-  StrataCloudSessionsErrors,
-  StrataCloudSessionsResponses,
-  StratacodeHeapSnapshotErrors,
-  StratacodeHeapSnapshotResponses,
-  StratacodeRemoveAgentErrors,
-  StratacodeRemoveAgentResponses,
-  StratacodeRemoveSkillErrors,
-  StratacodeRemoveSkillResponses,
-  StratacodeSessionImportMessageErrors,
-  StratacodeSessionImportMessageResponses,
-  StratacodeSessionImportPartErrors,
-  StratacodeSessionImportPartResponses,
-  StratacodeSessionImportProjectErrors,
-  StratacodeSessionImportProjectResponses,
-  StratacodeSessionImportSessionErrors,
-  StratacodeSessionImportSessionResponses,
-  StrataFimErrors,
-  StrataFimResponses,
-  StrataModesResponses,
-  StrataNotificationsErrors,
-  StrataNotificationsResponses,
-  StrataOrganizationSetErrors,
-  StrataOrganizationSetResponses,
-  StrataProfileErrors,
-  StrataProfileResponses,
   LspStatusResponses,
   McpAddErrors,
   McpAddResponses,
@@ -207,6 +176,37 @@ import type {
   SessionUpdateErrors,
   SessionUpdateResponses,
   SessionViewedResponses,
+  StrataClawChatCredentialsResponses,
+  StrataClawStatusResponses,
+  StrataCloudSessionGetErrors,
+  StrataCloudSessionGetResponses,
+  StrataCloudSessionImportErrors,
+  StrataCloudSessionImportResponses,
+  StrataCloudSessionsErrors,
+  StrataCloudSessionsResponses,
+  StratacodeHeapSnapshotErrors,
+  StratacodeHeapSnapshotResponses,
+  StratacodeRemoveAgentErrors,
+  StratacodeRemoveAgentResponses,
+  StratacodeRemoveSkillErrors,
+  StratacodeRemoveSkillResponses,
+  StratacodeSessionImportMessageErrors,
+  StratacodeSessionImportMessageResponses,
+  StratacodeSessionImportPartErrors,
+  StratacodeSessionImportPartResponses,
+  StratacodeSessionImportProjectErrors,
+  StratacodeSessionImportProjectResponses,
+  StratacodeSessionImportSessionErrors,
+  StratacodeSessionImportSessionResponses,
+  StrataFimErrors,
+  StrataFimResponses,
+  StrataModesResponses,
+  StrataNotificationsErrors,
+  StrataNotificationsResponses,
+  StrataOrganizationSetErrors,
+  StrataOrganizationSetResponses,
+  StrataProfileErrors,
+  StrataProfileResponses,
   SubtaskPartInput,
   SuggestionAcceptErrors,
   SuggestionAcceptResponses,
@@ -5531,18 +5531,20 @@ export class Stratacode extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).post<StratacodeRemoveSkillResponses, StratacodeRemoveSkillErrors, ThrowOnError>(
-      {
-        url: "/stratacode/skill/remove",
-        ...options,
-        ...params,
-        headers: {
-          "Content-Type": "application/json",
-          ...options?.headers,
-          ...params.headers,
-        },
+    return (options?.client ?? this.client).post<
+      StratacodeRemoveSkillResponses,
+      StratacodeRemoveSkillErrors,
+      ThrowOnError
+    >({
+      url: "/stratacode/skill/remove",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
       },
-    )
+    })
   }
 
   /**
@@ -5570,18 +5572,20 @@ export class Stratacode extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).post<StratacodeRemoveAgentResponses, StratacodeRemoveAgentErrors, ThrowOnError>(
-      {
-        url: "/stratacode/agent/remove",
-        ...options,
-        ...params,
-        headers: {
-          "Content-Type": "application/json",
-          ...options?.headers,
-          ...params.headers,
-        },
+    return (options?.client ?? this.client).post<
+      StratacodeRemoveAgentResponses,
+      StratacodeRemoveAgentErrors,
+      ThrowOnError
+    >({
+      url: "/stratacode/agent/remove",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
       },
-    )
+    })
   }
 
   private _sessionImport?: SessionImport
@@ -5621,18 +5625,20 @@ export class Organization extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).post<StrataOrganizationSetResponses, StrataOrganizationSetErrors, ThrowOnError>(
-      {
-        url: "/strata/organization",
-        ...options,
-        ...params,
-        headers: {
-          "Content-Type": "application/json",
-          ...options?.headers,
-          ...params.headers,
-        },
+    return (options?.client ?? this.client).post<
+      StrataOrganizationSetResponses,
+      StrataOrganizationSetErrors,
+      ThrowOnError
+    >({
+      url: "/strata/organization",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
       },
-    )
+    })
   }
 }
 
@@ -5662,7 +5668,11 @@ export class Session3 extends HeyApiClient {
         },
       ],
     )
-    return (options?.client ?? this.client).get<StrataCloudSessionGetResponses, StrataCloudSessionGetErrors, ThrowOnError>({
+    return (options?.client ?? this.client).get<
+      StrataCloudSessionGetResponses,
+      StrataCloudSessionGetErrors,
+      ThrowOnError
+    >({
       url: "/strata/cloud/session/{id}",
       ...options,
       ...params,

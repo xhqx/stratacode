@@ -48,6 +48,12 @@ export const ServerProvider: ParentComponent = (props) => {
     if (m.type === "gitStatus") setGitInstalled(m.repo)
   })
 
+  // stratacode_change start
+  const pluginSub = vscode.onMessage((m: ExtensionMessage) => {
+    if (m.type === "pluginContributionsLoaded") setPluginContributions(m.contributions)
+  })
+  // stratacode_change end
+
   onMount(() => {
     const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
       switch (message.type) {
@@ -127,14 +133,13 @@ export const ServerProvider: ParentComponent = (props) => {
           setDeviceAuth(initialDeviceAuth)
           break
 
-        case "pluginContributionsLoaded":
-          setPluginContributions(message.contributions)
-          break
+
       }
     })
 
     onCleanup(() => {
       gitSub()
+      pluginSub() // stratacode_change
       unsubscribe()
     })
 
