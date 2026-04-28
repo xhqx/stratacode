@@ -113,6 +113,6 @@ Our community is built on respect, inclusivity, and collaboration. Please review
 This project is licensed under the MIT License.
 You’re free to use, modify, and distribute this code, including for commercial purposes as long as you include proper attribution and license notices. See [License](/LICENSE).
 
-### Where did Strata CLI come from?
+### Where did Strata Code come from?
 
-Strata CLI is a fork of [OpenCode](https://github.com/anomalyco/opencode), enhanced to work within the Strata agentic engineering platform.
+Strata Code is a fork of Kilo Code, and our goal is simplicity.
