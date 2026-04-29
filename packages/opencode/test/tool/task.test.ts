@@ -74,6 +74,7 @@ function stubOps(opts?: {
   return {
     cancel() {},
     resolvePromptParts: (template) => Effect.succeed([{ type: "text" as const, text: template }]),
+    scope: undefined as any,
     prompt: (input) =>
       Effect.gen(function* () {
         opts?.onPrompt?.(input)
@@ -567,6 +568,7 @@ describe("tool.task cost propagation", () => {
         const ops: TaskPromptOps = {
           cancel() {},
           resolvePromptParts: (template) => Effect.succeed([{ type: "text" as const, text: template }]),
+          scope: undefined as any,
           prompt: (input) =>
             Effect.gen(function* () {
               const info: MessageV2.Assistant = {

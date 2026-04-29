@@ -1,6 +1,7 @@
 // stratacode_change - new file
 import { CodebaseSearchTool } from "../../tool/warpgrep"
 import { RecallTool } from "../../tool/recall"
+import { TaskStatusTool } from "@/stratacode/tool/task-status"
 import * as Tool from "../../tool/tool"
 import { Flag } from "@/flag/flag"
 import { Effect } from "effect"
@@ -15,17 +16,19 @@ export namespace StrataToolRegistry {
       const codebase = yield* CodebaseSearchTool
       const semantic = yield* SemanticSearchTool
       const recall = yield* RecallTool
-      return { codebase, semantic, recall }
+      const status = yield* TaskStatusTool
+      return { codebase, semantic, recall, status }
     })
   }
 
   /** Finalize Strata-specific tools into Tool.Defs. Call this inside the InstanceState state Effect —
    * it has no Service deps beyond what Tool.init itself needs. */
-  export function build(tools: { codebase: Tool.Info; semantic: Tool.Info; recall: Tool.Info }) {
+  export function build(tools: { codebase: Tool.Info; semantic: Tool.Info; recall: Tool.Info; status: Tool.Info }) {
     return Effect.all({
       codebase: Tool.init(tools.codebase),
       semantic: Tool.init(tools.semantic),
       recall: Tool.init(tools.recall),
+      status: Tool.init(tools.status),
     })
   }
 
@@ -46,7 +49,7 @@ export namespace StrataToolRegistry {
 
   /** Strata-specific tools to append to the builtin list */
   export function extra(
-    tools: { codebase: Tool.Def; semantic: Tool.Def; recall: Tool.Def },
+    tools: { codebase: Tool.Def; semantic: Tool.Def; recall: Tool.Def; status: Tool.Def },
     cfg: { experimental?: { codebase_search?: boolean } },
   ): Tool.Def[] {
     const ready = StrataIndexing.ready()
@@ -54,6 +57,7 @@ export namespace StrataToolRegistry {
       ...(cfg.experimental?.codebase_search === true ? [tools.codebase] : []),
       ...(ready ? [tools.semantic] : []),
       tools.recall,
+      tools.status,
     ]
   }
 

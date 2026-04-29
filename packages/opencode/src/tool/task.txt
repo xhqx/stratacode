@@ -19,6 +19,7 @@ Usage notes:
 4. The agent's outputs should generally be trusted
 5. Clearly tell the agent whether you expect it to write code or just to do research (search, file reads, web fetches, etc.), since it is not aware of the user's intent. Tell it how to verify its work if possible (e.g., relevant test commands).
 6. If the agent description mentions that it should be used proactively, then you should try your best to use it without the user having to ask for it first. Use your judgement.
+7. Set background=true to start a task without waiting for it to finish. The tool returns immediately with a task_id. Call task_status with that task_id and wait=true to block until the task completes. Use this for long-running tasks where you want to continue working while the task runs, then collect results before your final response. Background tasks are cancelled if the parent session is cancelled. Note that background tasks will be lost if the server restarts, but you can always pass the previous task_id to the task tool to resume the agent's work.
 
 Example usage (NOTE: The agents below are fictional examples for illustration only - use the actual agents listed above):
 

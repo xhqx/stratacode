@@ -5,6 +5,7 @@ import { StrataSessionPrompt } from "@/stratacode/session/prompt" // stratacode_
 import { StrataSessionPromptQueue } from "@/stratacode/session/prompt-queue" // stratacode_change
 import { StrataSession } from "@/stratacode/session" // stratacode_change
 import { StrataCostPropagation } from "@/stratacode/session/cost-propagation" // stratacode_change
+import { StrataTaskRegistry } from "@/stratacode/tool/task-registry" // stratacode_change
 import { Suggestion } from "@/stratacode/suggestion" // stratacode_change
 import { Question } from "@/question" // stratacode_change
 import z from "zod"
@@ -122,6 +123,7 @@ export const layer = Layer.effect(
         cancel: (sessionID: SessionID) => run.fork(cancel(sessionID)),
         resolvePromptParts: (template: string) => resolvePromptParts(template),
         prompt: (input: PromptInput) => prompt(input),
+        scope, // stratacode_change
       } satisfies TaskPromptOps
     })
 
@@ -129,6 +131,7 @@ export const layer = Layer.effect(
       yield* elog.info("cancel", { sessionID })
       yield* StrataSessionPromptQueue.cancel(sessionID) // stratacode_change - drop queued follow-up loops on abort
       StrataSessionPrompt.abortPlanFollowup(sessionID) // stratacode_change - abort pending plan-followup handover work
+      yield* StrataTaskRegistry.cancel(sessionID) // stratacode_change - interrupt background subagents
       yield* state.cancel(sessionID)
     })
 
