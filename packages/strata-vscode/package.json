@@ -93,18 +93,12 @@
       {
         "command": "strata-code.new.plusButtonClicked",
         "title": "New Task",
-        "icon": {
-          "light": "assets/icons/strata-light.svg",
-          "dark": "assets/icons/strata-dark.svg"
-        }
+        "icon": "$(add)"
       },
       {
         "command": "strata-code.new.agentManagerOpen",
         "title": "Agent Manager",
-        "icon": {
-          "light": "assets/icons/strata-light.svg",
-          "dark": "assets/icons/strata-dark.svg"
-        }
+        "icon": "$(layout-panel)"
       },
       {
         "command": "strata-code.new.strataClawOpen",
@@ -118,10 +112,7 @@
       {
         "command": "strata-code.new.historyButtonClicked",
         "title": "History",
-        "icon": {
-          "light": "assets/icons/strata-light.svg",
-          "dark": "assets/icons/strata-dark.svg"
-        }
+        "icon": "$(history)"
       },
       {
         "command": "strata-code.new.profileButtonClicked",
@@ -134,18 +125,12 @@
       {
         "command": "strata-code.new.settingsButtonClicked",
         "title": "Settings",
-        "icon": {
-          "light": "assets/icons/strata-light.svg",
-          "dark": "assets/icons/strata-dark.svg"
-        }
+        "icon": "$(settings-gear)"
       },
       {
         "command": "strata-code.new.openInTab",
         "title": "Strata Code",
-        "icon": {
-          "light": "assets/icons/strata-light.svg",
-          "dark": "assets/icons/strata-dark.svg"
-        }
+        "icon": "$(link-external)"
       },
       {
         "command": "strata-code.new.showChanges",
