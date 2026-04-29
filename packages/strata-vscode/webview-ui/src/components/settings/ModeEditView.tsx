@@ -1,5 +1,7 @@
 import { Component, Show, For, createMemo, createSignal, onCleanup } from "solid-js"
 import { TextField } from "@stratacode/strata-ui/text-field"
+import { parseModelString } from "../../../../src/shared/provider-model"
+import { ModelSelectorBase } from "../shared/ModelSelector"
 import { Switch } from "@stratacode/strata-ui/switch"
 import { Card } from "@stratacode/strata-ui/card"
 import { Button } from "@stratacode/strata-ui/button"
@@ -180,10 +182,18 @@ const ModeEditView: Component<Props> = (props) => {
           title={language.t("settings.agentBehaviour.modelOverride.title")}
           description={language.t("settings.agentBehaviour.modelOverride.description")}
         >
-          <TextField
-            value={cfg().model ?? ""}
-            placeholder="e.g. anthropic/claude-sonnet-4-20250514"
-            onChange={(val) => update({ model: val || null })}
+          <ModelSelectorBase
+            value={parseModelString(cfg().model ?? undefined)}
+            onSelect={(providerID, modelID) => {
+              if (!providerID || !modelID) {
+                update({ model: null })
+                return
+              }
+              update({ model: `${providerID}/${modelID}` })
+            }}
+            placement="bottom-start"
+            allowClear
+            clearLabel={language.t("settings.providers.notSet")}
           />
         </SettingsRow>
 

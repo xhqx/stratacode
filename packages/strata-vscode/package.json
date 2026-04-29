@@ -319,8 +319,8 @@
         "title": "Generate Commit Message",
         "category": "Strata Code",
         "icon": {
-          "light": "assets/icons/strata-light.svg",
-          "dark": "assets/icons/strata-dark.svg"
+          "light": "assets/icons/strata-commit-light.svg",
+          "dark": "assets/icons/strata-commit-dark.svg"
         }
       },
       {
