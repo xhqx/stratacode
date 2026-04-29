@@ -713,9 +713,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
           onClick={() => vscode.postMessage({ type: "openSettingsTab", tab: "providers" })}
           aria-label={language.t("prompt.noModels")}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2v4M10 2v4M4 6h8a1 1 0 011 1v1a4 4 0 01-3 3.87V14M8 11.87V14" />
-          </svg>
+          <span aria-hidden="true">+</span>
           <span>{language.t("prompt.noModels")}</span>
         </button>
       </Show>
