@@ -220,7 +220,7 @@ export function filterVisibleAgents(
   const visible = agents.filter(
     (a) => a.mode !== "subagent" && !a.hidden,
   )
-  const defaultAgent = visible.length > 0 ? visible[0]!.name : "code"
+  const defaultAgent = visible.length > 0 ? visible[0]!.name : "ask"
   return { visible, defaultAgent }
 }
 

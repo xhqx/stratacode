@@ -2,7 +2,7 @@
 // Source: src/i18n/locales/en/stratacode.json → "autocomplete" section
 
 export const dict = {
-  "stratacode:autocomplete.statusBar.enabled": "☄ Autocomplete",
+  "stratacode:autocomplete.statusBar.enabled": "$(sparkle) Autocomplete",
   "stratacode:autocomplete.statusBar.snoozed": "snoozed",
   "stratacode:autocomplete.statusBar.warning": "$(warning) Autocomplete",
   "stratacode:autocomplete.statusBar.tooltip.basic": "Strata Code Autocomplete",

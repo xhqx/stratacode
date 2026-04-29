@@ -318,10 +318,7 @@
         "command": "strata-code.new.generateCommitMessage",
         "title": "Generate Commit Message",
         "category": "Strata Code",
-        "icon": {
-          "light": "assets/icons/strata-commit-light.svg",
-          "dark": "assets/icons/strata-commit-dark.svg"
-        }
+        "icon": "$(sparkle)"
       },
       {
         "command": "strata-code.new.explainCode",

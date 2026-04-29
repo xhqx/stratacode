@@ -225,6 +225,7 @@ export function patchAgents(
     agents.code = {
       ...agents.build,
       name: "code",
+      hidden: true,
       permission: Permission.merge(defaults, Permission.fromConfig({ semantic_search: "allow" }), user),
     }
     delete agents.build
@@ -308,6 +309,7 @@ export function patchAgents(
     ),
     mode: "primary",
     native: true,
+    hidden: true,
   }
 
   // Add orchestrator agent
@@ -346,6 +348,7 @@ export function patchAgents(
     mode: "primary",
     native: true,
     deprecated: true,
+    hidden: true,
   }
 
   // Add ask agent
@@ -386,7 +389,7 @@ export function patchAgents(
     native: true,
   }
   
-  // Add commit agent (hidden by default — extension controls visibility)
+  // Add commit agent
   agents.commit = {
     name: "commit",
     description: "Generate conventional commit messages from staged changes.",
@@ -406,10 +409,9 @@ export function patchAgents(
     ),
     mode: "primary",
     native: true,
-    hidden: true,
   }
 
-  // Add autocomplete agent (hidden by default — extension controls visibility)
+  // Add autocomplete agent
   agents.autocomplete = {
     name: "autocomplete",
     description: "Inline code completion assistant.",
@@ -430,7 +432,6 @@ export function patchAgents(
     ),
     mode: "primary",
     native: true,
-    hidden: true,
   }
 }
 

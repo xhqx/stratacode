@@ -314,7 +314,7 @@ export const layer = Layer.effect(
             agents,
             values(),
             sortBy(
-              [(x) => (cfg.default_agent ? x.name === cfg.default_agent : x.name === "code"), "desc"], // stratacode_change - renamed from "build" to "code"
+              [(x) => (cfg.default_agent ? x.name === cfg.default_agent : x.name === "ask"), "desc"], // stratacode_change - default agent is "ask"
               [(x) => x.name, "asc"],
             ),
           )
@@ -330,9 +330,9 @@ export const layer = Layer.effect(
             if (agent.hidden === true) throw new Error(`default agent "${c.default_agent}" is hidden`)
             return agent.name
           }
-          // stratacode_change start - prefer "code" as default agent (key order changes after rename from "build")
-          const code = agents.code
-          if (code && code.mode !== "subagent" && code.hidden !== true) return code.name
+          // stratacode_change start - prefer "ask" as default agent
+          const ask = agents.ask
+          if (ask && ask.mode !== "subagent" && ask.hidden !== true) return ask.name
           // stratacode_change end
           const visible = Object.values(agents).find((a) => a.mode !== "subagent" && a.hidden !== true)
           if (!visible) throw new Error("no primary visible agent found")

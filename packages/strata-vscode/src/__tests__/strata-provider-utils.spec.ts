@@ -7,42 +7,25 @@ describe("filterVisibleAgents", () => {
     const agents = [
       { name: "sub", mode: "subagent", hidden: false },
       { name: "hidden_agent", mode: "primary", hidden: true },
-      { name: "code", mode: "primary", hidden: false },
       { name: "ask", mode: "primary", hidden: false },
+      { name: "plan", mode: "primary", hidden: false },
     ] as Agent[]
 
     const result = filterVisibleAgents(agents)
 
-    expect(result.visible.map((a) => a.name)).toEqual(["code", "ask"])
-    expect(result.defaultAgent).toBe("code")
+    expect(result.visible.map((a) => a.name)).toEqual(["ask", "plan"])
+    expect(result.defaultAgent).toBe("ask")
   })
 
-  it("includes force-shown hidden agents in visible list but excludes them from defaultAgent strict list", () => {
+  it("falls back to 'ask' when no visible agents exist", () => {
     const agents = [
       { name: "hidden_agent", mode: "primary", hidden: true },
-      { name: "commit", mode: "primary", hidden: true },
-      { name: "autocomplete", mode: "primary", hidden: true },
-      { name: "code", mode: "primary", hidden: false },
+      { name: "code", mode: "primary", hidden: true },
     ] as Agent[]
 
-    const shown = new Set(["commit", "autocomplete"])
-    const result = filterVisibleAgents(agents, shown)
+    const result = filterVisibleAgents(agents)
 
-    expect(result.visible.map((a) => a.name)).toEqual(["commit", "autocomplete", "code"])
-    // defaultAgent should still be 'code', not 'commit' which was force-shown
-    expect(result.defaultAgent).toBe("code")
-  })
-
-  it("handles empty strict list by falling back to 'code'", () => {
-    const agents = [
-      { name: "hidden_agent", mode: "primary", hidden: true },
-      { name: "commit", mode: "primary", hidden: true },
-    ] as Agent[]
-
-    const shown = new Set(["commit"])
-    const result = filterVisibleAgents(agents, shown)
-
-    expect(result.visible.map((a) => a.name)).toEqual(["commit"])
-    expect(result.defaultAgent).toBe("code")
+    expect(result.visible).toEqual([])
+    expect(result.defaultAgent).toBe("ask")
   })
 })
