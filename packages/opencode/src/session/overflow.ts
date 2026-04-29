@@ -22,5 +22,12 @@ export function isOverflow(input: { cfg: Config.Info; tokens: MessageV2.Assistan
 
   const count =
     input.tokens.total || input.tokens.input + input.tokens.output + input.tokens.cache.read + input.tokens.cache.write
+  // stratacode_change start - support threshold_percent: trigger early at X% of max context
+  const pct = input.cfg.compaction?.threshold_percent
+  if (pct !== undefined && pct < 100) {
+    const limit = input.model.limit.input || input.model.limit.context
+    if (limit > 0) return count >= Math.floor(limit * (pct / 100))
+  }
+  // stratacode_change end
   return count >= usable(input)
 }

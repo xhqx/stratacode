@@ -1371,6 +1371,8 @@ export const dict = {
   "settings.context.autoCompaction.description": "Automatically compact context when it's full",
   "settings.context.prune.title": "Prune Old Outputs",
   "settings.context.prune.description": "Remove old tool outputs during compaction",
+  "settings.context.compactionThreshold.title": "Compaction Threshold",
+  "settings.context.compactionThreshold.description": "Trigger auto-compaction when context reaches this percentage of the model's maximum context window (10–100%, default: 100%)",
   "settings.context.watcherPatterns": "File Watcher Ignore Patterns",
   "settings.context.watcherPatterns.description": "Glob patterns for files the watcher should ignore",
 

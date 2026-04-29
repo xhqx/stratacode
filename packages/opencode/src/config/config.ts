@@ -263,6 +263,14 @@ export const Info = Schema.Struct({
       reserved: Schema.optional(NonNegativeInt).annotate({
         description: "Token buffer for compaction. Leaves enough window to avoid overflow during compaction.",
       }),
+      // stratacode_change start
+      threshold_percent: Schema.optional(
+        Schema.Number.check(Schema.isGreaterThan(0)).check(Schema.isLessThanOrEqualTo(100)),
+      ).annotate({
+        description:
+          "Percentage of the model's maximum context at which auto-compaction is triggered (1-100, default: 100). For example, 80 triggers compaction when the context reaches 80% of its limit.",
+      }),
+      // stratacode_change end
     }),
   ),
   experimental: Schema.optional(
