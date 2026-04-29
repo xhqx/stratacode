@@ -91,7 +91,7 @@ export interface ModelSelectorBaseProps {
 }
 
 export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
-  const { connected, models, findModel } = useProvider()
+  const { connected, models, findModel, providers: providerMap } = useProvider()
   const language = useLanguage()
   // Session context is optional — ModelSelectorBase is also used in Settings
   // where SessionProvider may not be mounted.
@@ -150,10 +150,14 @@ export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
 
   // Only show models from Strata Gateway or connected providers.
   // strata-auto/small is excluded unless includeAutoSmall is explicitly true.
+  // When STRATA_ENABLE_GATEWAY=false the CLI won't register the strata
+  // provider so gateway models won't appear in the list.
   const visibleModels = createMemo(() => {
     const c = connected()
+    const gatewayEnabled = !!providerMap()[STRATA_GATEWAY_ID]
     return models().filter((m) => {
       if (!props.includeAutoSmall && isSmall(m)) return false
+      if (m.providerID === STRATA_GATEWAY_ID && !gatewayEnabled) return false
       return m.providerID === STRATA_GATEWAY_ID || c.includes(m.providerID)
     })
   })

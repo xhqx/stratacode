@@ -26,9 +26,6 @@ export function providerIcon(providerID: string): IconName {
   return "synthetic"
 }
 
-export function strataFallbackProvider(): Provider {
-  return createStrataFallbackProvider()
-}
 
 export function providerNoteKey(providerID: string) {
   if (providerID === "strata") return "dialog.provider.strata.note"

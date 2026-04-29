@@ -63,7 +63,12 @@ const ProvidersTab: Component = () => {
 
   const disabledProviders = createMemo(() => config().disabled_providers ?? [])
   const disabledIds = createMemo(() => new Set(disabledProviders()))
-  const providers = createMemo(() => providersWithStrataFallback(provider.providers()))
+  // Derive gateway availability from CLI provider data.
+  // When STRATA_ENABLE_GATEWAY=false the CLI won't register the strata provider.
+  const gatewayEnabled = createMemo(() => !!provider.providers()[STRATA_PROVIDER_ID])
+  const providers = createMemo(() =>
+    gatewayEnabled() ? providersWithStrataFallback(provider.providers()) : provider.providers(),
+  )
   const disabledOptions = createMemo(() => disabledProviderOptions(providers(), disabledProviders()))
 
   function source(item: Provider): ProviderSource | undefined {
@@ -158,7 +163,7 @@ const ProvidersTab: Component = () => {
 
   return (
     <div>
-      <Show when={!disabledIds().has(STRATA_PROVIDER_ID)}>
+      <Show when={!disabledIds().has(STRATA_PROVIDER_ID) && gatewayEnabled()}>
         {/* Strata Gateway — always at the top, not editable */}
         <Card>
           <div

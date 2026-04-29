@@ -484,8 +484,8 @@ async function openStrataInNewTab(
   })
 
   panel.iconPath = {
-    light: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "strata-light.png"),
-    dark: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "strata-dark.png"),
+    light: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "strata-icon.svg"),
+    dark: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "strata-comet-white.svg"),
   }
 
   const tabProvider = new StrataProvider(context.extensionUri, connectionService, context)

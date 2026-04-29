@@ -67,6 +67,7 @@ export class ServerManager {
     return new Promise((resolve, reject) => {
       console.log("[Strata New] ServerManager: 🎬 Spawning CLI process:", cliPath, ["serve", "--port", "0"])
       const claudeCompat = vscode.workspace.getConfiguration("strata-code.new").get<boolean>("claudeCodeCompat", false)
+      const enableGateway = vscode.workspace.getConfiguration("strata-code.new").get<boolean>("enableGateway", true)
       // Pin cwd so the CLI doesn't inherit the extension host's cwd ("/" under F5 debug)
       const spawnCwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.env.HOME ?? require("os").homedir()
       const serverProcess = spawn(cliPath, ["serve", "--port", "0"], {
@@ -93,6 +94,7 @@ export class ServerManager {
           STRATA_VSCODE_VERSION: vscode.version,
           STRATACODE_EDITOR_NAME: `${vscode.env.appName} ${vscode.version}`,
           ...(!claudeCompat && { STRATA_DISABLE_CLAUDE_CODE: "true" }),
+          ...(!enableGateway && { STRATA_ENABLE_GATEWAY: "false" }),
         },
         stdio: ["ignore", "pipe", "pipe"],
         detached: true,

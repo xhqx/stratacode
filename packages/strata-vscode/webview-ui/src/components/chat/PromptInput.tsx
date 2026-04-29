@@ -19,6 +19,7 @@ import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
 import { useWorktreeMode } from "../../context/worktree-mode"
 import { useConfig } from "../../context/config"
+import { useProvider } from "../../context/provider"
 import { ModelSelector } from "../shared/ModelSelector"
 import { ModeSwitcher } from "../shared/ModeSwitcher"
 import { ThinkingSelector } from "../shared/ThinkingSelector"
@@ -37,6 +38,7 @@ import { fileName, dirName, buildHighlightSegments, atEnd, isPromptBusy } from "
 import type { ReviewComment, TextPart } from "../../types/messages"
 import { formatReviewCommentsMarkdown } from "../../utils/review-comment-markdown"
 import { pendingDraftKey, scopeDraftKey, sessionDraftKey } from "../../utils/prompt-drafts"
+import { STRATA_GATEWAY_ID } from "../shared/model-selector-utils"
 
 // Per-session input text storage (module-level so it survives remounts)
 const drafts = new Map<string, string>()
@@ -71,6 +73,15 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const vscode = useVSCode()
   const worktree = useWorktreeMode()
   const dialog = useDialog()
+  const { connected, models, providers: providerMap } = useProvider()
+  const noModels = () => {
+    const c = connected()
+    const gatewayEnabled = !!providerMap()[STRATA_GATEWAY_ID]
+    return models().filter((m) => {
+      if (m.providerID === STRATA_GATEWAY_ID && !gatewayEnabled) return false
+      return m.providerID === STRATA_GATEWAY_ID || c.includes(m.providerID)
+    }).length === 0
+  }
   const sid = () => session.currentSessionID() ?? props.pendingSessionID ?? session.draftSessionID() ?? undefined
   const ctx = () => {
     const id = props.boxId
@@ -687,11 +698,28 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   return (
     <div
       class="prompt-input-container"
-      classList={{ "prompt-input-container--dragging": imageAttach.dragging() }}
+      classList={{
+        "prompt-input-container--dragging": imageAttach.dragging(),
+        "prompt-input-container--empty": noModels(),
+      }}
       onDragOver={imageAttach.handleDragOver}
       onDragLeave={imageAttach.handleDragLeave}
       onDrop={imageAttach.handleDrop}
     >
+      <Show when={noModels()}>
+        <button
+          type="button"
+          class="prompt-input-no-models"
+          onClick={() => vscode.postMessage({ type: "openSettingsTab", tab: "providers" })}
+          aria-label={language.t("prompt.noModels")}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2v4M10 2v4M4 6h8a1 1 0 011 1v1a4 4 0 01-3 3.87V14M8 11.87V14" />
+          </svg>
+          <span>{language.t("prompt.noModels")}</span>
+        </button>
+      </Show>
+      <Show when={!noModels()}>
       <Show when={reviewComments().length > 0}>
         <div class="prompt-review-comments">
           <div class="prompt-review-comments-header">
@@ -1004,6 +1032,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
           </Show>
         </div>
       </div>
+      </Show>
     </div>
   )
 }

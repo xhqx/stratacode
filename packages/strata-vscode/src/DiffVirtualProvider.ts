@@ -48,8 +48,8 @@ export class DiffVirtualProvider implements vscode.Disposable {
     })
 
     panel.iconPath = {
-      light: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-light.png"),
-      dark: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-dark.png"),
+      light: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-icon.svg"),
+      dark: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-comet-white.svg"),
     }
 
     panel.webview.html = this.getHtml(panel.webview)

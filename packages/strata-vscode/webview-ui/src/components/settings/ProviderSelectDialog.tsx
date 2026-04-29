@@ -13,7 +13,6 @@ import ProviderConnectDialog from "./ProviderConnectDialog"
 import {
   CUSTOM_PROVIDER_ID,
   isPopularProvider,
-  strataFallbackProvider,
   popularProviderIndex,
   providerIcon,
 } from "./provider-catalog"
@@ -38,7 +37,10 @@ const ProviderSelectDialog = () => {
     const disabled = new Set(config().disabled_providers ?? [])
     const connected = new Set(provider.connected())
     const all = Object.values(provider.providers())
-    const withStrata = all.some((item) => item.id === STRATA_PROVIDER_ID) ? all : [strataFallbackProvider(), ...all]
+    // When the CLI has STRATA_ENABLE_GATEWAY=false, the strata provider
+    // won't appear in the provider list — don't inject a fallback.
+    const gatewayEnabled = all.some((item) => item.id === STRATA_PROVIDER_ID)
+    const withStrata = gatewayEnabled ? all : all.filter((item) => item.id !== STRATA_PROVIDER_ID)
     const available = withStrata.filter((item) => !disabled.has(item.id) && !connected.has(item.id))
 
     return [

@@ -96,8 +96,8 @@ export class SettingsEditorProvider implements vscode.Disposable {
 
   private wirePanel(panel: vscode.WebviewPanel, view: PanelView, projectDirectory: string | null): void {
     panel.iconPath = {
-      light: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-light.png"),
-      dark: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-dark.png"),
+      light: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-icon.svg"),
+      dark: vscode.Uri.joinPath(this.extensionUri, "assets", "icons", "strata-comet-white.svg"),
     }
 
     // Create a dedicated StrataProvider for this panel so it has full

@@ -75,8 +75,8 @@
         {
           "id": "strata-code-ActivityBar",
           "title": "Strata Code",
-          "icon": "assets/icons/strata-activity-v7.svg",
-          "darkIcon": "assets/icons/strata-activity-v7.svg"
+          "icon": "assets/icons/strata-comet-v2.svg",
+          "darkIcon": "assets/icons/strata-comet-v2.svg"
         }
       ]
     },
@@ -93,40 +93,58 @@
       {
         "command": "strata-code.new.plusButtonClicked",
         "title": "New Task",
-        "icon": "$(add)"
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.agentManagerOpen",
         "title": "Agent Manager",
-        "icon": "$(organization)"
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.strataClawOpen",
         "title": "StrataClaw",
-        "icon": "$(comment-discussion)"
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
 
       {
         "command": "strata-code.new.historyButtonClicked",
         "title": "History",
-        "icon": "$(history)"
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.profileButtonClicked",
         "title": "Profile",
-        "icon": "$(account)"
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.settingsButtonClicked",
         "title": "Settings",
-        "icon": "$(settings-gear)"
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.openInTab",
         "title": "Strata Code",
         "icon": {
-          "light": "assets/icons/strata-light.png",
-          "dark": "assets/icons/strata-dark.png"
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
         }
       },
       {
@@ -142,12 +160,20 @@
       {
         "command": "strata-code.new.autocomplete.generateSuggestions",
         "title": "Generate Suggested Edits",
-        "category": "Strata Code"
+        "category": "Strata Code",
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.autocomplete.cancelSuggestions",
         "title": "Cancel Suggested Edits",
-        "category": "Strata Code"
+        "category": "Strata Code",
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.api.sendMessage",
@@ -293,44 +319,72 @@
         "title": "Generate Commit Message",
         "category": "Strata Code",
         "icon": {
-          "light": "assets/icons/strata-light.png",
-          "dark": "assets/icons/strata-dark.png"
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
         }
       },
       {
         "command": "strata-code.new.explainCode",
         "title": "Explain Code",
-        "category": "Strata Code"
+        "category": "Strata Code",
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.fixCode",
         "title": "Fix Code",
-        "category": "Strata Code"
+        "category": "Strata Code",
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.improveCode",
         "title": "Improve Code",
-        "category": "Strata Code"
+        "category": "Strata Code",
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.addToContext",
         "title": "Add to Context",
-        "category": "Strata Code"
+        "category": "Strata Code",
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.terminalAddToContext",
         "title": "Add Terminal Content to Context",
-        "category": "Strata Code"
+        "category": "Strata Code",
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.terminalFixCommand",
         "title": "Fix This Command",
-        "category": "Strata Code"
+        "category": "Strata Code",
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.terminalExplainCommand",
         "title": "Explain This Command",
-        "category": "Strata Code"
+        "category": "Strata Code",
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.focusChatInput",
@@ -355,7 +409,11 @@
       {
         "command": "strata-code.new.generateTerminalCommand",
         "title": "Generate Terminal Command",
-        "category": "Strata Code"
+        "category": "Strata Code",
+        "icon": {
+          "light": "assets/icons/strata-light.svg",
+          "dark": "assets/icons/strata-dark.svg"
+        }
       },
       {
         "command": "strata-code.new.takeHeapSnapshot",
@@ -391,30 +449,12 @@
           "when": "view == strata-code.SidebarProvider"
         },
         {
-          "command": "strata-code.new.strataClawOpen",
-          "group": "navigation@3",
-          "when": "view == strata-code.SidebarProvider"
-        },
-
-        {
-          "command": "strata-code.new.profileButtonClicked",
-          "group": "navigation@5",
-          "when": "view == strata-code.SidebarProvider"
-        },
-        {
           "command": "strata-code.new.settingsButtonClicked",
           "group": "navigation@6",
           "when": "view == strata-code.SidebarProvider"
         }
       ],
       "scm/title": [
-        {
-          "command": "strata-code.new.generateCommitMessage",
-          "group": "navigation",
-          "when": "scmProvider == git"
-        }
-      ],
-      "scm/input": [
         {
           "command": "strata-code.new.generateCommitMessage",
           "group": "navigation",
@@ -433,13 +473,8 @@
           "when": "activeWebviewPanelId == strata-code.new.TabPanel"
         },
         {
-          "command": "strata-code.new.profileButtonClicked",
-          "group": "navigation@2",
-          "when": "activeWebviewPanelId == strata-code.new.TabPanel"
-        },
-        {
           "command": "strata-code.new.settingsButtonClicked",
-          "group": "navigation@3",
+          "group": "navigation@2",
           "when": "activeWebviewPanelId == strata-code.new.TabPanel"
         }
       ],
@@ -788,6 +823,12 @@
           "type": "boolean",
           "default": false,
           "description": "Enable chat textarea autocomplete"
+        },
+
+        "strata-code.new.enableGateway": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Strata Gateway provider. When disabled, the Strata Gateway and its models are hidden from the UI."
         },
 
         "strata-code.new.claudeCodeCompat": {

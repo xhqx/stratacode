@@ -1074,6 +1074,7 @@ export const dict = {
   "prompt.placeholder.connecting": "Connecting to server...",
   "prompt.placeholder.default": "Type a message... (Enter to send, Shift+Enter for new line)",
   "prompt.placeholder.error": "Connection failed. Check the output panel or restart the extension.",
+  "prompt.noModels": "Add your first model to use Strata Code features",
 
   "context.usage.sessionCost": "Session cost",
   "context.usage.olderSessions": "{{count}} older sessions",

@@ -19,6 +19,7 @@ import McpEditView from "./McpEditView"
 import WorkflowsTab from "./agent-behaviour/WorkflowsTab"
 import { parseImport, MAX_IMPORT_SIZE } from "./mode-io"
 import type { ImportError } from "./mode-io"
+import { parseImport as parseSettingsImport, MAX_IMPORT_SIZE as MAX_SETTINGS_IMPORT_SIZE } from "./settings-io"
 
 import { parseModelString } from "../../../../src/shared/provider-model"
 import { ModelSelectorBase } from "../shared/ModelSelector"
@@ -289,6 +290,36 @@ const AgentBehaviourTab: Component = () => {
     input.click()
   }
 
+  const importOpenCodeSettings = (file: File) => {
+    setImportError("")
+    if (file.size > MAX_SETTINGS_IMPORT_SIZE) {
+      setImportError(language.t(errorKey("tooLarge")))
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = parseSettingsImport(reader.result as string)
+      if (!result.ok) {
+        setImportError(language.t(errorKey(result.error as any)))
+        return
+      }
+      updateConfig(result.config)
+      setImportError("")
+    }
+    reader.readAsText(file)
+  }
+
+  const triggerImportSettings = () => {
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = ".json,.jsonc"
+    input.onchange = () => {
+      const file = input.files?.[0]
+      if (file) importOpenCodeSettings(file)
+    }
+    input.click()
+  }
+
   function handleModelSelect(configKey: "model" | "small_model") {
     return (providerID: string, modelID: string) => {
       if (!providerID || !modelID) {
@@ -376,6 +407,9 @@ const AgentBehaviourTab: Component = () => {
         >
           <div data-slot="settings-row-label-title">{language.t("settings.agentBehaviour.availableAgents")}</div>
           <div style={{ display: "flex", gap: "8px" }}>
+            <Button variant="ghost" size="small" onClick={triggerImportSettings}>
+              {language.t("settings.agentBehaviour.importOpenCodeSettings")}
+            </Button>
             <Button variant="ghost" size="small" onClick={triggerImport}>
               {language.t("settings.agentBehaviour.importMode")}
             </Button>

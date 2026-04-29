@@ -43,9 +43,7 @@ import "./migration.css"
 
 const StrataLogo = (): JSX.Element => {
   const iconsBaseUri = (window as { ICONS_BASE_URI?: string }).ICONS_BASE_URI || ""
-  const isLight =
-    document.body.classList.contains("vscode-light") || document.body.classList.contains("vscode-high-contrast-light")
-  const icon = isLight ? "strata-light.png" : "strata-dark.png"
+  const icon = "strata-icon.svg"
   return (
     <div class="migration-wizard__logo">
       <img src={`${iconsBaseUri}/${icon}`} alt="Strata Code" />

@@ -83,4 +83,5 @@ export const dict = {
   "plan.followup.answer.newSession.description": "Implement in a fresh session with a clean context",
   "plan.followup.answer.continue": "Continue here",
   "plan.followup.answer.continue.description": "Implement the plan in this session",
+  "settings.agentBehaviour.importOpenCodeSettings": "Import settings from OpenCode",
 }

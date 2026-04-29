@@ -37,9 +37,7 @@ import type { QuestionRequest, SuggestionRequest } from "../../types/messages"
 
 const StrataLogo = (): JSX.Element => {
   const iconsBaseUri = (window as { ICONS_BASE_URI?: string }).ICONS_BASE_URI || ""
-  const isLight =
-    document.body.classList.contains("vscode-light") || document.body.classList.contains("vscode-high-contrast-light")
-  const iconFile = isLight ? "strata-light.png" : "strata-dark.png"
+  const iconFile = "strata-icon.svg"
 
   return (
     <div class="strata-logo">
