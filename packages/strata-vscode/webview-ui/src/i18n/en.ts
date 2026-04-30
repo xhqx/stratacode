@@ -1219,6 +1219,10 @@ export const dict = {
   "settings.agentBehaviour.selectAgent.description": "Select an agent to configure…",
   "settings.agentBehaviour.modelOverride.title": "Model Override",
   "settings.agentBehaviour.modelOverride.description": "Override the default model for this agent",
+  "settings.agentBehaviour.fallbackModels.title": "Fallback Models",
+  "settings.agentBehaviour.fallbackModels.description":
+    "Ordered list of models to try if the primary model encounters an error (e.g., rate limit, auth, or service outage).",
+  "settings.agentBehaviour.fallbackModels.add": "Add fallback model",
   "settings.agentBehaviour.prompt.title": "Custom Prompt",
   "settings.agentBehaviour.prompt.description": "Additional system prompt for this agent",
   "settings.agentBehaviour.temperature.title": "Temperature",

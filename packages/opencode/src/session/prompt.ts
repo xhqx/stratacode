@@ -8,6 +8,7 @@ import { StrataCostPropagation } from "@/stratacode/session/cost-propagation" //
 import { StrataTaskRegistry } from "@/stratacode/tool/task-registry" // stratacode_change
 import { Suggestion } from "@/stratacode/suggestion" // stratacode_change
 import { Question } from "@/question" // stratacode_change
+import * as ModelFallback from "@/stratacode/model-fallback" // stratacode_change
 import z from "zod"
 import { SessionID, MessageID, PartID } from "./schema"
 import { MessageV2 } from "./message-v2"
@@ -924,14 +925,33 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       return { info: msg, parts: [part] }
     })
 
+    // stratacode_change start — fallback model resolution
     const getModel = Effect.fn("SessionPrompt.getModel")(function* (
       providerID: ProviderID,
       modelID: ModelID,
       sessionID: SessionID,
+      fallbacks?: { providerID: ProviderID; modelID: ModelID }[],
     ) {
       const exit = yield* provider.getModel(providerID, modelID).pipe(Effect.exit)
       if (Exit.isSuccess(exit)) return exit.value
       const err = Cause.squash(exit.cause)
+
+      // Try each fallback in order when the error is recoverable
+      if (fallbacks?.length && ModelFallback.shouldFallback(err)) {
+        for (const fb of fallbacks) {
+          const fbExit = yield* provider.getModel(fb.providerID, fb.modelID).pipe(Effect.exit)
+          if (Exit.isSuccess(fbExit)) {
+            yield* bus.publish(Session.Event.Error, {
+              sessionID,
+              error: new NamedError.Unknown({
+                message: `Model ${providerID}/${modelID} unavailable — using fallback ${fb.providerID}/${fb.modelID}.`,
+              }).toObject(),
+            })
+            return fbExit.value
+          }
+        }
+      }
+
       if (Provider.ModelNotFoundError.isInstance(err)) {
         const hint = err.data.suggestions?.length ? ` Did you mean: ${err.data.suggestions.join(", ")}?` : ""
         yield* bus.publish(Session.Event.Error, {
@@ -943,6 +963,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       }
       return yield* Effect.failCause(exit.cause)
     })
+    // stratacode_change end
 
     const lastModel = Effect.fnUntraced(function* (sessionID: SessionID) {
       const match = yield* sessions.findMessage(sessionID, (m) => m.info.role === "user" && !!m.info.model)
@@ -1432,7 +1453,24 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               history: msgs,
             }).pipe(Effect.ignore, Effect.forkIn(scope))
 
-          const model = yield* getModel(lastUser.model.providerID, lastUser.model.modelID, sessionID)
+          // stratacode_change start — resolve agent early to supply fallback candidates to getModel
+          const agent = yield* agents.get(lastUser.agent)
+          if (!agent) {
+            const available = (yield* agents.list()).filter((a) => !a.hidden).map((a) => a.name)
+            const hint = available.length ? ` Available agents: ${available.join(", ")}` : ""
+            const error = new NamedError.Unknown({ message: `Agent not found: "${lastUser.agent}".${hint}` })
+            yield* bus.publish(Session.Event.Error, { sessionID, error: error.toObject() })
+            throw error
+          }
+          const fallbacks = ModelFallback.candidates(agent)
+          const model = yield* getModel(lastUser.model.providerID, lastUser.model.modelID, sessionID, fallbacks)
+
+          // Persist fallback model so subsequent turns reuse it automatically
+          if (model.providerID !== lastUser.model.providerID || model.id !== lastUser.model.modelID) {
+            lastUser.model = { ...lastUser.model, providerID: model.providerID, modelID: model.id }
+            yield* sessions.updateMessage(lastUser)
+          }
+          // stratacode_change end
           const task = tasks.pop()
 
           if (task?.type === "subtask") {
@@ -1483,14 +1521,6 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             continue
           }
 
-          const agent = yield* agents.get(lastUser.agent)
-          if (!agent) {
-            const available = (yield* agents.list()).filter((a) => !a.hidden).map((a) => a.name)
-            const hint = available.length ? ` Available agents: ${available.join(", ")}` : ""
-            const error = new NamedError.Unknown({ message: `Agent not found: "${lastUser.agent}".${hint}` })
-            yield* bus.publish(Session.Event.Error, { sessionID, error: error.toObject() })
-            throw error
-          }
           const maxSteps = agent.steps ?? Infinity
           const isLastStep = step >= maxSteps
           msgs = yield* insertReminders({ messages: msgs, agent, session })

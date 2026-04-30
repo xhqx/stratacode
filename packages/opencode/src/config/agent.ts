@@ -52,6 +52,9 @@ const AgentSchema = Schema.StructWithRest(
     }),
     maxSteps: Schema.optional(PositiveInt).annotate({ description: "@deprecated Use 'steps' field instead." }),
     permission: Schema.optional(ConfigPermission.Info),
+    fallback_models: Schema.optional(Schema.mutable(Schema.Array(ConfigModelID))).annotate({
+      description: "Ordered list of fallback models (provider/model) to try when the active model is unavailable.",
+    }), // stratacode_change
   }),
   [Schema.Record(Schema.String, Schema.Any)],
 )
@@ -73,6 +76,7 @@ const KNOWN_KEYS = new Set([
   "permission",
   "disable",
   "tools",
+  "fallback_models", // stratacode_change
 ])
 
 // Post-parse normalisation:

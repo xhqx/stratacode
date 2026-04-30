@@ -198,6 +198,65 @@ const ModeEditView: Component<Props> = (props) => {
         </SettingsRow>
 
         <SettingsRow
+          title={language.t("settings.agentBehaviour.fallbackModels.title")}
+          description={language.t("settings.agentBehaviour.fallbackModels.description")}
+        >
+          <div style={{ display: "flex", "flex-direction": "column", gap: "6px", width: "100%" }}>
+            <For each={cfg().fallback_models ?? []}>
+              {(entry, index) => (
+                <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
+                  <span
+                    style={{
+                      "min-width": "18px",
+                      "text-align": "right",
+                      "font-size": "11px",
+                      color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                    }}
+                  >
+                    {index() + 1}.
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <ModelSelectorBase
+                      value={parseModelString(entry)}
+                      onSelect={(providerID, modelID) => {
+                        if (!providerID || !modelID) return
+                        const list = [...(cfg().fallback_models ?? [])]
+                        list[index()] = `${providerID}/${modelID}`
+                        update({ fallback_models: list })
+                      }}
+                      placement="bottom-start"
+                    />
+                  </div>
+                  <IconButton
+                    size="small"
+                    variant="ghost"
+                    icon="close"
+                    onClick={() => {
+                      const list = [...(cfg().fallback_models ?? [])]
+                      list.splice(index(), 1)
+                      update({ fallback_models: list.length ? list : null })
+                    }}
+                  />
+                </div>
+              )}
+            </For>
+            <div>
+              <ModelSelectorBase
+                value={null}
+                onSelect={(providerID, modelID) => {
+                  if (!providerID || !modelID) return
+                  const list = [...(cfg().fallback_models ?? []), `${providerID}/${modelID}`]
+                  update({ fallback_models: list })
+                }}
+                placement="bottom-start"
+                clearLabel={language.t("settings.agentBehaviour.fallbackModels.add")}
+                allowClear
+              />
+            </div>
+          </div>
+        </SettingsRow>
+
+        <SettingsRow
           title={language.t("settings.agentBehaviour.temperature.title")}
           description={language.t("settings.agentBehaviour.temperature.description")}
         >

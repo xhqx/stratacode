@@ -39,4 +39,5 @@ export interface AgentConfig {
   top_p?: number
   steps?: number
   permission?: PermissionConfig
+  fallback_models?: string[] | null
 }

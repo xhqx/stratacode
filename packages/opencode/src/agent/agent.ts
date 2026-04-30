@@ -48,6 +48,7 @@ export const Info = z
     prompt: z.string().optional(),
     options: z.record(z.string(), z.any()),
     steps: z.number().int().positive().optional(),
+    fallback_models: z.array(z.string()).optional(), // stratacode_change
   })
   .meta({
     ref: "Agent",
@@ -285,6 +286,9 @@ export const layer = Layer.effect(
           item.steps = value.steps ?? item.steps
           item.options = mergeDeep(item.options, value.options ?? {})
           item.permission = Permission.merge(item.permission, Permission.fromConfig(value.permission ?? {}))
+          // stratacode_change start - propagate fallback_models from config
+          if (value.fallback_models?.length) item.fallback_models = value.fallback_models
+          // stratacode_change end
           StrataAgent.processConfigItem(item) // stratacode_change - populate displayName from options
         }
 
