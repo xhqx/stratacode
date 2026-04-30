@@ -266,6 +266,9 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
     vscode.commands.registerCommand("strata-code.new.settingsButtonClicked", (tab?: string) => {
       settingsEditorProvider.openPanel("settings", tab)
     }),
+    vscode.commands.registerCommand("strata-code.new.kanbanButtonClicked", () => {
+      provider.postMessage({ type: "navigate", view: "kanban" })
+    }),
     vscode.commands.registerCommand("strata-code.new.openIndexingSettings", () => {
       settingsEditorProvider.openPanel("settings", "indexing")
     }),

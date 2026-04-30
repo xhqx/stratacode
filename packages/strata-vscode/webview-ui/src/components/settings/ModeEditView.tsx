@@ -299,17 +299,46 @@ const ModeEditView: Component<Props> = (props) => {
         </Show>
       </div>
 
-      <Tabs variant="settings" orientation="horizontal" value={activeTab()} onChange={setActiveTab} style={{ "margin-bottom": "16px" }}>
-        <Tabs.List>
-          <Tabs.Trigger value="general">{language.t("settings.agentBehaviour.editMode.tab.general") || "General"}</Tabs.Trigger>
-          <Tabs.Trigger value="prompt">{language.t("settings.agentBehaviour.editMode.tab.prompt") || "Prompt"}</Tabs.Trigger>
-          <Tabs.Trigger value="permissions">{language.t("settings.agentBehaviour.editMode.tab.permissions") || "Permissions"}</Tabs.Trigger>
-          <Show when={hasFeaturesTab()}>
-            <Tabs.Trigger value="features">{language.t("settings.agentBehaviour.editMode.tab.features") || "Agent-Specific"}</Tabs.Trigger>
-          </Show>
-        </Tabs.List>
+      <div
+        style={{
+          display: "flex",
+          gap: "0",
+          "border-bottom": "1px solid var(--vscode-panel-border)",
+          "margin-bottom": "16px",
+        }}
+      >
+        <For
+          each={[
+            { id: "general", label: language.t("settings.agentBehaviour.editMode.tab.general") || "General" },
+            { id: "prompt", label: language.t("settings.agentBehaviour.editMode.tab.prompt") || "Prompt" },
+            { id: "permissions", label: language.t("settings.agentBehaviour.editMode.tab.permissions") || "Permissions" },
+            ...(hasFeaturesTab()
+              ? [{ id: "features", label: language.t("settings.agentBehaviour.editMode.tab.features") || "Agent-Specific" }]
+              : []),
+          ]}
+        >
+          {(tab) => (
+            <button
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: "8px 16px",
+                border: "none",
+                background: "transparent",
+                color: activeTab() === tab.id ? "var(--vscode-tab-activeForeground)" : "var(--vscode-tab-inactiveForeground)",
+                "border-bottom": activeTab() === tab.id ? "2px solid var(--vscode-tab-activeBorder)" : "2px solid transparent",
+                cursor: "pointer",
+                "font-size": "12px",
+                "text-transform": "uppercase",
+                "font-weight": activeTab() === tab.id ? "600" : "normal",
+              }}
+            >
+              {tab.label}
+            </button>
+          )}
+        </For>
+      </div>
 
-        <Tabs.Content value="general">
+      <Show when={activeTab() === "general"}>
           <Show when={native()}>
             <Card style={{ "margin-bottom": "12px" }}>
               <div
@@ -560,9 +589,9 @@ const ModeEditView: Component<Props> = (props) => {
               </div>
             </SettingsRow>
           </Card>
-        </Tabs.Content>
+      </Show>
 
-        <Tabs.Content value="prompt">
+      <Show when={activeTab() === "prompt"}>
           {/* Prompt (full-width, markdown editor) */}
           <Card style={{ "margin-bottom": "12px" }}>
             <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
@@ -579,9 +608,9 @@ const ModeEditView: Component<Props> = (props) => {
               onChange={(val) => update({ prompt: val || undefined })}
             />
           </Card>
-        </Tabs.Content>
+      </Show>
 
-        <Tabs.Content value="permissions">
+      <Show when={activeTab() === "permissions"}>
           {/* Per-agent permission overrides */}
           <AgentPermissionEditor cfg={cfg()} update={update} />
 
@@ -596,10 +625,9 @@ const ModeEditView: Component<Props> = (props) => {
               />
             )}
           </Show>
-        </Tabs.Content>
+      </Show>
 
-        <Show when={hasFeaturesTab()}>
-          <Tabs.Content value="features">
+        <Show when={hasFeaturesTab() && activeTab() === "features"}>
             <Show when={props.name === "autocomplete" && !cfg().disable}>
               <Card style={{ "margin-bottom": "12px" }}>
                 <SettingsRow
@@ -678,9 +706,7 @@ const ModeEditView: Component<Props> = (props) => {
                 </Show>
               </Card>
             </Show>
-          </Tabs.Content>
         </Show>
-      </Tabs>
 
       <div style={{ display: "flex", "justify-content": "flex-end" }}>
         <Button variant="ghost" onClick={props.onBack}>

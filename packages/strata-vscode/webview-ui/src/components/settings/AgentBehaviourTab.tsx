@@ -197,62 +197,109 @@ const AgentBehaviourTab: Component = () => {
       updateConfig({ [configKey]: `${providerID}/${modelID}` })
     }
   }
-
-  const view = agentView()
-  if (view === "create") return <ModeCreateView taken={agentNames()} onBack={back} />
-  if (view === "edit") return <ModeEditView name={editingAgent()} onBack={back} onRemove={confirmRemoveMode} />
+  const [activeMainTab, setActiveMainTab] = createSignal<"agents" | "models">("agents")
 
   return (
+    <>
+      <Show when={agentView() === "create"}>
+        <ModeCreateView taken={agentNames()} onBack={back} />
+      </Show>
+      <Show when={agentView() === "edit"}>
+        <ModeEditView name={editingAgent()} onBack={back} onRemove={confirmRemoveMode} />
+      </Show>
+      <Show when={agentView() === "list"}>
     <div>
-      {/* Default models and agent */}
-      <Card style={{ "margin-bottom": "12px" }}>
-        <SettingsRow
-          title={language.t("settings.providers.defaultModel.title")}
-          description={language.t("settings.providers.defaultModel.description")}
+      <div
+        style={{
+          display: "flex",
+          gap: "0",
+          "border-bottom": "1px solid var(--vscode-panel-border)",
+          "margin-bottom": "16px",
+        }}
+      >
+        <For
+          each={[
+            { id: "agents", label: language.t("settings.agentBehaviour.title") || "Agents" },
+            { id: "models", label: language.t("settings.providers.title") || "Models" },
+          ]}
         >
-          <ModelSelectorBase
-            value={parseModelString(config().model ?? undefined)}
-            onSelect={handleModelSelect("model")}
-            placement="bottom-start"
-            allowClear
-            clearLabel={language.t("settings.providers.notSet")}
-          />
-        </SettingsRow>
-        <SettingsRow
-          title={language.t("settings.providers.smallModel.title")}
-          description={language.t("settings.providers.smallModel.description")}
-        >
-          <ModelSelectorBase
-            value={parseModelString(config().small_model ?? undefined)}
-            onSelect={handleModelSelect("small_model")}
-            placement="bottom-start"
-            allowClear
-            clearLabel={language.t("settings.providers.notSet")}
-            includeAutoSmall
-          />
-        </SettingsRow>
-        <SettingsRow
-          title={language.t("settings.agentBehaviour.defaultAgent.title")}
-          description={language.t("settings.agentBehaviour.defaultAgent.description")}
-          last
-        >
-          <Select
-            options={defaultAgentOptions()}
-            current={defaultAgentOptions().find((o) => o.value === (config().default_agent ?? ""))}
-            value={(o) => o.value}
-            label={(o) => o.label}
-            onSelect={(o) => {
-              if (!o) return
-              const next = o.value || undefined
-              if (next === (config().default_agent ?? undefined)) return
-              updateConfig({ default_agent: next })
-            }}
-            variant="secondary"
-            size="small"
-            triggerVariant="settings"
-          />
-        </SettingsRow>
-      </Card>
+          {(tab) => (
+            <button
+              onClick={() => setActiveMainTab(tab.id as any)}
+              style={{
+                padding: "8px 16px",
+                border: "none",
+                background: "transparent",
+                color: activeMainTab() === tab.id ? "var(--vscode-tab-activeForeground)" : "var(--vscode-tab-inactiveForeground)",
+                "border-bottom": activeMainTab() === tab.id ? "2px solid var(--vscode-tab-activeBorder)" : "2px solid transparent",
+                cursor: "pointer",
+                "font-size": "12px",
+                "text-transform": "uppercase",
+                "font-weight": activeMainTab() === tab.id ? "600" : "normal",
+              }}
+            >
+              {tab.label}
+            </button>
+          )}
+        </For>
+      </div>
+
+      <Show when={activeMainTab() === "models"}>
+        <Card style={{ "margin-bottom": "24px" }}>
+          <SettingsRow
+            title={language.t("settings.providers.defaultModel.title")}
+            description={language.t("settings.providers.defaultModel.description")}
+          >
+            <ModelSelectorBase
+              value={parseModelString(config().model ?? undefined)}
+              onSelect={handleModelSelect("model")}
+              placement="bottom-start"
+              allowClear
+              clearLabel={language.t("settings.providers.notSet")}
+            />
+          </SettingsRow>
+          <SettingsRow
+            title={language.t("settings.providers.smallModel.title")}
+            description={language.t("settings.providers.smallModel.description")}
+            last
+          >
+            <ModelSelectorBase
+              value={parseModelString(config().small_model ?? undefined)}
+              onSelect={handleModelSelect("small_model")}
+              placement="bottom-start"
+              allowClear
+              clearLabel={language.t("settings.providers.notSet")}
+              includeAutoSmall
+            />
+          </SettingsRow>
+        </Card>
+      </Show>
+
+      {/* Agents Section */}
+      <Show when={activeMainTab() === "agents"}>
+        <Card style={{ "margin-bottom": "12px" }}>
+          <SettingsRow
+            title={language.t("settings.agentBehaviour.defaultAgent.title")}
+            description={language.t("settings.agentBehaviour.defaultAgent.description")}
+            last
+          >
+            <Select
+              options={defaultAgentOptions()}
+              current={defaultAgentOptions().find((o) => o.value === (config().default_agent ?? ""))}
+              value={(o) => o.value}
+              label={(o) => o.label}
+              onSelect={(o) => {
+                if (!o) return
+                const next = o.value || undefined
+                if (next === (config().default_agent ?? undefined)) return
+                updateConfig({ default_agent: next })
+              }}
+              variant="secondary"
+              size="small"
+              triggerVariant="settings"
+            />
+          </SettingsRow>
+        </Card>
 
       {/* Available agents list header + create button */}
       <div
@@ -443,7 +490,10 @@ const AgentBehaviourTab: Component = () => {
           </For>
         </Card>
       </Show>
+      </Show>
     </div>
+      </Show>
+    </>
   )
 }
 

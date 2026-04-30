@@ -1588,6 +1588,16 @@ export type AgentConfig = {
    * Ordered list of fallback models (provider/model) to try when the active model is unavailable.
    */
   fallback_models?: Array<string>
+  auto_approve?: {
+    /**
+     * Auto-approve permissions after N seconds of inaction (0 = disabled)
+     */
+    timeout?: number
+    /**
+     * Auto-answer questions after N seconds (0 = disabled, selects first option)
+     */
+    question_timeout?: number
+  }
   [key: string]:
     | unknown
     | string
@@ -1615,6 +1625,16 @@ export type AgentConfig = {
     | number
     | PermissionConfig
     | Array<string>
+    | {
+        /**
+         * Auto-approve permissions after N seconds of inaction (0 = disabled)
+         */
+        timeout?: number
+        /**
+         * Auto-answer questions after N seconds (0 = disabled, selects first option)
+         */
+        question_timeout?: number
+      }
     | undefined
 }
 
@@ -2063,6 +2083,16 @@ export type Config = {
      * Timeout in milliseconds for model context protocol (MCP) requests
      */
     mcp_timeout?: number
+  }
+  auto_approve?: {
+    /**
+     * Auto-approve permissions after N seconds of inaction (0 = disabled)
+     */
+    timeout?: number
+    /**
+     * Auto-answer questions after N seconds (0 = disabled, selects first option)
+     */
+    question_timeout?: number
   }
 }
 

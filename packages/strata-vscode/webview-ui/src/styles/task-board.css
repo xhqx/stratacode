@@ -1,0 +1,186 @@
+/* ============================================
+   Task Board View
+   ============================================ */
+
+[data-component="task-board"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+[data-slot="task-board-add-form"] {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-weak-base);
+  background: var(--background-subtle);
+}
+
+[data-slot="task-board-add-actions"] {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+[data-slot="task-board-content"] {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Vertical Layout */
+[data-slot="task-board-vertical-container"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Horizontal Layout */
+[data-slot="task-board-horizontal-container"] {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 12px;
+  gap: 16px;
+}
+
+/* Sections (Vertical) */
+[data-slot="task-board-section-header"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+[data-slot="task-board-section-header"] span {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-base);
+}
+
+/* Columns (Horizontal) */
+[data-component="task-board-column"] {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--background-subtle);
+  border-radius: 6px;
+  border: 1px solid var(--border-weak-base);
+}
+
+[data-slot="task-board-column-header"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-weak-base);
+}
+
+[data-slot="task-board-column-header"] span {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-base);
+}
+
+.task-board-column-cards {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Common Cards Container */
+[data-slot="task-board-section-cards"] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 12px 12px 12px;
+  min-height: 20px;
+}
+
+/* Drop zone indicators */
+[data-slot="task-board-section-cards"][data-drag-over] {
+  outline: 2px dashed var(--vscode-focusBorder);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+[data-slot="task-board-empty"] {
+  color: var(--text-weak);
+  font-size: 12px;
+  text-align: center;
+  padding: 16px 0;
+  font-style: italic;
+}
+
+/* Cards */
+[data-component="task-board-card"] {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: grab;
+  background: var(--background-base);
+}
+
+[data-component="task-board-card"]:active {
+  cursor: grabbing;
+}
+
+[data-component="task-board-card"][draggable="false"] {
+  cursor: default;
+}
+
+[data-component="task-board-card"][data-source="agent"] {
+  border-left: 3px solid var(--vscode-focusBorder);
+}
+
+[data-slot="task-board-card-header"] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-slot="task-board-card-title"] {
+  flex: 1;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="task-board-card-description"] {
+  font-size: 12px;
+  color: var(--text-weak);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+[data-slot="task-board-card-footer"] {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+[data-slot="task-board-card-session"] {
+  cursor: pointer;
+  max-width: 100%;
+}
+
+[data-slot="task-board-card-session"]:hover {
+  background: var(--background-interactive-hover);
+}

@@ -738,6 +738,7 @@ export const SessionProvider: ParentComponent = (props) => {
     return false
   }
 
+  // eslint-disable-next-line complexity
   function handleExtensionMessage(message: ExtensionMessage): void {
     // Route suggestion messages (extracted to stay within complexity limit)
     routeSuggestionMessage(message)

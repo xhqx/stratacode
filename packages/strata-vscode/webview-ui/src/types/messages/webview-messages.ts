@@ -12,6 +12,7 @@ import type {
   SkipLegacyMigrationMessage,
   StartLegacyMigrationMessage,
 } from "./migration"
+import type { KanbanTask } from "./kanban"
 
 // ============================================
 // Messages FROM webview TO extension
@@ -1105,9 +1106,20 @@ export type WebviewMessage =
   | ExecutePluginContributionMessage
   | RequestPluginConfigMessage
   | SavePluginConfigMessage
+  | SaveKanbanTasksRequest
+  | RequestKanbanTasksMessage
   
   | { type: "cancelAutoApproveTimer"; requestId: string }
   
+
+export interface SaveKanbanTasksRequest {
+  type: "saveKanbanTasks"
+  tasks: KanbanTask[]
+}
+
+export interface RequestKanbanTasksMessage {
+  type: "requestKanbanTasks"
+}
 
 export interface ExecutePluginContributionMessage {
   type: "executePluginContribution"

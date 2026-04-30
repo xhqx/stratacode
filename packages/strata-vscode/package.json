@@ -127,6 +127,11 @@
         "icon": "$(settings-gear)"
       },
       {
+        "command": "strata-code.new.kanbanButtonClicked",
+        "title": "Task Board",
+        "icon": "$(checklist)"
+      },
+      {
         "command": "strata-code.new.openInTab",
         "title": "Strata Code",
         "icon": "$(link-external)"
@@ -432,6 +437,11 @@
         {
           "command": "strata-code.new.settingsButtonClicked",
           "group": "navigation@6",
+          "when": "view == strata-code.SidebarProvider"
+        },
+        {
+          "command": "strata-code.new.kanbanButtonClicked",
+          "group": "navigation@3",
           "when": "view == strata-code.SidebarProvider"
         }
       ],

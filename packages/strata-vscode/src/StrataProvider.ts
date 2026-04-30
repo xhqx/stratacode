@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import * as path from "path"
 import * as vscode from "vscode"
 import { buildPreviewPath, getPreviewCommand, getPreviewDir, parseImage, trimEntries } from "./image-preview"
@@ -627,6 +628,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         this.fetchAndSendAgents()
       }
     })
+    // eslint-disable-next-line complexity
     this.webviewMessageDisposable = webview.onDidReceiveMessage(async (message) => {
       const intercepted = await interceptMessage(message, {
         workspaceDir: (sid) => this.getWorkspaceDirectory(sid ?? this.currentSession?.id),
@@ -1051,6 +1053,14 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         case "requestFavorites": {
           const favorites = validateFavorites(this.extensionContext?.globalState.get("favoriteModels"))
           this.postMessage({ type: "favoritesLoaded", favorites })
+          break
+        }
+        case "saveKanbanTasks":
+          await this.extensionContext?.globalState.update("kanbanTasks", (message as any).tasks)
+          break
+        case "requestKanbanTasks": {
+          const tasks = this.extensionContext?.globalState.get<any>("kanbanTasks") ?? []
+          this.postMessage({ type: "kanbanTasksLoaded", tasks })
           break
         }
 
@@ -2991,6 +3001,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     // Clear globalState items that are not part of the configuration
     await this.extensionContext?.globalState.update("variantSelections", undefined)
     await this.extensionContext?.globalState.update("recentModels", undefined)
+    await this.extensionContext?.globalState.update("kanbanTasks", undefined)
     await this.extensionContext?.globalState.update("strata.dismissedNotificationIds", undefined)
 
     // Re-send all settings to the webview so the UI reflects the reset

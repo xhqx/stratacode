@@ -35,6 +35,7 @@ import type {
   LegacyMigrationSessionProgressMessage,
   MigrationStateMessage,
 } from "./migration"
+import type { KanbanTask } from "./kanban"
 
 export interface RenderableUIContribution {
   id: string
@@ -275,7 +276,7 @@ export interface DeviceAuthCancelledMessage {
 
 export interface NavigateMessage {
   type: "navigate"
-  view: "newTask" | "marketplace" | "history" | "profile" | "settings" | "subAgentViewer"
+  view: "newTask" | "marketplace" | "history" | "profile" | "settings" | "subAgentViewer" | "kanban"
   tab?: string
 }
 
@@ -968,6 +969,7 @@ export type ExtensionMessage =
   | ContinueInWorktreeProgressMessage
   | WorktreeStatsLoadedMessage
   | McpStatusLoadedMessage
+  | KanbanTasksLoadedMessage
   | ClearPendingPromptsMessage
   | ExtensionDataReadyMessage
   
@@ -977,3 +979,9 @@ export type ExtensionMessage =
   | { type: "autoApproveTimerFired"; requestId: string }
   
   | RemoteStatusMessage
+
+
+export interface KanbanTasksLoadedMessage {
+  type: "kanbanTasksLoaded"
+  tasks: KanbanTask[]
+}

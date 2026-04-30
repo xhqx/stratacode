@@ -33,11 +33,13 @@ registerVscodeToolOverrides()
 import HistoryView from "./components/history/HistoryView"
 import { MigrationWizard } from "./components/migration" // legacy-migration
 import { NotificationsProvider } from "./context/notifications"
+import { KanbanProvider } from "./context/kanban"
+import { TaskBoardView } from "./components/kanban"
 import type { Message as SDKMessage, Part as SDKPart } from "@stratacode/sdk/v2"
 import "./styles/chat.css"
 
-type ViewType = "newTask" | "marketplace" | "history" | "profile" | "settings" | "subAgentViewer"
-const VALID_VIEWS = new Set<string>(["newTask", "marketplace", "history", "profile", "settings", "subAgentViewer"])
+type ViewType = "newTask" | "marketplace" | "history" | "profile" | "settings" | "subAgentViewer" | "kanban"
+const VALID_VIEWS = new Set<string>(["newTask", "marketplace", "history", "profile", "settings", "subAgentViewer", "kanban"])
 
 /**
  * Bridge our session store to the DataProvider's expected Data shape.
@@ -207,6 +209,9 @@ const AppContent: Component = () => {
       case "settingsButtonClicked":
         setCurrentView("settings")
         break
+      case "kanbanButtonClicked":
+        setCurrentView("kanban")
+        break
       case "cycleAgentMode":
         if (document.hasFocus()) cycleAgent(1)
         break
@@ -325,6 +330,11 @@ const AppContent: Component = () => {
             </Match>
             <Match when={currentView() === "subAgentViewer"}>
               <ChatView readonly />
+            </Match>
+            <Match when={currentView() === "kanban"}>
+              <KanbanProvider>
+                <TaskBoardView onBack={() => setCurrentView("newTask")} />
+              </KanbanProvider>
             </Match>
           </Switch>
         }
