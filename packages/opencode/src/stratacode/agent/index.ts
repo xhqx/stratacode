@@ -433,6 +433,29 @@ export function patchAgents(
     mode: "primary",
     native: true,
   }
+
+  // Add shell agent
+  agents.shell = {
+    name: "shell",
+    description:
+      "Execute terminal commands, diagnose failures, and manage build/test processes. " +
+      "Provide concise operation descriptions for each command.",
+    options: {},
+    permission: Permission.merge(
+      defaults,
+      Permission.fromConfig({
+        "*": "deny",
+        bash: "allow",
+        read: "allow",
+        grep: "allow",
+        glob: "allow",
+        list: "allow",
+      }),
+      user,
+    ),
+    mode: "subagent",
+    native: true,
+  }
 }
 
 export const RemoveError = NamedError.create(

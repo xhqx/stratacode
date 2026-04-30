@@ -974,6 +974,7 @@ export interface ToolProps {
   hideDetails?: boolean
   defaultOpen?: boolean
   forceOpen?: boolean
+  forceClose?: boolean // stratacode_change
   locked?: boolean
   animate?: boolean
   reveal?: boolean

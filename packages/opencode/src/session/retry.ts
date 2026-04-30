@@ -20,12 +20,14 @@ function cap(ms: number) {
   return Math.min(ms, RETRY_MAX_DELAY)
 }
 
+// stratacode_change start
 export function delay(
   attempt: number,
   error?: MessageV2.APIError,
-  baseDelay = RETRY_INITIAL_DELAY, // stratacode_change
-  maxDelayCap = RETRY_MAX_DELAY_NO_HEADERS, // stratacode_change
+  baseDelay = RETRY_INITIAL_DELAY,
+  maxDelayCap = RETRY_MAX_DELAY_NO_HEADERS,
 ) {
+// stratacode_change end
   if (error) {
     const headers = error.data.responseHeaders
     if (headers) {
@@ -159,8 +161,8 @@ export function policy(opts: {
         const base = opts.delay !== undefined ? opts.delay * 1000 : undefined
         const maxCap = opts.max_delay !== undefined ? opts.max_delay * 1000 : undefined
         const wait = delay(meta.attempt, MessageV2.APIError.isInstance(error) ? error : undefined, base, maxCap)
-        // stratacode_change end
         yield* opts.set({ attempt: meta.attempt, message, next: Date.now() + wait })
+        // stratacode_change end
         return [meta.attempt, Duration.millis(wait)] as [number, Duration.Duration]
       })
     }),

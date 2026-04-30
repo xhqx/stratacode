@@ -57,6 +57,7 @@ const AgentSchema = Schema.StructWithRest(
       description: "Ordered list of fallback models (provider/model) to try when the active model is unavailable.",
     }), // stratacode_change
     auto_approve: Schema.optional(ConfigAutoApprove.Info), // stratacode_change
+    // stratacode_change start
     retry: Schema.optional(
       Schema.Struct({
         enabled: Schema.optional(Schema.Boolean),
@@ -64,7 +65,8 @@ const AgentSchema = Schema.StructWithRest(
         delay: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))),
         max_delay: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))),
       }),
-    ), // stratacode_change
+    ),
+    // stratacode_change end
   }),
   [Schema.Record(Schema.String, Schema.Any)],
 )

@@ -53,6 +53,7 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
     })
 
   const running = createMemo(() => props.status === "pending" || props.status === "running")
+  const done = createMemo(() => props.status === "completed" || props.status === "error")
 
   // Warm child session data immediately so completed task tools already have
   // their compact child tool list available when the user expands them.
@@ -116,7 +117,7 @@ const TaskToolRenderer: Component<ToolProps> = (props) => {
 
   return (
     <div data-component="tool-part-wrapper">
-      <BasicTool icon="task" status={props.status} trigger={trigger()} defaultOpen>
+      <BasicTool icon="task" status={props.status} trigger={trigger()} animated defaultOpen forceOpen={running()} forceClose={done()}>
         <div ref={autoScroll.scrollRef} onScroll={autoScroll.handleScroll} data-component="tool-output" data-scrollable>
           <div ref={autoScroll.contentRef} data-component="task-tools">
             <Show when={running() && childToolParts().length === 0}>

@@ -49,6 +49,7 @@ export const Info = z
     options: z.record(z.string(), z.any()),
     steps: z.number().int().positive().optional(),
     fallback_models: z.array(z.string()).optional(), // stratacode_change
+    // stratacode_change start
     retry: z
       .object({
         enabled: z.boolean().optional(),
@@ -56,7 +57,8 @@ export const Info = z
         delay: z.number().positive().optional(),
         max_delay: z.number().positive().optional(),
       })
-      .optional(), // stratacode_change
+      .optional(),
+    // stratacode_change end
   })
   .meta({
     ref: "Agent",

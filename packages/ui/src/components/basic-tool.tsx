@@ -30,6 +30,7 @@ export interface BasicToolProps {
   hideDetails?: boolean
   defaultOpen?: boolean
   forceOpen?: boolean
+  forceClose?: boolean // stratacode_change
   defer?: boolean
   locked?: boolean
   animated?: boolean
@@ -63,6 +64,12 @@ export function BasicTool(props: BasicToolProps) {
   createEffect(() => {
     if (props.forceOpen) setState("open", true)
   })
+
+  // stratacode_change start
+  createEffect(() => {
+    if (props.forceClose) setState("open", false)
+  })
+  // stratacode_change end
 
   createEffect(
     on(
