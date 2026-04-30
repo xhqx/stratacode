@@ -109,11 +109,11 @@ BYOK keys can be configured at the personal level or at the organization level. 
 
 The gateway accepts the following headers:
 
-| Header                      | Required                | Description                                  |
-| --------------------------- | ----------------------- | -------------------------------------------- |
-| `Authorization`             | Yes (unless free model) | `Bearer <api_key>`                           |
-| `Content-Type`              | Yes                     | `application/json`                           |
+| Header                        | Required                | Description                                  |
+| ----------------------------- | ----------------------- | -------------------------------------------- |
+| `Authorization`               | Yes (unless free model) | `Bearer <api_key>`                           |
+| `Content-Type`                | Yes                     | `application/json`                           |
 | `X-StrataCode-OrganizationId` | No                      | Organization context for org-scoped requests |
 | `X-StrataCode-TaskId`         | No                      | Task identifier for prompt cache keying      |
 | `X-StrataCode-Version`        | No                      | Client version string                        |
-| `x-stratacode-mode`           | No                      | Mode hint for `strata-auto` model routing      |
+| `x-stratacode-mode`           | No                      | Mode hint for `strata-auto` model routing    |

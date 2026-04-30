@@ -76,9 +76,9 @@ Remote servers support OAuth 2.0 authentication. If the server supports it, Stra
 
 The CLI accepts several config filenames. The recommended file is `strata.json`:
 
-| Scope       | Recommended Path                     | Also supported                                                 |
-| ----------- | ------------------------------------ | -------------------------------------------------------------- |
-| **Global**  | `~/.config/strata/strata.json`           | `strata.jsonc`, `opencode.json`, `opencode.jsonc`, `config.json` |
+| Scope       | Recommended Path                           | Also supported                                                   |
+| ----------- | ------------------------------------------ | ---------------------------------------------------------------- |
+| **Global**  | `~/.config/strata/strata.json`             | `strata.jsonc`, `opencode.json`, `opencode.jsonc`, `config.json` |
 | **Project** | `./strata.json` or `./.strata/strata.json` | `strata.jsonc`, `opencode.jsonc`, `opencode.json`                |
 
 {% /tab %}
@@ -86,10 +86,10 @@ The CLI accepts several config filenames. The recommended file is `strata.json`:
 
 MCP server configurations can be managed at two levels: **global** (applies across all workspaces) and **project-level** (specific to a single project). Project-level configuration takes precedence over global settings.
 
-| Scope       | Path                 | Description                                                     |
-| ----------- | -------------------- | --------------------------------------------------------------- |
-| **Global**  | `mcp_settings.json`  | Accessible via VS Code settings. Applies across all workspaces. |
-| **Project** | `.stratacode/mcp.json` | In your project root. Auto-detected by Strata Code.               |
+| Scope       | Path                   | Description                                                     |
+| ----------- | ---------------------- | --------------------------------------------------------------- |
+| **Global**  | `mcp_settings.json`    | Accessible via VS Code settings. Applies across all workspaces. |
+| **Project** | `.stratacode/mcp.json` | In your project root. Auto-detected by Strata Code.             |
 
 Project-level configs can be committed to version control to share with your team.
 
@@ -339,8 +339,8 @@ The extension also supports the `{env:VARIABLE_NAME}` syntax in config files to 
 
 ### CLI Commands
 
-| Command           | Description                     |
-| ----------------- | ------------------------------- |
+| Command             | Description                     |
+| ------------------- | ------------------------------- |
 | `strata mcp list`   | List all configured MCP servers |
 | `strata mcp add`    | Add an MCP server               |
 | `strata mcp auth`   | Authenticate with an MCP server |

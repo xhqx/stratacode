@@ -20,11 +20,11 @@ When you describe a task, the agent uses its tools — `read`, `grep`, `glob`, a
 
 Type `@` in the chat input to get autocomplete suggestions. You can mention:
 
-| Mention          | Description                                           | Example         |
-| ---------------- | ----------------------------------------------------- | --------------- |
-| **File**         | Attach a file's contents to your message              | `@src/utils.ts` |
-| **Terminal**     | Include your active VS Code terminal output           | `@terminal`     |
-| **Git Changes**  | Attach uncommitted working-tree diffs and new files   | `@git-changes`  |
+| Mention         | Description                                         | Example         |
+| --------------- | --------------------------------------------------- | --------------- |
+| **File**        | Attach a file's contents to your message            | `@src/utils.ts` |
+| **Terminal**    | Include your active VS Code terminal output         | `@terminal`     |
+| **Git Changes** | Attach uncommitted working-tree diffs and new files | `@git-changes`  |
 
 Selecting a suggestion inserts the mention and highlights it in the input. File contents, terminal output, and git changes are attached as context when you send the message.
 
@@ -108,7 +108,7 @@ This means the agent can explore your entire project as needed, rather than bein
 | ------------------------------ | -------------------------------------------------------------------------------------------------- |
 | **Describe the task clearly**  | The agent finds context on its own — focus on _what_ you want done rather than _where_ the code is |
 | **Mention files when helpful** | If you know the exact file, mention its path to save the agent a search step                       |
-| **Use `strata run -f`**          | Pass key files with `-f` when using `strata run` for immediate context                               |
+| **Use `strata run -f`**        | Pass key files with `-f` when using `strata run` for immediate context                             |
 | **Trust the agent's tools**    | The agent can search, read, and explore your codebase — let it do the discovery work               |
 
 {% /tab %}

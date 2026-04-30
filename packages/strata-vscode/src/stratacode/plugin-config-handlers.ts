@@ -11,19 +11,16 @@ export function buildPluginConfigLoaded() {
   for (const section of sections) {
     values[section.id] = {}
     for (const field of section.fields) {
-      values[section.id][field.key] = pluginRegistry.getPluginConfigValue(section.id, field.key) ?? field.default ?? null
+      values[section.id][field.key] =
+        pluginRegistry.getPluginConfigValue(section.id, field.key) ?? field.default ?? null
     }
   }
   return { type: "pluginConfigLoaded" as const, sections, values }
 }
 
 /** Handles the savePluginConfig webview message. Validates the section, writes to VS Code config, and responds. */
-export async function handleSavePluginConfig(
-  sectionId: string,
-  changes: Record<string, JSONValue>,
-  post: PostMessage,
-) {
-  const registered = pluginRegistry.getRenderableConfigSections().find(s => s.id === sectionId)
+export async function handleSavePluginConfig(sectionId: string, changes: Record<string, JSONValue>, post: PostMessage) {
+  const registered = pluginRegistry.getRenderableConfigSections().find((s) => s.id === sectionId)
   if (!registered) {
     post({ type: "pluginConfigUpdateFailed", sectionId, message: `Unknown config section: ${sectionId}` })
     return
@@ -31,7 +28,7 @@ export async function handleSavePluginConfig(
   try {
     const config = vscode.workspace.getConfiguration(sectionId)
     for (const [key, value] of Object.entries(changes)) {
-      if (!registered.fields.some(f => f.key === key)) {
+      if (!registered.fields.some((f) => f.key === key)) {
         console.warn(`[StrataPluginAPI] Skipping unknown config key: ${sectionId}.${key}`)
         continue
       }
@@ -63,7 +60,9 @@ export async function applyPluginHooks(
   pluginRegistry.onWillSendMessage.fire({
     sessionId: sid,
     text,
-    cancel: () => { cancelled = true },
+    cancel: () => {
+      cancelled = true
+    },
   })
   if (cancelled) return true
 

@@ -92,9 +92,7 @@ const AgentBehaviourTab: Component = () => {
     // Exclude server-side hidden internal modes (compaction, title, summary)
     // from the list by using the pre-filtered visible agents list, which safely
     // includes any agents explicitly force-shown by the user.
-    const names = session
-      .agents()
-      .map((a) => a.name)
+    const names = session.agents().map((a) => a.name)
     // Always include pinned native agents so users can re-enable them
     for (const pin of PINNED) {
       if (!names.includes(pin)) names.push(pin)
@@ -112,7 +110,8 @@ const AgentBehaviourTab: Component = () => {
   // Default-agent picker must only show visible primary agents (not subagents
   // or hidden modes) since the CLI rejects those as default_agent values.
   const defaultAgentOptions = createMemo<SelectOption[]>(() => {
-    const visible = session.agents()
+    const visible = session
+      .agents()
       .filter((a) => !a.hidden)
       .map((a) => a.name)
     return [

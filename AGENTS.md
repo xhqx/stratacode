@@ -27,12 +27,12 @@ Strata CLI is an open source AI coding agent that generates code from natural la
 
 All products are clients of the **CLI** (`packages/opencode/`), which contains the AI agent runtime, HTTP server, and session management. Each client spawns or connects to a `strata serve` process and communicates via HTTP + SSE using `@stratacode/sdk`.
 
-| Product                | Package                 | Description                                                                                                                                                                          |
-| ---------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Strata CLI               | `packages/opencode/`    | Core engine. TUI, `strata run`, `strata serve`, `strata web`. Fork of upstream OpenCode.                                                                                                   |
+| Product                  | Package                   | Description                                                                                                                                                                            |
+| ------------------------ | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Strata CLI               | `packages/opencode/`      | Core engine. TUI, `strata run`, `strata serve`, `strata web`. Fork of upstream OpenCode.                                                                                               |
 | Strata VS Code Extension | `packages/strata-vscode/` | VS Code extension. Bundles the CLI binary, spawns `strata serve` as a child process. Includes the **Agent Manager** — a multi-session orchestration panel with git worktree isolation. |
-| OpenCode Desktop       | `packages/desktop/`     | Standalone Tauri native app. Bundles CLI as sidecar. Single-session UI. Unrelated to the VS Code extension. Not actively maintained — synced from upstream fork.                     |
-| OpenCode Web           | `packages/app/`         | Shared SolidJS frontend used by both the desktop app and `strata web` CLI command. Not actively maintained — synced from upstream fork.                                                |
+| OpenCode Desktop         | `packages/desktop/`       | Standalone Tauri native app. Bundles CLI as sidecar. Single-session UI. Unrelated to the VS Code extension. Not actively maintained — synced from upstream fork.                       |
+| OpenCode Web             | `packages/app/`           | Shared SolidJS frontend used by both the desktop app and `strata web` CLI command. Not actively maintained — synced from upstream fork.                                                |
 
 **Agent Manager** refers to a feature inside `packages/strata-vscode/` (extension code in `src/agent-manager/`, webview in `webview-ui/agent-manager/`). It is not a standalone product. See the extension's `AGENTS.md` for details.
 
@@ -40,19 +40,19 @@ All products are clients of the **CLI** (`packages/opencode/`), which contains t
 
 Turborepo + Bun workspaces. The packages you'll work with most:
 
-| Package                    | Name                       | Purpose                                                                                    |
-| -------------------------- | -------------------------- | ------------------------------------------------------------------------------------------ |
-| `packages/opencode/`       | `@stratacode/cli`            | Core CLI -- agents, tools, sessions, server, TUI. This is where most work happens.         |
-| `packages/sdk/js/`         | `@stratacode/sdk`            | Auto-generated TypeScript SDK (client for the server API). Do not edit `src/gen/` by hand. |
-| `packages/strata-vscode/`    | `strata-code`                | VS Code extension with sidebar chat + Agent Manager. See its own `AGENTS.md` for details.  |
-| `packages/strata-gateway/`   | `@stratacode/strata-gateway`   | Strata auth, provider routing, API integration                                               |
+| Package                      | Name                           | Purpose                                                                                    |
+| ---------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------ |
+| `packages/opencode/`         | `@stratacode/cli`              | Core CLI -- agents, tools, sessions, server, TUI. This is where most work happens.         |
+| `packages/sdk/js/`           | `@stratacode/sdk`              | Auto-generated TypeScript SDK (client for the server API). Do not edit `src/gen/` by hand. |
+| `packages/strata-vscode/`    | `strata-code`                  | VS Code extension with sidebar chat + Agent Manager. See its own `AGENTS.md` for details.  |
+| `packages/strata-gateway/`   | `@stratacode/strata-gateway`   | Strata auth, provider routing, API integration                                             |
 | `packages/strata-telemetry/` | `@stratacode/strata-telemetry` | PostHog analytics + OpenTelemetry                                                          |
 | `packages/strata-i18n/`      | `@stratacode/strata-i18n`      | Internationalization / translations                                                        |
 | `packages/strata-ui/`        | `@stratacode/strata-ui`        | SolidJS component library shared by the extension webview and `packages/app/`              |
-| `packages/app/`            | `@opencode-ai/app`         | Shared SolidJS web UI for desktop app and `strata web`                                       |
-| `packages/desktop/`        | `@opencode-ai/desktop`     | Tauri desktop app shell                                                                    |
-| `packages/util/`           | `@opencode-ai/util`        | Shared utilities (error, path, retry, slug, etc.)                                          |
-| `packages/plugin/`         | `@stratacode/plugin`         | Plugin/tool interface definitions                                                          |
+| `packages/app/`              | `@opencode-ai/app`             | Shared SolidJS web UI for desktop app and `strata web`                                     |
+| `packages/desktop/`          | `@opencode-ai/desktop`         | Tauri desktop app shell                                                                    |
+| `packages/util/`             | `@opencode-ai/util`            | Shared utilities (error, path, retry, slug, etc.)                                          |
+| `packages/plugin/`           | `@stratacode/plugin`           | Plugin/tool interface definitions                                                          |
 
 ## Style Guide
 

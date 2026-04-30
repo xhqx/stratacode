@@ -132,11 +132,14 @@ export const ChatView: Component<ChatViewProps> = (props) => {
     onCleanup(cleanup)
   }
 
-  const decide = (response: "once" | "always" | "reject", approvedAlways: string[], deniedAlways: string[]) => {
+  const decide = (
+    response: "once" | "always" | "reject",
+    approvedAlways: string[],
+    deniedAlways: string[],
+    scope?: "global" | "agent",     agent?: string,   ) => {
     const perm = permissionRequest()
     if (!perm || session.respondingPermissions().has(perm.id)) return
-    session.respondToPermission(perm.id, response, approvedAlways, deniedAlways)
-  }
+    session.respondToPermission(perm.id, response, approvedAlways, deniedAlways, scope, agent)   }
 
   const startSession = () => window.dispatchEvent(new CustomEvent("newTaskRequest"))
 
@@ -299,7 +302,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
           </>
         </Show>
         <Show when={server.pluginContributions().length > 0}>
-          <For each={server.pluginContributions().filter(c => c.placement === "input-toolbar")}>
+          <For each={server.pluginContributions().filter((c) => c.placement === "input-toolbar")}>
             {(contrib) => (
               <Tooltip value={contrib.tooltip ?? contrib.label ?? ""} placement="top">
                 <Button
@@ -308,8 +311,12 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                   onClick={() => vscode.postMessage({ type: "executePluginContribution", id: contrib.id })}
                   aria-label={contrib.label}
                 >
-                  <Show when={contrib.icon}><Icon name={contrib.icon as any} size="small" /></Show>
-                  <Show when={contrib.label}><span>{contrib.label}</span></Show>
+                  <Show when={contrib.icon}>
+                    <Icon name={contrib.icon as any} size="small" />
+                  </Show>
+                  <Show when={contrib.label}>
+                    <span>{contrib.label}</span>
+                  </Show>
                 </Button>
               </Tooltip>
             )}
@@ -320,7 +327,19 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   )
 
   return (
-    <div class="chat-view">
+    <div
+      class="chat-view"
+      onMouseDown={() => {
+        
+        const timers = session.timers()
+        if (Object.keys(timers).length > 0) {
+          for (const requestId of Object.keys(timers)) {
+            session.cancelTimer(requestId)
+          }
+        }
+        
+      }}
+    >
       <TaskHeader readonly={props.readonly} />
       <div class="chat-messages-wrapper">
         <div class="chat-messages">

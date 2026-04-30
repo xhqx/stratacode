@@ -24,11 +24,11 @@ The UI reads and writes to the same `strata.jsonc` config files used by the CLI,
 
 Each tool permission can be set to one of three values:
 
-| Value     | Behavior                                                  |
-| --------- | --------------------------------------------------------- |
-| `"allow"` | The tool runs automatically without prompting             |
+| Value     | Behavior                                                    |
+| --------- | ----------------------------------------------------------- |
+| `"allow"` | The tool runs automatically without prompting               |
 | `"ask"`   | Strata pauses and asks for approval before running the tool |
-| `"deny"`  | The tool is blocked entirely                              |
+| `"deny"`  | The tool is blocked entirely                                |
 
 When no rule matches a permission check, the default action is `ask`.
 
@@ -89,11 +89,11 @@ The CLI uses a granular, per-tool permission system configured in `strata.jsonc`
 
 Each tool permission can be set to one of three values:
 
-| Value     | Behavior                                                  |
-| --------- | --------------------------------------------------------- |
-| `"allow"` | The tool runs automatically without prompting             |
+| Value     | Behavior                                                    |
+| --------- | ----------------------------------------------------------- |
+| `"allow"` | The tool runs automatically without prompting               |
 | `"ask"`   | Strata pauses and asks for approval before running the tool |
-| `"deny"`  | The tool is blocked entirely                              |
+| `"deny"`  | The tool is blocked entirely                                |
 
 When no rule matches a permission check, the default action is `ask`.
 
@@ -279,12 +279,12 @@ Click the toolbar to expand it and configure individual permissions:
 
 | Permission                     | What it does                                     | Risk level  |
 | ------------------------------ | ------------------------------------------------ | ----------- |
-| **Read files and directories** | Lets Strata Code access files without asking       | Medium      |
-| **Edit files**                 | Lets Strata Code modify files without asking       | **High**    |
+| **Read files and directories** | Lets Strata Code access files without asking     | Medium      |
+| **Edit files**                 | Lets Strata Code modify files without asking     | **High**    |
 | **Execute approved commands**  | Runs whitelisted terminal commands automatically | **High**    |
 | **Use the browser**            | Allows headless browser interaction              | Medium      |
-| **Use MCP servers**            | Lets Strata Code use configured MCP services       | Medium-High |
-| **Switch modes**               | Changes between Strata Code modes automatically    | Low         |
+| **Use MCP servers**            | Lets Strata Code use configured MCP services     | Medium-High |
+| **Switch modes**               | Changes between Strata Code modes automatically  | Low         |
 | **Create & complete subtasks** | Manages subtasks without confirmation            | Low         |
 | **Retry failed requests**      | Automatically retries failed API requests        | Low         |
 | **Answer follow-up questions** | Selects default answer for follow-up questions   | Low         |

@@ -52,7 +52,10 @@ export async function handleLogin(ctx: AuthContext, attempt: number, getAttempt:
     })
 
     // Step 2: Wait for callback (blocks until polling completes)
-    await ctx.client.provider.oauth.callback({ providerID: "strata", method: 0, directory: dir }, { throwOnError: true })
+    await ctx.client.provider.oauth.callback(
+      { providerID: "strata", method: 0, directory: dir },
+      { throwOnError: true },
+    )
 
     // Check if this attempt was cancelled
     if (attempt !== getAttempt()) return

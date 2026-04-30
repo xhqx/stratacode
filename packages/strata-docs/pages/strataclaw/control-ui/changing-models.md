@@ -7,13 +7,13 @@ description: "Browse and switch models from the Control UI chat"
 
 The Control UI Chat tab doubles as a command line for model management. StrataClaw exposes 335+ models through the `stratacode` provider and you can browse and switch between them without leaving the chat.
 
-| Command                              | Description                                                                     |
-| ------------------------------------ | ------------------------------------------------------------------------------- |
-| `/model status`                      | View the currently active model and provider                                    |
-| `/models stratacode`                   | Browse available models (paginated, 20 per page)                                |
+| Command                                | Description                                                                       |
+| -------------------------------------- | --------------------------------------------------------------------------------- |
+| `/model status`                        | View the currently active model and provider                                      |
+| `/models stratacode`                   | Browse available models (paginated, 20 per page)                                  |
 | `/models stratacode <page>`            | Jump to a specific page (e.g. `/models stratacode 2`)                             |
 | `/model stratacode/<provider>/<model>` | Switch to a specific model (e.g. `/model stratacode/anthropic/claude-sonnet-4.6`) |
-| `/models stratacode all`               | List every available model at once                                              |
+| `/models stratacode all`               | List every available model at once                                                |
 
 Each `/models` response includes helper text at the bottom with shortcuts for switching, paging, and listing all models.
 

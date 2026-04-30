@@ -113,9 +113,9 @@ The model used for classification.
 
 Auto-Triage uses two reserved labels for tracking. You should create these in your GitHub repositories before enabling the feature:
 
-| Label            | Meaning                                                                       |
-| ---------------- | ----------------------------------------------------------------------------- |
-| `strata-triaged`   | Applied to every issue that completes triage successfully.                    |
+| Label              | Meaning                                                                         |
+| ------------------ | ------------------------------------------------------------------------------- |
+| `strata-triaged`   | Applied to every issue that completes triage successfully.                      |
 | `strata-duplicate` | Applied alongside `strata-triaged` when the issue is identified as a duplicate. |
 
 These labels are managed by Strata and should not be added to your **skip labels** list.

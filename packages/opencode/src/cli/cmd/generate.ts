@@ -32,7 +32,7 @@ export const GenerateCommand = {
       }
     }
     const raw = JSON.stringify(specs, null, 2)
-    // stratacode_change start - replace upstream product name in all descriptions
+      // stratacode_change start - replace upstream product name in all descriptions
       .replaceAll("OpenCode", "Strata")
       .replaceAll("opencode.local", "strata.local")
       .replaceAll("opencode serve", "strata serve")

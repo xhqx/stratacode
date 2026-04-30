@@ -541,7 +541,11 @@ export class WorktreeManager {
 
       const worktreeGitDir = path.resolve(worktreePath, match[1].trim())
       const mainGitDir = path.dirname(path.dirname(worktreeGitDir))
-      await this.addExcludeEntry(path.join(mainGitDir, "info", "exclude"), `${STRATA_DIR}/`, "Strata Code session metadata")
+      await this.addExcludeEntry(
+        path.join(mainGitDir, "info", "exclude"),
+        `${STRATA_DIR}/`,
+        "Strata Code session metadata",
+      )
     } catch (error) {
       this.log(`Warning: Failed to update git exclude for worktree: ${error}`)
     }

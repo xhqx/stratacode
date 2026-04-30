@@ -22,7 +22,7 @@ For example, Admins and Owners can extend these by creating **Custom Modes** wit
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | **Mode Name**                      | Display name for the new mode (e.g. _Security Reviewer_).                                            |
 | **Mode Slug**                      | A short identifier used internally (e.g. `security-reviewer`).                                       |
-| **Role Definition**                | Describe Strata's role and personality for this mode. Shapes how it reasons and responds.              |
+| **Role Definition**                | Describe Strata's role and personality for this mode. Shapes how it reasons and responds.            |
 | **Short Description**              | A brief summary shown in the mode selector.                                                          |
 | **When to Use (optional)**         | Guidance for when this mode should be used. Helps the Orchestrator choose the right mode for a task. |
 | **Custom Instructions (optional)** | Add behavioral guidelines specific to this mode.                                                     |

@@ -259,7 +259,7 @@ In-line ghost-text completions with tab to complete. Works alongside the agent m
 
 ## Feature Mapping
 
-| Cline Feature      | Strata Equivalent                    | Notes                                                                           |
+| Cline Feature      | Strata Equivalent                  | Notes                                                                           |
 | ------------------ | ---------------------------------- | ------------------------------------------------------------------------------- |
 | Plan mode          | Orchestrator, Architect, Ask modes | Architect plans, Ask explains, Orchestrate distributes tasks across other modes |
 | Act mode           | Code mode                          | Implementation                                                                  |

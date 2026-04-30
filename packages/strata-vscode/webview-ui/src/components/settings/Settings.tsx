@@ -35,7 +35,7 @@ const Settings: Component<SettingsProps> = (props) => {
   const vscode = useVSCode()
   const { saving, saveError, features } = useConfig()
   const pluginConfig = usePluginConfig()
-  
+
   // Stale tab handling: if the active tab is a plugin tab but the section no longer exists,
   // fall back to "models". If it is a removed tab, fallback to "agentBehaviour".
   const activeTab = () => {
@@ -45,21 +45,27 @@ const Settings: Component<SettingsProps> = (props) => {
     }
     if (tab.startsWith("plugin:")) {
       const sectionId = tab.replace("plugin:", "")
-      if (!pluginConfig.sections().find(s => s.id === sectionId)) {
+      if (!pluginConfig.sections().find((s) => s.id === sectionId)) {
         return "agentBehaviour"
       }
     }
     return tab
   }
-  
+
   const [active, setActive] = createSignal(activeTab())
   const [errorExpanded, setErrorExpanded] = createSignal(false)
   // Brief "Saved" indicator that appears after a successful auto-save
   const [saved, setSaved] = createSignal(false)
   let fadeTimer: ReturnType<typeof setTimeout> | undefined
 
-  const isAnySaving = () => saving() || pluginConfig.sections().some(s => pluginConfig.saving(s.id))
-  const anySaveError = () => saveError() || pluginConfig.sections().map(s => pluginConfig.saveError(s.id)).find(e => e !== null) || null
+  const isAnySaving = () => saving() || pluginConfig.sections().some((s) => pluginConfig.saving(s.id))
+  const anySaveError = () =>
+    saveError() ||
+    pluginConfig
+      .sections()
+      .map((s) => pluginConfig.saveError(s.id))
+      .find((e) => e !== null) ||
+    null
 
   // Show "Saved" briefly after a save completes
   createEffect(
@@ -120,7 +126,11 @@ const Settings: Component<SettingsProps> = (props) => {
 
   createEffect(
     on(
-      () => pluginConfig.sections().map(s => pluginConfig.saveError(s.id)).find(e => e !== null),
+      () =>
+        pluginConfig
+          .sections()
+          .map((s) => pluginConfig.saveError(s.id))
+          .find((e) => e !== null),
       (err) => {
         if (err) setErrorExpanded(true)
       },
@@ -181,7 +191,6 @@ const Settings: Component<SettingsProps> = (props) => {
         style={{ flex: 1, overflow: "hidden" }}
       >
         <Tabs.List>
-
           <Tabs.Trigger value="providers">
             <Icon name="providers" />
             <span class="label">{language.t("settings.providers.title")}</span>
@@ -260,7 +269,6 @@ const Settings: Component<SettingsProps> = (props) => {
             </For>
           </Show>
         </Tabs.List>
-
 
         <Tabs.Content value="providers">
           <h3>{language.t("settings.providers.title")}</h3>
@@ -365,10 +373,7 @@ const Settings: Component<SettingsProps> = (props) => {
           }`}
         >
           <span class="settings-autosave-status-icon">
-            <Icon
-              name={anySaveError() ? "close" : isAnySaving() ? "reset" : "circle-check"}
-              size="small"
-            />
+            <Icon name={anySaveError() ? "close" : isAnySaving() ? "reset" : "circle-check"} size="small" />
           </span>
           <span>
             {anySaveError()

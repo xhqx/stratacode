@@ -11,8 +11,8 @@ Strata Auto is a model routing system that automatically selects the optimal AI 
 
 Three tiers are user-facing, and one is internal:
 
-| Tier ID              | Audience                       | Pricing |
-| -------------------- | ------------------------------ | ------- |
+| Tier ID                | Audience                       | Pricing |
+| ---------------------- | ------------------------------ | ------- |
 | `strata-auto/frontier` | Best paid models               | Paid    |
 | `strata-auto/balanced` | Strong performance, lower cost | Paid    |
 | `strata-auto/free`     | Best available free models     | Free    |
@@ -140,16 +140,16 @@ The client-side chain works as follows:
 
 ### Key files
 
-| File                                            | Role                                                                                  |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `packages/strata-gateway/src/api/constants.ts`    | Default model constants (`DEFAULT_MODEL`, `DEFAULT_FREE_MODEL`)                       |
-| `packages/strata-gateway/src/api/models.ts`       | Fetches models from Strata API, parses `opencode.variants`                              |
-| `packages/opencode/src/provider/model-cache.ts` | Caches Strata Gateway models with 5-min TTL                                             |
+| File                                            | Role                                                                                      |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `packages/strata-gateway/src/api/constants.ts`  | Default model constants (`DEFAULT_MODEL`, `DEFAULT_FREE_MODEL`)                           |
+| `packages/strata-gateway/src/api/models.ts`     | Fetches models from Strata API, parses `opencode.variants`                                |
+| `packages/opencode/src/provider/model-cache.ts` | Caches Strata Gateway models with 5-min TTL                                               |
 | `packages/opencode/src/provider/provider.ts`    | Preserves variants for strata provider; `getSmallModel()` prioritizes `strata-auto/small` |
-| `packages/opencode/src/provider/transform.ts`   | Passes through server-defined variants for Strata Gateway models                        |
-| `packages/opencode/src/session/prompt.ts`       | Resolves variant from agent config, attaches to user messages                         |
-| `packages/opencode/src/session/llm.ts`          | Merges variant options into LLM call parameters                                       |
-| `packages/opencode/src/config/config.ts`        | Agent config schema includes `variant` field                                          |
+| `packages/opencode/src/provider/transform.ts`   | Passes through server-defined variants for Strata Gateway models                          |
+| `packages/opencode/src/session/prompt.ts`       | Resolves variant from agent config, attaches to user messages                             |
+| `packages/opencode/src/session/llm.ts`          | Merges variant options into LLM call parameters                                           |
+| `packages/opencode/src/config/config.ts`        | Agent config schema includes `variant` field                                              |
 
 ## Requirements
 

@@ -10,12 +10,7 @@ import { useProvider } from "../../context/provider"
 import { useServer } from "../../context/server"
 import type { Provider } from "../../types/messages"
 import ProviderConnectDialog from "./ProviderConnectDialog"
-import {
-  CUSTOM_PROVIDER_ID,
-  isPopularProvider,
-  popularProviderIndex,
-  providerIcon,
-} from "./provider-catalog"
+import { CUSTOM_PROVIDER_ID, isPopularProvider, popularProviderIndex, providerIcon } from "./provider-catalog"
 import CustomProviderDialog from "./CustomProviderDialog"
 import { STRATA_PROVIDER_ID } from "../../../../src/shared/provider-model"
 

@@ -21,7 +21,8 @@ export const dict = {
   "strataClaw.upgrade.description1": "تم إعداد هذا المثيل قبل تفعيل الدردشة.",
   "strataClaw.upgrade.description2.before": "استخدم زر ",
   "strataClaw.upgrade.description2.bold": "الترقية إلى الأحدث",
-  "strataClaw.upgrade.description2.after": " في لوحة تحكم StrataClaw لتنشيط الدردشة في الوقت الفعلي مع الروبوت الخاص بك.",
+  "strataClaw.upgrade.description2.after":
+    " في لوحة تحكم StrataClaw لتنشيط الدردشة في الوقت الفعلي مع الروبوت الخاص بك.",
   "strataClaw.upgrade.openDashboard": "فتح لوحة التحكم",
   "strataClaw.sidebar.title": "StrataClaw",
   "strataClaw.sidebar.instance": "المثيل",

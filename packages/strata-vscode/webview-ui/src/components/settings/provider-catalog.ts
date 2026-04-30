@@ -26,7 +26,6 @@ export function providerIcon(providerID: string): IconName {
   return "synthetic"
 }
 
-
 export function providerNoteKey(providerID: string) {
   if (providerID === "strata") return "dialog.provider.strata.note"
   if (providerID === "opencode") return "dialog.provider.opencode.note"

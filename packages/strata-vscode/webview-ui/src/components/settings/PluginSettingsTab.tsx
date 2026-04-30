@@ -54,8 +54,8 @@ const PluginSettingsTab: Component<{ section: RenderablePluginConfigSection }> =
                   <Select
                     current={String(currentValue())}
                     onSelect={(val) => updateValue(props.section.id, field.key, val as string)}
-                    options={field.options.map(o => o.value)}
-                    label={(val: string) => field.options?.find(o => o.value === val)?.label || val}
+                    options={field.options.map((o) => o.value)}
+                    label={(val: string) => field.options?.find((o) => o.value === val)?.label || val}
                     value={(val: string) => val}
                   />
                 )}

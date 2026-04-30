@@ -15,7 +15,15 @@ export namespace StratacodePaths {
     const home = os.homedir()
     switch (process.platform) {
       case "darwin":
-        return path.join(home, "Library", "Application Support", "Code", "User", "globalStorage", "stratacode.strata-code")
+        return path.join(
+          home,
+          "Library",
+          "Application Support",
+          "Code",
+          "User",
+          "globalStorage",
+          "stratacode.strata-code",
+        )
       case "win32":
         return path.join(
           process.env.APPDATA || path.join(home, "AppData", "Roaming"),

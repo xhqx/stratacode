@@ -1110,7 +1110,8 @@ export const dict = {
   "settings.aboutStrataCode.version.label": "Versie:",
   "settings.aboutStrataCode.extensionName": "Strata Code Extensie",
   "settings.aboutStrataCode.community": "Community & Ondersteuning",
-  "settings.aboutStrataCode.feedback.prefix": "Als je vragen of feedback hebt, voel je vrij om een issue aan te maken op",
+  "settings.aboutStrataCode.feedback.prefix":
+    "Als je vragen of feedback hebt, voel je vrij om een issue aan te maken op",
   "settings.aboutStrataCode.feedback.or": "of",
   "settings.aboutStrataCode.support.prefix":
     "Voor vragen over facturering of je account, neem contact op met Klantenservice op",

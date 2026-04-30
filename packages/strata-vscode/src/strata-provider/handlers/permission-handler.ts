@@ -41,7 +41,7 @@ export async function handlePermissionResponse(
   response: "once" | "always" | "reject",
   approvedAlways: string[],
   deniedAlways: string[],
-): Promise<void> {
+  scope?: "global" | "agent",   agent?: string, ): Promise<void> {
   if (!ctx.client) {
     ctx.postMessage({ type: "permissionError", permissionID: permissionId })
     return
@@ -59,15 +59,21 @@ export async function handlePermissionResponse(
 
     // Save per-pattern rules before replying (reply deletes the pending request)
     if (approvedAlways.length > 0 || deniedAlways.length > 0) {
-      await ctx.client.permission.saveAlwaysRules(
-        {
-          requestID: permissionId,
-          directory: dir,
-          approvedAlways,
-          deniedAlways,
-        },
-        { throwOnError: true },
-      )
+      if (scope === "agent" && agent) {
+        
+        await saveAgentPermissionRules(ctx, agent, approvedAlways, deniedAlways, permissionId, dir)
+        
+      } else {
+        await ctx.client.permission.saveAlwaysRules(
+          {
+            requestID: permissionId,
+            directory: dir,
+            approvedAlways,
+            deniedAlways,
+          },
+          { throwOnError: true },
+        )
+      }
     }
 
     await ctx.client.permission.reply(
@@ -79,6 +85,36 @@ export async function handlePermissionResponse(
     ctx.postMessage({ type: "permissionError", permissionID: permissionId })
   }
 }
+
+
+async function saveAgentPermissionRules(
+  ctx: PermissionContext,
+  agent: string,
+  approved: string[],
+  denied: string[],
+  requestId: string,
+  dir: string,
+): Promise<void> {
+  const listRes = await ctx.client!.permission.list({ directory: dir })
+  const pending = listRes.data?.find((p) => p.id === requestId)
+  const permName = pending?.permission ?? "*"
+
+  const rules: Record<string, "allow" | "deny"> = {}
+  for (const p of approved) rules[p] = "allow"
+  for (const p of denied) rules[p] = "deny"
+
+  await ctx.client!.config.update({
+    directory: dir,
+    config: {
+      agent: {
+        [agent]: {
+          permission: { [permName]: rules },
+        },
+      },
+    },
+  })
+}
+
 
 /**
  * Fetch all pending permissions from the backend and forward any that belong
@@ -107,7 +143,7 @@ export async function fetchAndSendPendingPermissions(ctx: PermissionContext): Pr
             args: perm.metadata,
             message: `Permission required: ${perm.permission}`,
             tool: perm.tool,
-          },
+            agent: perm.agent,           },
         })
       }
     }

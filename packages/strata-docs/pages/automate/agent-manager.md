@@ -187,9 +187,9 @@ The run button lets you start your project (dev server, build, tests, etc.) dire
 
 Create a script file in `.strata/` using the appropriate filename for your platform:
 
-| Platform      | Filename (checked in order)                                            |
-| ------------- | ---------------------------------------------------------------------- |
-| macOS / Linux | `.strata/run-script`, `.strata/run-script.sh`                              |
+| Platform      | Filename (checked in order)                                                  |
+| ------------- | ---------------------------------------------------------------------------- |
+| macOS / Linux | `.strata/run-script`, `.strata/run-script.sh`                                |
 | Windows       | `.strata/run-script.ps1`, `.strata/run-script.cmd`, `.strata/run-script.bat` |
 
 For example, on macOS / Linux create `.strata/run-script`:

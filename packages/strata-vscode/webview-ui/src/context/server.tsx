@@ -5,7 +5,14 @@
 
 import { createContext, useContext, createSignal, onMount, onCleanup, ParentComponent, Accessor } from "solid-js"
 import { useVSCode } from "./vscode"
-import type { ConnectionState, ServerInfo, ProfileData, DeviceAuthState, ExtensionMessage, RenderableUIContribution } from "../types/messages"
+import type {
+  ConnectionState,
+  ServerInfo,
+  ProfileData,
+  DeviceAuthState,
+  ExtensionMessage,
+  RenderableUIContribution,
+} from "../types/messages"
 
 interface ServerContextValue {
   connectionState: Accessor<ConnectionState>
@@ -130,8 +137,6 @@ export const ServerProvider: ParentComponent = (props) => {
           console.log("[Strata New] Device auth cancelled")
           setDeviceAuth(initialDeviceAuth)
           break
-
-
       }
     })
 

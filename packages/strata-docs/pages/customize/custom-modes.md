@@ -236,8 +236,8 @@ Default legacy mode slugs (`code`, `build`, `architect`, `ask`, `debug`, `orches
 
 The current VSCode extension reads the legacy `custom_modes.yaml` file from its own global storage directory. Helpful for inspecting or fixing the file before the one-time migration runs:
 
-| OS      | Path                                                                                                  |
-| ------- | ----------------------------------------------------------------------------------------------------- |
+| OS      | Path                                                                                                      |
+| ------- | --------------------------------------------------------------------------------------------------------- |
 | macOS   | `~/Library/Application Support/Code/User/globalStorage/stratacode.strata-code/settings/custom_modes.yaml` |
 | Linux   | `~/.config/Code/User/globalStorage/stratacode.strata-code/settings/custom_modes.yaml`                     |
 | Windows | `%APPDATA%\Code\User\globalStorage\stratacode.strata-code\settings\custom_modes.yaml`                     |
@@ -472,12 +472,12 @@ Default legacy mode slugs (`code`, `build`, `architect`, `ask`, `debug`, `orches
 
 The CLI reads legacy mode files from the following locations (in load order). When the same slug appears in multiple sources, the **last loaded source wins**:
 
-| Load Order | Path | Format | Scope |
-|------------|------|--------|-------|
-| 1 | VSCode extension global storage `/settings/custom_modes.yaml` | YAML | Global |
-| 2 | `~/.stratacode/cli/global/settings/custom_modes.yaml` | YAML | Global |
-| 3 | `~/.stratacodemodes` | YAML | Global |
-| 4 | `<project>/.stratacodemodes` | YAML | Project (wins on conflict) |
+| Load Order | Path                                                          | Format | Scope                      |
+| ---------- | ------------------------------------------------------------- | ------ | -------------------------- |
+| 1          | VSCode extension global storage `/settings/custom_modes.yaml` | YAML   | Global                     |
+| 2          | `~/.stratacode/cli/global/settings/custom_modes.yaml`         | YAML   | Global                     |
+| 3          | `~/.stratacodemodes`                                          | YAML   | Global                     |
+| 4          | `<project>/.stratacodemodes`                                  | YAML   | Project (wins on conflict) |
 
 {% callout type="info" %}
 `~/.config/strata/` is the XDG config directory for the new agent format — legacy `custom_modes.yaml` placed there will **not** be loaded. Use `~/.config/strata/agent/*.md` or `~/.config/strata/strata.jsonc` for new agent definitions instead.
@@ -502,13 +502,13 @@ _Strata Code's interface for creating and managing custom modes._
 
 Custom modes are defined by several key properties. Understanding these concepts will help you tailor Strata's behavior effectively.
 
-| UI Field / YAML Property                       | Conceptual Description                                                                                                                                                               |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| UI Field / YAML Property                       | Conceptual Description                                                                                                                                                                 |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Slug** (`slug`)                              | A unique internal identifier for the mode. Used by Strata Code to reference the mode, especially for associating mode-specific instruction files.                                      |
 | **Name** (`name`)                              | The display name for the mode as it appears in the Strata Code user interface. Should be human-readable and descriptive.                                                               |
-| **Description** (`description`)                | A short, user-friendly summary of the mode's purpose displayed in the mode selector UI. Keep this concise and focused on what the mode does for the user.                            |
+| **Description** (`description`)                | A short, user-friendly summary of the mode's purpose displayed in the mode selector UI. Keep this concise and focused on what the mode does for the user.                              |
 | **Role Definition** (`roleDefinition`)         | Defines the core identity and expertise of the mode. This text is placed at the beginning of the system prompt and defines Strata's personality and behavior when this mode is active. |
-| **Available Tools** (`groups`)                 | Defines the allowed toolsets and file access permissions for the mode. Corresponds to selecting which general categories of tools the mode can use.                                  |
+| **Available Tools** (`groups`)                 | Defines the allowed toolsets and file access permissions for the mode. Corresponds to selecting which general categories of tools the mode can use.                                    |
 | **When to Use** (`whenToUse`)                  | _(Optional)_ Provides guidance for Strata's automated decision-making, particularly for mode selection and task orchestration. Used by the Orchestrator mode for task coordination.    |
 | **Custom Instructions** (`customInstructions`) | _(Optional)_ Specific behavioral guidelines or rules for the mode. Added near the end of the system prompt to further refine Strata's behavior.                                        |
 

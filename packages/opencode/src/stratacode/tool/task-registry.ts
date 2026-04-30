@@ -47,7 +47,7 @@ export namespace StrataTaskRegistry {
           fibersToInterrupt.push(entry.fiber)
         }
       }
-      
+
       if (fibersToInterrupt.length > 0) {
         yield* Effect.forEach(fibersToInterrupt, (fiber) => Fiber.interrupt(fiber), {
           concurrency: "unbounded",

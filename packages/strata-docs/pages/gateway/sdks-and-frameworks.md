@@ -287,7 +287,7 @@ The Strata AI Gateway works with any framework that supports OpenAI-compatible A
 
 | Framework                                                             | Integration                               |
 | --------------------------------------------------------------------- | ----------------------------------------- |
-| [Vercel AI SDK](https://ai-sdk.dev)                                   | Use `createOpenAI` with Strata base URL     |
+| [Vercel AI SDK](https://ai-sdk.dev)                                   | Use `createOpenAI` with Strata base URL   |
 | [LangChain](https://langchain.com)                                    | Use `ChatOpenAI` with custom base URL     |
 | [LlamaIndex](https://www.llamaindex.ai)                               | Use OpenAI-compatible configuration       |
 | [Haystack](https://haystack.deepset.ai)                               | Use OpenAI generator with custom URL      |

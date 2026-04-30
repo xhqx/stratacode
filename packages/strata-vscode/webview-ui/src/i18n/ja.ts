@@ -895,7 +895,8 @@ export const dict = {
   "settings.config.title": "{{scope}}のStrata構成ファイルを開く",
   "settings.config.placeholder":
     "構成ファイルは順番にマージされます。読み込み済みとしてマークされているファイルが現在設定に影響しています。",
-  "settings.config.noWorkspace": "ローカルのStrata構成ファイルを編集するには、ワークスペースフォルダーを開いてください。",
+  "settings.config.noWorkspace":
+    "ローカルのStrata構成ファイルを編集するには、ワークスペースフォルダーを開いてください。",
   "settings.config.openFailed": "{{scope}}のStrata構成ファイルを開けませんでした: {{message}}",
   "settings.config.source.xdg": "XDGグローバル構成",
   "settings.config.source.homeStrata": "Homeの.strata構成",
@@ -1122,7 +1123,8 @@ export const dict = {
   "settings.aboutStrataCode.importSettings.invalidJson":
     "無効な JSON ファイルです。有効な設定ファイルを選択してください。",
   "settings.aboutStrataCode.importSettings.invalidConfig": "ファイルに有効な Strata の設定が含まれていません。",
-  "settings.aboutStrataCode.importSettings.tooLarge": "ファイルが大きすぎます。設定ファイルは 1 MB 以下にしてください。",
+  "settings.aboutStrataCode.importSettings.tooLarge":
+    "ファイルが大きすぎます。設定ファイルは 1 MB 以下にしてください。",
   "settings.aboutStrataCode.importSettings.newerVersion":
     "このファイルはより新しいバージョンの Strata からエクスポートされたものです。一部の設定が無視される場合があります。",
   "settings.aboutStrataCode.importSettings.success":

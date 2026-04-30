@@ -154,9 +154,10 @@ export function validateCustomProvider(input: ValidateArgs): ValidateResult {
       ? input.t("provider.custom.error.baseURL.format")
       : undefined
 
-  const proxyUrlError = proxyURL && !/^https?:\/\//.test(proxyURL)
-    ? input.t("provider.custom.error.baseURL.format") // Reuse the URL format error message
-    : undefined
+  const proxyUrlError =
+    proxyURL && !/^https?:\/\//.test(proxyURL)
+      ? input.t("provider.custom.error.baseURL.format") // Reuse the URL format error message
+      : undefined
 
   const seenModels = new Set<string>()
   const modelErrors = input.form.models.map((m) => checkModel(m, seenModels, input.t))

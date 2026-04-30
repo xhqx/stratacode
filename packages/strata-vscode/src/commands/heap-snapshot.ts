@@ -1,7 +1,10 @@
 import * as vscode from "vscode"
 import type { StrataConnectionService } from "../services/cli-backend/connection-service"
 
-export function registerHeapSnapshot(context: vscode.ExtensionContext, connectionService: StrataConnectionService): void {
+export function registerHeapSnapshot(
+  context: vscode.ExtensionContext,
+  connectionService: StrataConnectionService,
+): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("strata-code.new.takeHeapSnapshot", async () => {
       try {

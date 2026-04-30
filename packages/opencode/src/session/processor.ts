@@ -374,6 +374,7 @@ export const layer: Layer.Layer<
               permission: "doom_loop",
               patterns: [value.toolName],
               sessionID: ctx.assistantMessage.sessionID,
+              agent: ctx.assistantMessage.agent, // stratacode_change
               metadata: { tool: value.toolName, input: value.input },
               always: [value.toolName],
               ruleset: agent.permission,

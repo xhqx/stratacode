@@ -15,7 +15,8 @@ export const dict = {
   // Desktop translations
   "desktop.menu.reloadWebview": "Ponovno učitavanje webview-a",
   "desktop.updater.installFailed.message": "Neuspjelo instaliranje ažuriranja",
-  "desktop.cli.installed.message": "CLI je instaliran u {{path}}\n\nRestartuj terminal da bi koristio komandu 'strata'.",
+  "desktop.cli.installed.message":
+    "CLI je instaliran u {{path}}\n\nRestartuj terminal da bi koristio komandu 'strata'.",
 
   // Reasoning block label
   "ui.permission.run": "Pokreni",

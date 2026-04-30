@@ -906,7 +906,8 @@ export const dict = {
   "settings.config.title": "Otvori {{scope}} Strata konfiguracijsku datoteku",
   "settings.config.placeholder":
     "Konfiguracijske datoteke se spajaju po redu; datoteke označene kao učitane trenutno utiču na postavke.",
-  "settings.config.noWorkspace": "Otvorite fasciklu radnog prostora da uredite lokalnu Strata konfiguracijsku datoteku.",
+  "settings.config.noWorkspace":
+    "Otvorite fasciklu radnog prostora da uredite lokalnu Strata konfiguracijsku datoteku.",
   "settings.config.openFailed": "Nije uspjelo otvaranje {{scope}} Strata konfiguracijske datoteke: {{message}}",
   "settings.config.source.xdg": "XDG globalna konfiguracija",
   "settings.config.source.homeStrata": "Home .strata konfiguracija",
@@ -1131,7 +1132,8 @@ export const dict = {
   "settings.aboutStrataCode.importSettings": "Uvezi",
   "settings.aboutStrataCode.importSettings.invalidJson": "Nevažeći JSON fajl. Odaberite važeći fajl s postavkama.",
   "settings.aboutStrataCode.importSettings.invalidConfig": "Fajl ne sadrži važeće Strata postavke.",
-  "settings.aboutStrataCode.importSettings.tooLarge": "Fajl je prevelik. Fajlovi s postavkama moraju biti manji od 1 MB.",
+  "settings.aboutStrataCode.importSettings.tooLarge":
+    "Fajl je prevelik. Fajlovi s postavkama moraju biti manji od 1 MB.",
   "settings.aboutStrataCode.importSettings.newerVersion":
     "Ovaj fajl je izvezen iz novije verzije Strata-a. Neke postavke mogu biti zanemarene.",
   "settings.aboutStrataCode.importSettings.success":

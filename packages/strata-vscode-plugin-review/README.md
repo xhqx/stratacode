@@ -11,6 +11,7 @@ This is an example Strata Code plugin extension. It demonstrates how a third-par
 ## Configuration
 
 You can customize the prompt sent to Strata Code via VS Code settings:
+
 - `strata-review.prompt`: The prompt template used when reviewing a branch.
 
 ## Requirements

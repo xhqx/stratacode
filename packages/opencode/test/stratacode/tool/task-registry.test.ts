@@ -12,7 +12,7 @@ describe("StrataTaskRegistry", () => {
   it("should register and retrieve a running task", () => {
     const parent = SessionID.make("parent-1")
     const session = SessionID.make("child-1")
-    
+
     // Create a dummy fiber that we can track
     const dummyFiber = Effect.runFork(Effect.never)
 
@@ -72,10 +72,14 @@ describe("StrataTaskRegistry", () => {
   it("should cancel running tasks from a parent session", async () => {
     const parent = SessionID.make("parent-cancel")
     const session = SessionID.make("child-cancel")
-    
+
     let interrupted = false
     const program = Effect.never.pipe(
-      Effect.onInterrupt(() => Effect.sync(() => { interrupted = true }))
+      Effect.onInterrupt(() =>
+        Effect.sync(() => {
+          interrupted = true
+        }),
+      ),
     )
     const dummyFiber = Effect.runFork(program)
 
@@ -88,7 +92,7 @@ describe("StrataTaskRegistry", () => {
     })
 
     await Effect.runPromise(StrataTaskRegistry.cancel(parent))
-    
+
     // The fiber should have been interrupted
     expect(interrupted).toBe(true)
   })

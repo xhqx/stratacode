@@ -385,7 +385,8 @@ export const GithubInstallCommand = cmd({
                 ? `\n          STRATA_API_KEY: \${{ secrets.STRATA_API_KEY }}\n          STRATA_ORG_ID: \${{ secrets.STRATA_ORG_ID }}`
                 : ""
 
-            const envStr = providerEnvStr || strataGatewayEnv ? `\n        env:${providerEnvStr}${strataGatewayEnv}` : ""
+            const envStr =
+              providerEnvStr || strataGatewayEnv ? `\n        env:${providerEnvStr}${strataGatewayEnv}` : ""
 
             await Filesystem.write(
               path.join(app.root, WORKFLOW_FILE),

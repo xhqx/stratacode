@@ -154,7 +154,8 @@ export const dict = {
   "provider.connect.oauth.code.invalid": "รหัสการอนุญาตไม่ถูกต้อง",
   "provider.connect.oauth.auto.visit.prefix": "เยี่ยมชม ",
   "provider.connect.oauth.auto.visit.link": "ลิงก์นี้",
-  "provider.connect.oauth.auto.visit.suffix": " และป้อนรหัสด้านล่างเพื่อเชื่อมต่อบัญชีและใช้โมเดล {{provider}} ใน Strata",
+  "provider.connect.oauth.auto.visit.suffix":
+    " และป้อนรหัสด้านล่างเพื่อเชื่อมต่อบัญชีและใช้โมเดล {{provider}} ใน Strata",
   "provider.connect.oauth.auto.confirmationCode": "รหัสยืนยัน",
   "provider.connect.toast.connected.title": "{{provider}} ที่เชื่อมต่อแล้ว",
   "provider.connect.toast.connected.description": "โมเดล {{provider}} พร้อมใช้งานแล้ว",
@@ -1103,7 +1104,8 @@ export const dict = {
   "settings.aboutStrataCode.community": "ชุมชนและการสนับสนุน",
   "settings.aboutStrataCode.feedback.prefix": "หากคุณมีคำถามหรือข้อเสนอแนะ สามารถเปิด issue ได้ที่",
   "settings.aboutStrataCode.feedback.or": "หรือ",
-  "settings.aboutStrataCode.support.prefix": "สำหรับคำถามเกี่ยวกับการเรียกเก็บเงินหรือบัญชี ติดต่อฝ่ายสนับสนุนลูกค้าที่",
+  "settings.aboutStrataCode.support.prefix":
+    "สำหรับคำถามเกี่ยวกับการเรียกเก็บเงินหรือบัญชี ติดต่อฝ่ายสนับสนุนลูกค้าที่",
   "settings.aboutStrataCode.resetSettings.title": "รีเซ็ตการตั้งค่า",
   "settings.aboutStrataCode.resetSettings.description":
     "การดำเนินการนี้จะรีเซ็ตเฉพาะการตั้งค่าเฉพาะของส่วนขยาย VS Code กลับเป็นค่าเริ่มต้นเท่านั้น การตั้งค่าที่ใช้ร่วมกับ CLI เช่น โหมดและกฎการอนุมัติอัตโนมัติ จะถูกเก็บไว้ในการกำหนดค่า CLI และจะไม่ถูกรีเซ็ต",
@@ -1118,7 +1120,8 @@ export const dict = {
   "settings.aboutStrataCode.importSettings.tooLarge": "ไฟล์มีขนาดใหญ่เกินไป ไฟล์การตั้งค่าต้องมีขนาดไม่เกิน 1 MB",
   "settings.aboutStrataCode.importSettings.newerVersion":
     "ไฟล์นี้ถูกส่งออกจาก Strata เวอร์ชันใหม่กว่า การตั้งค่าบางรายการอาจถูกข้ามไป",
-  "settings.aboutStrataCode.importSettings.success": "นำเข้าการตั้งค่าแล้ว ตรวจสอบการเปลี่ยนแปลงด้านบน จากนั้นคลิกบันทึก",
+  "settings.aboutStrataCode.importSettings.success":
+    "นำเข้าการตั้งค่าแล้ว ตรวจสอบการเปลี่ยนแปลงด้านบน จากนั้นคลิกบันทึก",
 
   "settings.aboutStrataCode.telemetry.title": "Telemetry",
   "settings.aboutStrataCode.telemetry.description":

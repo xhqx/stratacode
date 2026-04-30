@@ -21,11 +21,12 @@ export function DialogSessionRename(props: DialogSessionRenameProps) {
       title="Rename Session"
       value={session()?.title ?? props.title} // stratacode_change
       onConfirm={(value) => {
-        void sdk.client.session.update({
-          sessionID: props.session,
-          title: value,
-        })
-        .then(() => props.onConfirm?.()) // stratacode_change
+        void sdk.client.session
+          .update({
+            sessionID: props.session,
+            title: value,
+          })
+          .then(() => props.onConfirm?.()) // stratacode_change
         dialog.clear()
       }}
       onCancel={() => dialog.clear()}

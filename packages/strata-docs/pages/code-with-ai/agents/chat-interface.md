@@ -140,7 +140,7 @@ Reference files and other context directly in your message using `@`:
 | Instead of this...                | Try this                                                                            |
 | --------------------------------- | ----------------------------------------------------------------------------------- |
 | "Fix the code"                    | "Fix the bug in `calculateTotal` that returns incorrect results"                    |
-| Assuming Strata knows context       | Use `@` to reference specific files                                                 |
+| Assuming Strata knows context     | Use `@` to reference specific files                                                 |
 | Multiple unrelated tasks          | Submit one focused request at a time                                                |
 | Technical jargon overload         | Clear, straightforward language works best                                          |
 | Using chat for tiny code changes. | Use [autocomplete](/docs/code-with-ai/features/autocomplete) for inline completions |

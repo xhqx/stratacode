@@ -38,13 +38,13 @@ Choose your current tool:
 
 ### What's Different in Strata Code
 
-| Cursor                                      | Strata Code                                 | Key Difference                              |
+| Cursor                                      | Strata Code                               | Key Difference                              |
 | ------------------------------------------- | ----------------------------------------- | ------------------------------------------- |
-| `.cursor/rules/*.mdc` with YAML frontmatter | `.stratacode/rules/*.md` plain Markdown     | No YAML metadata required                   |
+| `.cursor/rules/*.mdc` with YAML frontmatter | `.stratacode/rules/*.md` plain Markdown   | No YAML metadata required                   |
 | `alwaysApply: true/false` metadata          | File location determines scope            | Scope controlled by directory structure     |
 | `globs: ["*.ts"]` for file patterns         | Mode-specific directories or custom modes | File patterns handled via custom modes      |
 | `description` for AI activation             | Clear file names and organization         | Relies on explicit file organization        |
-| Global rules in UI settings                 | `~/.stratacode/rules/*.md` files            | Global rules stored as files in home folder |
+| Global rules in UI settings                 | `~/.stratacode/rules/*.md` files          | Global rules stored as files in home folder |
 
 ### Migration Steps
 
@@ -160,14 +160,14 @@ Cursor supports nested `.cursor/rules/` directories. Strata Code uses flat struc
 
 ### What's Different in Strata Code
 
-| Windsurf                                                       | Strata Code                      | Key Difference                              |
+| Windsurf                                                       | Strata Code                    | Key Difference                              |
 | -------------------------------------------------------------- | ------------------------------ | ------------------------------------------- |
-| `.windsurf/rules/*.md`                                         | `.stratacode/rules/*.md`         | Same Markdown format                        |
+| `.windsurf/rules/*.md`                                         | `.stratacode/rules/*.md`       | Same Markdown format                        |
 | GUI configuration for activation modes                         | File location determines scope | Scope controlled by directory structure     |
-| "Always On" mode (GUI)                                         | Place in `.stratacode/rules/`    | Rules stored as files, not GUI settings     |
+| "Always On" mode (GUI)                                         | Place in `.stratacode/rules/`  | Rules stored as files, not GUI settings     |
 | "Glob" mode (GUI)                                              | Mode-specific directories      | File patterns handled via mode directories  |
 | 12,000 character limit per rule                                | No hard limit                  | No character limit on rule files            |
-| Global rules in `~/.codeium/windsurf/memories/global_rules.md` | `~/.stratacode/rules/*.md`       | Global rules in home folder, multiple files |
+| Global rules in `~/.codeium/windsurf/memories/global_rules.md` | `~/.stratacode/rules/*.md`     | Global rules in home folder, multiple files |
 
 ### Migration Steps
 
@@ -220,9 +220,9 @@ If you had rules approaching the 12,000 character limit, split them:
 
 Windsurf configures activation through the GUI. In Strata Code, file organization replaces GUI configuration:
 
-| Windsurf GUI Mode        | Strata Code Equivalent                                        |
+| Windsurf GUI Mode        | Strata Code Equivalent                                      |
 | ------------------------ | ----------------------------------------------------------- |
-| **Always On**            | Place in `.stratacode/rules/` (default)                       |
+| **Always On**            | Place in `.stratacode/rules/` (default)                     |
 | **Glob** (file patterns) | Mode-specific directory or custom mode                      |
 | **Model Decision**       | Clear file names by concern (e.g., `testing-guidelines.md`) |
 | **Manual**               | Organize with descriptive names                             |

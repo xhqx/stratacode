@@ -136,15 +136,15 @@ export default { id: "hello", server: hello }
 
 The plugin function receives a context object:
 
-| Field                    | Description                                                       |
-| ------------------------ | ----------------------------------------------------------------- |
-| `project`                | Current project metadata.                                         |
-| `directory`              | Current working directory for this session.                       |
-| `worktree`               | Git worktree root for this session.                               |
+| Field                    | Description                                                           |
+| ------------------------ | --------------------------------------------------------------------- |
+| `project`                | Current project metadata.                                             |
+| `directory`              | Current working directory for this session.                           |
+| `worktree`               | Git worktree root for this session.                                   |
 | `client`                 | A Strata SDK client (`@stratacode/sdk`) for calling the local server. |
-| `$`                      | [Bun's shell API](https://bun.com/docs/runtime/shell).            |
-| `serverUrl`              | URL of the local Strata server.                                     |
-| `experimental_workspace` | Register workspace adaptors (used by Agent Manager).              |
+| `$`                      | [Bun's shell API](https://bun.com/docs/runtime/shell).                |
+| `serverUrl`              | URL of the local Strata server.                                       |
+| `experimental_workspace` | Register workspace adaptors (used by Agent Manager).                  |
 
 The function returns a `Hooks` object. Any second argument is the options object passed via config (e.g. the `{ apiKey: "..." }` from `["my-plugin", { apiKey: "..." }]`).
 
@@ -257,7 +257,7 @@ Every hook is optional. Return only the ones you care about.
 | `chat.headers`           | Add or replace HTTP headers on the LLM API call.                             |
 | `permission.ask`         | Auto-allow or auto-deny permission prompts.                                  |
 | `command.execute.before` | Intercept slash command execution; mutate the resulting `parts`.             |
-| `shell.env`              | Inject environment variables into every shell command Strata runs.             |
+| `shell.env`              | Inject environment variables into every shell command Strata runs.           |
 
 ### Providers & auth
 

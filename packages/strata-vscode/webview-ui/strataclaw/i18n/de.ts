@@ -22,7 +22,8 @@ export const dict = {
   "strataClaw.upgrade.description1": "Diese Instanz wurde bereitgestellt, bevor der Chat aktiviert wurde.",
   "strataClaw.upgrade.description2.before": "Verwende die Schaltfläche ",
   "strataClaw.upgrade.description2.bold": "Auf neueste Version aktualisieren",
-  "strataClaw.upgrade.description2.after": " im StrataClaw Dashboard, um den Echtzeit-Chat mit deinem Bot zu aktivieren.",
+  "strataClaw.upgrade.description2.after":
+    " im StrataClaw Dashboard, um den Echtzeit-Chat mit deinem Bot zu aktivieren.",
   "strataClaw.upgrade.openDashboard": "Dashboard öffnen",
   "strataClaw.sidebar.title": "StrataClaw",
   "strataClaw.sidebar.instance": "Instanz",

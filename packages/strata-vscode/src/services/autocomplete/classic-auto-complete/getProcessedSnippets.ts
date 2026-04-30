@@ -94,7 +94,12 @@ export async function getProcessedSnippets(
   }
 
   const modelName = model.getModelName() ?? "codestral"
-  const helper = await HelperVars.create(helperInput as ContinueAutocompleteInput, DEFAULT_AUTOCOMPLETE_OPTS, modelName, ide)
+  const helper = await HelperVars.create(
+    helperInput as ContinueAutocompleteInput,
+    DEFAULT_AUTOCOMPLETE_OPTS,
+    modelName,
+    ide,
+  )
 
   const snippetPayload = await getAllSnippetsWithoutRace({
     helper,

@@ -100,8 +100,8 @@ If no compaction agent is set, the current session's model is used.
 
 ### Environment overrides
 
-| Variable                             | Effect                                            |
-| ------------------------------------ | ------------------------------------------------- |
+| Variable                               | Effect                                            |
+| -------------------------------------- | ------------------------------------------------- |
 | `STRATA_DISABLE_AUTOCOMPACT=1`         | Forces `compaction.auto = false`                  |
 | `STRATA_DISABLE_PRUNE=1`               | Forces `compaction.prune = false`                 |
 | `STRATA_EXPERIMENTAL_OUTPUT_TOKEN_MAX` | Overrides the 32,000 default output-token ceiling |
@@ -188,8 +188,8 @@ If no compaction agent is set, the current session's model is used.
 
 ### Environment overrides
 
-| Variable                             | Effect                                            |
-| ------------------------------------ | ------------------------------------------------- |
+| Variable                               | Effect                                            |
+| -------------------------------------- | ------------------------------------------------- |
 | `STRATA_DISABLE_AUTOCOMPACT=1`         | Forces `compaction.auto = false`                  |
 | `STRATA_DISABLE_PRUNE=1`               | Forces `compaction.prune = false`                 |
 | `STRATA_EXPERIMENTAL_OUTPUT_TOKEN_MAX` | Overrides the 32,000 default output-token ceiling |

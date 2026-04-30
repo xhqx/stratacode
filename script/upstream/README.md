@@ -37,19 +37,19 @@ bun run merge.ts --version v1.1.50 --base-branch catrielmuller/strata-opencode-v
 
 ### Transform Scripts
 
-| Script                                 | Description                                                 |
-| -------------------------------------- | ----------------------------------------------------------- |
+| Script                                 | Description                                                   |
+| -------------------------------------- | ------------------------------------------------------------- |
 | `transforms/package-names.ts`          | Transform opencode package names to strata                    |
 | `transforms/preserve-versions.ts`      | Preserve Strata's package versions                            |
 | `transforms/keep-ours.ts`              | Keep Strata's version of specific files                       |
 | `transforms/skip-files.ts`             | Skip/remove files that shouldn't exist in Strata              |
 | `transforms/transform-i18n.ts`         | Transform i18n files with Strata branding                     |
 | `transforms/transform-take-theirs.ts`  | Take upstream + apply Strata branding for branding-only files |
-| `transforms/transform-tauri.ts`        | Transform Tauri/Desktop config files                        |
+| `transforms/transform-tauri.ts`        | Transform Tauri/Desktop config files                          |
 | `transforms/transform-package-json.ts` | Enhanced package.json with Strata dependency injection        |
-| `transforms/transform-scripts.ts`      | Transform script files with GitHub API references           |
-| `transforms/transform-extensions.ts`   | Transform extension files (Zed, etc.)                       |
-| `transforms/transform-web.ts`          | Transform web/docs files (.mdx)                             |
+| `transforms/transform-scripts.ts`      | Transform script files with GitHub API references             |
+| `transforms/transform-extensions.ts`   | Transform extension files (Zed, etc.)                         |
+| `transforms/transform-web.ts`          | Transform web/docs files (.mdx)                               |
 
 ### Codemods (AST-based)
 
@@ -175,15 +175,15 @@ The following transforms are applied to the opencode branch before merging:
 
 After merging, any remaining conflicts are handled based on file type:
 
-| File Type         | Strategy                | Description                                      |
-| ----------------- | ----------------------- | ------------------------------------------------ |
+| File Type         | Strategy                | Description                                        |
+| ----------------- | ----------------------- | -------------------------------------------------- |
 | i18n files        | `i18n-transform`        | Take upstream, apply Strata branding               |
-| App components    | `take-theirs-transform` | Take upstream, apply branding (no logic changes) |
-| Tauri configs     | `tauri-transform`       | Take upstream, transform identifiers/names       |
+| App components    | `take-theirs-transform` | Take upstream, apply branding (no logic changes)   |
+| Tauri configs     | `tauri-transform`       | Take upstream, transform identifiers/names         |
 | package.json      | `package-transform`     | Take upstream, transform names, inject Strata deps |
-| Script files      | `script-transform`      | Take upstream, transform GitHub references       |
-| Extensions        | `extension-transform`   | Take upstream, apply branding                    |
-| Web/docs          | `web-transform`         | Take upstream, apply branding                    |
+| Script files      | `script-transform`      | Take upstream, transform GitHub references         |
+| Extensions        | `extension-transform`   | Take upstream, apply branding                      |
+| Web/docs          | `web-transform`         | Take upstream, apply branding                      |
 | README/docs       | `keep-ours`             | Keep Strata's version                              |
 | GitHub workflows  | `keep-ours`             | Keep Strata's version (manual review)              |
 | Code with markers | `manual`                | Has `stratacode_change` markers, needs review      |

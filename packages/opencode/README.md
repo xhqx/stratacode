@@ -40,8 +40,8 @@ strata run "add input validation to the signup form"
 
 ## Commands
 
-| Command               | Description                |
-| --------------------- | -------------------------- |
+| Command                 | Description                |
+| ----------------------- | -------------------------- |
 | `strata`                | Launch interactive TUI     |
 | `strata run "<task>"`   | Run a one-off task         |
 | `strata auth`           | Manage authentication      |

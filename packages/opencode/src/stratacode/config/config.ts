@@ -56,7 +56,12 @@ export namespace StratacodeConfig {
   export const STRATA_DIR_SUFFIXES = [".strata", ".stratacode"] as const
 
   /** Path patterns for resolving strata agent names from file paths. */
-  export const AGENT_PATTERNS = ["/.strata/agent/", "/.strata/agents/", "/.stratacode/agent/", "/.stratacode/agents/"] as const
+  export const AGENT_PATTERNS = [
+    "/.strata/agent/",
+    "/.strata/agents/",
+    "/.stratacode/agent/",
+    "/.stratacode/agents/",
+  ] as const
 
   /** Path patterns for resolving strata command names from file paths. */
   export const COMMAND_PATTERNS = [

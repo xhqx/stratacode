@@ -229,10 +229,10 @@ Leader key default: `ctrl+x`. Keybinds below use `<leader>` prefix (e.g. `<leade
 
 ### Theme & Appearance
 
-| Action                         | Keybind     | Slash     | Notes                                                                                              |
-| ------------------------------ | ----------- | --------- | -------------------------------------------------------------------------------------------------- |
+| Action                         | Keybind     | Slash     | Notes                                                                                                |
+| ------------------------------ | ----------- | --------- | ---------------------------------------------------------------------------------------------------- |
 | Switch theme                   | `<leader>t` | `/themes` | Pick from 35+ built-in themes (strata, catppuccin, dracula, github, gruvbox, nord, tokyonight, etc.) |
-| Toggle appearance (dark/light) | —           | —         | Ctrl+P → "Toggle appearance"                                                                       |
+| Toggle appearance (dark/light) | —           | —         | Ctrl+P → "Toggle appearance"                                                                         |
 
 Custom themes: place JSON files in `~/.config/strata/themes/` or `.strata/themes/`.
 
@@ -278,10 +278,10 @@ Toggle notifications, Toggle animations, Toggle diff wrapping, Toggle sidebar (`
 
 ### Config files (strata.json)
 
-| Scope   | Path                                                                                                                                                                                                 |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Project | `./strata.json`, `./strata.jsonc`, `./opencode.json` (legacy), `./opencode.jsonc` (legacy)                                                                                                               |
-| Global  | `~/.config/strata/strata.json`, `~/.config/strata/strata.jsonc`, `~/.config/strata/opencode.json` (legacy), `~/.config/strata/opencode.jsonc` (legacy), `~/.config/strata/config.json` (legacy)                    |
+| Scope   | Path                                                                                                                                                                                                           |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Project | `./strata.json`, `./strata.jsonc`, `./opencode.json` (legacy), `./opencode.jsonc` (legacy)                                                                                                                     |
+| Global  | `~/.config/strata/strata.json`, `~/.config/strata/strata.jsonc`, `~/.config/strata/opencode.json` (legacy), `~/.config/strata/opencode.jsonc` (legacy), `~/.config/strata/config.json` (legacy)                |
 | Managed | Linux: `/etc/strata/`, macOS: `/Library/Application Support/strata/`, Windows: `%ProgramData%\strata\` — loads `strata.json`, `strata.jsonc`, `opencode.json`, `opencode.jsonc` (enterprise, highest priority) |
 
 Each config directory (`.strata/`, `.stratacode/`, `.opencode/`) can also contain `strata.json`, `strata.jsonc`, `opencode.json`, or `opencode.jsonc`.
@@ -316,8 +316,8 @@ Example: `~/.config/strata/command/*.md` (modern global), `~/.stratacode/command
 
 ### Environment variable overrides
 
-| Variable                      | Description                                                      |
-| ----------------------------- | ---------------------------------------------------------------- |
+| Variable                        | Description                                                      |
+| ------------------------------- | ---------------------------------------------------------------- |
 | `STRATA_CONFIG`                 | Path to an additional config file (loaded after global)          |
 | `STRATA_CONFIG_DIR`             | Path to an additional config directory (appended to search list) |
 | `STRATA_CONFIG_CONTENT`         | Inline JSON config string (high precedence, after project dirs)  |

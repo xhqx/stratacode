@@ -169,10 +169,7 @@ const ModeEditView: Component<Props> = (props) => {
             ? language.t("settings.agentBehaviour.editMode.promptOverride")
             : language.t("settings.agentBehaviour.editMode.prompt")}
         </div>
-        <div
-          data-slot="settings-row-label-subtitle"
-          style={{ "margin-bottom": "8px" }}
-        >
+        <div data-slot="settings-row-label-subtitle" style={{ "margin-bottom": "8px" }}>
           {language.t("settings.agentBehaviour.editMode.prompt.help")}
         </div>
         <MarkdownEditor
@@ -303,6 +300,64 @@ const ModeEditView: Component<Props> = (props) => {
             }}
           />
         </SettingsRow>
+
+        
+        <SettingsRow
+          title="Auto-Approve Timeouts"
+          description="Override global auto-approve settings for this specific agent."
+        >
+          <div style={{ display: "flex", "flex-direction": "column", gap: "8px" }}>
+            <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+              <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                Action timeout (seconds)
+              </label>
+              <input
+                type="number"
+                style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+                value={cfg().auto_approve?.timeout ?? ""}
+                placeholder="Global"
+                min="0"
+                max="300"
+                onChange={(e) => {
+                  const val = e.currentTarget.value
+                  const parsed = parseInt(val, 10)
+                  const existing = cfg().auto_approve ?? {}
+                  const updated = { ...existing, timeout: isNaN(parsed) ? undefined : parsed }
+                  if (updated.timeout === undefined && updated.question_timeout === undefined) {
+                    update({ auto_approve: null })
+                  } else {
+                    update({ auto_approve: updated })
+                  }
+                }}
+              />
+            </div>
+            <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+              <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                Question timeout (seconds)
+              </label>
+              <input
+                type="number"
+                style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+                value={cfg().auto_approve?.question_timeout ?? ""}
+                placeholder="Global"
+                min="0"
+                max="300"
+                onChange={(e) => {
+                  const val = e.currentTarget.value
+                  const parsed = parseInt(val, 10)
+                  const existing = cfg().auto_approve ?? {}
+                  const updated = { ...existing, question_timeout: isNaN(parsed) ? undefined : parsed }
+                  if (updated.timeout === undefined && updated.question_timeout === undefined) {
+                    update({ auto_approve: null })
+                  } else {
+                    update({ auto_approve: updated })
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </SettingsRow>
+        
 
         <SettingsRow
           title={language.t("settings.agentBehaviour.hidden.title")}

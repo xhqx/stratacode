@@ -21,7 +21,7 @@ Once setup is complete, your StrataClaw machine will have the following configur
 - Real-time Gmail push notifications via Google Pub/Sub, so StrataClaw can react to incoming emails sent to the dedicated account without polling
 - Access to the full range of Google Workspace services:
 
-| Service               | What StrataClaw can do         |
+| Service               | What StrataClaw can do       |
 | --------------------- | ---------------------------- |
 | **Gmail**             | Read, draft, and send emails |
 | **Google Calendar**   | View and manage events       |
@@ -68,8 +68,8 @@ StrataClaw will automatically use the dedicated account's credentials to fulfill
 
 StrataClaw's credentials are tied to its dedicated Google account — not your personal one. To let StrataClaw work with your personal Google data, you need to **share or delegate access from your personal account to the StrataClaw account**:
 
-| Service                           | How to share access                                                                                                                                                                                    |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Service                           | How to share access                                                                                                                                                                                      |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Google Calendar**               | Share your calendar with the StrataClaw account's email address ([instructions](https://support.google.com/calendar/answer/37082))                                                                       |
 | **Google Drive**                  | Share specific files or folders with the StrataClaw account's email address                                                                                                                              |
 | **Gmail** (Option 1: Delegation)  | Set up [Gmail delegation](https://support.google.com/mail/answer/138350) to grant StrataClaw read and write access to your inbox — it can read, draft, and send emails on your behalf                    |

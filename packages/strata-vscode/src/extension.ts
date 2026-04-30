@@ -429,18 +429,11 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
   })
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "strata-code.new.api.sendMessage",
-      (text: string, options?: SendOptions) => api.sendMessage({ text, ...options })
+    vscode.commands.registerCommand("strata-code.new.api.sendMessage", (text: string, options?: SendOptions) =>
+      api.sendMessage({ text, ...options }),
     ),
-    vscode.commands.registerCommand(
-      "strata-code.new.api.getActiveSession",
-      () => api.getActiveSession()
-    ),
-    vscode.commands.registerCommand(
-      "strata-code.new.api.focus",
-      () => api.focus()
-    ),
+    vscode.commands.registerCommand("strata-code.new.api.getActiveSession", () => api.getActiveSession()),
+    vscode.commands.registerCommand("strata-code.new.api.focus", () => api.focus()),
   )
 
   // Dispose services when extension deactivates (kills the server)

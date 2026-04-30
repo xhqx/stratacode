@@ -53,7 +53,7 @@ export interface PermissionResponseRequest {
   response: "once" | "always" | "reject"
   approvedAlways: string[]
   deniedAlways: string[]
-}
+  scope?: "global" | "agent"   agent?: string }
 
 export interface CreateSessionRequest {
   type: "createSession"
@@ -246,7 +246,6 @@ export interface RemoveMcpMessage {
 export interface RequestMcpStatusMessage {
   type: "requestMcpStatus"
 }
-
 
 export interface ConnectMcpMessage {
   type: "connectMcp"
@@ -1104,6 +1103,9 @@ export type WebviewMessage =
   | ExecutePluginContributionMessage
   | RequestPluginConfigMessage
   | SavePluginConfigMessage
+  
+  | { type: "cancelAutoApproveTimer"; requestId: string }
+  
 
 export interface ExecutePluginContributionMessage {
   type: "executePluginContribution"

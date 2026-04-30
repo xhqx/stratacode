@@ -388,7 +388,7 @@ export function patchAgents(
     mode: "primary",
     native: true,
   }
-  
+
   // Add commit agent
   agents.commit = {
     name: "commit",

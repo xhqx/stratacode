@@ -69,7 +69,7 @@ Key subsystems inside the CLI:
 | MCP Servers     | Model Context Protocol support for extending with external tools         |
 | LSP Client      | Language Server Protocol integration for code intelligence               |
 | Session Manager | Persistent session state, conversation history, and checkpoints          |
-| Provider Router | Connects to 500+ AI models via direct APIs or Strata Gateway               |
+| Provider Router | Connects to 500+ AI models via direct APIs or Strata Gateway             |
 | HTTP Server     | REST API + SSE streaming for client communication                        |
 | Config System   | Project and global configuration, modes, and permissions                 |
 
@@ -255,10 +255,10 @@ The project uses:
 
 ## Repositories
 
-| Repository                                                | Contents                                                                                                                       |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| [Strata-Org/stratacode](https://github.com/Strata-Org/stratacode) | CLI engine, VS Code extension, SDK, gateway client, telemetry, docs, UI components                                             |
-| Cloud (private)                                           | Web dashboard, Cloud Agent, Strata Bot, StrataClaw, Gas Town, code review, auto triage, billing, and supporting Cloudflare Workers |
+| Repository                                                        | Contents                                                                                                                           |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| [Strata-Org/stratacode](https://github.com/Strata-Org/stratacode) | CLI engine, VS Code extension, SDK, gateway client, telemetry, docs, UI components                                                 |
+| Cloud (private)                                                   | Web dashboard, Cloud Agent, Strata Bot, StrataClaw, Gas Town, code review, auto triage, billing, and supporting Cloudflare Workers |
 
 ## Further Reading
 

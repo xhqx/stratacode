@@ -40,10 +40,10 @@ The Strata Code dev container is pre-configured with named volumes to preserve y
 
 ## Storage Locations
 
-| Data Type    | Container Path                                                            |
-| ------------ | ------------------------------------------------------------------------- |
+| Data Type    | Container Path                                                                |
+| ------------ | ----------------------------------------------------------------------------- |
 | Threads      | `/root/.vscode-remote/data/User/globalStorage/stratacode.strata-code/tasks/`  |
-| Settings     | `/root/.vscode-remote/data/User/settings/`                                |
+| Settings     | `/root/.vscode-remote/data/User/settings/`                                    |
 | Cache        | `/root/.vscode-remote/data/User/globalStorage/stratacode.strata-code/cache/`  |
 | Vector Store | `/root/.vscode-remote/data/User/globalStorage/stratacode.strata-code/vector/` |
 

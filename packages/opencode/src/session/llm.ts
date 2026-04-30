@@ -321,6 +321,7 @@ const live: Layer.Layer<
                 id,
                 sessionID: SessionID.make(input.sessionID),
                 permission: "workflow_tool_approval",
+                agent: input.agent.name, // stratacode_change
                 patterns: uniquePatterns,
                 metadata: { tools: approvalTools },
                 always: uniquePatterns,

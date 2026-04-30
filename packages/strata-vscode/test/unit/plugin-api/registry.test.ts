@@ -7,10 +7,14 @@ mock.module("vscode", () => ({
     private listeners: any[] = []
     event = (listener: any) => {
       this.listeners.push(listener)
-      return { dispose: () => { this.listeners = this.listeners.filter(l => l !== listener) } }
+      return {
+        dispose: () => {
+          this.listeners = this.listeners.filter((l) => l !== listener)
+        },
+      }
     }
     fire(data: any) {
-      this.listeners.forEach(l => l(data))
+      this.listeners.forEach((l) => l(data))
     }
   },
   Disposable: class {
@@ -20,7 +24,7 @@ mock.module("vscode", () => ({
     }
   },
   commands: {
-    executeCommand: mock(() => Promise.resolve())
+    executeCommand: mock(() => Promise.resolve()),
   },
   workspace: {
     onDidChangeConfiguration: mock(() => ({ dispose: () => {} })),
@@ -29,9 +33,9 @@ mock.module("vscode", () => ({
         if (section === "test-section" && key === "test-key") return "test-val"
         return undefined
       }),
-      update: mock(() => Promise.resolve())
-    }))
-  }
+      update: mock(() => Promise.resolve()),
+    })),
+  },
 }))
 
 import { PluginRegistry } from "../../../src/plugin-api/index"
@@ -45,12 +49,12 @@ describe("PluginRegistry", () => {
       placement: "input-toolbar",
       type: "button",
       label: "Test",
-      command: "test.cmd"
+      command: "test.cmd",
     }
 
     registry.registerUIContribution(contrib)
     const renderables = registry.getRenderableContributions()
-    
+
     expect(renderables.length).toBe(1)
     expect(renderables[0].id).toBe("test.btn")
     expect(renderables[0]).not.toHaveProperty("command") // Command should be stripped
@@ -62,12 +66,12 @@ describe("PluginRegistry", () => {
       id: "test.btn",
       placement: "input-toolbar",
       type: "button",
-      command: "test.cmd"
+      command: "test.cmd",
     }
 
     const disposable = registry.registerUIContribution(contrib)
     expect(registry.getRenderableContributions().length).toBe(1)
-    
+
     disposable.dispose()
     expect(registry.getRenderableContributions().length).toBe(0)
   })
@@ -79,12 +83,12 @@ describe("PluginRegistry", () => {
       placement: "input-toolbar",
       type: "button",
       command: "test.cmd",
-      commandArgs: ["arg1", 123]
+      commandArgs: ["arg1", 123],
     }
 
     registry.registerUIContribution(contrib)
     registry.executeContribution("test.btn")
-    
+
     expect(vscode.commands.executeCommand).toHaveBeenCalledWith("test.cmd", "arg1", 123)
   })
 
@@ -102,7 +106,7 @@ describe("PluginRegistry", () => {
       registry.registerConfigSection({
         id: "test-section",
         title: "Test Section",
-        fields: [{ key: "test-key", type: "string", label: "Test Key" }]
+        fields: [{ key: "test-key", type: "string", label: "Test Key" }],
       })
 
       const sections = registry.getRenderableConfigSections()
@@ -117,7 +121,7 @@ describe("PluginRegistry", () => {
       const disposable = registry.registerConfigSection({
         id: "test-section",
         title: "Test Section",
-        fields: [{ key: "test-key", type: "string", label: "Test Key" }]
+        fields: [{ key: "test-key", type: "string", label: "Test Key" }],
       })
 
       expect(registry.getRenderableConfigSections().length).toBe(1)
@@ -130,7 +134,7 @@ describe("PluginRegistry", () => {
       registry.registerConfigSection({
         id: "test-section",
         title: "Test",
-        fields: [{ key: "test-key", type: "string", label: "Key" }]
+        fields: [{ key: "test-key", type: "string", label: "Key" }],
       })
 
       expect(registry.getPluginConfigValue("test-section", "test-key")).toBe("test-val")
@@ -143,7 +147,7 @@ describe("PluginRegistry", () => {
       const disposable = registry.registerConfigSection({
         id: "bad-section",
         title: "Bad",
-        fields: [{ key: "", type: "string", label: "Bad" }]
+        fields: [{ key: "", type: "string", label: "Bad" }],
       })
 
       expect(registry.getRenderableConfigSections().length).toBe(0)
@@ -156,7 +160,7 @@ describe("PluginRegistry", () => {
       registry.registerContextProvider({
         id: "test.provider",
         label: "Test Provider",
-        provideContext: async () => [{ type: "text", label: "Test", content: "Hello" }]
+        provideContext: async () => [{ type: "text", label: "Test", content: "Hello" }],
       })
 
       const items = await registry.getContextItems({ id: "s1", title: "Test", directory: "/" })
@@ -169,12 +173,14 @@ describe("PluginRegistry", () => {
       registry.registerContextProvider({
         id: "bad.provider",
         label: "Bad",
-        provideContext: async () => { throw new Error("Boom") }
+        provideContext: async () => {
+          throw new Error("Boom")
+        },
       })
       registry.registerContextProvider({
         id: "good.provider",
         label: "Good",
-        provideContext: async () => [{ type: "text", label: "Good", content: "Valid" }]
+        provideContext: async () => [{ type: "text", label: "Good", content: "Valid" }],
       })
 
       const items = await registry.getContextItems({ id: "s1", title: "Test", directory: "/" })
@@ -187,7 +193,7 @@ describe("PluginRegistry", () => {
       registry.registerContextProvider({
         id: "slow.provider",
         label: "Slow",
-        provideContext: () => new Promise(resolve => setTimeout(resolve, 3100))
+        provideContext: () => new Promise((resolve) => setTimeout(resolve, 3100)),
       })
 
       // The timeout is 3000ms. It should return empty if it timeouts.
@@ -195,7 +201,7 @@ describe("PluginRegistry", () => {
       const start = Date.now()
       const items = await registry.getContextItems({ id: "s1", title: "Test", directory: "/" })
       const elapsed = Date.now() - start
-      
+
       expect(items.length).toBe(0)
       expect(elapsed).toBeLessThan(3100) // Should have timed out at 3000ms
     }, 4000)
@@ -205,8 +211,8 @@ describe("PluginRegistry", () => {
     test("fires onWillSendMessage", () => {
       const registry = new PluginRegistry()
       let fired = false
-      
-      registry.onWillSendMessage.event(e => {
+
+      registry.onWillSendMessage.event((e) => {
         fired = true
         if (e.sessionId === "test") {
           e.cancel()
@@ -217,7 +223,9 @@ describe("PluginRegistry", () => {
       registry.onWillSendMessage.fire({
         sessionId: "test",
         text: "hello",
-        cancel: () => { isCancelled = true }
+        cancel: () => {
+          isCancelled = true
+        },
       })
 
       expect(fired).toBe(true)
@@ -227,8 +235,8 @@ describe("PluginRegistry", () => {
     test("fires onDidCompleteMessage", () => {
       const registry = new PluginRegistry()
       let firedSession = ""
-      
-      registry.onDidCompleteMessage.event(e => {
+
+      registry.onDidCompleteMessage.event((e) => {
         firedSession = e.sessionId
       })
 

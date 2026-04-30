@@ -121,6 +121,12 @@ export interface Config {
   layout?: "auto" | "stretch"
   experimental?: ExperimentalConfig
   indexing?: IndexingConfig
+  
+  auto_approve?: {
+    timeout?: number
+    question_timeout?: number
+  } | null
+  
 }
 
 export interface FeatureFlags {

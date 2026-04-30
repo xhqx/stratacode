@@ -8,8 +8,9 @@ export async function activate(context: vscode.ExtensionContext) {
       const ext = vscode.extensions.getExtension("stratacode.strata-code")
       const api = ext?.exports as StrataPluginAPI | undefined
 
-      const prompt = (api?.getPluginConfigValue?.("strata-review", "prompt") as string)
-        || "Review the current branch changes and provide feedback."
+      const prompt =
+        (api?.getPluginConfigValue?.("strata-review", "prompt") as string) ||
+        "Review the current branch changes and provide feedback."
 
       try {
         if (api?.sendMessage) {
@@ -18,9 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
         await vscode.commands.executeCommand("strata-code.new.api.sendMessage", prompt, { focus: true })
       } catch (err) {
-        vscode.window.showErrorMessage(
-          "Failed to communicate with Strata Code. Is the extension installed and active?",
-        )
+        vscode.window.showErrorMessage("Failed to communicate with Strata Code. Is the extension installed and active?")
         console.error("Strata Code sendMessage command failed:", err)
       }
     }),
@@ -34,7 +33,7 @@ export async function activate(context: vscode.ExtensionContext) {
       await strata.activate()
     }
     const api = strata.exports as StrataPluginAPI
-    
+
     // 1. UI Contribution
     if (api && api.registerUIContribution) {
       const disposable = api.registerUIContribution({
@@ -44,7 +43,7 @@ export async function activate(context: vscode.ExtensionContext) {
         label: "Review",
         tooltip: "Review Current Branch",
         icon: "git-compare",
-        command: "strata-review.reviewBranch"
+        command: "strata-review.reviewBranch",
       })
       context.subscriptions.push(disposable)
     }
@@ -61,16 +60,17 @@ export async function activate(context: vscode.ExtensionContext) {
             type: "string",
             label: "Default Review Prompt",
             description: "The prompt sent to Strata Code when the review button is clicked.",
-            default: "Review the current branch changes and provide feedback."
+            default: "Review the current branch changes and provide feedback.",
           },
           {
             key: "autoInjectDiff",
             type: "boolean",
             label: "Auto-inject Git Diff",
-            description: "Automatically inject the current branch diff as context into prompts sent from the review button.",
-            default: true
-          }
-        ]
+            description:
+              "Automatically inject the current branch diff as context into prompts sent from the review button.",
+            default: true,
+          },
+        ],
       })
       context.subscriptions.push(disposable)
     }
@@ -85,16 +85,16 @@ export async function activate(context: vscode.ExtensionContext) {
           const autoInject = api.getPluginConfigValue("strata-review", "autoInjectDiff") ?? true
           if (!autoInject) return []
 
-          // Note: In a real implementation we would run `git diff` here, 
+          // Note: In a real implementation we would run `git diff` here,
           // but for this example we return mock data.
           return [
             {
               type: "text",
               label: "git diff",
-              content: "diff --git a/src/example.ts b/src/example.ts\n+ console.log('hello world');"
-            }
+              content: "diff --git a/src/example.ts b/src/example.ts\n+ console.log('hello world');",
+            },
           ]
-        }
+        },
       })
       context.subscriptions.push(disposable)
     }

@@ -54,6 +54,7 @@ export class Request extends Schema.Class<Request>("PermissionRequest")({
       callID: Schema.String,
     }),
   ),
+  agent: Schema.optional(Schema.String), // stratacode_change
 }) {
   static readonly zod = zod(this)
 }

@@ -1121,7 +1121,8 @@ export const dict = {
   "settings.aboutStrataCode.community": "Comunidad y soporte",
   "settings.aboutStrataCode.feedback.prefix": "Si tienes preguntas o comentarios, abre un issue en",
   "settings.aboutStrataCode.feedback.or": "o",
-  "settings.aboutStrataCode.support.prefix": "Para preguntas de facturación o cuenta, contacta al Soporte al Cliente en",
+  "settings.aboutStrataCode.support.prefix":
+    "Para preguntas de facturación o cuenta, contacta al Soporte al Cliente en",
   "settings.aboutStrataCode.resetSettings.title": "Restablecer configuración",
   "settings.aboutStrataCode.resetSettings.description":
     "Esto restablece únicamente las configuraciones específicas de la extensión VS Code a sus valores predeterminados. Las configuraciones compartidas con el CLI, como los modos y las reglas de aprobación automática, se almacenan en la configuración del CLI y no serán restablecidas.",

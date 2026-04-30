@@ -26,22 +26,22 @@ Every client spawns or connects to a `strata serve` process and communicates via
                 └──────────┘ └─────────┘ └──────────────┘
 ```
 
-| Product                    | Package                                | What it is                                          | How it uses the CLI                                               |
-| -------------------------- | -------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------- |
-| Strata CLI (TUI)             | `packages/opencode/`                   | Interactive terminal UI (SolidJS + OpenTUI)         | In-process — TUI and server run together                          |
-| Strata CLI (`strata run`)      | `packages/opencode/`                   | Non-interactive headless mode for scripting         | In-process — no network socket                                    |
-| **Strata VS Code Extension** | **`packages/strata-vscode/`**            | VS Code extension with sidebar chat + Agent Manager | Bundles CLI binary, spawns `strata serve --port 0` as child process |
-| OpenCode Desktop           | `packages/desktop/`                    | Standalone native app (Tauri)                       | Bundles CLI binary as sidecar, spawns `strata serve`                |
-| OpenCode Web (`strata web`)  | `packages/opencode/` + `packages/app/` | Browser-based UI                                    | CLI starts server + opens browser                                 |
+| Product                      | Package                                | What it is                                          | How it uses the CLI                                                 |
+| ---------------------------- | -------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------- |
+| Strata CLI (TUI)             | `packages/opencode/`                   | Interactive terminal UI (SolidJS + OpenTUI)         | In-process — TUI and server run together                            |
+| Strata CLI (`strata run`)    | `packages/opencode/`                   | Non-interactive headless mode for scripting         | In-process — no network socket                                      |
+| **Strata VS Code Extension** | **`packages/strata-vscode/`**          | VS Code extension with sidebar chat + Agent Manager | Bundles CLI binary, spawns `strata serve --port 0` as child process |
+| OpenCode Desktop             | `packages/desktop/`                    | Standalone native app (Tauri)                       | Bundles CLI binary as sidecar, spawns `strata serve`                |
+| OpenCode Web (`strata web`)  | `packages/opencode/` + `packages/app/` | Browser-based UI                                    | CLI starts server + opens browser                                   |
 
 **OpenCode Desktop** (`packages/desktop/`) and `strata web` both render the shared `@opencode-ai/app` SolidJS frontend (`packages/app/`). They differ only in the platform layer (Tauri native APIs vs browser APIs). Neither has any relationship to this extension or the Agent Manager — they are independent clients of the same `strata serve` backend.
 
 ### Strata-Domain Packages
 
-| Package                    | Name                       | Role                                                                                                                         |
-| -------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `packages/strata-vscode/`    | `strata-code`                | **This package.** VS Code extension.                                                                                         |
-| `packages/strata-gateway/`   | `@stratacode/strata-gateway`   | Auth (device flow), AI provider routing (OpenRouter), Strata API integration (profile, balance, teams)                         |
+| Package                      | Name                           | Role                                                                                                                         |
+| ---------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `packages/strata-vscode/`    | `strata-code`                  | **This package.** VS Code extension.                                                                                         |
+| `packages/strata-gateway/`   | `@stratacode/strata-gateway`   | Auth (device flow), AI provider routing (OpenRouter), Strata API integration (profile, balance, teams)                       |
 | `packages/strata-ui/`        | `@stratacode/strata-ui`        | SolidJS component library (40+ components, built on `@kobalte/core`). Shared by this extension's webview and `packages/app/` |
 | `packages/strata-telemetry/` | `@stratacode/strata-telemetry` | PostHog analytics + OpenTelemetry tracing for the CLI                                                                        |
 | `packages/strata-i18n/`      | `@stratacode/strata-i18n`      | Translation strings (16 languages)                                                                                           |
@@ -51,13 +51,13 @@ Every client spawns or connects to a `strata serve` process and communicates via
 
 | Package              | Name                   | Role                                                                                     |
 | -------------------- | ---------------------- | ---------------------------------------------------------------------------------------- |
-| `packages/opencode/` | `@stratacode/cli`        | Core CLI — forked from upstream OpenCode. AI agents, tools, sessions, server.            |
-| `packages/sdk/js/`   | `@stratacode/sdk`        | Auto-generated TypeScript SDK client for the server API. Do not edit `src/gen/` by hand. |
-| `packages/app/`      | `@opencode-ai/app`     | Shared SolidJS web UI consumed by desktop app and `strata web`                             |
+| `packages/opencode/` | `@stratacode/cli`      | Core CLI — forked from upstream OpenCode. AI agents, tools, sessions, server.            |
+| `packages/sdk/js/`   | `@stratacode/sdk`      | Auto-generated TypeScript SDK client for the server API. Do not edit `src/gen/` by hand. |
+| `packages/app/`      | `@opencode-ai/app`     | Shared SolidJS web UI consumed by desktop app and `strata web`                           |
 | `packages/desktop/`  | `@opencode-ai/desktop` | Tauri desktop app shell                                                                  |
 | `packages/ui/`       | `@opencode-ai/ui`      | Shared UI primitives                                                                     |
 | `packages/util/`     | `@opencode-ai/util`    | Shared utilities (error, path, retry, slug)                                              |
-| `packages/plugin/`   | `@stratacode/plugin`     | Plugin/tool interface definitions                                                        |
+| `packages/plugin/`   | `@stratacode/plugin`   | Plugin/tool interface definitions                                                        |
 
 ## Commands
 
@@ -155,15 +155,15 @@ The Agent Manager is a feature within this extension (not a separate product). I
 
 ### How It Differs From the Sidebar
 
-| Aspect        | Sidebar                    | Agent Manager                                       |
-| ------------- | -------------------------- | --------------------------------------------------- |
-| Location      | Activity bar sidebar panel | Editor tab (full panel)                             |
-| Sessions      | Single session at a time   | Multiple parallel sessions with tabbed UI           |
-| Git isolation | Uses workspace root        | Each session can get its own worktree branch        |
+| Aspect        | Sidebar                    | Agent Manager                                         |
+| ------------- | -------------------------- | ----------------------------------------------------- |
+| Location      | Activity bar sidebar panel | Editor tab (full panel)                               |
+| Sessions      | Single session at a time   | Multiple parallel sessions with tabbed UI             |
+| Git isolation | Uses workspace root        | Each session can get its own worktree branch          |
 | State         | No dedicated state file    | `.strata/agent-manager.json`                          |
-| Terminals     | None                       | Dedicated VS Code terminal per session              |
+| Terminals     | None                       | Dedicated VS Code terminal per session                |
 | Setup scripts | None                       | Configurable `.strata/setup-script` runs per worktree |
-| Multi-version | Not supported              | Up to 4 parallel worktrees with the same prompt     |
+| Multi-version | Not supported              | Up to 4 parallel worktrees with the same prompt       |
 
 ### Architecture
 

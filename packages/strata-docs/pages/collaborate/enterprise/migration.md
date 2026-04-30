@@ -78,7 +78,7 @@ Switch to **Strata Teams** or **Strata Enterprise** from other AI coding tools a
 
 ### Cursor Feature Mapping
 
-| Cursor Feature         | Strata Equivalent                                                |
+| Cursor Feature         | Strata Equivalent                                              |
 | ---------------------- | -------------------------------------------------------------- |
 | AI Chat                | Chat interface with multiple modes                             |
 | Code Generation        | Code mode with advanced tools                                  |
@@ -131,7 +131,7 @@ Switch to **Strata Teams** or **Strata Enterprise** from other AI coding tools a
 
 ### GitHub Copilot Feature Comparison
 
-| GitHub Copilot   | Strata                             | Advantage                     |
+| GitHub Copilot   | Strata                           | Advantage                     |
 | ---------------- | -------------------------------- | ----------------------------- |
 | Code suggestions | AI-powered code generation       | ✅ More model choices         |
 | Chat interface   | Multi-mode chat system           | ✅ Specialized modes          |

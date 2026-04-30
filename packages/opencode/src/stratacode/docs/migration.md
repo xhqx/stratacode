@@ -27,23 +27,23 @@ The migrator reads custom modes from these locations (in order, later entries ov
 
 ### Global Modes (VSCode Extension Storage)
 
-| Platform | Path                                                                                                  |
-| -------- | ----------------------------------------------------------------------------------------------------- |
+| Platform | Path                                                                                                      |
+| -------- | --------------------------------------------------------------------------------------------------------- |
 | macOS    | `~/Library/Application Support/Code/User/globalStorage/stratacode.strata-code/settings/custom_modes.yaml` |
 | Windows  | `%APPDATA%/Code/User/globalStorage/stratacode.strata-code/settings/custom_modes.yaml`                     |
 | Linux    | `~/.config/Code/User/globalStorage/stratacode.strata-code/settings/custom_modes.yaml`                     |
 
 ### Project Modes
 
-| Location         | Description                                  |
-| ---------------- | -------------------------------------------- |
+| Location           | Description                                  |
+| ------------------ | -------------------------------------------- |
 | `.stratacodemodes` | Project-specific modes in the workspace root |
 
 ## Field Mapping
 
 ### Migrated Fields
 
-| Stratacode Field       | Opencode Field | Notes                                                 |
+| Stratacode Field     | Opencode Field | Notes                                                 |
 | -------------------- | -------------- | ----------------------------------------------------- |
 | `slug`               | Agent key      | Used as the agent identifier                          |
 | `roleDefinition`     | `prompt`       | Combined with `customInstructions`                    |
@@ -58,12 +58,12 @@ The migrator reads custom modes from these locations (in order, later entries ov
 Stratacode uses "groups" to define what tools a mode can access. These are converted to Opencode's permission system:
 
 | Stratacode Group | Opencode Permission | Notes                      |
-| -------------- | ------------------- | -------------------------- |
-| `read`         | `read: "allow"`     | File reading               |
-| `edit`         | `edit: "allow"`     | File editing               |
-| `command`      | `bash: "allow"`     | Shell commands             |
-| `browser`      | `bash: "allow"`     | Browser actions (via bash) |
-| `mcp`          | `mcp: "allow"`      | MCP server access          |
+| ---------------- | ------------------- | -------------------------- |
+| `read`           | `read: "allow"`     | File reading               |
+| `edit`           | `edit: "allow"`     | File editing               |
+| `command`        | `bash: "allow"`     | Shell commands             |
+| `browser`        | `bash: "allow"`     | Browser actions (via bash) |
+| `mcp`            | `mcp: "allow"`      | MCP server access          |
 
 **Important:** Permissions that are NOT in the groups list are explicitly set to `"deny"`. This ensures that a mode with only `read` and `edit` groups cannot run shell commands or access MCP servers.
 
@@ -101,13 +101,13 @@ Note: `bash` and `mcp` are explicitly denied because they weren't in the origina
 
 The following Stratacode default modes are **skipped** during migration because Opencode has native equivalents:
 
-| Stratacode Mode  | Reason                                                   |
-| -------------- | -------------------------------------------------------- |
-| `code`         | Maps to Opencode's `build` agent                         |
-| `architect`    | Maps to Opencode's `plan` agent                          |
-| `ask`          | Read-only exploration (use `explore` subagent)           |
-| `debug`        | Debugging workflow (use `build` with debug instructions) |
-| `orchestrator` | Redundant - all Opencode agents can spawn subagents      |
+| Stratacode Mode | Reason                                                   |
+| --------------- | -------------------------------------------------------- |
+| `code`          | Maps to Opencode's `build` agent                         |
+| `architect`     | Maps to Opencode's `plan` agent                          |
+| `ask`           | Read-only exploration (use `explore` subagent)           |
+| `debug`         | Debugging workflow (use `build` with debug instructions) |
+| `orchestrator`  | Redundant - all Opencode agents can spawn subagents      |
 
 ## Example Conversion
 
@@ -155,14 +155,14 @@ customModes:
 
 The following Stratacode features are not yet migrated:
 
-| Feature                            | Status      | Notes                                |
-| ---------------------------------- | ----------- | ------------------------------------ |
+| Feature                              | Status      | Notes                                |
+| ------------------------------------ | ----------- | ------------------------------------ |
 | Rules (`.stratacode/rules/`)         | Phase 2     | Will map to `instructions` array     |
 | Workflows (`.stratacode/workflows/`) | Phase 2     | Will map to custom commands          |
-| MCP Servers (`mcp_settings.json`)  | Phase 2     | Will map to `mcp` config             |
-| Provider Settings                  | Phase 2     | Will map to `provider` config        |
-| Mode-specific API configs          | Phase 2     | Different models per mode            |
-| Organization modes                 | Not planned | `source: organization` not preserved |
+| MCP Servers (`mcp_settings.json`)    | Phase 2     | Will map to `mcp` config             |
+| Provider Settings                    | Phase 2     | Will map to `provider` config        |
+| Mode-specific API configs            | Phase 2     | Different models per mode            |
+| Organization modes                   | Not planned | `source: organization` not preserved |
 
 ## Troubleshooting
 
@@ -220,14 +220,14 @@ Running from `packages/my-package/` discovers both `package-skill` and `project-
 
 ### Global Skills
 
-| Platform | Path                  |
-| -------- | --------------------- |
+| Platform | Path                    |
+| -------- | ----------------------- |
 | All      | `~/.stratacode/skills/` |
 
 ### VSCode Extension Storage (Marketplace Skills)
 
-| Platform | Path                                                                               |
-| -------- | ---------------------------------------------------------------------------------- |
+| Platform | Path                                                                                   |
+| -------- | -------------------------------------------------------------------------------------- |
 | macOS    | `~/Library/Application Support/Code/User/globalStorage/stratacode.strata-code/skills/` |
 | Windows  | `%APPDATA%/Code/User/globalStorage/stratacode.strata-code/skills/`                     |
 | Linux    | `~/.config/Code/User/globalStorage/stratacode.strata-code/skills/`                     |
@@ -305,8 +305,8 @@ Stratacode rules are migrated to Opencode's `instructions` array. See [`rules-mi
 
 ## Source Locations
 
-| Location                      | Description                   |
-| ----------------------------- | ----------------------------- |
+| Location                        | Description                   |
+| ------------------------------- | ----------------------------- |
 | `.stratacoderules`              | Legacy project rules file     |
 | `.stratacode/rules/*.md`        | Project rules directory       |
 | `~/.stratacode/rules/*.md`      | Global rules directory        |
@@ -321,11 +321,11 @@ Stratacode workflows are migrated to Opencode commands. See [`workflows-migrator
 
 ## Source Locations
 
-| Location                     | Description                     |
-| ---------------------------- | ------------------------------- |
+| Location                       | Description                     |
+| ------------------------------ | ------------------------------- |
 | `.stratacode/workflows/*.md`   | Project workflows               |
 | `~/.stratacode/workflows/*.md` | Global workflows                |
-| VSCode extension storage     | Marketplace-installed workflows |
+| VSCode extension storage       | Marketplace-installed workflows |
 
 ---
 
@@ -385,11 +385,11 @@ Action: Learn More -> https://docs.strata.ai/skills
 
 ## Display Conditions
 
-| Condition                 | Notifications Shown |
-| ------------------------- | ------------------- |
+| Condition                   | Notifications Shown |
+| --------------------------- | ------------------- |
 | Connected to Strata Gateway | Yes                 |
 | Not connected to Strata     | No                  |
-| No notifications from API | No                  |
+| No notifications from API   | No                  |
 
 ## Related Files
 

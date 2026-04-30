@@ -22,7 +22,8 @@ export const dict = {
   "strataClaw.upgrade.description1": "Denne instansen ble klargjort før chat ble aktivert.",
   "strataClaw.upgrade.description2.before": "Bruk ",
   "strataClaw.upgrade.description2.bold": "Oppgrader til nyeste",
-  "strataClaw.upgrade.description2.after": "-knappen på StrataClaw-dashbordet for å aktivere sanntidschat med boten din.",
+  "strataClaw.upgrade.description2.after":
+    "-knappen på StrataClaw-dashbordet for å aktivere sanntidschat med boten din.",
   "strataClaw.upgrade.openDashboard": "Åpne dashbord",
   "strataClaw.sidebar.title": "StrataClaw",
   "strataClaw.sidebar.instance": "Instans",

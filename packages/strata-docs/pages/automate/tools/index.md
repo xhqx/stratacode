@@ -22,7 +22,7 @@ Tools are organized into logical groups based on their functionality:
 | **Edit Group**     | File system modifications         | `edit`, `multiedit`, `write`, `apply_patch`                  | Code changes and file manipulation      |
 | **Execute Group**  | Shell command execution           | `bash`                                                       | Running scripts, building projects      |
 | **Web Group**      | Fetch and search web content      | `webfetch`, `websearch`, `codesearch`                        | Research, documentation lookup          |
-| **Browser Group**  | Web browser automation            | `strata-playwright_*` (via built-in Playwright MCP)            | Browser testing and interaction         |
+| **Browser Group**  | Web browser automation            | `strata-playwright_*` (via built-in Playwright MCP)          | Browser testing and interaction         |
 | **MCP Group**      | External tool integration         | MCP server tools (namespaced as `{server}_{tool}`)           | Specialized functionality via MCP       |
 | **Workflow Group** | Sub-agents and task management    | `question`, `task`, `todowrite`, `todoread`, `plan`, `skill` | Context switching and task organization |
 

@@ -31,14 +31,18 @@ export class PluginRegistry {
   private readonly _contributions = new Map<string, UIContribution>()
   private readonly _configSections = new Map<string, import("@stratacode/vscode-api").PluginConfigSection>()
   private readonly _contextProviders = new Map<string, import("@stratacode/vscode-api").ContextProvider>()
-  
+
   private readonly _onDidChangeContributions = new vscode.EventEmitter<RenderableUIContribution[]>()
   public readonly onDidChangeContributions = this._onDidChangeContributions.event
 
   private readonly _onDidChangeConfigSections = new vscode.EventEmitter<RenderablePluginConfigSection[]>()
   public readonly onDidChangeConfigSections = this._onDidChangeConfigSections.event
 
-  private readonly _onDidChangePluginConfig = new vscode.EventEmitter<{ sectionId: string; key: string; value: JSONValue }>()
+  private readonly _onDidChangePluginConfig = new vscode.EventEmitter<{
+    sectionId: string
+    key: string
+    value: JSONValue
+  }>()
   public readonly onDidChangePluginConfig = this._onDidChangePluginConfig.event
 
   private configDisposables = new Map<string, vscode.Disposable>()
@@ -46,7 +50,9 @@ export class PluginRegistry {
   private readonly _onWillSendMessage = new vscode.EventEmitter<import("@stratacode/vscode-api").WillSendMessageEvent>()
   public readonly onWillSendMessage = this._onWillSendMessage
 
-  private readonly _onDidCompleteMessage = new vscode.EventEmitter<import("@stratacode/vscode-api").DidCompleteMessageEvent>()
+  private readonly _onDidCompleteMessage = new vscode.EventEmitter<
+    import("@stratacode/vscode-api").DidCompleteMessageEvent
+  >()
   public readonly onDidCompleteMessage = this._onDidCompleteMessage
 
   registerUIContribution(contribution: UIContribution): vscode.Disposable {
@@ -69,15 +75,15 @@ export class PluginRegistry {
     }
 
     // Validate schema
-    if (section.fields.some(f => !f.key)) {
+    if (section.fields.some((f) => !f.key)) {
       console.error(`[StrataPluginAPI] Invalid config section ${section.id}: fields must have keys.`)
       return new vscode.Disposable(() => {})
     }
 
     this._configSections.set(section.id, section)
-    
+
     // Wire up vs code setting change listener
-    const disp = vscode.workspace.onDidChangeConfiguration(e => {
+    const disp = vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration(section.id)) {
         const config = vscode.workspace.getConfiguration(section.id)
         for (const field of section.fields) {
@@ -110,22 +116,22 @@ export class PluginRegistry {
   }
 
   getRenderableContributions(): RenderableUIContribution[] {
-    return Array.from(this._contributions.values()).map(c => ({
+    return Array.from(this._contributions.values()).map((c) => ({
       id: c.id,
       placement: c.placement,
       type: c.type,
       label: c.label,
       icon: c.icon,
-      tooltip: c.tooltip
+      tooltip: c.tooltip,
     }))
   }
 
   getRenderableConfigSections(): RenderablePluginConfigSection[] {
-    return Array.from(this._configSections.values()).map(s => ({
+    return Array.from(this._configSections.values()).map((s) => ({
       id: s.id,
       title: s.title,
       icon: s.icon,
-      fields: s.fields
+      fields: s.fields,
     }))
   }
 
@@ -138,22 +144,21 @@ export class PluginRegistry {
     if (providers.length === 0) return []
 
     const empty: PromiseSettledResult<import("@stratacode/vscode-api").ContextItem[]>[] = []
-    const timeout = new Promise<typeof empty>(resolve =>
+    const timeout = new Promise<typeof empty>((resolve) =>
       setTimeout(() => {
         console.warn("[StrataPluginAPI] Context providers timed out.")
         resolve(empty)
-      }, 3000)
+      }, 3000),
     )
 
-    const results = await Promise.race([
-      Promise.allSettled(providers.map(p => p.provideContext(session))),
-      timeout
-    ])
+    const results = await Promise.race([Promise.allSettled(providers.map((p) => p.provideContext(session))), timeout])
 
     return results
-      .filter((r): r is PromiseFulfilledResult<import("@stratacode/vscode-api").ContextItem[]> => r.status === "fulfilled")
-      .flatMap(r => r.value)
-      .filter(item => item.content.length <= 4096)
+      .filter(
+        (r): r is PromiseFulfilledResult<import("@stratacode/vscode-api").ContextItem[]> => r.status === "fulfilled",
+      )
+      .flatMap((r) => r.value)
+      .filter((item) => item.content.length <= 4096)
       .slice(0, 10)
   }
 
@@ -193,11 +198,15 @@ export function createPluginAPI(deps: {
     const active = target()
     if (active.sessionId !== lastActiveSessionId) {
       lastActiveSessionId = active.sessionId
-      onDidChangeActiveSessionEmitter.fire(active.sessionId ? {
-        id: active.sessionId,
-        title: "Session", // We don't have the title easily accessible here without querying StrataProvider state
-        directory: active.directory
-      } as SessionInfo : undefined)
+      onDidChangeActiveSessionEmitter.fire(
+        active.sessionId
+          ? ({
+              id: active.sessionId,
+              title: "Session", // We don't have the title easily accessible here without querying StrataProvider state
+              directory: active.directory,
+            } as SessionInfo)
+          : undefined,
+      )
     }
   }
 
@@ -209,7 +218,7 @@ export function createPluginAPI(deps: {
     onDidCreateSessionEmitter.fire({
       id: session.id,
       title: session.title,
-      directory: deps.sidebar.getWorkspaceDirectoryPublic(session.id)
+      directory: deps.sidebar.getWorkspaceDirectoryPublic(session.id),
     })
     checkActiveSession()
   })
@@ -219,7 +228,7 @@ export function createPluginAPI(deps: {
       onDidCreateSessionEmitter.fire({
         id: session.id,
         title: session.title,
-        directory: p.getWorkspaceDirectoryPublic(session.id)
+        directory: p.getWorkspaceDirectoryPublic(session.id),
       })
       checkActiveSession()
     })
@@ -237,7 +246,7 @@ export function createPluginAPI(deps: {
         }
       }
     }
-    
+
     // 2. Sidebar
     return {
       provider: deps.sidebar,
@@ -263,10 +272,7 @@ export function createPluginAPI(deps: {
 
       let sessionId = sid
       if (!sessionId) {
-        const { data } = await client.session.create(
-          { directory: dir },
-          { throwOnError: true }
-        )
+        const { data } = await client.session.create({ directory: dir }, { throwOnError: true })
         sessionId = data.id
         t.provider.registerSession(data)
       }
@@ -278,7 +284,7 @@ export function createPluginAPI(deps: {
         undefined,
         undefined,
         undefined,
-        options.agent
+        options.agent,
       )
     },
 
@@ -314,6 +320,6 @@ export function createPluginAPI(deps: {
     onDidCompleteMessage: pluginRegistry.onDidCompleteMessage.event,
 
     onDidCreateSession: onDidCreateSessionEmitter.event,
-    onDidChangeActiveSession: onDidChangeActiveSessionEmitter.event
+    onDidChangeActiveSession: onDidChangeActiveSessionEmitter.event,
   }
 }

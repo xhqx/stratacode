@@ -70,7 +70,10 @@ export namespace WorkflowsMigrator {
     return workflows
   }
 
-  export async function discoverWorkflows(projectDir: string, skipGlobalPaths?: boolean): Promise<StratacodeWorkflow[]> {
+  export async function discoverWorkflows(
+    projectDir: string,
+    skipGlobalPaths?: boolean,
+  ): Promise<StratacodeWorkflow[]> {
     const workflows: StratacodeWorkflow[] = []
 
     if (!skipGlobalPaths) {

@@ -108,7 +108,6 @@
           "dark": "assets/icons/strata-dark.svg"
         }
       },
-
       {
         "command": "strata-code.new.historyButtonClicked",
         "title": "History",
@@ -806,13 +805,11 @@
           "default": false,
           "description": "Enable chat textarea autocomplete"
         },
-
         "strata-code.new.enableGateway": {
           "type": "boolean",
           "default": true,
           "description": "Enable Strata Gateway provider. When disabled, the Strata Gateway and its models are hidden from the UI."
         },
-
         "strata-code.new.claudeCodeCompat": {
           "type": "boolean",
           "default": false,

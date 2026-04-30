@@ -404,6 +404,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             .ask({
               ...req,
               sessionID: input.session.id,
+              agent: input.agent.name, // stratacode_change
               tool: { messageID: input.processor.message.id, callID: options.toolCallId },
               ruleset: Permission.merge(input.agent.permission, input.session.permission ?? []),
             })
@@ -631,6 +632,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               .ask({
                 ...req,
                 sessionID,
+                agent: task.agent, // stratacode_change
                 ruleset: Permission.merge(taskAgent.permission, session.permission ?? []),
               })
               .pipe(Effect.orDie),

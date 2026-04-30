@@ -41,23 +41,23 @@ The migrator reads rules from these locations:
 
 ### Project Rules
 
-| Location                      | Description                                              |
-| ----------------------------- | -------------------------------------------------------- |
-| `.stratacoderules`              | Legacy single-file rules in project root                 |
-| `.stratacode/rules/*.md`        | Directory-based rules (multiple markdown files)          |
+| Location                        | Description                                                |
+| ------------------------------- | ---------------------------------------------------------- |
+| `.stratacoderules`              | Legacy single-file rules in project root                   |
+| `.stratacode/rules/*.md`        | Directory-based rules (multiple markdown files)            |
 | `.stratacoderules-{mode}`       | Mode-specific legacy rules (e.g., `.stratacoderules-code`) |
-| `.stratacode/rules-{mode}/*.md` | Mode-specific rule directories                           |
+| `.stratacode/rules-{mode}/*.md` | Mode-specific rule directories                             |
 
 ### Global Rules
 
-| Location                 | Description            |
-| ------------------------ | ---------------------- |
+| Location                   | Description            |
+| -------------------------- | ---------------------- |
 | `~/.stratacode/rules/*.md` | Global rules directory |
 
 ## File Mapping
 
-| Stratacode Location             | Opencode Equivalent                                     |
-| ----------------------------- | ------------------------------------------------------- |
+| Stratacode Location             | Opencode Equivalent                                       |
+| ------------------------------- | --------------------------------------------------------- |
 | `.stratacoderules`              | `instructions: [".stratacoderules"]`                      |
 | `.stratacoderules-{mode}`       | `instructions: [".stratacoderules-{mode}"]`               |
 | `.stratacode/rules/*.md`        | `instructions: [".stratacode/rules/file.md", ...]`        |

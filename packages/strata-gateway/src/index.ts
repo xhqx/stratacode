@@ -9,7 +9,13 @@ export { StrataAuthPlugin, default } from "./plugin.js"
 export { createStrata } from "./provider.js"
 export { createStrataDebug } from "./provider-debug.js"
 export { strataCustomLoader } from "./loader.js"
-export { buildStrataHeaders, getEditorNameHeader, getFeatureHeader, getDefaultHeaders, getUserAgent } from "./headers.js"
+export {
+  buildStrataHeaders,
+  getEditorNameHeader,
+  getFeatureHeader,
+  getDefaultHeaders,
+  getUserAgent,
+} from "./headers.js"
 
 // ============================================================================
 // Auth

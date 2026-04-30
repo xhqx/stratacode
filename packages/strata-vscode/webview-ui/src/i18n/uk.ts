@@ -465,7 +465,8 @@ export const dict = {
   "error.chain.didYouMean": "Можливо ви мали на увазі: {{suggestions}}",
   "error.chain.modelNotFound": "Модель не знайдено: {{provider}}/{{model}}",
   "error.chain.checkConfig": "Перевірте назви провайдера/моделі у файлі конфігурації (opencode.json)",
-  "error.chain.mcpFailed": 'MCP-сервер "{{name}}" зазнав помилки. Примітка: Strata поки не підтримує автентифікацію MCP.',
+  "error.chain.mcpFailed":
+    'MCP-сервер "{{name}}" зазнав помилки. Примітка: Strata поки не підтримує автентифікацію MCP.',
   "error.chain.providerAuthFailed": "Автентифікація провайдера не вдалася ({{provider}}): {{message}}",
   "error.chain.providerInitFailed":
     'Не вдалося ініціалізувати провайдера "{{provider}}". Перевірте облікові дані та конфігурацію.',
@@ -873,7 +874,8 @@ export const dict = {
   "settings.config.title": "Відкрити файл конфігурації Strata ({{scope}})",
   "settings.config.placeholder":
     "Файли конфігурації об'єднуються по порядку; файли, позначені як завантажені, наразі впливають на налаштування.",
-  "settings.config.noWorkspace": "Відкрийте папку робочої області, щоб відредагувати локальний файл конфігурації Strata.",
+  "settings.config.noWorkspace":
+    "Відкрийте папку робочої області, щоб відредагувати локальний файл конфігурації Strata.",
   "settings.config.openFailed": "Не вдалося відкрити файл конфігурації Strata ({{scope}}): {{message}}",
   "settings.config.source.xdg": "Глобальна конфігурація XDG",
   "settings.config.source.homeStrata": "Конфігурація .strata (Home)",
@@ -1112,7 +1114,8 @@ export const dict = {
   "settings.aboutStrataCode.community": "Спільнота і підтримка",
   "settings.aboutStrataCode.feedback.prefix": "Якщо у вас є питання або відгуки, будь ласка, відкрийте тікет на:",
   "settings.aboutStrataCode.feedback.or": "або",
-  "settings.aboutStrataCode.support.prefix": "З питань виставлення рахунків або акаунту зверніться до служби підтримки:",
+  "settings.aboutStrataCode.support.prefix":
+    "З питань виставлення рахунків або акаунту зверніться до служби підтримки:",
   "settings.aboutStrataCode.resetSettings.title": "Скидання налаштувань",
   "settings.aboutStrataCode.resetSettings.description":
     "Це скине лише налаштування, специфічні для розширення VS Code, до стандартних значень. Налаштування, що зберігаються в конфігурації CLI (такі як режими та правила автоматичного схвалення), не будуть скинуті.",

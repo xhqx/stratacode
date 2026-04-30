@@ -243,8 +243,6 @@ export interface AppendReviewCommentsMessage {
   autoSend?: boolean
 }
 
-
-
 export interface TriggerTaskMessage {
   type: "triggerTask"
   text: string
@@ -972,4 +970,10 @@ export type ExtensionMessage =
   | McpStatusLoadedMessage
   | ClearPendingPromptsMessage
   | ExtensionDataReadyMessage
+  
+  | { type: "autoApproveTimerStarted"; requestId: string; timeLeft: number }
+  | { type: "autoApproveTimerUpdated"; requestId: string; timeLeft: number }
+  | { type: "autoApproveTimerCancelled"; requestId: string }
+  | { type: "autoApproveTimerFired"; requestId: string }
+  
   | RemoteStatusMessage

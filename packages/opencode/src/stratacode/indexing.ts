@@ -166,7 +166,9 @@ export namespace StrataIndexing {
     }
 
     if (cfg.experimental?.semantic_indexing !== true) {
-      return inert(() => disabledIndexingStatus("Semantic indexing is disabled. Enable it in the Experimental settings."))
+      return inert(() =>
+        disabledIndexingStatus("Semantic indexing is disabled. Enable it in the Experimental settings."),
+      )
     }
 
     if (isWorktreePath(dir)) {

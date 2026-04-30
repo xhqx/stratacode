@@ -26,7 +26,9 @@ describe("indexing plugin detection", () => {
     expect(normalizePluginName("file:///tmp/node_modules/@stratacode/strata-indexing/index.js")).toBe(
       "@stratacode/strata-indexing",
     )
-    expect(normalizePluginName("file:///tmp/repo/packages/strata-indexing/src/index.ts")).toBe("@stratacode/strata-indexing")
+    expect(normalizePluginName("file:///tmp/repo/packages/strata-indexing/src/index.ts")).toBe(
+      "@stratacode/strata-indexing",
+    )
   })
 
   test("detects supported indexing plugin specifiers", () => {
@@ -54,7 +56,10 @@ describe("indexing plugin detection", () => {
 
   test("detects indexing plugin in merged plugin lists", () => {
     expect(
-      hasIndexingPlugin(["@stratacode/strata-gateway", "file:///tmp/node_modules/@stratacode/strata-indexing/index.js"]),
+      hasIndexingPlugin([
+        "@stratacode/strata-gateway",
+        "file:///tmp/node_modules/@stratacode/strata-indexing/index.js",
+      ]),
     ).toBe(true)
   })
 })

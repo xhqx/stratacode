@@ -21,14 +21,15 @@ const parameters = z.object({
 export const TaskStatusTool = Tool.define(
   "task_status",
   Effect.gen(function* () {
-    const run = Effect.fn("TaskStatusTool.execute")(function* (
-      params: z.infer<typeof parameters>,
-      ctx: Tool.Context,
-    ) {
+    const run = Effect.fn("TaskStatusTool.execute")(function* (params: z.infer<typeof parameters>, ctx: Tool.Context) {
       const entry = StrataTaskRegistry.get(params.task_id)
-      
+
       if (!entry) {
-        return yield* Effect.fail(new Error(`Unknown task_id: ${params.task_id}. The task may have expired or was spawned by a different session.`))
+        return yield* Effect.fail(
+          new Error(
+            `Unknown task_id: ${params.task_id}. The task may have expired or was spawned by a different session.`,
+          ),
+        )
       }
 
       if (entry.status === "completed") {
@@ -54,12 +55,9 @@ export const TaskStatusTool = Tool.define(
 
       // Wait mode
       const timeoutSecs = params.timeout_seconds ?? 120
-      
+
       return yield* Effect.gen(function* () {
-        const exit = yield* Fiber.await(entry.fiber).pipe(
-          Effect.timeout(`${timeoutSecs} seconds`),
-          Effect.exit,
-        )
+        const exit = yield* Fiber.await(entry.fiber).pipe(Effect.timeout(`${timeoutSecs} seconds`), Effect.exit)
 
         if (Exit.isSuccess(exit)) {
           const innerExit = exit.value

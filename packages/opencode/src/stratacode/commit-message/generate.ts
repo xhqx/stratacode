@@ -153,7 +153,7 @@ export async function generateCommitMessage(request: CommitMessageRequest): Prom
     files: ctx.files.length,
   })
 
-  let targetModel;
+  let targetModel
   if (request.model) {
     const parts = request.model.split("/")
     const providerID = parts[0] as any

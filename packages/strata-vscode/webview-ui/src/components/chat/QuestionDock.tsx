@@ -490,7 +490,8 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
                     disabled={store.sending || (!confirm() && (store.answers[store.tab]?.length ?? 0) === 0)}
                   >
                     {last() && single()
-                      ? language.t("ui.common.submit")
+                      ? session.timers()[props.request.id] !== undefined
+                        ? `${language.t("ui.common.submit")} (${session.timers()[props.request.id]}s)`                         : language.t("ui.common.submit")
                       : last()
                         ? language.t("common.review")
                         : language.t("ui.common.next")}
@@ -498,7 +499,11 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
                 }
               >
                 <Button variant="primary" size="small" onClick={submit} disabled={store.sending}>
-                  {language.t("ui.common.submit")}
+                  
+                  {session.timers()[props.request.id] !== undefined
+                    ? `${language.t("ui.common.submit")} (${session.timers()[props.request.id]}s)`
+                    : language.t("ui.common.submit")}
+                  
                 </Button>
               </Show>
             </div>

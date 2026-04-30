@@ -33,7 +33,8 @@ export const dict = {
   "strataClaw.upgrade.description1": "This instance was provisioned before chat was enabled.",
   "strataClaw.upgrade.description2.before": "Use the ",
   "strataClaw.upgrade.description2.bold": "Upgrade to Latest",
-  "strataClaw.upgrade.description2.after": " button on the StrataClaw dashboard to activate real-time chat with your bot.",
+  "strataClaw.upgrade.description2.after":
+    " button on the StrataClaw dashboard to activate real-time chat with your bot.",
   "strataClaw.upgrade.openDashboard": "Open Dashboard",
 
   // Sidebar

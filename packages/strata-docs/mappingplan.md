@@ -63,7 +63,7 @@
 | New Item                              | Existing Page(s)                                    |
 | ------------------------------------- | --------------------------------------------------- |
 | Sessions & Sharing                    | `advanced-usage/sessions`                           |
-| **Strata for Teams** (subheader)        |                                                     |
+| **Strata for Teams** (subheader)      |                                                     |
 | About Plans                           | `plans/about`                                       |
 | Getting Started with Teams            | `plans/getting-started`                             |
 | Dashboard                             | `plans/dashboard`                                   |
@@ -86,25 +86,25 @@
 
 ### Automate
 
-| New Item                       | Existing Page(s)                      |
-| ------------------------------ | ------------------------------------- |
-| Integrations Overview          | `advanced-usage/integrations`         |
-| Code Reviews                   | `advanced-usage/code-reviews`         |
-| Agent Manager                  | `advanced-usage/agent-manager`        |
-| **Extending Strata** (subheader) |                                       |
-| Local Models                   | `advanced-usage/local-models`         |
-| Shell Integration              | `features/shell-integration`          |
-| Auto-launch Configuration      | `features/auto-launch-configuration`  |
-| **MCP** (subheader)            |                                       |
-| MCP Overview                   | `features/mcp/overview`               |
+| New Item                         | Existing Page(s)                        |
+| -------------------------------- | --------------------------------------- |
+| Integrations Overview            | `advanced-usage/integrations`           |
+| Code Reviews                     | `advanced-usage/code-reviews`           |
+| Agent Manager                    | `advanced-usage/agent-manager`          |
+| **Extending Strata** (subheader) |                                         |
+| Local Models                     | `advanced-usage/local-models`           |
+| Shell Integration                | `features/shell-integration`            |
+| Auto-launch Configuration        | `features/auto-launch-configuration`    |
+| **MCP** (subheader)              |                                         |
+| MCP Overview                     | `features/mcp/overview`                 |
 | Using MCP in Strata Code         | `features/mcp/using-mcp-in-strata-code` |
-| Using MCP in CLI               | `features/mcp/using-mcp-in-cli`       |
-| What is MCP                    | `features/mcp/what-is-mcp`            |
-| Server Transports              | `features/mcp/server-transports`      |
-| MCP vs API                     | `features/mcp/mcp-vs-api`             |
-| **Tools (subheader)**          |                                       |
-| How Tools Work                 | `basic-usage/how-tools-work`          |
-| Tool Details                   | ALL of Tool reference                 |
+| Using MCP in CLI                 | `features/mcp/using-mcp-in-cli`         |
+| What is MCP                      | `features/mcp/what-is-mcp`              |
+| Server Transports                | `features/mcp/server-transports`        |
+| MCP vs API                       | `features/mcp/mcp-vs-api`               |
+| **Tools (subheader)**            |                                         |
+| How Tools Work                   | `basic-usage/how-tools-work`            |
+| Tool Details                     | ALL of Tool reference                   |
 
 ---
 

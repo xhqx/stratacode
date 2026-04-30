@@ -125,7 +125,9 @@ describe("buildTriggerLabel", () => {
 
   it("returns modelID for strata gateway raw selection", () => {
     const raw = { providerID: "strata", modelID: "strata-auto/frontier" }
-    expect(buildTriggerLabel(undefined, undefined, undefined, raw, false, "", true, labels)).toBe("strata-auto/frontier")
+    expect(buildTriggerLabel(undefined, undefined, undefined, raw, false, "", true, labels)).toBe(
+      "strata-auto/frontier",
+    )
   })
 
   it("returns providerID / modelID for non-strata raw selection", () => {

@@ -237,6 +237,7 @@ export type PermissionRequest = {
     messageID: string
     callID: string
   }
+  agent?: string
 }
 
 export type EventPermissionAsked = {
@@ -1583,6 +1584,10 @@ export type AgentConfig = {
    */
   maxSteps?: number
   permission?: PermissionConfig
+  /**
+   * Ordered list of fallback models (provider/model) to try when the active model is unavailable.
+   */
+  fallback_models?: Array<string>
   [key: string]:
     | unknown
     | string
@@ -1609,6 +1614,7 @@ export type AgentConfig = {
     | "info"
     | number
     | PermissionConfig
+    | Array<string>
     | undefined
 }
 
@@ -1623,6 +1629,17 @@ export type ProviderConfig = {
   options?: {
     apiKey?: string
     baseURL?: string
+    /**
+     * HTTP/HTTPS proxy URL or config object. Overrides global HTTP_PROXY/HTTPS_PROXY.
+     */
+    proxy?:
+      | string
+      | {
+          url: string
+          headers?: {
+            [key: string]: string
+          }
+        }
     /**
      * GitHub Enterprise URL for copilot authentication
      */
@@ -1639,7 +1656,21 @@ export type ProviderConfig = {
      * Timeout in milliseconds between streamed SSE chunks for this provider. If no chunk arrives within this window, the request is aborted.
      */
     chunkTimeout?: number
-    [key: string]: unknown | string | boolean | number | false | number | undefined
+    [key: string]:
+      | unknown
+      | string
+      | string
+      | {
+          url: string
+          headers?: {
+            [key: string]: string
+          }
+        }
+      | boolean
+      | number
+      | false
+      | number
+      | undefined
   }
   models?: {
     [key: string]: {
@@ -1964,7 +1995,15 @@ export type Config = {
    */
   commit_message?: {
     /**
-     * Custom system prompt for AI commit message generation. When set, replaces the default conventional commits prompt entirely.
+     * Model to use for generating the commit message, in the format provider/model.
+     */
+    model?: string | null
+    /**
+     * Format style for the commit message. Defaults to conventional.
+     */
+    format?: "conventional" | "simple" | "gitmoji"
+    /**
+     * Custom system prompt for AI commit message generation. When set, replaces the default prompt entirely.
      */
     prompt?: string
   }
@@ -1989,6 +2028,10 @@ export type Config = {
      * Token buffer for compaction. Leaves enough window to avoid overflow during compaction.
      */
     reserved?: number
+    /**
+     * Percentage of the model's maximum context at which auto-compaction is triggered (1-100, default: 100). For example, 80 triggers compaction when the context reaches 80% of its limit.
+     */
+    threshold_percent?: number
   }
   experimental?: {
     disable_paste_summary?: boolean
@@ -2540,6 +2583,7 @@ export type Agent = {
     [key: string]: unknown
   }
   steps?: number
+  fallback_models?: Array<string>
 }
 
 export type LspStatus = {

@@ -214,12 +214,8 @@ export function indexProvidersById(all: ProviderInfo[]): Record<string, Provider
   return normalized
 }
 
-export function filterVisibleAgents(
-  agents: Agent[],
-): { visible: Agent[]; defaultAgent: string } {
-  const visible = agents.filter(
-    (a) => a.mode !== "subagent" && !a.hidden,
-  )
+export function filterVisibleAgents(agents: Agent[]): { visible: Agent[]; defaultAgent: string } {
+  const visible = agents.filter((a) => a.mode !== "subagent" && !a.hidden)
   const defaultAgent = visible.length > 0 ? visible[0]!.name : "ask"
   return { visible, defaultAgent }
 }
@@ -365,7 +361,7 @@ export type WebviewMessage =
         args: Record<string, unknown>
         message: string
         tool?: { messageID: string; callID: string }
-      }
+        agent?: string       }
     }
   | { type: "todoUpdated"; sessionID: string; items: unknown[] }
   | {
@@ -373,6 +369,7 @@ export type WebviewMessage =
       question: { id: string; sessionID: string; questions: unknown[]; blocking?: boolean; tool?: unknown }
     }
   | { type: "questionResolved"; requestID: string }
+  | { type: "questionError"; requestID: string }
   | {
       type: "suggestionRequest"
       suggestion: {
@@ -469,7 +466,7 @@ export function mapSSEEventToWebviewMessage(event: Event, sessionID: string | un
           args: event.properties.metadata,
           message: `Permission required: ${event.properties.permission}`,
           tool: event.properties.tool,
-        },
+          agent: event.properties.agent,         },
       }
     case "permission.replied":
       return {

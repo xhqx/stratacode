@@ -629,7 +629,11 @@ export async function transformAllPackageJson(options: PackageJsonOptions = {}):
         }
 
         // Preserve Strata's test runner scripts for packages/opencode
-        if (path === "packages/opencode/package.json" && strataScripts?.test && pkg.scripts?.test !== strataScripts.test) {
+        if (
+          path === "packages/opencode/package.json" &&
+          strataScripts?.test &&
+          pkg.scripts?.test !== strataScripts.test
+        ) {
           pkg.scripts = pkg.scripts || {}
           pkg.scripts.test = strataScripts.test
           changes.push(`scripts.test: preserved Strata's test runner script`)

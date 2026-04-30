@@ -124,11 +124,11 @@ This redirects all gateway traffic (auth, model listing, provider routing, profi
 
 There are also optional overrides for other services:
 
-| Variable                  | Default                          | Purpose                                   |
-| ------------------------- | -------------------------------- | ----------------------------------------- |
+| Variable                    | Default                            | Purpose                                     |
+| --------------------------- | ---------------------------------- | ------------------------------------------- |
 | `STRATA_API_URL`            | `https://api.strata.ai`            | Strata API (gateway, auth, models, profile) |
-| `STRATA_SESSION_INGEST_URL` | `https://ingest.stratasessions.ai` | Session export / cloud sync               |
-| `STRATA_MODELS_URL`         | `https://models.dev`             | Model metadata                            |
+| `STRATA_SESSION_INGEST_URL` | `https://ingest.stratasessions.ai` | Session export / cloud sync                 |
+| `STRATA_MODELS_URL`         | `https://models.dev`               | Model metadata                              |
 
 > **VS Code:** The repo includes a "VSCode - Run Extension (Local Backend)" launch config in `.vscode/launch.json` that sets `STRATA_API_URL=http://localhost:3000` automatically.
 

@@ -12,6 +12,7 @@ import * as ConfigMarkdown from "./markdown"
 import { ConfigModelID } from "./model-id"
 import { ConfigPermission } from "./permission"
 // stratacode_change start
+import * as ConfigAutoApprove from "./auto-approve"
 import { StratacodeConfig } from "@/stratacode/config/config"
 import type { Warning } from "./config"
 // stratacode_change end
@@ -55,6 +56,7 @@ const AgentSchema = Schema.StructWithRest(
     fallback_models: Schema.optional(Schema.mutable(Schema.Array(ConfigModelID))).annotate({
       description: "Ordered list of fallback models (provider/model) to try when the active model is unavailable.",
     }), // stratacode_change
+    auto_approve: Schema.optional(ConfigAutoApprove.Info), // stratacode_change
   }),
   [Schema.Record(Schema.String, Schema.Any)],
 )
@@ -77,6 +79,7 @@ const KNOWN_KEYS = new Set([
   "disable",
   "tools",
   "fallback_models", // stratacode_change
+  "auto_approve", // stratacode_change
 ])
 
 // Post-parse normalisation:

@@ -33,7 +33,10 @@ const parameters = z.object({
     )
     .optional(),
   command: z.string().describe("The command that triggered this task").optional(),
-  background: z.boolean().describe("If true, start in background and return task_id immediately. Use task_status to retrieve results.").optional(), // stratacode_change
+  background: z
+    .boolean()
+    .describe("If true, start in background and return task_id immediately. Use task_status to retrieve results.")
+    .optional(), // stratacode_change
 })
 
 export const TaskTool = Tool.define(
@@ -151,39 +154,45 @@ export const TaskTool = Tool.define(
           const costBefore = yield* StrataCostPropagation.childCost(sessions, nextSession.id)
           return yield* Effect.acquireUseRelease(
             Effect.succeed(costBefore),
-            () => Effect.gen(function* () {
-              const parts = yield* ops.resolvePromptParts(params.prompt)
-              return yield* ops.prompt({
-                messageID,
-                sessionID: nextSession.id,
-                model: {
-                  modelID: model.modelID,
-                  providerID: model.providerID,
-                },
-                variant,
-                agent: next.name,
-                tools: {
-                  ...(canTodo ? {} : { todowrite: false }),
-                  ...(canTask ? {} : { task: false }),
-                  ...Object.fromEntries((cfg.experimental?.primary_tools ?? []).map((item) => [item, false])),
-                },
-                parts,
-              })
-            }),
-            (costBefore) => Effect.gen(function* () {
-              ctx.abort.removeEventListener("abort", cancel)
-              const costAfter = yield* StrataCostPropagation.childCost(sessions, nextSession.id)
-              yield* StrataCostPropagation.propagate(sessions, ctx.sessionID, ctx.messageID, costAfter - costBefore)
-            }),
+            () =>
+              Effect.gen(function* () {
+                const parts = yield* ops.resolvePromptParts(params.prompt)
+                return yield* ops.prompt({
+                  messageID,
+                  sessionID: nextSession.id,
+                  model: {
+                    modelID: model.modelID,
+                    providerID: model.providerID,
+                  },
+                  variant,
+                  agent: next.name,
+                  tools: {
+                    ...(canTodo ? {} : { todowrite: false }),
+                    ...(canTask ? {} : { task: false }),
+                    ...Object.fromEntries((cfg.experimental?.primary_tools ?? []).map((item) => [item, false])),
+                  },
+                  parts,
+                })
+              }),
+            (costBefore) =>
+              Effect.gen(function* () {
+                ctx.abort.removeEventListener("abort", cancel)
+                const costAfter = yield* StrataCostPropagation.childCost(sessions, nextSession.id)
+                yield* StrataCostPropagation.propagate(sessions, ctx.sessionID, ctx.messageID, costAfter - costBefore)
+              }),
           )
         }).pipe(
-          Effect.tap((result) => Effect.sync(() => {
-            const output = result.parts.findLast((p) => p.type === "text")?.text ?? ""
-            StrataTaskRegistry.complete(nextSession.id, output)
-          })),
-          Effect.catch((error: unknown) => Effect.sync(() => {
-            StrataTaskRegistry.fail(nextSession.id, error instanceof Error ? error.message : String(error))
-          })),
+          Effect.tap((result) =>
+            Effect.sync(() => {
+              const output = result.parts.findLast((p) => p.type === "text")?.text ?? ""
+              StrataTaskRegistry.complete(nextSession.id, output)
+            }),
+          ),
+          Effect.catch((error: unknown) =>
+            Effect.sync(() => {
+              StrataTaskRegistry.fail(nextSession.id, error instanceof Error ? error.message : String(error))
+            }),
+          ),
           Effect.forkIn(ops.scope),
         )
 

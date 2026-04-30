@@ -165,8 +165,8 @@ This safety mechanism ensures you maintain control over which files are modified
 | `apply_patch` | Applies unified diffs (used with certain models)       | Edit     |
 | `bash`        | Runs shell commands                                    | Execute  |
 | `webfetch`    | Fetches a URL                                          | Web      |
-| `websearch`   | Searches the web (Strata/OpenRouter users)               | Web      |
-| `codesearch`  | Semantic code search (Strata/OpenRouter users)           | Web      |
+| `websearch`   | Searches the web (Strata/OpenRouter users)             | Web      |
+| `codesearch`  | Semantic code search (Strata/OpenRouter users)         | Web      |
 | `question`    | Asks you a clarifying question with selectable options | Workflow |
 | `task`        | Spawns a sub-agent session                             | Workflow |
 | `todowrite`   | Creates and updates a session TODO list                | Workflow |

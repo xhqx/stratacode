@@ -26,7 +26,7 @@ This document tracks remaining work needed for feature parity with the old exten
 | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------- |
 | [Authentication & Enterprise](non-agent-features/authentication-organization-enterprise-enforcement.md) | Org feature flags, MDM policy enforcement                                        | CLI handles its auth; extension handles org/MDM                      | P1       |
 | [Auto-Purge](non-agent-features/auto-purge.md)                                                          | Scheduled cleanup of old session/task storage                                    | Extension-side (storage ownership TBD)                               | P3       |
-| [Cloud Task Support](non-agent-features/cloud-task-support.md)                                          | Upload local sessions to cloud, real-time sync, conflict resolution              | Strata cloud API + CLI; extension provides UI                          | P2       |
+| [Cloud Task Support](non-agent-features/cloud-task-support.md)                                          | Upload local sessions to cloud, real-time sync, conflict resolution              | Strata cloud API + CLI; extension provides UI                        | P2       |
 | [Code Reviews](non-agent-features/code-reviews.md)                                                      | Local review mode, automated AI review of uncommitted/branch changes             | CLI (partial); extension for VS Code review UX                       | P2       |
 | [Codebase Indexing & Semantic Search](non-agent-features/codebase-indexing-semantic-search.md)          | Vector indexing, semantic search, embeddings infrastructure                      | CLI has grep/glob endpoints; semantic indexing is extension or cloud | P2       |
 | [Contribution Tracking](non-agent-features/contribution-tracking.md)                                    | AI attribution tracking, line fingerprinting, reporting                          | Extension-side                                                       | P3       |
@@ -96,7 +96,7 @@ Open issues from the [GitHub project board](https://github.com/orgs/Strata-Org/p
 | [Publish to OpenVSX](infrastructure/openvsx-publish.md)                    | Add `ovsx publish` step to CI/CD pipeline after VS Code Marketplace publish | P3       |
 | [HTTP Request Timeouts](infrastructure/http-request-timeouts.md)           | Add timeouts to SDK calls (only health check has timeout currently)         | P1       |
 | [VSCode Error Notifications](infrastructure/vscode-error-notifications.md) | Error notifications for CLI start failure, SSE disconnect                   | P1       |
-| [Dedicated Output Channel](infrastructure/dedicated-output-channel.md)     | General "Strata Code" output channel and centralized logging utility          | P2       |
+| [Dedicated Output Channel](infrastructure/dedicated-output-channel.md)     | General "Strata Code" output channel and centralized logging utility        | P2       |
 
 ### CLI-Side (tracked here for awareness)
 

@@ -102,16 +102,16 @@ The workflow requires these GitHub token permissions:
 
 The following secrets must be configured in the repository:
 
-| Secret                       | Purpose                                                          |
-| ---------------------------- | ---------------------------------------------------------------- |
+| Secret                         | Purpose                                                            |
+| ------------------------------ | ------------------------------------------------------------------ |
 | `STRATA_API_KEY`               | Strata API key used during version computation                     |
 | `STRATA_ORG_ID`                | Strata organization ID                                             |
 | `STRATA_MAINTAINER_APP_ID`     | GitHub App ID for the strata-maintainer bot (used for git commits) |
 | `STRATA_MAINTAINER_APP_SECRET` | GitHub App secret for the strata-maintainer bot                    |
-| `NPM_TOKEN`                  | npm authentication token for publishing packages                 |
-| `VSCE_TOKEN`                 | VS Code Marketplace personal access token                        |
-| `OVSX_TOKEN`                 | Open VSX Registry token (currently unused but configured)        |
-| `AUR_KEY`                    | SSH private key for pushing to the AUR                           |
+| `NPM_TOKEN`                    | npm authentication token for publishing packages                   |
+| `VSCE_TOKEN`                   | VS Code Marketplace personal access token                          |
+| `OVSX_TOKEN`                   | Open VSX Registry token (currently unused but configured)          |
+| `AUR_KEY`                      | SSH private key for pushing to the AUR                             |
 
 ### Concurrency
 

@@ -15,9 +15,9 @@ MCP servers add to your context, so be careful with which ones you enable. Certa
 
 The CLI accepts several config filenames. The recommended file is `strata.json`:
 
-| Scope       | Recommended Path                     | Also supported              |
-| ----------- | ------------------------------------ | --------------------------- |
-| **Global**  | `~/.config/strata/strata.json`           | `strata.jsonc`, `config.json` |
+| Scope       | Recommended Path                           | Also supported                |
+| ----------- | ------------------------------------------ | ----------------------------- |
+| **Global**  | `~/.config/strata/strata.json`             | `strata.jsonc`, `config.json` |
 | **Project** | `./strata.json` or `./.strata/strata.json` | `strata.jsonc`                |
 
 Project-level configuration takes precedence over global settings.
@@ -104,8 +104,8 @@ Remote MCP servers are accessed over HTTP/HTTPS. Set `type` to `"remote"`.
 
 You can manage MCP servers from the CLI:
 
-| Command         | Description                     |
-| --------------- | ------------------------------- |
+| Command           | Description                     |
+| ----------------- | ------------------------------- |
 | `strata mcp list` | List all configured MCP servers |
 | `strata mcp add`  | Add an MCP server               |
 | `strata mcp auth` | Authenticate with an MCP server |

@@ -1,7 +1,13 @@
 import { z } from "zod"
 import { getStrataUrlFromToken } from "../auth/token.js"
 import { getDefaultHeaders, buildStrataHeaders } from "../headers.js"
-import { STRATA_API_BASE, STRATA_OPENROUTER_BASE, MODELS_FETCH_TIMEOUT_MS, PROMPTS, AI_SDK_PROVIDERS } from "./constants.js"
+import {
+  STRATA_API_BASE,
+  STRATA_OPENROUTER_BASE,
+  MODELS_FETCH_TIMEOUT_MS,
+  PROMPTS,
+  AI_SDK_PROVIDERS,
+} from "./constants.js"
 
 /**
  * OpenRouter model schema
@@ -74,7 +80,9 @@ export async function fetchStrataModels(options?: {
   const organizationId = options?.stratacodeOrganizationId
 
   // Construct base URL
-  const defaultBaseURL = organizationId ? `${STRATA_API_BASE}/api/organizations/${organizationId}` : STRATA_OPENROUTER_BASE
+  const defaultBaseURL = organizationId
+    ? `${STRATA_API_BASE}/api/organizations/${organizationId}`
+    : STRATA_OPENROUTER_BASE
 
   const baseURL = options?.baseURL ?? defaultBaseURL
 

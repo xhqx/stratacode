@@ -123,8 +123,8 @@ For detailed help on every command and subcommand, see the [CLI Command Referenc
 
 | Command    | Aliases                  | Description                               |
 | ---------- | ------------------------ | ----------------------------------------- |
-| `/profile` | `/me`, `/whoami`         | View your Strata Gateway profile            |
-| `/teams`   | `/team`, `/org`, `/orgs` | Switch between Strata Gateway teams         |
+| `/profile` | `/me`, `/whoami`         | View your Strata Gateway profile          |
+| `/teams`   | `/team`, `/org`, `/orgs` | Switch between Strata Gateway teams       |
 | `/remote`  | -                        | Toggle remote mode for Cloud Agent access |
 
 #### Built-in Commands
@@ -278,10 +278,10 @@ The Strata CLI is a fork of [OpenCode](https://opencode.ai) and supports the sam
 
 ### Config File Location (Strata CLI 1.0)
 
-| Scope       | Path                                                                                              |
-| ----------- | ------------------------------------------------------------------------------------------------- |
+| Scope       | Path                                                                                                |
+| ----------- | --------------------------------------------------------------------------------------------------- |
 | **Global**  | `~/.config/strata/opencode.json` or `opencode.jsonc` (Windows: config dir may vary; same filenames) |
-| **Project** | `./opencode.json` or `./.opencode/` in project root                                               |
+| **Project** | `./opencode.json` or `./.opencode/` in project root                                                 |
 
 Project-level configuration takes precedence over global settings.
 

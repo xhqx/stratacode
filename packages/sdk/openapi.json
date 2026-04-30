@@ -1663,24 +1663,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "consoleManagedProviders": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "activeOrgName": {
-                      "type": "string"
-                    },
-                    "switchableOrgCount": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    }
-                  },
-                  "required": ["consoleManagedProviders", "switchableOrgCount"]
+                  "$ref": "#/components/schemas/ConsoleState"
                 }
               }
             }
@@ -5701,6 +5684,47 @@
         ]
       }
     },
+    "/sync/start": {
+      "post": {
+        "operationId": "sync.start",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Start workspace sync",
+        "description": "Start sync loops for workspaces in the current project that have active sessions.",
+        "responses": {
+          "200": {
+            "description": "Workspace sync started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.sync.start({\n  ...\n})"
+          }
+        ]
+      }
+    },
     "/sync/replay": {
       "post": {
         "operationId": "sync.replay",
@@ -5805,7 +5829,7 @@
       }
     },
     "/sync/history": {
-      "get": {
+      "post": {
         "operationId": "sync.history.list",
         "parameters": [
           {
@@ -10164,6 +10188,9 @@
                                 "type": "string"
                               }
                             }
+                          },
+                          "text": {
+                            "type": "string"
                           }
                         }
                       }
@@ -11353,6 +11380,9 @@
               }
             },
             "required": ["messageID", "callID"]
+          },
+          "agent": {
+            "type": "string"
           }
         },
         "required": ["id", "sessionID", "permission", "patterns", "metadata", "always"]
@@ -12177,6 +12207,24 @@
         },
         "required": ["type", "properties"]
       },
+      "Event.vcs.branch.updated": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "vcs.branch.updated"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "branch": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": ["type", "properties"]
+      },
       "IndexingStatusState": {
         "type": "string",
         "enum": ["Disabled", "In Progress", "Complete", "Error", "Standby"]
@@ -12223,24 +12271,6 @@
               }
             },
             "required": ["status"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
-      "Event.vcs.branch.updated": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "vcs.branch.updated"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "branch": {
-                "type": "string"
-              }
-            }
           }
         },
         "required": ["type", "properties"]
@@ -13727,6 +13757,25 @@
         },
         "required": ["type", "properties"]
       },
+      "SnapshotSummaryFileDiff": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "additions": {
+            "type": "number"
+          },
+          "deletions": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["added", "deleted", "modified"]
+          }
+        },
+        "required": ["file", "additions", "deletions"]
+      },
       "PermissionAction": {
         "type": "string",
         "enum": ["allow", "deny", "ask"]
@@ -13791,23 +13840,7 @@
               "diffs": {
                 "type": "array",
                 "items": {
-                  "type": "object",
-                  "properties": {
-                    "file": {
-                      "type": "string"
-                    },
-                    "additions": {
-                      "type": "number"
-                    },
-                    "deletions": {
-                      "type": "number"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": ["added", "deleted", "modified"]
-                    }
-                  },
-                  "required": ["file", "additions", "deletions"]
+                  "$ref": "#/components/schemas/SnapshotSummaryFileDiff"
                 }
               }
             },
@@ -14246,23 +14279,7 @@
                           "diffs": {
                             "type": "array",
                             "items": {
-                              "type": "object",
-                              "properties": {
-                                "file": {
-                                  "type": "string"
-                                },
-                                "additions": {
-                                  "type": "number"
-                                },
-                                "deletions": {
-                                  "type": "number"
-                                },
-                                "status": {
-                                  "type": "string",
-                                  "enum": ["added", "deleted", "modified"]
-                                }
-                              },
-                              "required": ["file", "additions", "deletions"]
+                              "$ref": "#/components/schemas/SnapshotSummaryFileDiff"
                             }
                           }
                         },
@@ -14579,10 +14596,10 @@
                 "$ref": "#/components/schemas/Event.todo.updated"
               },
               {
-                "$ref": "#/components/schemas/Event.indexing.status"
+                "$ref": "#/components/schemas/Event.vcs.branch.updated"
               },
               {
-                "$ref": "#/components/schemas/Event.vcs.branch.updated"
+                "$ref": "#/components/schemas/Event.indexing.status"
               },
               {
                 "$ref": "#/components/schemas/Event.session.compacted"
@@ -14701,8 +14718,7 @@
               "type": "string"
             }
           }
-        },
-        "additionalProperties": false
+        }
       },
       "IndexingConfig": {
         "description": "Codebase indexing configuration",
@@ -15069,6 +15085,13 @@
           },
           "permission": {
             "$ref": "#/components/schemas/PermissionConfig"
+          },
+          "fallback_models": {
+            "description": "Ordered list of fallback models (provider/model) to try when the active model is unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "additionalProperties": {}
@@ -15115,6 +15138,32 @@
               "baseURL": {
                 "type": "string"
               },
+              "proxy": {
+                "description": "HTTP/HTTPS proxy URL or config object. Overrides global HTTP_PROXY/HTTPS_PROXY.",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string"
+                      },
+                      "headers": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": ["url"]
+                  }
+                ]
+              },
               "enterpriseUrl": {
                 "description": "GitHub Enterprise URL for copilot authentication",
                 "type": "string"
@@ -15127,13 +15176,11 @@
                 "description": "Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.",
                 "anyOf": [
                   {
-                    "description": "Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.",
                     "type": "integer",
                     "exclusiveMinimum": 0,
                     "maximum": 9007199254740991
                   },
                   {
-                    "description": "Disable timeout for this provider entirely.",
                     "type": "boolean",
                     "const": false
                   }
@@ -15196,8 +15243,7 @@
                               "enum": ["reasoning_content", "reasoning_details"]
                             }
                           },
-                          "required": ["field"],
-                          "additionalProperties": false
+                          "required": ["field"]
                         }
                       ]
                     },
@@ -15338,8 +15384,7 @@
               ]
             }
           }
-        },
-        "additionalProperties": false
+        }
       },
       "McpLocalConfig": {
         "type": "object",
@@ -15372,13 +15417,10 @@
           },
           "timeout": {
             "description": "Timeout in ms for MCP server requests. Defaults to 5000 (5 seconds) if not specified.",
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991
+            "type": "number"
           }
         },
-        "required": ["type", "command"],
-        "additionalProperties": false
+        "required": ["type", "command"]
       },
       "McpOAuthConfig": {
         "type": "object",
@@ -15399,8 +15441,7 @@
             "description": "OAuth redirect URI (default: http://127.0.0.1:19876/mcp/oauth/callback).",
             "type": "string"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "McpRemoteConfig": {
         "type": "object",
@@ -15442,13 +15483,10 @@
           },
           "timeout": {
             "description": "Timeout in ms for MCP server requests. Defaults to 5000 (5 seconds) if not specified.",
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 9007199254740991
+            "type": "number"
           }
         },
-        "required": ["type", "url"],
-        "additionalProperties": false
+        "required": ["type", "url"]
       },
       "LayoutConfig": {
         "description": "@deprecated Always uses stretch layout.",
@@ -15565,13 +15603,6 @@
             "description": "@deprecated Use 'share' field instead. Share newly created sessions automatically",
             "type": "boolean"
           },
-          "remote_control": {
-            "description": "Enable remote control of sessions via Strata Cloud. Equivalent to running /remote on startup.",
-            "type": "boolean"
-          },
-          "indexing": {
-            "$ref": "#/components/schemas/IndexingConfig"
-          },
           "autoupdate": {
             "description": "Automatically update to the latest version. Set to true to auto-update, false to disable, or 'notify' to show update notifications",
             "anyOf": [
@@ -15597,6 +15628,13 @@
             "items": {
               "type": "string"
             }
+          },
+          "remote_control": {
+            "description": "Enable remote control of sessions via Strata Cloud. Equivalent to running /remote on startup.",
+            "type": "boolean"
+          },
+          "indexing": {
+            "$ref": "#/components/schemas/IndexingConfig"
           },
           "model": {
             "description": "Model to use in the format of provider/model, eg anthropic/claude-2",
@@ -15864,8 +15902,24 @@
             "description": "Configuration for AI-generated commit messages",
             "type": "object",
             "properties": {
+              "model": {
+                "description": "Model to use for generating the commit message, in the format provider/model.",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "format": {
+                "description": "Format style for the commit message. Defaults to conventional.",
+                "type": "string",
+                "enum": ["conventional", "simple", "gitmoji"]
+              },
               "prompt": {
-                "description": "Custom system prompt for AI commit message generation. When set, replaces the default conventional commits prompt entirely.",
+                "description": "Custom system prompt for AI commit message generation. When set, replaces the default prompt entirely.",
                 "type": "string"
               }
             }
@@ -15898,6 +15952,12 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
+              },
+              "threshold_percent": {
+                "description": "Percentage of the model's maximum context at which auto-compaction is triggered (1-100, default: 100). For example, 80 triggers compaction when the context reaches 80% of its limit.",
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 100
               }
             }
           },
@@ -15913,6 +15973,10 @@
               },
               "codebase_search": {
                 "description": "Enable AI-powered codebase search",
+                "type": "boolean"
+              },
+              "semantic_indexing": {
+                "description": "Enable semantic codebase indexing and the semantic_search tool",
                 "type": "boolean"
               },
               "openTelemetry": {
@@ -16381,6 +16445,24 @@
         },
         "required": ["id", "name", "source", "env", "options", "models"]
       },
+      "ConsoleState": {
+        "type": "object",
+        "properties": {
+          "consoleManagedProviders": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "activeOrgName": {
+            "type": "string"
+          },
+          "switchableOrgCount": {
+            "type": "number"
+          }
+        },
+        "required": ["consoleManagedProviders", "switchableOrgCount"]
+      },
       "ToolIDs": {
         "type": "array",
         "items": {
@@ -16556,23 +16638,7 @@
               "diffs": {
                 "type": "array",
                 "items": {
-                  "type": "object",
-                  "properties": {
-                    "file": {
-                      "type": "string"
-                    },
-                    "additions": {
-                      "type": "number"
-                    },
-                    "deletions": {
-                      "type": "number"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": ["added", "deleted", "modified"]
-                    }
-                  },
-                  "required": ["file", "additions", "deletions"]
+                  "$ref": "#/components/schemas/SnapshotSummaryFileDiff"
                 }
               }
             },
@@ -17191,10 +17257,10 @@
             "$ref": "#/components/schemas/Event.todo.updated"
           },
           {
-            "$ref": "#/components/schemas/Event.indexing.status"
+            "$ref": "#/components/schemas/Event.vcs.branch.updated"
           },
           {
-            "$ref": "#/components/schemas/Event.vcs.branch.updated"
+            "$ref": "#/components/schemas/Event.indexing.status"
           },
           {
             "$ref": "#/components/schemas/Event.session.compacted"
@@ -17491,6 +17557,12 @@
             "type": "integer",
             "exclusiveMinimum": 0,
             "maximum": 9007199254740991
+          },
+          "fallback_models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["name", "mode", "permission", "options"]

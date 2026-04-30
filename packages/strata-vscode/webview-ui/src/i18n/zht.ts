@@ -1154,7 +1154,8 @@ export const dict = {
   "settings.experimental.mcpTimeout.title": "MCP 逾時（毫秒）",
   "settings.experimental.mcpTimeout.description": "MCP 伺服器請求的逾時時間（毫秒）",
   "settings.experimental.remote.title": "Remote 控制",
-  "settings.experimental.remote.description": "透過 Strata Cloud 啟用工作階段的 Remote 控制。這也會影響此電腦上的 CLI。",
+  "settings.experimental.remote.description":
+    "透過 Strata Cloud 啟用工作階段的 Remote 控制。這也會影響此電腦上的 CLI。",
   "settings.experimental.remote.current": "目前狀態：",
   "settings.experimental.remote.startup": "啟動時自動啟用：",
   "settings.experimental.remote.active": "已啟用",

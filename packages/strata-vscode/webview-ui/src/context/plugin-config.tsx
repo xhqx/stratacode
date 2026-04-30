@@ -30,7 +30,7 @@ export const PluginConfigProvider: ParentComponent = (props) => {
   const [sections, setSections] = createSignal<RenderablePluginConfigSection[]>([])
   const [values, setValues] = createSignal<Record<string, Record<string, JSONValue>>>({})
   const [loading, setLoading] = createSignal(true)
-  
+
   // Per-section state
   const [draft, setDraft] = createSignal<Record<string, Record<string, JSONValue>>>({})
   const [saved, setSaved] = createSignal<Record<string, Record<string, JSONValue>>>({})
@@ -41,58 +41,58 @@ export const PluginConfigProvider: ParentComponent = (props) => {
   const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
     if (message.type === "pluginConfigLoaded") {
       setSections(message.sections)
-      
+
       const newValues = { ...values() }
       const newSaved = { ...saved() }
-      
+
       for (const section of message.sections) {
         // Skip if a save is in-flight for this section
         if (savingState()[section.id]) continue
-        
+
         const sectionValues = message.values[section.id] || {}
         newSaved[section.id] = sectionValues
-        
+
         // Re-apply draft on top
         const sectionDraft = draft()[section.id] || {}
         newValues[section.id] = { ...sectionValues, ...sectionDraft }
       }
-      
+
       setValues(newValues)
       setSaved(newSaved)
       setLoading(false)
       return
     }
-    
+
     if (message.type === "pluginConfigUpdated") {
       const { sectionId, values: newValues } = message
-      
+
       if (savingState()[sectionId]) {
         // Confirmed save
-        setSavingState(prev => ({ ...prev, [sectionId]: false }))
-        
+        setSavingState((prev) => ({ ...prev, [sectionId]: false }))
+
         // Clear draft for this section
-        setDraft(prev => {
+        setDraft((prev) => {
           const next = { ...prev }
           delete next[sectionId]
           return next
         })
-        
-        setErrorState(prev => ({ ...prev, [sectionId]: null }))
+
+        setErrorState((prev) => ({ ...prev, [sectionId]: null }))
       }
-      
-      setSaved(prev => ({ ...prev, [sectionId]: newValues }))
-      
+
+      setSaved((prev) => ({ ...prev, [sectionId]: newValues }))
+
       // Re-apply draft on top in case another client updated config
       const currentDraft = draft()[sectionId] || {}
-      setValues(prev => ({ ...prev, [sectionId]: { ...newValues, ...currentDraft } }))
-      
+      setValues((prev) => ({ ...prev, [sectionId]: { ...newValues, ...currentDraft } }))
+
       return
     }
-    
+
     if (message.type === "pluginConfigUpdateFailed") {
       const { sectionId, message: errorMsg } = message
-      setSavingState(prev => ({ ...prev, [sectionId]: false }))
-      setErrorState(prev => ({ ...prev, [sectionId]: { message: errorMsg } }))
+      setSavingState((prev) => ({ ...prev, [sectionId]: false }))
+      setErrorState((prev) => ({ ...prev, [sectionId]: { message: errorMsg } }))
       return
     }
   })
@@ -125,19 +125,19 @@ export const PluginConfigProvider: ParentComponent = (props) => {
 
   function updateValue(sectionId: string, key: string, value: JSONValue) {
     // Optimistic update
-    setValues(prev => ({
+    setValues((prev) => ({
       ...prev,
-      [sectionId]: { ...(prev[sectionId] || {}), [key]: value }
+      [sectionId]: { ...(prev[sectionId] || {}), [key]: value },
     }))
-    
+
     // Accumulate draft
-    setDraft(prev => ({
+    setDraft((prev) => ({
       ...prev,
-      [sectionId]: { ...(prev[sectionId] || {}), [key]: value }
+      [sectionId]: { ...(prev[sectionId] || {}), [key]: value },
     }))
-    
+
     // Clear error
-    setErrorState(prev => ({ ...prev, [sectionId]: null }))
+    setErrorState((prev) => ({ ...prev, [sectionId]: null }))
     // Auto-save: debounce 600ms per section
     clearTimeout(timers[sectionId])
     timers[sectionId] = setTimeout(() => saveSection(sectionId), 600)
@@ -146,26 +146,26 @@ export const PluginConfigProvider: ParentComponent = (props) => {
   function saveSection(sectionId: string) {
     const changes = draft()[sectionId]
     if (!changes || Object.keys(changes).length === 0) return
-    
-    setSavingState(prev => ({ ...prev, [sectionId]: true }))
-    setErrorState(prev => ({ ...prev, [sectionId]: null }))
-    
+
+    setSavingState((prev) => ({ ...prev, [sectionId]: true }))
+    setErrorState((prev) => ({ ...prev, [sectionId]: null }))
+
     vscode.postMessage({ type: "savePluginConfig", sectionId, changes })
   }
 
   function discardSection(sectionId: string) {
-    setValues(prev => ({
+    setValues((prev) => ({
       ...prev,
-      [sectionId]: saved()[sectionId] || {}
+      [sectionId]: saved()[sectionId] || {},
     }))
-    
-    setDraft(prev => {
+
+    setDraft((prev) => {
       const next = { ...prev }
       delete next[sectionId]
       return next
     })
-    
-    setErrorState(prev => ({ ...prev, [sectionId]: null }))
+
+    setErrorState((prev) => ({ ...prev, [sectionId]: null }))
   }
 
   const value: PluginConfigContextValue = {
@@ -178,7 +178,7 @@ export const PluginConfigProvider: ParentComponent = (props) => {
     saveError: (sectionId) => errorState()[sectionId] || null,
     updateValue,
     saveSection,
-    discardSection
+    discardSection,
   }
 
   return <PluginConfigContext.Provider value={value}>{props.children}</PluginConfigContext.Provider>

@@ -1155,7 +1155,8 @@ export const dict = {
   "settings.autocomplete.model.title": "Autocomplete model",
   "settings.autocomplete.model.description": "Select the model used for inline code completions",
   "settings.autocomplete.showAgent.title": "Show Agent in Agents list",
-  "settings.autocomplete.showAgent.description": "Add the Autocomplete agent to the global Agents dropdown in the chat header.",
+  "settings.autocomplete.showAgent.description":
+    "Add the Autocomplete agent to the global Agents dropdown in the chat header.",
   "settings.autocomplete.autoTrigger.title": "Enable automatic inline completions",
   "settings.autocomplete.autoTrigger.description": "Automatically show inline completion suggestions as you type",
   "settings.autocomplete.smartKeybinding.title": "Enable smart inline task keybinding",
@@ -1390,7 +1391,8 @@ export const dict = {
   "settings.context.prune.title": "Prune Old Outputs",
   "settings.context.prune.description": "Remove old tool outputs during compaction",
   "settings.context.compactionThreshold.title": "Compaction Threshold",
-  "settings.context.compactionThreshold.description": "Trigger auto-compaction when context reaches this percentage of the model's maximum context window (10–100%, default: 100%)",
+  "settings.context.compactionThreshold.description":
+    "Trigger auto-compaction when context reaches this percentage of the model's maximum context window (10–100%, default: 100%)",
   "settings.context.watcherPatterns": "File Watcher Ignore Patterns",
   "settings.context.watcherPatterns.description": "Glob patterns for files the watcher should ignore",
 
@@ -1399,7 +1401,8 @@ export const dict = {
   "settings.commitMessage.showAgent.description":
     "Add the Commit agent to the global Agents dropdown in the chat header.",
   "settings.commitMessage.model.title": "Commit Message Model",
-  "settings.commitMessage.model.description": "Model used to generate commit messages. If not set, falls back to the default small model.",
+  "settings.commitMessage.model.description":
+    "Model used to generate commit messages. If not set, falls back to the default small model.",
   "settings.commitMessage.format.title": "Commit Message Format",
   "settings.commitMessage.format.description": "Select the format style for generated commit messages.",
   "settings.commitMessage.format.conventional": "Conventional",

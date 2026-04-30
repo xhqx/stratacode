@@ -27,11 +27,11 @@ Once you have a GitHub account ready, continue to Step 2.
 
 StrataClaw uses a [fine grained Personal Access Token](https://github.com/settings/tokens?type=beta) to authenticate as your bot. When creating the token, use these settings:
 
-| Setting               | Recommended Value                         |
-| --------------------- | ----------------------------------------- |
-| **Token name**        | `strataclaw-bot` (or any descriptive name)  |
-| **Expiration**        | 90 days (set a reminder to rotate)        |
-| **Repository access** | All repositories, or select specific ones |
+| Setting               | Recommended Value                          |
+| --------------------- | ------------------------------------------ |
+| **Token name**        | `strataclaw-bot` (or any descriptive name) |
+| **Expiration**        | 90 days (set a reminder to rotate)         |
+| **Repository access** | All repositories, or select specific ones  |
 
 Grant the following permissions:
 

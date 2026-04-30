@@ -144,7 +144,8 @@ export const dict = {
   "provider.connect.opencodeZen.visit.prefix": "",
   "provider.connect.opencodeZen.visit.link": "https://opencode.ai/zen",
   "provider.connect.opencodeZen.visit.suffix": " adresini ziyaret ederek API anahtarınızı alın.",
-  "provider.connect.oauth.code.visit.prefix": "Hesabınızı bağlamak ve Strata'da {{provider}} modellerini kullanmak için ",
+  "provider.connect.oauth.code.visit.prefix":
+    "Hesabınızı bağlamak ve Strata'da {{provider}} modellerini kullanmak için ",
   "provider.connect.oauth.code.visit.link": "bu bağlantıya",
   "provider.connect.oauth.code.visit.suffix": " tıklayarak yetkilendirme kodunuzu alın.",
   "provider.connect.oauth.code.label": "{{method}} yetkilendirme kodu",
@@ -1123,7 +1124,8 @@ export const dict = {
     "Ayarlarınızı VS Code örnekleri arasında aktarmak için dışa veya içe aktarın.",
   "settings.aboutStrataCode.exportSettings": "Dışa Aktar",
   "settings.aboutStrataCode.importSettings": "İçe Aktar",
-  "settings.aboutStrataCode.importSettings.invalidJson": "Geçersiz JSON dosyası. Lütfen geçerli bir ayar dosyası seçin.",
+  "settings.aboutStrataCode.importSettings.invalidJson":
+    "Geçersiz JSON dosyası. Lütfen geçerli bir ayar dosyası seçin.",
   "settings.aboutStrataCode.importSettings.invalidConfig": "Dosya geçerli Strata ayarları içermiyor.",
   "settings.aboutStrataCode.importSettings.tooLarge": "Dosya çok büyük. Ayar dosyaları 1 MB altında olmalıdır.",
   "settings.aboutStrataCode.importSettings.newerVersion":

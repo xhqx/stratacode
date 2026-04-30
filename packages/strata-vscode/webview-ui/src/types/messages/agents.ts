@@ -40,4 +40,10 @@ export interface AgentConfig {
   steps?: number
   permission?: PermissionConfig
   fallback_models?: string[] | null
+  
+  auto_approve?: {
+    timeout?: number
+    question_timeout?: number
+  } | null
+  
 }

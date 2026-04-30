@@ -125,7 +125,10 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
   // stratacode_change start - also load tui.json from .strata/.stratacode
   const dirs = unique(directories).filter(
     (dir) =>
-      dir.endsWith(".strata") || dir.endsWith(".stratacode") || dir.endsWith(".opencode") || dir === Flag.STRATA_CONFIG_DIR,
+      dir.endsWith(".strata") ||
+      dir.endsWith(".stratacode") ||
+      dir.endsWith(".opencode") ||
+      dir === Flag.STRATA_CONFIG_DIR,
   )
   // stratacode_change end
 

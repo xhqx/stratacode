@@ -7,8 +7,8 @@ description: "Smart model routing that automatically selects the optimal AI mode
 
 Auto Model is a smart model routing system that automatically selects the optimal AI model based on the Strata Code mode you're using. It comes in multiple tiers so you can balance cost and capability to fit your needs.
 
-| Tier                 | Best For                                          | Pricing |
-| -------------------- | ------------------------------------------------- | ------- |
+| Tier                   | Best For                                          | Pricing |
+| ---------------------- | ------------------------------------------------- | ------- |
 | `strata-auto/frontier` | Maximum capability with the best available models | Paid    |
 | `strata-auto/balanced` | Strong performance at a lower cost                | Paid    |
 | `strata-auto/free`     | The best free models available                    | Free    |

@@ -40,8 +40,8 @@ export function DialogClawSetup(props: { orgId?: string | null }) {
         </text>
 
         <text fg={theme.textMuted} wrapMode="word">
-          StrataClaw gives you a personal AI that reads email, manages your calendar, monitors your projects, and lives in
-          Telegram, Slack — whatever you already use.
+          StrataClaw gives you a personal AI that reads email, manages your calendar, monitors your projects, and lives
+          in Telegram, Slack — whatever you already use.
         </text>
 
         <text fg={theme.textMuted} wrapMode="word">

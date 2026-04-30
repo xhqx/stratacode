@@ -13,7 +13,13 @@ import type {
 } from "@stratacode/sdk/v2/client"
 import { type StrataConnectionService, ServerStartupError } from "./services/cli-backend"
 import { pluginRegistry } from "./plugin-api"
-import { buildPluginConfigLoaded, handleSavePluginConfig, applyPluginHooks, markPending, checkCompletion } from "./stratacode/plugin-config-handlers"
+import {
+  buildPluginConfigLoaded,
+  handleSavePluginConfig,
+  applyPluginHooks,
+  markPending,
+  checkCompletion,
+} from "./stratacode/plugin-config-handlers"
 import type { EditorContext, IndexingStatus } from "./services/cli-backend/types"
 import { FileIgnoreController } from "./services/autocomplete/shims/FileIgnoreController"
 import { ChatTextAreaAutocomplete } from "./services/autocomplete/chat-autocomplete/ChatTextAreaAutocomplete"
@@ -142,6 +148,10 @@ const mapAgent = (a: Agent) => ({
   model: a.model,
 })
 
+
+import { AutoApproveTimer } from "./strata-provider/auto-approve-timer"
+
+
 export class StrataProvider implements vscode.WebviewViewProvider, TelemetryPropertiesProvider {
   public static readonly viewType = "strata-code.SidebarProvider"
   private readonly instanceId = crypto.randomUUID()
@@ -152,6 +162,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private contextSessionID: string | undefined
   private connectionState: "connecting" | "connected" | "disconnected" | "error" = "connecting"
   private loginAttempt = 0
+  
+  private autoApproveTimer: AutoApproveTimer = new AutoApproveTimer(this)
+  
   private isWebviewReady = false
   private readonly extensionVersion =
     vscode.extensions.getExtension("stratacode.strata-code")?.packageJSON?.version ?? "unknown"
@@ -188,7 +201,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private sessionStatusMap = new Map<string, SessionStatus["type"]>()
   /** Tracks sessions waiting for a message to complete */
 
-
   // Subscriptions directory overrides (e.g., worktree paths registered by AgentManagerProvider). */
   private sessionDirectories = new Map<string, string>()
   /** Project ID for the current workspace, used to filter out sessions from other repositories. */
@@ -222,12 +234,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private viewStateDisposable: vscode.Disposable | null = null
   private visibilityDisposable: vscode.Disposable | null = null
   /** Whether the sidebar panel is currently visible to the user. */
-  private sidebarVisible = false // stratacode_change
-  /** Reference to the WebviewView for badge updates. */
-  private view: vscode.WebviewView | null = null // stratacode_change
-  /** Number of pending prompts (permissions + questions) — drives the Activity Bar badge. */
-  private pendingPrompts = 0 // stratacode_change
-
+  private sidebarVisible = false   /** Reference to the WebviewView for badge updates. */
+  private view: vscode.WebviewView | null = null   /** Number of pending prompts (permissions + questions) — drives the Activity Bar badge. */
+  private pendingPrompts = 0 
   /** Lazily initialized ignore controller for .stratacodeignore filtering */
   private ignoreController: FileIgnoreController | null = null
   private ignoreControllerDir: string | null = null
@@ -380,11 +389,11 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         workspaceDirectory: this.getProjectDirectory(this.currentSession?.id),
       })
     }
-    
+
     // Push plugin UI contributions
     this.postMessage({
       type: "pluginContributionsLoaded",
-      contributions: pluginRegistry.getRenderableContributions()
+      contributions: pluginRegistry.getRenderableContributions(),
     })
 
     // Push plugin config sections
@@ -450,23 +459,20 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview)
     this.setupWebviewMessageHandler(webviewView.webview)
 
-    this.view = webviewView // stratacode_change
-    this.sidebarVisible = webviewView.visible // stratacode_change
-    vscode.commands.executeCommand("setContext", "strata-code.new.sidebarVisible", webviewView.visible)
+    this.view = webviewView     this.sidebarVisible = webviewView.visible     vscode.commands.executeCommand("setContext", "strata-code.new.sidebarVisible", webviewView.visible)
     this.visibilityDisposable?.dispose()
     this.visibilityDisposable = webviewView.onDidChangeVisibility(() => {
-      this.sidebarVisible = webviewView.visible // stratacode_change
-      vscode.commands.executeCommand("setContext", "strata-code.new.sidebarVisible", webviewView.visible)
+      this.sidebarVisible = webviewView.visible       vscode.commands.executeCommand("setContext", "strata-code.new.sidebarVisible", webviewView.visible)
       if (this.statsPoller) {
         this.statsPoller.setEnabled(webviewView.visible)
         this.statsPoller.setVisible(webviewView.visible)
       }
-      // stratacode_change start — clear badge when sidebar becomes visible
+      
       if (webviewView.visible && this.pendingPrompts > 0) {
         this.pendingPrompts = 0
         this.updateBadge()
       }
-      // stratacode_change end
+      
       this.focusSession(webviewView.visible ? this.currentSession?.id : undefined)
     })
     this.initializeConnection()
@@ -654,6 +660,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           this.recoverPendingPrompts()
           this.readyResolvers.splice(0).forEach((r) => r())
           break
+        
+        case "cancelAutoApproveTimer":
+          if (this.autoApproveTimer.isTimerRunningFor(message.requestId)) {
+            this.autoApproveTimer.clearTimer()
+          }
+          break
+        
         case "executePluginContribution":
           pluginRegistry.executeContribution((message as any).id)
           break
@@ -710,7 +723,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             message.response,
             message.approvedAlways,
             message.deniedAlways,
-          )
+            message.scope,             message.agent,           )
           break
         case "createSession":
           await this.handleCreateSession()
@@ -862,7 +875,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           this.fetchAndSendConfig().catch((e) => console.error("[Strata New] fetchAndSendConfig failed:", e))
           break
         case "requestGlobalConfig":
-          this.fetchAndSendGlobalConfig().catch((e) => console.error("[Strata New] fetchAndSendGlobalConfig failed:", e))
+          this.fetchAndSendGlobalConfig().catch((e) =>
+            console.error("[Strata New] fetchAndSendGlobalConfig failed:", e),
+          )
           break
         case "requestIndexingStatus":
           this.fetchAndSendIndexingStatus().catch((e) =>
@@ -2234,7 +2249,11 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
       const first = list[0]!
       const summary = list.length === 1 ? first.message : `${first.message} (and ${list.length - 1} more)`
-      console.warn("[Strata New] StrataProvider: showing config warnings", { from, count: list.length, path: first.path })
+      console.warn("[Strata New] StrataProvider: showing config warnings", {
+        from,
+        count: list.length,
+        path: first.path,
+      })
 
       const action = await vscode.window.showWarningMessage(`Config: ${summary}`, "Show Details")
       if (action === "Show Details") {
@@ -2489,7 +2508,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         }
 
         const delay = backoff(attempt, result.response?.headers)
-        console.log(`[Strata New] StrataProvider: Retry on ${status}, attempt ${attempt}/${MAX_RETRIES}, delay ${delay}ms`)
+        console.log(
+          `[Strata New] StrataProvider: Retry on ${status}, attempt ${attempt}/${MAX_RETRIES}, delay ${delay}ms`,
+        )
 
         this.postMessage({
           type: "sessionStatus",
@@ -2560,7 +2581,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           parts.push({ type: "file", mime: f.mime, url: f.url, filename: f.filename, source: f.source })
         }
       }
-      
+
       const sid = resolved!.sid
       const dir = resolved!.dir
 
@@ -3131,20 +3152,20 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       }
     }
 
-    // stratacode_change start — badge + toast for permission/question requests
+    
     if (event.type === "permission.asked" || event.type === "question.asked") {
       this.pendingPrompts++
       this.updateBadge()
       if (!this.sidebarVisible) {
-        const enabled = vscode.workspace.getConfiguration("strata-code.new.notifications").get<boolean>("permissions", true)
+        const enabled = vscode.workspace
+          .getConfiguration("strata-code.new.notifications")
+          .get<boolean>("permissions", true)
         if (enabled) {
-          const label = event.type === "permission.asked"
-            ? `Permission required: ${event.properties.permission ?? "tool"}`
-            : "Agent is waiting for your response"
-          void vscode.window.showInformationMessage(
-            label,
-            "Review",
-          ).then((action) => {
+          const label =
+            event.type === "permission.asked"
+              ? `Permission required: ${event.properties.permission ?? "tool"}`
+              : "Agent is waiting for your response"
+          void vscode.window.showInformationMessage(label, "Review").then((action) => {
             if (action === "Review") {
               vscode.commands.executeCommand(`${StrataProvider.viewType}.focus`)
             }
@@ -3153,13 +3174,15 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       }
     }
     if (
-      (event.type === "permission.replied" || event.type === "question.replied" || event.type === "question.rejected")
-      && this.pendingPrompts > 0
+      (event.type === "permission.replied" ||
+        event.type === "question.replied" ||
+        event.type === "question.rejected") &&
+      this.pendingPrompts > 0
     ) {
       this.pendingPrompts--
       this.updateBadge()
     }
-    // stratacode_change end
+    
 
     handleNetworkEvent(event.type as string, event.properties as any, this.client, (s) => this.getWorkspaceDirectory(s))
 
@@ -3179,16 +3202,67 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     }
     this.streams.flush(sessionID)
     this.postMessage(msg)
+
+    
+    if (msg.type === "permissionRequest" || msg.type === "questionRequest") {
+      const config = (this.cachedConfigMessage as any)?.config
+      if (config) {
+        const agentName = msg.type === "permissionRequest" ? msg.permission.agent : (msg.question as any).agent
+        const agentConfig = agentName ? config.agent?.[agentName] : undefined
+        const timeoutSeconds =
+          msg.type === "permissionRequest"
+            ? (agentConfig?.auto_approve?.timeout ?? config.auto_approve?.timeout ?? 0)
+            : (agentConfig?.auto_approve?.question_timeout ?? config.auto_approve?.question_timeout ?? 0)
+
+        if (timeoutSeconds > 0) {
+          const reqId = msg.type === "permissionRequest" ? msg.permission.id : msg.question.id
+          this.autoApproveTimer.startTimer(reqId, timeoutSeconds, () => {
+            if (msg.type === "permissionRequest") {
+              // Simulate user clicking "Run" (once)
+              handlePermissionResponse(
+                this.permissionCtx,
+                reqId,
+                msg.permission.sessionID,
+                "once",
+                [],
+                [],
+                undefined,
+                undefined,
+              )
+            } else if (msg.type === "questionRequest") {
+              // Simulate selecting the first option of the first question (or empty string if none)
+              const firstQ: any = msg.question.questions[0]
+              const answers = firstQ?.options?.length ? [firstQ.options[0].label] : [""]
+              handleQuestionReply(this.questionCtx, reqId, [answers], msg.question.sessionID)             }
+          })
+        }
+      }
+    }
+    if (msg.type === "permissionResolved" || msg.type === "permissionError") {
+      if (this.autoApproveTimer.isTimerRunningFor(msg.permissionID)) {
+        this.autoApproveTimer.clearTimer()
+      }
+    }
+    if (msg.type === "questionResolved" || msg.type === "questionError") {
+      if (this.autoApproveTimer.isTimerRunningFor(msg.requestID)) {
+        this.autoApproveTimer.clearTimer()
+      }
+    }
+    
   }
-  // stratacode_change start
+  
   /** Set or clear the Activity Bar badge based on pending prompt count. */
   private updateBadge(): void {
     if (!this.view) return
-    this.view.badge = this.pendingPrompts > 0
-      ? { value: this.pendingPrompts, tooltip: `${this.pendingPrompts} action${this.pendingPrompts > 1 ? "s" : ""} needed` }
-      : undefined
+    this.view.badge =
+      this.pendingPrompts > 0
+        ? {
+            value: this.pendingPrompts,
+            tooltip: `${this.pendingPrompts} action${this.pendingPrompts > 1 ? "s" : ""} needed`,
+          }
+        : undefined
   }
-  // stratacode_change end
+  
 
   /** Wait until the webview has sent "webviewReady". Resolves immediately when already ready. */
   public waitForReady(): Promise<void> {

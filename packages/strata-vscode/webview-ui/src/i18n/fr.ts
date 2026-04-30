@@ -425,7 +425,8 @@ export const dict = {
   "toast.session.listFailed.title": "Échec du chargement des sessions pour {{project}}",
 
   "toast.update.title": "Mise à jour disponible",
-  "toast.update.description": "Une nouvelle version d'Strata ({{version}}) est maintenant disponible pour installation.",
+  "toast.update.description":
+    "Une nouvelle version d'Strata ({{version}}) est maintenant disponible pour installation.",
   "toast.update.action.installRestart": "Installer et redémarrer",
   "toast.update.action.notYet": "Pas encore",
 

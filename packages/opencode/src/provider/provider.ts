@@ -1313,8 +1313,7 @@ const layer: Layer.Layer<
           const providerID = ProviderID.make(id)
           // stratacode_change start - keep OAuth plugin source when config and Codex auth coexist
           const oauth =
-            auths[providerID]?.type === "oauth" &&
-            plugins.some((x) => x.auth?.provider === providerID && x.auth.loader)
+            auths[providerID]?.type === "oauth" && plugins.some((x) => x.auth?.provider === providerID && x.auth.loader)
           const partial: Partial<Info> = oauth ? {} : { source: "config" }
           if (provider.env) partial.env = provider.env
           // stratacode_change end

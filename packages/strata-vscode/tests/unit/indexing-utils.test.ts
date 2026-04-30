@@ -90,7 +90,9 @@ describe("indexing feature detection", () => {
   })
 
   it("detects supported indexing plugin specifiers when experimental.semantic_indexing is true", () => {
-    expect(configFeatures({ plugin: ["strata-indexing"], experimental: { semantic_indexing: true } }).indexing).toBe(true)
+    expect(configFeatures({ plugin: ["strata-indexing"], experimental: { semantic_indexing: true } }).indexing).toBe(
+      true,
+    )
     expect(
       configFeatures({ plugin: ["strata-indexing@1.2.3"], experimental: { semantic_indexing: true } }).indexing,
     ).toBe(true)
@@ -98,7 +100,8 @@ describe("indexing feature detection", () => {
       configFeatures({ plugin: ["@stratacode/strata-indexing"], experimental: { semantic_indexing: true } }).indexing,
     ).toBe(true)
     expect(
-      configFeatures({ plugin: ["@stratacode/strata-indexing@1.2.3"], experimental: { semantic_indexing: true } }).indexing,
+      configFeatures({ plugin: ["@stratacode/strata-indexing@1.2.3"], experimental: { semantic_indexing: true } })
+        .indexing,
     ).toBe(true)
     expect(
       configFeatures({

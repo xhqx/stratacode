@@ -27,6 +27,9 @@ import { InstanceRef } from "@/effect/instance-ref"
 import { zod, ZodOverride } from "@/util/effect-zod"
 import { withStatics } from "@/util/schema"
 import { ConfigAgent } from "./agent"
+// stratacode_change start
+import * as ConfigAutoApprove from "./auto-approve"
+// stratacode_change end
 import { ConfigCommand } from "./command"
 import { ConfigFormatter } from "./formatter"
 import { ConfigLayout } from "./layout"
@@ -299,6 +302,9 @@ export const Info = Schema.Struct({
       }),
     }),
   ),
+  // stratacode_change start
+  auto_approve: Schema.optional(ConfigAutoApprove.Info),
+  // stratacode_change end
 })
   .annotate({ identifier: "Config" })
   .pipe(

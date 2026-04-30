@@ -83,7 +83,8 @@ export const layer = Layer.effect(
     const skill = yield* Skill.Service
 
     return Service.of({
-      environment(model, editorContext) { // stratacode_change
+      environment(model, editorContext) {
+        // stratacode_change
         const project = Instance.project
         return [
           [
