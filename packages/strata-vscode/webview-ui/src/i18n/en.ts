@@ -1324,6 +1324,20 @@ export const dict = {
   "settings.agentBehaviour.editMode.native":
     "This is a built-in mode. Its base definition cannot be changed, but you can configure overrides below.",
   "settings.agentBehaviour.editMode.promptOverride": "Custom prompt override for this built-in mode",
+  "settings.agentBehaviour.editMode.prompt.help":
+    "Write instructions in Markdown. Use the toolbar to format or toggle the preview.",
+
+  "markdown.bold": "Bold",
+  "markdown.italic": "Italic",
+  "markdown.code": "Inline code",
+  "markdown.codeBlock": "Code block",
+  "markdown.heading": "Heading",
+  "markdown.list": "Bullet list",
+  "markdown.orderedList": "Numbered list",
+  "markdown.link": "Link",
+  "markdown.preview": "Preview",
+  "markdown.edit": "Edit",
+
   "settings.agentBehaviour.badge.subagent": "subagent",
   "settings.agentBehaviour.permissions.title": "Calculated Permissions",
   "settings.agentBehaviour.permissions.count": "{{count}} rules",

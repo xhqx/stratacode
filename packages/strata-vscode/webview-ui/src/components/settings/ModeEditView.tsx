@@ -1,6 +1,7 @@
 import { Component, Show, For, createMemo, createSignal, onCleanup } from "solid-js"
 import { TextField } from "@stratacode/strata-ui/text-field"
 import { parseModelString } from "../../../../src/shared/provider-model"
+import MarkdownEditor from "./MarkdownEditor"
 import { ModelSelectorBase } from "../shared/ModelSelector"
 import { Switch } from "@stratacode/strata-ui/switch"
 import { Card } from "@stratacode/strata-ui/card"
@@ -161,17 +162,22 @@ const ModeEditView: Component<Props> = (props) => {
         </Card>
       </Show>
 
-      {/* Prompt (full-width, auto-resizing) */}
+      {/* Prompt (full-width, markdown editor) */}
       <Card style={{ "margin-bottom": "12px" }}>
-        <div data-slot="settings-row-label-title" style={{ "margin-bottom": "8px" }}>
+        <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
           {native()
             ? language.t("settings.agentBehaviour.editMode.promptOverride")
             : language.t("settings.agentBehaviour.editMode.prompt")}
         </div>
-        <TextField
+        <div
+          data-slot="settings-row-label-subtitle"
+          style={{ "margin-bottom": "8px" }}
+        >
+          {language.t("settings.agentBehaviour.editMode.prompt.help")}
+        </div>
+        <MarkdownEditor
           value={cfg().prompt ?? ""}
           placeholder={language.t("settings.agentBehaviour.createMode.prompt.placeholder")}
-          multiline
           onChange={(val) => update({ prompt: val || undefined })}
         />
       </Card>

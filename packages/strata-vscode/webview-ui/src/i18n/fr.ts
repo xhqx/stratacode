@@ -1301,6 +1301,20 @@ export const dict = {
   "settings.agentBehaviour.editMode.native":
     "Il s'agit d'un mode intégré. Sa définition de base ne peut pas être modifiée, mais vous pouvez configurer des surcharges ci-dessous.",
   "settings.agentBehaviour.editMode.promptOverride": "Remplacement de prompt personnalisé pour ce mode intégré",
+  "settings.agentBehaviour.editMode.prompt.help":
+    "Rédigez les instructions en Markdown. Utilisez la barre d'outils pour formater ou basculer l'aperçu.",
+
+  "markdown.bold": "Gras",
+  "markdown.italic": "Italique",
+  "markdown.code": "Code en ligne",
+  "markdown.codeBlock": "Bloc de code",
+  "markdown.heading": "Titre",
+  "markdown.list": "Liste à puces",
+  "markdown.orderedList": "Liste numérotée",
+  "markdown.link": "Lien",
+  "markdown.preview": "Aperçu",
+  "markdown.edit": "Éditer",
+
   "settings.agentBehaviour.badge.subagent": "sous-agent",
   "settings.agentBehaviour.permissions.title": "Permissions calculées",
   "settings.agentBehaviour.permissions.count": "{{count}} règles",
