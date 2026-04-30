@@ -15,6 +15,11 @@ import DisplayTab from "./DisplayTab"
 import NotificationsTab from "./NotificationsTab"
 import ContextTab from "./ContextTab"
 
+import McpServersTab from "./McpServersTab"
+import RulesTab from "./RulesTab"
+import WorkflowsTab from "./agent-behaviour/WorkflowsTab"
+import SkillsTab from "./SkillsTab"
+
 import ExperimentalTab from "./ExperimentalTab"
 import LanguageTab from "./LanguageTab"
 import AboutStrataCodeTab from "./AboutStrataCodeTab"
@@ -199,6 +204,22 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="brain" />
             <span class="label">{language.t("settings.agentBehaviour.title")}</span>
           </Tabs.Trigger>
+          <Tabs.Trigger value="mcpServers">
+            <Icon name="server" />
+            <span class="label">{language.t("settings.agentBehaviour.subtab.mcpServers")}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="rules">
+            <Icon name="bullet-list" />
+            <span class="label">{language.t("settings.agentBehaviour.subtab.rules")}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="workflows">
+            <Icon name="branch" />
+            <span class="label">{language.t("settings.agentBehaviour.subtab.workflows")}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="skills">
+            <Icon name="settings-gear" />
+            <span class="label">{language.t("settings.agentBehaviour.subtab.skills")}</span>
+          </Tabs.Trigger>
           <Tabs.Trigger value="autoApprove">
             <Icon name="checklist" />
             <span class="label">{language.t("settings.autoApprove.title")}</span>
@@ -277,6 +298,22 @@ const Settings: Component<SettingsProps> = (props) => {
         <Tabs.Content value="agentBehaviour">
           <h3>{language.t("settings.agentBehaviour.title")}</h3>
           <AgentBehaviourTab />
+        </Tabs.Content>
+        <Tabs.Content value="mcpServers">
+          <h3>{language.t("settings.agentBehaviour.subtab.mcpServers")}</h3>
+          <McpServersTab />
+        </Tabs.Content>
+        <Tabs.Content value="rules">
+          <h3>{language.t("settings.agentBehaviour.subtab.rules")}</h3>
+          <RulesTab />
+        </Tabs.Content>
+        <Tabs.Content value="workflows">
+          <h3>{language.t("settings.agentBehaviour.subtab.workflows")}</h3>
+          <WorkflowsTab />
+        </Tabs.Content>
+        <Tabs.Content value="skills">
+          <h3>{language.t("settings.agentBehaviour.subtab.skills")}</h3>
+          <SkillsTab />
         </Tabs.Content>
         <Tabs.Content value="autoApprove">
           <h3>{language.t("settings.autoApprove.title")}</h3>

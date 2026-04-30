@@ -1533,6 +1533,10 @@ export const dict = {
   "settings.agentBehaviour.createMode.prompt.placeholder":
     "e.g. You are a code reviewer. Focus on code quality, best practices, and potential bugs.",
   "settings.agentBehaviour.editMode": "Modus bewerken",
+  /* TODO: Translate */ "settings.agentBehaviour.editMode.tab.general": "General",
+  /* TODO: Translate */ "settings.agentBehaviour.editMode.tab.prompt": "Prompt",
+  /* TODO: Translate */ "settings.agentBehaviour.editMode.tab.permissions": "Permissions",
+  /* TODO: Translate */ "settings.agentBehaviour.editMode.tab.features": "Agent-Specific",
   "settings.agentBehaviour.editMode.back": "Terug naar lijst",
   "settings.agentBehaviour.editMode.description": "Beschrijving",
   "settings.agentBehaviour.editMode.native":

@@ -128,7 +128,14 @@ export const PermissionDock: Component<{
 
   const focusPrompt = () => requestAnimationFrame(() => window.dispatchEvent(new Event("focusPrompt")))
 
+  const cancelTimerIfRunning = () => {
+    if (session.timers()[props.request.id] !== undefined) {
+      session.cancelTimer(props.request.id)
+    }
+  }
+
   const onRoot = (e: KeyboardEvent) => {
+    cancelTimerIfRunning()
     const tag = (e.target as HTMLElement).tagName
 
     // Escape always denies — even from focused buttons — and stopPropagation
@@ -138,7 +145,8 @@ export const PermissionDock: Component<{
       e.stopPropagation()
       if (props.responding) return
       const { approved, denied } = collectRules()
-      props.onDecide("reject", approved, denied, scope(), props.request.agent)       focusPrompt()
+      props.onDecide("reject", approved, denied, scope(), props.request.agent)
+      focusPrompt()
       return
     }
 
@@ -151,10 +159,13 @@ export const PermissionDock: Component<{
       e.stopPropagation()
       if (props.responding) return
       const { approved, denied } = collectRules()
-      props.onDecide("once", approved, denied, scope(), props.request.agent)       focusPrompt()
+      props.onDecide("once", approved, denied, scope(), props.request.agent)
+      focusPrompt()
       return
     }
   }
+
+  const onMouseDown = () => cancelTimerIfRunning()
 
   // Keep keyboard shortcuts when the webview already has focus, but do not
   // steal focus from the editor, terminal, or other VS Code surfaces.
@@ -167,7 +178,7 @@ export const PermissionDock: Component<{
   })
 
   return (
-    <div ref={root} tabIndex={-1} onKeyDown={onRoot} style={{ outline: "none" }}>
+    <div ref={root} tabIndex={-1} onKeyDown={onRoot} onMouseDown={onMouseDown} style={{ outline: "none" }}>
       <DockPrompt
         kind="permission"
         header={

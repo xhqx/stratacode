@@ -53,7 +53,9 @@ export interface PermissionResponseRequest {
   response: "once" | "always" | "reject"
   approvedAlways: string[]
   deniedAlways: string[]
-  scope?: "global" | "agent"   agent?: string }
+  scope?: "global" | "agent"
+  agent?: string
+}
 
 export interface CreateSessionRequest {
   type: "createSession"

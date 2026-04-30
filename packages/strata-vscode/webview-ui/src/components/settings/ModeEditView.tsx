@@ -1,5 +1,6 @@
-import { Component, Show, For, createMemo, createSignal, onCleanup } from "solid-js"
+import { Component, Show, For, createMemo, createSignal, onCleanup, createEffect } from "solid-js"
 import { TextField } from "@stratacode/strata-ui/text-field"
+import { Select } from "@stratacode/strata-ui/select"
 import { parseModelString } from "../../../../src/shared/provider-model"
 import MarkdownEditor from "./MarkdownEditor"
 import { ModelSelectorBase } from "../shared/ModelSelector"
@@ -7,14 +8,168 @@ import { Switch } from "@stratacode/strata-ui/switch"
 import { Card } from "@stratacode/strata-ui/card"
 import { Button } from "@stratacode/strata-ui/button"
 import { IconButton } from "@stratacode/strata-ui/icon-button"
+import { Tabs } from "@stratacode/strata-ui/tabs"
 
 import { useConfig } from "../../context/config"
 import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
-import type { AgentConfig, AgentInfo, PermissionRuleItem, ExtensionMessage } from "../../types/messages"
+import type { AgentConfig, AgentInfo, PermissionRuleItem, ExtensionMessage, PermissionLevel, PermissionRule } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
 import { buildExport } from "./mode-io"
+
+const ACTION_COLORS: Record<string, { bg: string; fg: string }> = {
+  allow: { bg: "var(--vscode-terminal-ansiGreen, #3fb950)", fg: "var(--vscode-editor-background, #1e1e1e)" },
+  ask: { bg: "var(--vscode-editorWarning-foreground, #cca700)", fg: "var(--vscode-editor-background, #1e1e1e)" },
+  deny: { bg: "var(--vscode-errorForeground, #f85149)", fg: "var(--vscode-editor-background, #fff)" },
+  unknown: { bg: "var(--vscode-descriptionForeground, #8b949e)", fg: "var(--vscode-editor-background, #1e1e1e)" },
+}
+
+interface LevelOption {
+  value: PermissionLevel
+  label: string
+}
+
+const LEVEL_OPTIONS: LevelOption[] = [
+  { value: "allow", label: "Allow" },
+  { value: "ask", label: "Ask" },
+  { value: "deny", label: "Deny" },
+]
+
+const AGENT_TOOLS = [
+  { id: "edit", label: "Edit" },
+  { id: "bash", label: "Bash" },
+  { id: "read", label: "Read" },
+  { id: "external_directory", label: "External Directory" },
+  { id: "glob", label: "Glob" },
+  { id: "grep", label: "Grep" },
+  { id: "list", label: "List" },
+  { id: "task", label: "Task" },
+  { id: "skill", label: "Skill" },
+  { id: "lsp", label: "LSP" },
+  { id: "todoread", label: "Todo Read" },
+  { id: "todowrite", label: "Todo Write" },
+  { id: "websearch", label: "Web Search" },
+  { id: "codesearch", label: "Code Search" },
+  { id: "webfetch", label: "Web Fetch" },
+  { id: "doom_loop", label: "Doom Loop" },
+]
+
+/** Returns the wildcard-level action for a permission rule (string or object with "*" key). */
+function ruleAction(rule: PermissionRule | undefined): PermissionLevel | undefined {
+  if (!rule) return undefined
+  if (typeof rule === "string") return rule
+  return rule["*"] ?? undefined
+}
+
+const AgentPermissionEditor: Component<{
+  cfg: AgentConfig
+  update: (partial: Partial<AgentConfig>) => void
+}> = (props) => {
+  const language = useLanguage()
+
+  const overrides = createMemo(() => {
+    const perm = props.cfg.permission || {}
+    return AGENT_TOOLS.map((tool) => ({
+      ...tool,
+      level: ruleAction(perm[tool.id]),
+    }))
+  })
+
+  const hasAny = createMemo(() => overrides().some((o) => o.level !== undefined))
+
+  const setLevel = (tool: string, level: PermissionLevel | undefined) => {
+    if (level === undefined) {
+      props.update({ permission: { [tool]: null as any } })
+      return
+    }
+    props.update({ permission: { [tool]: level } })
+  }
+
+  return (
+    <Card style={{ "margin-bottom": "12px" }}>
+      <div
+        style={{
+          display: "flex",
+          "align-items": "center",
+          "justify-content": "space-between",
+          "margin-bottom": "8px",
+        }}
+      >
+        <div>
+          <div data-slot="settings-row-label-title">
+            {language.t("settings.agentBehaviour.permissions.agentOverridesTitle") || "Agent Permission Overrides"}
+          </div>
+          <div data-slot="settings-row-label-subtitle">
+            {language.t("settings.agentBehaviour.permissions.agentOverridesDesc") || "Override global tool permissions for this agent. Unset values inherit from global settings."}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", "flex-direction": "column" }}>
+        <For each={overrides()}>
+          {(tool) => (
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                "align-items": "center",
+                "justify-content": "space-between",
+                padding: "6px 0",
+                "border-bottom": "1px solid var(--border-weak-base)",
+              }}
+            >
+              <div style={{ flex: 1, "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))" }}>
+                {tool.label}
+              </div>
+              <div style={{ display: "flex", "align-items": "center", gap: "4px" }}>
+                <Select
+                  options={[
+                    { value: undefined as any, label: language.t("common.default") || "Default" },
+                    ...LEVEL_OPTIONS,
+                  ]}
+                  current={
+                    tool.level !== undefined
+                      ? LEVEL_OPTIONS.find((o) => o.value === tool.level)
+                      : { value: undefined as any, label: language.t("common.default") || "Default" }
+                  }
+                  value={(o) => o.value}
+                  label={(o) => o.label}
+                  onSelect={(option) => {
+                    if (!option || option.value === undefined) {
+                      setLevel(tool.id, undefined)
+                    } else {
+                      setLevel(tool.id, option.value)
+                    }
+                  }}
+                  variant="secondary"
+                  size="small"
+                  triggerVariant="settings"
+                />
+              </div>
+            </div>
+          )}
+        </For>
+      </div>
+
+      <Show when={hasAny()}>
+        <div style={{ "margin-top": "8px", display: "flex", "justify-content": "flex-end" }}>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              const reset: Record<string, null> = {}
+              for (const tool of AGENT_TOOLS) reset[tool.id] = null as any
+              props.update({ permission: reset as any })
+            }}
+          >
+            {language.t("settings.agentBehaviour.permissions.resetAll") || "Reset All to Default"}
+          </Button>
+        </div>
+      </Show>
+    </Card>
+  )
+}
+
 
 interface Props {
   name: string
@@ -96,6 +251,16 @@ const ModeEditView: Component<Props> = (props) => {
     }
   }
 
+  const [activeTab, setActiveTab] = createSignal("general")
+
+  const hasFeaturesTab = createMemo(() => props.name === "autocomplete" || props.name === "commit")
+
+  createEffect(() => {
+    if (activeTab() === "features" && !hasFeaturesTab()) {
+      setActiveTab("general")
+    }
+  })
+
   return (
     <div>
       <div
@@ -134,361 +299,388 @@ const ModeEditView: Component<Props> = (props) => {
         </Show>
       </div>
 
-      <Show when={native()}>
-        <Card style={{ "margin-bottom": "12px" }}>
-          <div
-            style={{
-              "font-size": "12px",
-              color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-              padding: "4px 0",
-            }}
-          >
-            {language.t("settings.agentBehaviour.editMode.native")}
-          </div>
-        </Card>
-      </Show>
+      <Tabs variant="settings" orientation="horizontal" value={activeTab()} onChange={setActiveTab} style={{ "margin-bottom": "16px" }}>
+        <Tabs.List>
+          <Tabs.Trigger value="general">{language.t("settings.agentBehaviour.editMode.tab.general") || "General"}</Tabs.Trigger>
+          <Tabs.Trigger value="prompt">{language.t("settings.agentBehaviour.editMode.tab.prompt") || "Prompt"}</Tabs.Trigger>
+          <Tabs.Trigger value="permissions">{language.t("settings.agentBehaviour.editMode.tab.permissions") || "Permissions"}</Tabs.Trigger>
+          <Show when={hasFeaturesTab()}>
+            <Tabs.Trigger value="features">{language.t("settings.agentBehaviour.editMode.tab.features") || "Agent-Specific"}</Tabs.Trigger>
+          </Show>
+        </Tabs.List>
 
-      {/* Description (full-width, custom modes only) */}
-      <Show when={!native()}>
-        <Card style={{ "margin-bottom": "12px" }}>
-          <div data-slot="settings-row-label-title" style={{ "margin-bottom": "8px" }}>
-            {language.t("settings.agentBehaviour.editMode.description")}
-          </div>
-          <TextField
-            value={cfg().description ?? ""}
-            placeholder={language.t("settings.agentBehaviour.createMode.description.placeholder")}
-            onChange={(val) => update({ description: val || undefined })}
-          />
-        </Card>
-      </Show>
+        <Tabs.Content value="general">
+          <Show when={native()}>
+            <Card style={{ "margin-bottom": "12px" }}>
+              <div
+                style={{
+                  "font-size": "12px",
+                  color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                  padding: "4px 0",
+                }}
+              >
+                {language.t("settings.agentBehaviour.editMode.native")}
+              </div>
+            </Card>
+          </Show>
 
-      {/* Prompt (full-width, markdown editor) */}
-      <Card style={{ "margin-bottom": "12px" }}>
-        <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
-          {native()
-            ? language.t("settings.agentBehaviour.editMode.promptOverride")
-            : language.t("settings.agentBehaviour.editMode.prompt")}
-        </div>
-        <div data-slot="settings-row-label-subtitle" style={{ "margin-bottom": "8px" }}>
-          {language.t("settings.agentBehaviour.editMode.prompt.help")}
-        </div>
-        <MarkdownEditor
-          value={cfg().prompt ?? ""}
-          placeholder={language.t("settings.agentBehaviour.createMode.prompt.placeholder")}
-          onChange={(val) => update({ prompt: val || undefined })}
-        />
-      </Card>
+          {/* Visibility and Model Overrides */}
+          <Card data-variant="wide-input" style={{ "margin-bottom": "12px" }}>
+            <SettingsRow
+              title={language.t("settings.agentBehaviour.hidden.title")}
+              description={language.t("settings.agentBehaviour.hidden.description")}
+            >
+              <Switch
+                checked={cfg().hidden ?? false}
+                onChange={(val) => {
+                  update({ hidden: val || undefined })
+                  // Clear default_agent if hiding the current default
+                  if (val && config().default_agent === props.name) {
+                    updateConfig({ default_agent: undefined })
+                  }
+                }}
+                hideLabel
+              >
+                {language.t("settings.agentBehaviour.hidden.title")}
+              </Switch>
+            </SettingsRow>
 
-      {/* Config overrides (wider inputs) */}
-      <Card data-variant="wide-input" style={{ "margin-bottom": "12px" }}>
-        <SettingsRow
-          title={language.t("settings.agentBehaviour.modelOverride.title")}
-          description={language.t("settings.agentBehaviour.modelOverride.description")}
-        >
-          <ModelSelectorBase
-            value={parseModelString(cfg().model ?? undefined)}
-            onSelect={(providerID, modelID) => {
-              if (!providerID || !modelID) {
-                update({ model: null })
-                return
-              }
-              update({ model: `${providerID}/${modelID}` })
-            }}
-            placement="bottom-start"
-            allowClear
-            clearLabel={language.t("settings.providers.notSet")}
-          />
-        </SettingsRow>
+            <SettingsRow
+              title={language.t("settings.agentBehaviour.disable.title")}
+              description={language.t("settings.agentBehaviour.disable.description")}
+            >
+              <Switch
+                checked={cfg().disable ?? false}
+                onChange={(val) => {
+                  update({ disable: val || undefined })
+                  // Clear default_agent if disabling the current default
+                  if (val && config().default_agent === props.name) {
+                    updateConfig({ default_agent: undefined })
+                  }
+                }}
+                hideLabel
+              >
+                {language.t("settings.agentBehaviour.disable.title")}
+              </Switch>
+            </SettingsRow>
 
-        <SettingsRow
-          title={language.t("settings.agentBehaviour.fallbackModels.title")}
-          description={language.t("settings.agentBehaviour.fallbackModels.description")}
-        >
-          <div style={{ display: "flex", "flex-direction": "column", gap: "6px", width: "100%" }}>
-            <For each={cfg().fallback_models ?? []}>
-              {(entry, index) => (
-                <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
-                  <span
-                    style={{
-                      "min-width": "18px",
-                      "text-align": "right",
-                      "font-size": "11px",
-                      color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+            <SettingsRow
+              title={language.t("settings.agentBehaviour.modelOverride.title")}
+              description={language.t("settings.agentBehaviour.modelOverride.description")}
+              last
+            >
+              <ModelSelectorBase
+                value={parseModelString(cfg().model ?? undefined)}
+                onSelect={(providerID, modelID) => {
+                  if (!providerID || !modelID) {
+                    update({ model: null })
+                    return
+                  }
+                  update({ model: `${providerID}/${modelID}` })
+                }}
+                placement="bottom-start"
+                allowClear
+                clearLabel={language.t("settings.providers.notSet")}
+              />
+            </SettingsRow>
+          </Card>
+
+          {/* Description (full-width, custom modes only) */}
+          <Show when={!native()}>
+            <Card style={{ "margin-bottom": "12px" }}>
+              <div data-slot="settings-row-label-title" style={{ "margin-bottom": "8px" }}>
+                {language.t("settings.agentBehaviour.editMode.description")}
+              </div>
+              <TextField
+                value={cfg().description ?? ""}
+                placeholder={language.t("settings.agentBehaviour.createMode.description.placeholder")}
+                onChange={(val) => update({ description: val || undefined })}
+              />
+            </Card>
+          </Show>
+
+          {/* Config overrides (wider inputs) */}
+          <Card data-variant="wide-input" style={{ "margin-bottom": "12px" }}>
+            <SettingsRow
+              title={language.t("settings.agentBehaviour.fallbackModels.title")}
+              description={language.t("settings.agentBehaviour.fallbackModels.description")}
+            >
+              <div style={{ display: "flex", "flex-direction": "column", gap: "6px", width: "100%" }}>
+                <For each={cfg().fallback_models ?? []}>
+                  {(entry, index) => (
+                    <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
+                      <span
+                        style={{
+                          "min-width": "18px",
+                          "text-align": "right",
+                          "font-size": "11px",
+                          color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                        }}
+                      >
+                        {index() + 1}.
+                      </span>
+                      <div style={{ flex: 1 }}>
+                        <ModelSelectorBase
+                          value={parseModelString(entry)}
+                          onSelect={(providerID, modelID) => {
+                            if (!providerID || !modelID) return
+                            const list = [...(cfg().fallback_models ?? [])]
+                            list[index()] = `${providerID}/${modelID}`
+                            update({ fallback_models: list })
+                          }}
+                          placement="bottom-start"
+                        />
+                      </div>
+                      <IconButton
+                        size="small"
+                        variant="ghost"
+                        icon="close"
+                        onClick={() => {
+                          const list = [...(cfg().fallback_models ?? [])]
+                          list.splice(index(), 1)
+                          update({ fallback_models: list.length ? list : null })
+                        }}
+                      />
+                    </div>
+                  )}
+                </For>
+                <div>
+                  <ModelSelectorBase
+                    value={null}
+                    onSelect={(providerID, modelID) => {
+                      if (!providerID || !modelID) return
+                      const list = [...(cfg().fallback_models ?? []), `${providerID}/${modelID}`]
+                      update({ fallback_models: list })
                     }}
-                  >
-                    {index() + 1}.
-                  </span>
-                  <div style={{ flex: 1 }}>
-                    <ModelSelectorBase
-                      value={parseModelString(entry)}
-                      onSelect={(providerID, modelID) => {
-                        if (!providerID || !modelID) return
-                        const list = [...(cfg().fallback_models ?? [])]
-                        list[index()] = `${providerID}/${modelID}`
-                        update({ fallback_models: list })
-                      }}
-                      placement="bottom-start"
-                    />
-                  </div>
-                  <IconButton
-                    size="small"
-                    variant="ghost"
-                    icon="close"
-                    onClick={() => {
-                      const list = [...(cfg().fallback_models ?? [])]
-                      list.splice(index(), 1)
-                      update({ fallback_models: list.length ? list : null })
+                    placement="bottom-start"
+                    clearLabel={language.t("settings.agentBehaviour.fallbackModels.add")}
+                    allowClear
+                  />
+                </div>
+              </div>
+            </SettingsRow>
+
+            <SettingsRow
+              title={language.t("settings.agentBehaviour.temperature.title")}
+              description={language.t("settings.agentBehaviour.temperature.description")}
+            >
+              <TextField
+                value={cfg().temperature?.toString() ?? ""}
+                placeholder={language.t("common.default")}
+                onChange={(val) => {
+                  const parsed = parseFloat(val)
+                  update({ temperature: isNaN(parsed) ? undefined : parsed })
+                }}
+              />
+            </SettingsRow>
+
+            <SettingsRow
+              title={language.t("settings.agentBehaviour.topP.title")}
+              description={language.t("settings.agentBehaviour.topP.description")}
+            >
+              <TextField
+                value={cfg().top_p?.toString() ?? ""}
+                placeholder={language.t("common.default")}
+                onChange={(val) => {
+                  const parsed = parseFloat(val)
+                  update({ top_p: isNaN(parsed) ? undefined : parsed })
+                }}
+              />
+            </SettingsRow>
+
+            <SettingsRow
+              title={language.t("settings.agentBehaviour.maxSteps.title")}
+              description={language.t("settings.agentBehaviour.maxSteps.description")}
+            >
+              <TextField
+                value={cfg().steps?.toString() ?? ""}
+                placeholder={language.t("common.default")}
+                onChange={(val) => {
+                  const parsed = parseInt(val, 10)
+                  update({ steps: isNaN(parsed) ? undefined : parsed })
+                }}
+              />
+            </SettingsRow>
+
+            
+            <SettingsRow
+              title="Auto-Approve Timeouts"
+              description="Override global auto-approve settings for this specific agent."
+              last
+            >
+              <div style={{ display: "flex", "flex-direction": "column", gap: "8px" }}>
+                <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+                  <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                    Action timeout (seconds)
+                  </label>
+                  <input
+                    type="number"
+                    style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+                    value={cfg().auto_approve?.timeout ?? ""}
+                    placeholder="Global"
+                    min="0"
+                    max="300"
+                    onChange={(e) => {
+                      const val = e.currentTarget.value
+                      const parsed = parseInt(val, 10)
+                      const existing = cfg().auto_approve ?? {}
+                      const updated = { ...existing, timeout: isNaN(parsed) ? undefined : parsed }
+                      if (updated.timeout === undefined && updated.question_timeout === undefined) {
+                        update({ auto_approve: null })
+                      } else {
+                        update({ auto_approve: updated })
+                      }
                     }}
                   />
                 </div>
-              )}
-            </For>
-            <div>
-              <ModelSelectorBase
-                value={null}
-                onSelect={(providerID, modelID) => {
-                  if (!providerID || !modelID) return
-                  const list = [...(cfg().fallback_models ?? []), `${providerID}/${modelID}`]
-                  update({ fallback_models: list })
-                }}
-                placement="bottom-start"
-                clearLabel={language.t("settings.agentBehaviour.fallbackModels.add")}
-                allowClear
-              />
-            </div>
-          </div>
-        </SettingsRow>
-
-        <SettingsRow
-          title={language.t("settings.agentBehaviour.temperature.title")}
-          description={language.t("settings.agentBehaviour.temperature.description")}
-        >
-          <TextField
-            value={cfg().temperature?.toString() ?? ""}
-            placeholder={language.t("common.default")}
-            onChange={(val) => {
-              const parsed = parseFloat(val)
-              update({ temperature: isNaN(parsed) ? undefined : parsed })
-            }}
-          />
-        </SettingsRow>
-
-        <SettingsRow
-          title={language.t("settings.agentBehaviour.topP.title")}
-          description={language.t("settings.agentBehaviour.topP.description")}
-        >
-          <TextField
-            value={cfg().top_p?.toString() ?? ""}
-            placeholder={language.t("common.default")}
-            onChange={(val) => {
-              const parsed = parseFloat(val)
-              update({ top_p: isNaN(parsed) ? undefined : parsed })
-            }}
-          />
-        </SettingsRow>
-
-        <SettingsRow
-          title={language.t("settings.agentBehaviour.maxSteps.title")}
-          description={language.t("settings.agentBehaviour.maxSteps.description")}
-        >
-          <TextField
-            value={cfg().steps?.toString() ?? ""}
-            placeholder={language.t("common.default")}
-            onChange={(val) => {
-              const parsed = parseInt(val, 10)
-              update({ steps: isNaN(parsed) ? undefined : parsed })
-            }}
-          />
-        </SettingsRow>
-
-        
-        <SettingsRow
-          title="Auto-Approve Timeouts"
-          description="Override global auto-approve settings for this specific agent."
-        >
-          <div style={{ display: "flex", "flex-direction": "column", gap: "8px" }}>
-            <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-              <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
-                Action timeout (seconds)
-              </label>
-              <input
-                type="number"
-                style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
-                value={cfg().auto_approve?.timeout ?? ""}
-                placeholder="Global"
-                min="0"
-                max="300"
-                onChange={(e) => {
-                  const val = e.currentTarget.value
-                  const parsed = parseInt(val, 10)
-                  const existing = cfg().auto_approve ?? {}
-                  const updated = { ...existing, timeout: isNaN(parsed) ? undefined : parsed }
-                  if (updated.timeout === undefined && updated.question_timeout === undefined) {
-                    update({ auto_approve: null })
-                  } else {
-                    update({ auto_approve: updated })
-                  }
-                }}
-              />
-            </div>
-            <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-              <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
-                Question timeout (seconds)
-              </label>
-              <input
-                type="number"
-                style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
-                value={cfg().auto_approve?.question_timeout ?? ""}
-                placeholder="Global"
-                min="0"
-                max="300"
-                onChange={(e) => {
-                  const val = e.currentTarget.value
-                  const parsed = parseInt(val, 10)
-                  const existing = cfg().auto_approve ?? {}
-                  const updated = { ...existing, question_timeout: isNaN(parsed) ? undefined : parsed }
-                  if (updated.timeout === undefined && updated.question_timeout === undefined) {
-                    update({ auto_approve: null })
-                  } else {
-                    update({ auto_approve: updated })
-                  }
-                }}
-              />
-            </div>
-          </div>
-        </SettingsRow>
-        
-
-        <SettingsRow
-          title={language.t("settings.agentBehaviour.hidden.title")}
-          description={language.t("settings.agentBehaviour.hidden.description")}
-        >
-          <Switch
-            checked={cfg().hidden ?? false}
-            onChange={(val) => {
-              update({ hidden: val || undefined })
-              // Clear default_agent if hiding the current default
-              if (val && config().default_agent === props.name) {
-                updateConfig({ default_agent: undefined })
-              }
-            }}
-            hideLabel
-          >
-            {language.t("settings.agentBehaviour.hidden.title")}
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title={language.t("settings.agentBehaviour.disable.title")}
-          description={language.t("settings.agentBehaviour.disable.description")}
-          last
-        >
-          <Switch
-            checked={cfg().disable ?? false}
-            onChange={(val) => {
-              update({ disable: val || undefined })
-              // Clear default_agent if disabling the current default
-              if (val && config().default_agent === props.name) {
-                updateConfig({ default_agent: undefined })
-              }
-            }}
-            hideLabel
-          >
-            {language.t("settings.agentBehaviour.disable.title")}
-          </Switch>
-        </SettingsRow>
-      </Card>
-
-      <Show when={props.name === "autocomplete" && !cfg().disable}>
-        <Card style={{ "margin-bottom": "12px" }}>
-          <SettingsRow
-            title={language.t("settings.autocomplete.autoTrigger.title")}
-            description={language.t("settings.autocomplete.autoTrigger.description")}
-          >
-            <Switch
-              checked={enableAutoTrigger()}
-              onChange={(checked) => updateAutocompleteSetting("enableAutoTrigger", checked)}
-              hideLabel
-            >
-              {language.t("settings.autocomplete.autoTrigger.title")}
-            </Switch>
-          </SettingsRow>
-
-          <SettingsRow
-            title={language.t("settings.autocomplete.smartKeybinding.title")}
-            description={language.t("settings.autocomplete.smartKeybinding.description")}
-          >
-            <Switch
-              checked={enableSmartInlineTaskKeybinding()}
-              onChange={(checked) => updateAutocompleteSetting("enableSmartInlineTaskKeybinding", checked)}
-              hideLabel
-            >
-              {language.t("settings.autocomplete.smartKeybinding.title")}
-            </Switch>
-          </SettingsRow>
-
-          <SettingsRow
-            title={language.t("settings.autocomplete.chatAutocomplete.title")}
-            description={language.t("settings.autocomplete.chatAutocomplete.description")}
-            last
-          >
-            <Switch
-              checked={enableChatAutocomplete()}
-              onChange={(checked) => updateAutocompleteSetting("enableChatAutocomplete", checked)}
-              hideLabel
-            >
-              {language.t("settings.autocomplete.chatAutocomplete.title")}
-            </Switch>
-          </SettingsRow>
-        </Card>
-      </Show>
-
-      <Show when={props.name === "commit" && !cfg().disable}>
-        <Card style={{ "margin-bottom": "12px" }}>
-          <SettingsRow
-            title={language.t("settings.commitMessage.override.title")}
-            description={language.t("settings.commitMessage.override.description")}
-            last={!commitExpanded[0]()}
-          >
-            <Switch checked={commitExpanded[0]()} onChange={toggleCommitPrompt} hideLabel>
-              {language.t("settings.commitMessage.override.title")}
-            </Switch>
-          </SettingsRow>
-
-          <Show when={commitExpanded[0]()}>
-            <div style={{ "padding-top": "8px" }}>
-              <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
-                {language.t("settings.commitMessage.prompt.title")}
+                <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+                  <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                    Question timeout (seconds)
+                  </label>
+                  <input
+                    type="number"
+                    style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+                    value={cfg().auto_approve?.question_timeout ?? ""}
+                    placeholder="Global"
+                    min="0"
+                    max="300"
+                    onChange={(e) => {
+                      const val = e.currentTarget.value
+                      const parsed = parseInt(val, 10)
+                      const existing = cfg().auto_approve ?? {}
+                      const updated = { ...existing, question_timeout: isNaN(parsed) ? undefined : parsed }
+                      if (updated.timeout === undefined && updated.question_timeout === undefined) {
+                        update({ auto_approve: null })
+                      } else {
+                        update({ auto_approve: updated })
+                      }
+                    }}
+                  />
+                </div>
               </div>
-              <div data-slot="settings-row-label-subtitle" style={{ "margin-bottom": "8px" }}>
-                {language.t("settings.commitMessage.prompt.description")}
-              </div>
-              <div style={{ "max-height": "300px", overflow: "auto" }}>
-                <TextField
-                  value={config().commit_message?.prompt ?? ""}
-                  placeholder={language.t("settings.commitMessage.prompt.placeholder")}
-                  multiline
-                  onChange={(val) => {
-                    updateConfig({ commit_message: { prompt: val } })
-                  }}
-                />
-              </div>
+            </SettingsRow>
+          </Card>
+        </Tabs.Content>
+
+        <Tabs.Content value="prompt">
+          {/* Prompt (full-width, markdown editor) */}
+          <Card style={{ "margin-bottom": "12px" }}>
+            <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
+              {native()
+                ? language.t("settings.agentBehaviour.editMode.promptOverride")
+                : language.t("settings.agentBehaviour.editMode.prompt")}
             </div>
+            <div data-slot="settings-row-label-subtitle" style={{ "margin-bottom": "8px" }}>
+              {language.t("settings.agentBehaviour.editMode.prompt.help")}
+            </div>
+            <MarkdownEditor
+              value={cfg().prompt ?? ""}
+              placeholder={language.t("settings.agentBehaviour.createMode.prompt.placeholder")}
+              onChange={(val) => update({ prompt: val || undefined })}
+            />
+          </Card>
+        </Tabs.Content>
+
+        <Tabs.Content value="permissions">
+          {/* Per-agent permission overrides */}
+          <AgentPermissionEditor cfg={cfg()} update={update} />
+
+          {/* Calculated permissions (read-only, collapsible) */}
+          <Show when={agent()?.permission} keyed>
+            {(rules) => (
+              <PermissionRuleset
+                agent={props.name}
+                rules={rules}
+                expanded={expanded()}
+                onToggle={() => setExpanded((v) => !v)}
+              />
+            )}
           </Show>
-        </Card>
-      </Show>
+        </Tabs.Content>
 
-      {/* Calculated permissions (read-only, collapsible) */}
-      <Show when={agent()?.permission} keyed>
-        {(rules) => (
-          <PermissionRuleset
-            agent={props.name}
-            rules={rules}
-            expanded={expanded()}
-            onToggle={() => setExpanded((v) => !v)}
-          />
-        )}
-      </Show>
+        <Show when={hasFeaturesTab()}>
+          <Tabs.Content value="features">
+            <Show when={props.name === "autocomplete" && !cfg().disable}>
+              <Card style={{ "margin-bottom": "12px" }}>
+                <SettingsRow
+                  title={language.t("settings.autocomplete.autoTrigger.title")}
+                  description={language.t("settings.autocomplete.autoTrigger.description")}
+                >
+                  <Switch
+                    checked={enableAutoTrigger()}
+                    onChange={(checked) => updateAutocompleteSetting("enableAutoTrigger", checked)}
+                    hideLabel
+                  >
+                    {language.t("settings.autocomplete.autoTrigger.title")}
+                  </Switch>
+                </SettingsRow>
+
+                <SettingsRow
+                  title={language.t("settings.autocomplete.smartKeybinding.title")}
+                  description={language.t("settings.autocomplete.smartKeybinding.description")}
+                >
+                  <Switch
+                    checked={enableSmartInlineTaskKeybinding()}
+                    onChange={(checked) => updateAutocompleteSetting("enableSmartInlineTaskKeybinding", checked)}
+                    hideLabel
+                  >
+                    {language.t("settings.autocomplete.smartKeybinding.title")}
+                  </Switch>
+                </SettingsRow>
+
+                <SettingsRow
+                  title={language.t("settings.autocomplete.chatAutocomplete.title")}
+                  description={language.t("settings.autocomplete.chatAutocomplete.description")}
+                  last
+                >
+                  <Switch
+                    checked={enableChatAutocomplete()}
+                    onChange={(checked) => updateAutocompleteSetting("enableChatAutocomplete", checked)}
+                    hideLabel
+                  >
+                    {language.t("settings.autocomplete.chatAutocomplete.title")}
+                  </Switch>
+                </SettingsRow>
+              </Card>
+            </Show>
+
+            <Show when={props.name === "commit" && !cfg().disable}>
+              <Card style={{ "margin-bottom": "12px" }}>
+                <SettingsRow
+                  title={language.t("settings.commitMessage.override.title")}
+                  description={language.t("settings.commitMessage.override.description")}
+                  last={!commitExpanded[0]()}
+                >
+                  <Switch checked={commitExpanded[0]()} onChange={toggleCommitPrompt} hideLabel>
+                    {language.t("settings.commitMessage.override.title")}
+                  </Switch>
+                </SettingsRow>
+
+                <Show when={commitExpanded[0]()}>
+                  <div style={{ "padding-top": "8px" }}>
+                    <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
+                      {language.t("settings.commitMessage.prompt.title")}
+                    </div>
+                    <div data-slot="settings-row-label-subtitle" style={{ "margin-bottom": "8px" }}>
+                      {language.t("settings.commitMessage.prompt.description")}
+                    </div>
+                    <div style={{ "max-height": "300px", overflow: "auto" }}>
+                      <TextField
+                        value={config().commit_message?.prompt ?? ""}
+                        placeholder={language.t("settings.commitMessage.prompt.placeholder")}
+                        multiline
+                        onChange={(val) => {
+                          updateConfig({ commit_message: { prompt: val } })
+                        }}
+                      />
+                    </div>
+                  </div>
+                </Show>
+              </Card>
+            </Show>
+          </Tabs.Content>
+        </Show>
+      </Tabs>
 
       <div style={{ display: "flex", "justify-content": "flex-end" }}>
         <Button variant="ghost" onClick={props.onBack}>
@@ -502,13 +694,6 @@ const ModeEditView: Component<Props> = (props) => {
 // ---------------------------------------------------------------------------
 // Collapsible permissions ruleset display
 // ---------------------------------------------------------------------------
-
-const ACTION_COLORS: Record<string, { bg: string; fg: string }> = {
-  allow: { bg: "var(--vscode-terminal-ansiGreen, #3fb950)", fg: "var(--vscode-editor-background, #1e1e1e)" },
-  ask: { bg: "var(--vscode-editorWarning-foreground, #cca700)", fg: "var(--vscode-editor-background, #1e1e1e)" },
-  deny: { bg: "var(--vscode-errorForeground, #f85149)", fg: "var(--vscode-editor-background, #fff)" },
-  unknown: { bg: "var(--vscode-descriptionForeground, #8b949e)", fg: "var(--vscode-editor-background, #1e1e1e)" },
-}
 
 interface RulesetProps {
   agent: string

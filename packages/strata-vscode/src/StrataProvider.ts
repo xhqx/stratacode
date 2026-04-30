@@ -459,10 +459,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview)
     this.setupWebviewMessageHandler(webviewView.webview)
 
-    this.view = webviewView     this.sidebarVisible = webviewView.visible     vscode.commands.executeCommand("setContext", "strata-code.new.sidebarVisible", webviewView.visible)
+    this.view = webviewView
+    this.sidebarVisible = webviewView.visible
+    vscode.commands.executeCommand("setContext", "strata-code.new.sidebarVisible", webviewView.visible)
     this.visibilityDisposable?.dispose()
     this.visibilityDisposable = webviewView.onDidChangeVisibility(() => {
-      this.sidebarVisible = webviewView.visible       vscode.commands.executeCommand("setContext", "strata-code.new.sidebarVisible", webviewView.visible)
+      this.sidebarVisible = webviewView.visible
+      vscode.commands.executeCommand("setContext", "strata-code.new.sidebarVisible", webviewView.visible)
       if (this.statsPoller) {
         this.statsPoller.setEnabled(webviewView.visible)
         this.statsPoller.setVisible(webviewView.visible)

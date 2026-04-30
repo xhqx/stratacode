@@ -254,7 +254,14 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
     }
   }
 
+  const cancelTimerIfRunning = () => {
+    if (session.timers()[props.request.id] !== undefined) {
+      session.cancelTimer(props.request.id)
+    }
+  }
+
   const onRoot = (e: KeyboardEvent) => {
+    cancelTimerIfRunning()
     if (e.key === "Escape") {
       e.preventDefault()
       e.stopPropagation()
@@ -274,6 +281,8 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
       return
     }
   }
+
+  const onMouseDown = () => cancelTimerIfRunning()
 
   // Keep keyboard navigation when the webview already has focus, but do not
   // steal focus from the editor, terminal, or other VS Code surfaces.
@@ -297,6 +306,7 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
       data-collapsed={store.collapsed ? "true" : "false"}
       onClick={(e: MouseEvent) => e.stopPropagation()}
       onKeyDown={onRoot}
+      onMouseDown={onMouseDown}
     >
       {/* Single unified header row — always visible */}
       <div data-slot="question-dock-header" onClick={toggleCollapse}>
@@ -374,7 +384,15 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
                         </span>
                       </span>
                       <span data-slot="question-option-main">
-                        <span data-slot="option-label">{localized.label()}</span>
+                        <span data-slot="option-label">
+                          {localized.label()}
+                          <Show when={i() === 0 && session.timers()[props.request.id] !== undefined}>
+                            {" "}
+                            <span style={{ "color": "var(--text-weak-base, var(--vscode-descriptionForeground))", "font-size": "0.9em" }}>
+                              ({session.timers()[props.request.id]}s)
+                            </span>
+                          </Show>
+                        </span>
                         <Show when={localized.description()}>
                           <span data-slot="option-description">{localized.description()}</span>
                         </Show>

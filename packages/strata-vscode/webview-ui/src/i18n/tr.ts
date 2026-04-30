@@ -1525,6 +1525,10 @@ export const dict = {
   "settings.agentBehaviour.createMode.prompt.placeholder":
     "e.g. You are a code reviewer. Focus on code quality, best practices, and potential bugs.",
   "settings.agentBehaviour.editMode": "Modu Düzenle",
+  /* TODO: Translate */ "settings.agentBehaviour.editMode.tab.general": "General",
+  /* TODO: Translate */ "settings.agentBehaviour.editMode.tab.prompt": "Prompt",
+  /* TODO: Translate */ "settings.agentBehaviour.editMode.tab.permissions": "Permissions",
+  /* TODO: Translate */ "settings.agentBehaviour.editMode.tab.features": "Agent-Specific",
   "settings.agentBehaviour.editMode.back": "Listeye dön",
   "settings.agentBehaviour.editMode.description": "Açıklama",
   "settings.agentBehaviour.editMode.native":
