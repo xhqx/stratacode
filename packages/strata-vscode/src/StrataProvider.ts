@@ -221,6 +221,12 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private settingsConfigDisposable: vscode.Disposable | null = null
   private viewStateDisposable: vscode.Disposable | null = null
   private visibilityDisposable: vscode.Disposable | null = null
+  /** Whether the sidebar panel is currently visible to the user. */
+  private sidebarVisible = false // stratacode_change
+  /** Reference to the WebviewView for badge updates. */
+  private view: vscode.WebviewView | null = null // stratacode_change
+  /** Number of pending prompts (permissions + questions) — drives the Activity Bar badge. */
+  private pendingPrompts = 0 // stratacode_change
 
   /** Lazily initialized ignore controller for .stratacodeignore filtering */
   private ignoreController: FileIgnoreController | null = null
@@ -444,14 +450,23 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview)
     this.setupWebviewMessageHandler(webviewView.webview)
 
+    this.view = webviewView // stratacode_change
+    this.sidebarVisible = webviewView.visible // stratacode_change
     vscode.commands.executeCommand("setContext", "strata-code.new.sidebarVisible", webviewView.visible)
     this.visibilityDisposable?.dispose()
     this.visibilityDisposable = webviewView.onDidChangeVisibility(() => {
+      this.sidebarVisible = webviewView.visible // stratacode_change
       vscode.commands.executeCommand("setContext", "strata-code.new.sidebarVisible", webviewView.visible)
       if (this.statsPoller) {
         this.statsPoller.setEnabled(webviewView.visible)
         this.statsPoller.setVisible(webviewView.visible)
       }
+      // stratacode_change start — clear badge when sidebar becomes visible
+      if (webviewView.visible && this.pendingPrompts > 0) {
+        this.pendingPrompts = 0
+        this.updateBadge()
+      }
+      // stratacode_change end
       this.focusSession(webviewView.visible ? this.currentSession?.id : undefined)
     })
     this.initializeConnection()
@@ -3116,6 +3131,36 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       }
     }
 
+    // stratacode_change start — badge + toast for permission/question requests
+    if (event.type === "permission.asked" || event.type === "question.asked") {
+      this.pendingPrompts++
+      this.updateBadge()
+      if (!this.sidebarVisible) {
+        const enabled = vscode.workspace.getConfiguration("strata-code.new.notifications").get<boolean>("permissions", true)
+        if (enabled) {
+          const label = event.type === "permission.asked"
+            ? `Permission required: ${event.properties.permission ?? "tool"}`
+            : "Agent is waiting for your response"
+          void vscode.window.showInformationMessage(
+            label,
+            "Review",
+          ).then((action) => {
+            if (action === "Review") {
+              vscode.commands.executeCommand(`${StrataProvider.viewType}.focus`)
+            }
+          })
+        }
+      }
+    }
+    if (
+      (event.type === "permission.replied" || event.type === "question.replied" || event.type === "question.rejected")
+      && this.pendingPrompts > 0
+    ) {
+      this.pendingPrompts--
+      this.updateBadge()
+    }
+    // stratacode_change end
+
     handleNetworkEvent(event.type as string, event.properties as any, this.client, (s) => this.getWorkspaceDirectory(s))
 
     if (event.type === "indexing.status" && directory) {
@@ -3135,6 +3180,15 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.streams.flush(sessionID)
     this.postMessage(msg)
   }
+  // stratacode_change start
+  /** Set or clear the Activity Bar badge based on pending prompt count. */
+  private updateBadge(): void {
+    if (!this.view) return
+    this.view.badge = this.pendingPrompts > 0
+      ? { value: this.pendingPrompts, tooltip: `${this.pendingPrompts} action${this.pendingPrompts > 1 ? "s" : ""} needed` }
+      : undefined
+  }
+  // stratacode_change end
 
   /** Wait until the webview has sent "webviewReady". Resolves immediately when already ready. */
   public waitForReady(): Promise<void> {
