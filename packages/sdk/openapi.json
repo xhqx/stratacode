@@ -8224,6 +8224,178 @@
         ]
       }
     },
+    "/repomap/generate": {
+      "post": {
+        "operationId": "repoMap.generate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Generate repository map",
+        "description": "Generate a token-budgeted repository map of the workspace",
+        "responses": {
+          "200": {
+            "description": "Repository map generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "map": {
+                      "type": "string"
+                    },
+                    "stats": {
+                      "type": "object",
+                      "properties": {
+                        "files": {
+                          "type": "number"
+                        },
+                        "symbols": {
+                          "type": "number"
+                        },
+                        "chars": {
+                          "type": "number"
+                        },
+                        "budget": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["files", "symbols", "chars", "budget"]
+                    }
+                  },
+                  "required": ["map", "stats"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "budget": {
+                    "description": "Character budget limit",
+                    "type": "number"
+                  },
+                  "mentioned": {
+                    "description": "Boost files that are mentioned",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.repoMap.generate({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/repomap/invalidate": {
+      "post": {
+        "operationId": "repoMap.invalidate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Invalidate repository map cache",
+        "description": "Clears the parsed tag cache for specific files, or the entire cache if omitted.",
+        "responses": {
+          "200": {
+            "description": "Cache invalidated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["success"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "description": "Specific files to invalidate",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.repoMap.invalidate({\n  ...\n})"
+          }
+        ]
+      }
+    },
     "/suggestion": {
       "get": {
         "operationId": "suggestion.list",
@@ -9648,6 +9820,198 @@
           {
             "lang": "js",
             "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.stratacode.sessionImport.part({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/stratacode/memory": {
+      "get": {
+        "operationId": "memory.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "List memory entries",
+        "description": "List all semantic project memory entries.",
+        "responses": {
+          "200": {
+            "description": "List of entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "content": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["id", "title", "content"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.memory.list({\n  ...\n})"
+          }
+        ]
+      },
+      "post": {
+        "operationId": "memory.add",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Add memory entry",
+        "description": "Add a new semantic project memory entry.",
+        "responses": {
+          "200": {
+            "description": "Entry added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                },
+                "required": ["id", "title", "content"]
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.memory.add({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/stratacode/memory/delete": {
+      "post": {
+        "operationId": "memory.delete",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Delete memory entry",
+        "description": "Delete a memory entry by ID.",
+        "responses": {
+          "200": {
+            "description": "Entry deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": ["id"]
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.memory.delete({\n  ...\n})"
           }
         ]
       }
@@ -15092,6 +15456,65 @@
             "items": {
               "type": "string"
             }
+          },
+          "model_pool": {
+            "description": "Model pool configuration for concurrent load-balanced subagent dispatch.",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "models": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "max_concurrent": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "timeout": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": ["models"]
+          },
+          "auto_approve": {
+            "type": "object",
+            "properties": {
+              "timeout": {
+                "description": "Auto-approve permissions after N seconds of inaction (0 = disabled)",
+                "type": "number"
+              },
+              "question_timeout": {
+                "description": "Auto-answer questions after N seconds (0 = disabled, selects first option)",
+                "type": "number"
+              }
+            }
+          },
+          "retry": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "delay": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "max_delay": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
           }
         },
         "additionalProperties": {}
@@ -15636,6 +16059,55 @@
           "indexing": {
             "$ref": "#/components/schemas/IndexingConfig"
           },
+          "retry": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "description": "Enable automatic retry on transient agent errors (default: true)",
+                "type": "boolean"
+              },
+              "limit": {
+                "description": "Maximum number of retry attempts (0 = no retries, default: unlimited)",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "delay": {
+                "description": "Base delay in seconds for exponential backoff (default: 2)",
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "max_delay": {
+                "description": "Maximum delay in seconds for exponential backoff cap (default: 30)",
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          },
+          "repomap": {
+            "type": "object",
+            "properties": {
+              "budget": {
+                "description": "Character budget limit for the generated repository map (0 = disabled, default: 4096)",
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "project_memory": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "description": "Whether automatic memory extraction on branch change is enabled (default: false)",
+                "type": "boolean"
+              },
+              "max_commits": {
+                "description": "Maximum number of recent commits to analyze per pull/branch change (default: 10)",
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          },
           "model": {
             "description": "Model to use in the format of provider/model, eg anthropic/claude-2",
             "anyOf": [
@@ -16000,6 +16472,69 @@
                 "type": "integer",
                 "exclusiveMinimum": 0,
                 "maximum": 9007199254740991
+              }
+            }
+          },
+          "auto_approve": {
+            "type": "object",
+            "properties": {
+              "timeout": {
+                "description": "Auto-approve permissions after N seconds of inaction (0 = disabled)",
+                "type": "number"
+              },
+              "question_timeout": {
+                "description": "Auto-answer questions after N seconds (0 = disabled, selects first option)",
+                "type": "number"
+              }
+            }
+          },
+          "acp_agents": {
+            "description": "External ACP (Agent Client Protocol) agents",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "description": "Display name",
+                  "type": "string"
+                },
+                "command": {
+                  "description": "Command to execute the ACP agent",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "env": {
+                  "description": "Environment variables for the ACP agent",
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "cwd": {
+                  "description": "Working directory for the ACP agent",
+                  "type": "string"
+                },
+                "transport": {
+                  "description": "Transport type (stdio or http)",
+                  "type": "string",
+                  "enum": ["stdio", "http"]
+                },
+                "url": {
+                  "description": "URL for HTTP transport",
+                  "type": "string"
+                },
+                "trusted": {
+                  "description": "Auto-approve file operations from this agent",
+                  "type": "boolean"
+                }
               }
             }
           }
@@ -17562,6 +18097,51 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          },
+          "model_pool": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "models": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "max_concurrent": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "timeout": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": ["models"]
+          },
+          "retry": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "delay": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "max_delay": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
             }
           }
         },

@@ -388,7 +388,12 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
                           {localized.label()}
                           <Show when={i() === 0 && session.timers()[props.request.id] !== undefined}>
                             {" "}
-                            <span style={{ "color": "var(--text-weak-base, var(--vscode-descriptionForeground))", "font-size": "0.9em" }}>
+                            <span
+                              style={{
+                                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                                "font-size": "0.9em",
+                              }}
+                            >
                               ({session.timers()[props.request.id]}s)
                             </span>
                           </Show>
@@ -509,7 +514,8 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
                   >
                     {last() && single()
                       ? session.timers()[props.request.id] !== undefined
-                        ? `${language.t("ui.common.submit")} (${session.timers()[props.request.id]}s)`                         : language.t("ui.common.submit")
+                        ? `${language.t("ui.common.submit")} (${session.timers()[props.request.id]}s)`
+                        : language.t("ui.common.submit")
                       : last()
                         ? language.t("common.review")
                         : language.t("ui.common.next")}
@@ -517,11 +523,9 @@ export const QuestionDock: Component<{ request: QuestionRequest }> = (props) => 
                 }
               >
                 <Button variant="primary" size="small" onClick={submit} disabled={store.sending}>
-                  
                   {session.timers()[props.request.id] !== undefined
                     ? `${language.t("ui.common.submit")} (${session.timers()[props.request.id]}s)`
                     : language.t("ui.common.submit")}
-                  
                 </Button>
               </Show>
             </div>

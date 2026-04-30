@@ -87,7 +87,8 @@ export const dict = {
 
   // Retry UI keys
   "settings.agentBehaviour.retry.title": "Resilience & Retries",
-  "settings.agentBehaviour.retry.description": "Configure automatic retry logic and backoff delays when the agent experiences transient failures.",
+  "settings.agentBehaviour.retry.description":
+    "Configure automatic retry logic and backoff delays when the agent experiences transient failures.",
 
   // Changed files panel
   "chat.changedFiles.title": "Changed Files",
@@ -98,7 +99,8 @@ export const dict = {
   "settings.agentBehaviour.subtab.acpAgents": "ACP Agents",
   "settings.agentBehaviour.card.addAcp": "Add ACP agent",
   "settings.agentBehaviour.removeAcp.title": "Remove ACP agent?",
-  "settings.agentBehaviour.removeAcp.confirm": "Are you sure you want to remove the '{{name}}' ACP agent configuration?",
+  "settings.agentBehaviour.removeAcp.confirm":
+    "Are you sure you want to remove the '{{name}}' ACP agent configuration?",
   "settings.agentBehaviour.removeAcp.button": "Remove",
 
   "settings.agentBehaviour.acpBrowseMarketplace": "Browse Marketplace",

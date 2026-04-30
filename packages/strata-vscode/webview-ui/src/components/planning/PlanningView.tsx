@@ -21,19 +21,21 @@ export function PlanningView(props: Props) {
 
   return (
     <div data-component="planning-view" style={{ display: "flex", "flex-direction": "column", height: "100%" }}>
-      <div data-slot="planning-header" class="history-view-header" style={{ padding: "8px", "border-bottom": "1px solid var(--vscode-panel-border)" }}>
+      <div
+        data-slot="planning-header"
+        class="history-view-header"
+        style={{ padding: "8px", "border-bottom": "1px solid var(--vscode-panel-border)" }}
+      >
         <div style={{ display: "flex", "align-items": "center", "margin-bottom": "8px" }}>
           <Button variant="ghost" size="small" icon="arrow-left" onClick={() => props.onBack?.()}>
             {language.t("planning.back")}
           </Button>
-          <span style={{ flex: 1, "font-weight": 600, "margin-left": "8px" }}>
-            {language.t("planning.title")}
-          </span>
+          <span style={{ flex: 1, "font-weight": 600, "margin-left": "8px" }}>{language.t("planning.title")}</span>
           <Button size="small" icon={"add" as any} onClick={() => setIsAdding(true)}>
             {language.t("planning.addTask")}
           </Button>
         </div>
-        
+
         <div style={{ display: "flex", gap: "8px" }}>
           <Button
             variant={viewMode() === "list" ? "primary" : "secondary"}

@@ -5,7 +5,7 @@ import type { PlanningTask } from "./types"
  */
 export function hasCycle(tasks: PlanningTask[], taskId: string, newDeps: string[]): boolean {
   const taskMap = new Map<string, string[]>()
-  
+
   // Build adjacency list
   for (const t of tasks) {
     if (t.id === taskId) {
@@ -49,13 +49,13 @@ export function hasCycle(tasks: PlanningTask[], taskId: string, newDeps: string[
 export function topologicalOrder(tasks: PlanningTask[]): string[] | null {
   const inDegree = new Map<string, number>()
   const adjList = new Map<string, string[]>()
-  
+
   // Initialize
   for (const t of tasks) {
     inDegree.set(t.id, 0)
     adjList.set(t.id, [])
   }
-  
+
   // Build graph
   for (const t of tasks) {
     const deps = t.dependsOn || []
@@ -69,18 +69,18 @@ export function topologicalOrder(tasks: PlanningTask[]): string[] | null {
       inDegree.set(t.id, inDegree.get(t.id)! + 1)
     }
   }
-  
+
   const queue: string[] = []
   for (const [id, degree] of inDegree.entries()) {
     if (degree === 0) queue.push(id)
   }
-  
+
   const order: string[] = []
-  
+
   while (queue.length > 0) {
     const current = queue.shift()!
     order.push(current)
-    
+
     const neighbors = adjList.get(current) || []
     for (const neighbor of neighbors) {
       inDegree.set(neighbor, inDegree.get(neighbor)! - 1)
@@ -89,12 +89,12 @@ export function topologicalOrder(tasks: PlanningTask[]): string[] | null {
       }
     }
   }
-  
+
   // If order length != number of unique nodes, there's a cycle
   if (order.length !== inDegree.size) {
     return null
   }
-  
+
   return order
 }
 
@@ -121,7 +121,7 @@ export function isReady(task: PlanningTask, allTasks: PlanningTask[], now: Date)
   // Check dependencies
   if (task.dependsOn && task.dependsOn.length > 0) {
     for (const depId of task.dependsOn) {
-      const depTask = allTasks.find(t => t.id === depId)
+      const depTask = allTasks.find((t) => t.id === depId)
       if (!depTask || depTask.status !== "done") {
         return false
       }

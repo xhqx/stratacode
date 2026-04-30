@@ -35,9 +35,7 @@ export const ChangedFilesPanel: Component = () => {
     <div data-component="changed-files-panel">
       <Show
         when={files().length > 0}
-        fallback={
-          <div data-slot="changed-files-empty">{t("chat.changedFiles.empty")}</div>
-        }
+        fallback={<div data-slot="changed-files-empty">{t("chat.changedFiles.empty")}</div>}
       >
         <div data-slot="changed-files-summary">
           <span data-slot="changed-files-count">

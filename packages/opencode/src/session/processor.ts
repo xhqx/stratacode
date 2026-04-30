@@ -632,9 +632,7 @@ export const layer: Layer.Layer<
             ctx.currentText = undefined
             ctx.reasoningMap = {}
             // stratacode_change start
-            const stream = streamInput.agent.options?.isACP
-              ? acpAdapter.stream(streamInput)
-              : llm.stream(streamInput)
+            const stream = streamInput.agent.options?.isACP ? acpAdapter.stream(streamInput) : llm.stream(streamInput)
             // stratacode_change end
 
             yield* stream.pipe(
@@ -660,7 +658,12 @@ export const layer: Layer.Layer<
               SessionRetry.policy({
                 parse,
                 // stratacode_change start
-                ...StrataSessionProcessor.retryOpts({ sessionID: ctx.sessionID, abort: ac.signal, set: status.set, retry }),
+                ...StrataSessionProcessor.retryOpts({
+                  sessionID: ctx.sessionID,
+                  abort: ac.signal,
+                  set: status.set,
+                  retry,
+                }),
                 // stratacode_change end
                 set: (info) =>
                   status.set(ctx.sessionID, {

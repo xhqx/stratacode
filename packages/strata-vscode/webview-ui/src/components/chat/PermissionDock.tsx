@@ -31,7 +31,9 @@ export const PermissionDock: Component<{
     response: "once" | "reject",
     approvedAlways: string[],
     deniedAlways: string[],
-    scope?: "global" | "agent",     agent?: string,   ) => void
+    scope?: "global" | "agent",
+    agent?: string,
+  ) => void
 }> = (props) => {
   const session = useSession()
   const language = useLanguage()
@@ -64,7 +66,7 @@ export const PermissionDock: Component<{
   const loadState = savedRuleStates(rules(), saved)
   const [decisions, setDecisions] = createSignal<Record<number, RuleDecision>>(loadState)
   const [expanded, setExpanded] = createSignal(rulesExpandedPreference)
-  const [scope, setScope] = createSignal<"global" | "agent">("global") 
+  const [scope, setScope] = createSignal<"global" | "agent">("global")
   let root!: HTMLDivElement
 
   const hasRules = () => rules().length > 0
@@ -115,7 +117,6 @@ export const PermissionDock: Component<{
   }
 
   const title = () => {
-    
     const base = fromChild()
       ? language.t("notification.permission.titleSubagent")
       : language.t("notification.permission.title")
@@ -123,7 +124,6 @@ export const PermissionDock: Component<{
       return `${base} — Agent: ${props.request.agent}`
     }
     return base
-    
   }
 
   const focusPrompt = () => requestAnimationFrame(() => window.dispatchEvent(new Event("focusPrompt")))
@@ -207,20 +207,45 @@ export const PermissionDock: Component<{
 
               <div data-slot="permission-rules-collapse" data-open={expanded() ? "" : undefined}>
                 <div data-slot="permission-rules-collapse-inner">
-                  
                   <Show when={props.request.agent}>
                     <div style={{ padding: "0 var(--s-gap-1) var(--s-gap-2)", display: "flex", gap: "var(--s-gap-2)" }}>
-                      <label style={{ display: "flex", "align-items": "center", gap: "var(--s-gap-1)", "font-size": "var(--s-text-small)", cursor: "pointer" }}>
-                        <input type="radio" name={`scope-${props.request.id}`} checked={scope() === "global"} onChange={() => setScope("global")} />
+                      <label
+                        style={{
+                          display: "flex",
+                          "align-items": "center",
+                          gap: "var(--s-gap-1)",
+                          "font-size": "var(--s-text-small)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name={`scope-${props.request.id}`}
+                          checked={scope() === "global"}
+                          onChange={() => setScope("global")}
+                        />
                         For all agents
                       </label>
-                      <label style={{ display: "flex", "align-items": "center", gap: "var(--s-gap-1)", "font-size": "var(--s-text-small)", cursor: "pointer" }}>
-                        <input type="radio" name={`scope-${props.request.id}`} checked={scope() === "agent"} onChange={() => setScope("agent")} />
+                      <label
+                        style={{
+                          display: "flex",
+                          "align-items": "center",
+                          gap: "var(--s-gap-1)",
+                          "font-size": "var(--s-text-small)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name={`scope-${props.request.id}`}
+                          checked={scope() === "agent"}
+                          onChange={() => setScope("agent")}
+                        />
                         For {props.request.agent} only
                       </label>
                     </div>
                   </Show>
-                  
+
                   <div data-slot="permission-rules">
                     <For each={rules()}>
                       {(rule, index) => (
@@ -291,21 +316,21 @@ export const PermissionDock: Component<{
             size="small"
             onClick={() => {
               const { approved, denied } = collectRules()
-              props.onDecide("once", approved, denied, scope(), props.request.agent)             }}
+              props.onDecide("once", approved, denied, scope(), props.request.agent)
+            }}
             disabled={props.responding}
           >
-            
             {session.timers()[props.request.id] !== undefined
               ? `${language.t("ui.permission.run")} (${session.timers()[props.request.id]}s)`
               : language.t("ui.permission.run")}
-            
           </Button>
           <Button
             variant="ghost"
             size="small"
             onClick={() => {
               const { approved, denied } = collectRules()
-              props.onDecide("reject", approved, denied, scope(), props.request.agent)             }}
+              props.onDecide("reject", approved, denied, scope(), props.request.agent)
+            }}
             disabled={props.responding}
           >
             {language.t("ui.permission.deny")}

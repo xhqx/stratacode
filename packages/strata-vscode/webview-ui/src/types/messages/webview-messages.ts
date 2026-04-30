@@ -1114,9 +1114,17 @@ export type WebviewMessage =
   | PlanningDispatchMessage
   | PlanningConfirmMessage
   | PlanningRequestStateMessage
-  
   | { type: "cancelAutoApproveTimer"; requestId: string }
-  
+  | RequestRepoMapStatsMessage
+  | InvalidateRepoMapMessage
+
+export interface RequestRepoMapStatsMessage {
+  type: "requestRepoMapStats"
+}
+
+export interface InvalidateRepoMapMessage {
+  type: "invalidateRepoMap"
+}
 
 export interface SaveKanbanTasksRequest {
   type: "saveKanbanTasks"
@@ -1145,7 +1153,12 @@ export interface PlanningAddMessage {
 export interface PlanningUpdateMessage {
   type: "planning.update"
   taskId: string
-  updates: Partial<Omit<import("./planning").PlanningTask, "id" | "created" | "sessionID" | "worktreeID" | "dispatchedAt" | "completedAt" | "error">>
+  updates: Partial<
+    Omit<
+      import("./planning").PlanningTask,
+      "id" | "created" | "sessionID" | "worktreeID" | "dispatchedAt" | "completedAt" | "error"
+    >
+  >
 }
 
 export interface PlanningRemoveMessage {

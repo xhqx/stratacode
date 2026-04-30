@@ -12,6 +12,7 @@ import PROMPT_GENERATE from "./generate.txt"
 import { makeRuntime } from "@/effect/run-service" // stratacode_change
 import PROMPT_COMPACTION from "./prompt/compaction.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
+import PROMPT_MEMORY_EXTRACTOR from "./prompt/memory_extractor.txt"
 import PROMPT_SUMMARY from "./prompt/summary.txt"
 import PROMPT_TITLE from "./prompt/title.txt"
 import { Permission } from "@/permission"
@@ -218,6 +219,27 @@ export const layer = Layer.effect(
             ),
             description: `Fast agent specialized for exploring codebases. Use this when you need to quickly find files by patterns (eg. "src/components/**/*.tsx"), search code for keywords (eg. "API endpoints"), or answer questions about the codebase (eg. "how do API endpoints work?"). When calling this agent, specify the desired thoroughness level: "quick" for basic searches, "medium" for moderate exploration, or "very thorough" for comprehensive analysis across multiple locations and naming conventions.`,
             prompt: PROMPT_EXPLORE,
+            options: {},
+            mode: "subagent",
+            native: true,
+          },
+          memory_extractor: {
+            name: "memory_extractor",
+            permission: Permission.merge(
+              defaults,
+              Permission.fromConfig({
+                "*": "deny",
+                edit: "allow",
+                bash: "allow",
+                read: "allow",
+                list: "allow",
+                glob: "allow",
+              }),
+              user,
+            ),
+            description:
+              "Agent for analyzing git commits and extracting semantic project memory into .stratacode/memory/ files.",
+            prompt: PROMPT_MEMORY_EXTRACTOR,
             options: {},
             mode: "subagent",
             native: true,

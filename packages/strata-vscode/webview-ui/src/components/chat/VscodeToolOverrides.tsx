@@ -25,15 +25,7 @@ export function registerVscodeToolOverrides() {
       render: (props) => {
         const active = () => props.status === "pending" || props.status === "running"
         const done = () => props.status === "completed" || props.status === "error"
-        return (
-          <Dynamic
-            component={upstream}
-            {...props}
-            defaultOpen
-            forceOpen={active()}
-            forceClose={done()}
-          />
-        )
+        return <Dynamic component={upstream} {...props} defaultOpen forceOpen={active()} forceClose={done()} />
       },
     })
     registered.add(name)

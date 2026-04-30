@@ -208,290 +208,295 @@ const AgentBehaviourTab: Component = () => {
         <ModeEditView name={editingAgent()} onBack={back} onRemove={confirmRemoveMode} />
       </Show>
       <Show when={agentView() === "list"}>
-    <div>
-      <div
-        style={{
-          display: "flex",
-          gap: "0",
-          "border-bottom": "1px solid var(--vscode-panel-border)",
-          "margin-bottom": "16px",
-        }}
-      >
-        <For
-          each={[
-            { id: "agents", label: language.t("settings.agentBehaviour.title") || "Agents" },
-            { id: "models", label: language.t("settings.providers.title") || "Models" },
-          ]}
-        >
-          {(tab) => (
-            <button
-              onClick={() => setActiveMainTab(tab.id as any)}
-              style={{
-                padding: "8px 16px",
-                border: "none",
-                background: "transparent",
-                color: activeMainTab() === tab.id ? "var(--vscode-tab-activeForeground)" : "var(--vscode-tab-inactiveForeground)",
-                "border-bottom": activeMainTab() === tab.id ? "2px solid var(--vscode-tab-activeBorder)" : "2px solid transparent",
-                cursor: "pointer",
-                "font-size": "12px",
-                "text-transform": "uppercase",
-                "font-weight": activeMainTab() === tab.id ? "600" : "normal",
-              }}
+        <div>
+          <div
+            style={{
+              display: "flex",
+              gap: "0",
+              "border-bottom": "1px solid var(--vscode-panel-border)",
+              "margin-bottom": "16px",
+            }}
+          >
+            <For
+              each={[
+                { id: "agents", label: language.t("settings.agentBehaviour.title") || "Agents" },
+                { id: "models", label: language.t("settings.providers.title") || "Models" },
+              ]}
             >
-              {tab.label}
-            </button>
-          )}
-        </For>
-      </div>
-
-      <Show when={activeMainTab() === "models"}>
-        <Card style={{ "margin-bottom": "24px" }}>
-          <SettingsRow
-            title={language.t("settings.providers.defaultModel.title")}
-            description={language.t("settings.providers.defaultModel.description")}
-          >
-            <ModelSelectorBase
-              value={parseModelString(config().model ?? undefined)}
-              onSelect={handleModelSelect("model")}
-              placement="bottom-start"
-              allowClear
-              clearLabel={language.t("settings.providers.notSet")}
-            />
-          </SettingsRow>
-          <SettingsRow
-            title={language.t("settings.providers.smallModel.title")}
-            description={language.t("settings.providers.smallModel.description")}
-            last
-          >
-            <ModelSelectorBase
-              value={parseModelString(config().small_model ?? undefined)}
-              onSelect={handleModelSelect("small_model")}
-              placement="bottom-start"
-              allowClear
-              clearLabel={language.t("settings.providers.notSet")}
-              includeAutoSmall
-            />
-          </SettingsRow>
-        </Card>
-      </Show>
-
-      {/* Agents Section */}
-      <Show when={activeMainTab() === "agents"}>
-        <Card style={{ "margin-bottom": "12px" }}>
-          <SettingsRow
-            title={language.t("settings.agentBehaviour.defaultAgent.title")}
-            description={language.t("settings.agentBehaviour.defaultAgent.description")}
-            last
-          >
-            <Select
-              options={defaultAgentOptions()}
-              current={defaultAgentOptions().find((o) => o.value === (config().default_agent ?? ""))}
-              value={(o) => o.value}
-              label={(o) => o.label}
-              onSelect={(o) => {
-                if (!o) return
-                const next = o.value || undefined
-                if (next === (config().default_agent ?? undefined)) return
-                updateConfig({ default_agent: next })
-              }}
-              variant="secondary"
-              size="small"
-              triggerVariant="settings"
-            />
-          </SettingsRow>
-        </Card>
-
-      {/* Available agents list header + create button */}
-      <div
-        style={{
-          display: "flex",
-          "align-items": "center",
-          "justify-content": "space-between",
-          "margin-bottom": "8px",
-          "margin-top": "16px",
-        }}
-      >
-        <div data-slot="settings-row-label-title">{language.t("settings.agentBehaviour.availableAgents")}</div>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <Button variant="ghost" size="small" onClick={triggerImportSettings}>
-            {language.t("settings.agentBehaviour.importOpenCodeSettings")}
-          </Button>
-          <Button variant="ghost" size="small" onClick={triggerImport}>
-            {language.t("settings.agentBehaviour.importMode")}
-          </Button>
-          <Button variant="ghost" size="small" onClick={browse}>
-            {language.t("settings.agentBehaviour.mcpBrowseMarketplace")}
-          </Button>
-          <Button variant="secondary" size="small" onClick={() => setAgentView("create")}>
-            {language.t("settings.agentBehaviour.createMode")}
-          </Button>
-        </div>
-      </div>
-
-      <Show when={importError()}>
-        <div
-          style={{
-            "font-size": "12px",
-            color: "var(--vscode-errorForeground)",
-            "margin-bottom": "8px",
-          }}
-        >
-          {importError()}
-        </div>
-      </Show>
-
-      {/* Agents list - clickable to edit */}
-      <Show
-        when={agentNames().length > 0}
-        fallback={
-          <Card style={{ "margin-bottom": "12px" }}>
-            <div
-              style={{
-                "font-size": "12px",
-                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-              }}
-            >
-              {language.t("settings.agentBehaviour.noModesFound")}
-            </div>
-          </Card>
-        }
-      >
-        <Card style={{ "margin-bottom": "12px" }}>
-          <For each={agentNames()}>
-            {(name, index) => {
-              const agent = () => session.allAgents().find((a) => a.name === name)
-              const isCustom = () => !agent()?.native
-              const agentCfg = () => config().agent?.[name] ?? {}
-              const disabled = () => agentCfg().disable ?? false
-              const hidden = () => agentCfg().hidden ?? false
-              const deprecated = () => agent()?.deprecated ?? false
-              return (
-                <div
+              {(tab) => (
+                <button
+                  onClick={() => setActiveMainTab(tab.id as any)}
                   style={{
-                    display: "flex",
-                    "align-items": "center",
-                    "justify-content": "space-between",
-                    padding: "8px 4px",
-                    "border-bottom": index() < agentNames().length - 1 ? "1px solid var(--border-weak-base)" : "none",
-                    "border-radius": "4px",
+                    padding: "8px 16px",
+                    border: "none",
+                    background: "transparent",
+                    color:
+                      activeMainTab() === tab.id
+                        ? "var(--vscode-tab-activeForeground)"
+                        : "var(--vscode-tab-inactiveForeground)",
+                    "border-bottom":
+                      activeMainTab() === tab.id ? "2px solid var(--vscode-tab-activeBorder)" : "2px solid transparent",
                     cursor: "pointer",
-                    opacity: disabled() ? "0.5" : "1",
-                  }}
-                  onClick={() => startEdit(name)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "var(--bg-hover-base, var(--vscode-list-hoverBackground))"
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent"
+                    "font-size": "12px",
+                    "text-transform": "uppercase",
+                    "font-weight": activeMainTab() === tab.id ? "600" : "normal",
                   }}
                 >
-                  <div style={{ flex: 1, "min-width": 0 }}>
-                    <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
-                      <div style={{ "font-weight": "500", "font-size": "13px" }}>{name}</div>
-                      <Show when={isCustom()}>
-                        <span
-                          style={{
-                            "font-size": "10px",
-                            padding: "1px 5px",
-                            "border-radius": "3px",
-                            background: "var(--bg-subtle-base, var(--vscode-badge-background))",
-                            color: "var(--text-weak-base, var(--vscode-badge-foreground))",
-                          }}
-                        >
-                          custom
-                        </span>
-                      </Show>
-                      <Show when={agent()?.mode === "subagent"}>
-                        <span
-                          style={{
-                            "font-size": "10px",
-                            padding: "1px 5px",
-                            "border-radius": "3px",
-                            background: "var(--bg-subtle-base, var(--vscode-badge-background))",
-                            color: "var(--text-weak-base, var(--vscode-badge-foreground))",
-                          }}
-                        >
-                          {language.t("settings.agentBehaviour.badge.subagent")}
-                        </span>
-                      </Show>
-                      <Show when={hidden()}>
-                        <span
-                          style={{
-                            "font-size": "10px",
-                            padding: "1px 5px",
-                            "border-radius": "3px",
-                            background: "var(--bg-subtle-base, var(--vscode-badge-background))",
-                            color: "var(--text-weak-base, var(--vscode-badge-foreground))",
-                          }}
-                        >
-                          {language.t("settings.agentBehaviour.badge.hidden")}
-                        </span>
-                      </Show>
-                      <Show when={disabled()}>
-                        <span
-                          style={{
-                            "font-size": "10px",
-                            padding: "1px 5px",
-                            "border-radius": "3px",
-                            background: "var(--vscode-errorForeground, #f44)",
-                            color: "var(--vscode-errorForeground-foreground, #fff)",
-                          }}
-                        >
-                          {language.t("settings.agentBehaviour.badge.disabled")}
-                        </span>
-                      </Show>
-                      <Show when={deprecated()}>
-                        <span
-                          style={{
-                            "font-size": "10px",
-                            padding: "1px 5px",
-                            "border-radius": "3px",
-                            background: "var(--vscode-editorWarning-foreground, #cca700)",
-                            color: "var(--vscode-editorWarning-foreground-text, #1e1e1e)",
-                          }}
-                        >
-                          {language.t("settings.agentBehaviour.badge.deprecated")}
-                        </span>
-                      </Show>
-                    </div>
-                    <Show when={agent()?.description}>
+                  {tab.label}
+                </button>
+              )}
+            </For>
+          </div>
+
+          <Show when={activeMainTab() === "models"}>
+            <Card style={{ "margin-bottom": "24px" }}>
+              <SettingsRow
+                title={language.t("settings.providers.defaultModel.title")}
+                description={language.t("settings.providers.defaultModel.description")}
+              >
+                <ModelSelectorBase
+                  value={parseModelString(config().model ?? undefined)}
+                  onSelect={handleModelSelect("model")}
+                  placement="bottom-start"
+                  allowClear
+                  clearLabel={language.t("settings.providers.notSet")}
+                />
+              </SettingsRow>
+              <SettingsRow
+                title={language.t("settings.providers.smallModel.title")}
+                description={language.t("settings.providers.smallModel.description")}
+                last
+              >
+                <ModelSelectorBase
+                  value={parseModelString(config().small_model ?? undefined)}
+                  onSelect={handleModelSelect("small_model")}
+                  placement="bottom-start"
+                  allowClear
+                  clearLabel={language.t("settings.providers.notSet")}
+                  includeAutoSmall
+                />
+              </SettingsRow>
+            </Card>
+          </Show>
+
+          {/* Agents Section */}
+          <Show when={activeMainTab() === "agents"}>
+            <Card style={{ "margin-bottom": "12px" }}>
+              <SettingsRow
+                title={language.t("settings.agentBehaviour.defaultAgent.title")}
+                description={language.t("settings.agentBehaviour.defaultAgent.description")}
+                last
+              >
+                <Select
+                  options={defaultAgentOptions()}
+                  current={defaultAgentOptions().find((o) => o.value === (config().default_agent ?? ""))}
+                  value={(o) => o.value}
+                  label={(o) => o.label}
+                  onSelect={(o) => {
+                    if (!o) return
+                    const next = o.value || undefined
+                    if (next === (config().default_agent ?? undefined)) return
+                    updateConfig({ default_agent: next })
+                  }}
+                  variant="secondary"
+                  size="small"
+                  triggerVariant="settings"
+                />
+              </SettingsRow>
+            </Card>
+
+            {/* Available agents list header + create button */}
+            <div
+              style={{
+                display: "flex",
+                "align-items": "center",
+                "justify-content": "space-between",
+                "margin-bottom": "8px",
+                "margin-top": "16px",
+              }}
+            >
+              <div data-slot="settings-row-label-title">{language.t("settings.agentBehaviour.availableAgents")}</div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <Button variant="ghost" size="small" onClick={triggerImportSettings}>
+                  {language.t("settings.agentBehaviour.importOpenCodeSettings")}
+                </Button>
+                <Button variant="ghost" size="small" onClick={triggerImport}>
+                  {language.t("settings.agentBehaviour.importMode")}
+                </Button>
+                <Button variant="ghost" size="small" onClick={browse}>
+                  {language.t("settings.agentBehaviour.mcpBrowseMarketplace")}
+                </Button>
+                <Button variant="secondary" size="small" onClick={() => setAgentView("create")}>
+                  {language.t("settings.agentBehaviour.createMode")}
+                </Button>
+              </div>
+            </div>
+
+            <Show when={importError()}>
+              <div
+                style={{
+                  "font-size": "12px",
+                  color: "var(--vscode-errorForeground)",
+                  "margin-bottom": "8px",
+                }}
+              >
+                {importError()}
+              </div>
+            </Show>
+
+            {/* Agents list - clickable to edit */}
+            <Show
+              when={agentNames().length > 0}
+              fallback={
+                <Card style={{ "margin-bottom": "12px" }}>
+                  <div
+                    style={{
+                      "font-size": "12px",
+                      color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                    }}
+                  >
+                    {language.t("settings.agentBehaviour.noModesFound")}
+                  </div>
+                </Card>
+              }
+            >
+              <Card style={{ "margin-bottom": "12px" }}>
+                <For each={agentNames()}>
+                  {(name, index) => {
+                    const agent = () => session.allAgents().find((a) => a.name === name)
+                    const isCustom = () => !agent()?.native
+                    const agentCfg = () => config().agent?.[name] ?? {}
+                    const disabled = () => agentCfg().disable ?? false
+                    const hidden = () => agentCfg().hidden ?? false
+                    const deprecated = () => agent()?.deprecated ?? false
+                    return (
                       <div
                         style={{
-                          "font-size": "11px",
-                          color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-                          "margin-top": "2px",
-                          overflow: "hidden",
-                          "text-overflow": "ellipsis",
-                          "white-space": "nowrap",
+                          display: "flex",
+                          "align-items": "center",
+                          "justify-content": "space-between",
+                          padding: "8px 4px",
+                          "border-bottom":
+                            index() < agentNames().length - 1 ? "1px solid var(--border-weak-base)" : "none",
+                          "border-radius": "4px",
+                          cursor: "pointer",
+                          opacity: disabled() ? "0.5" : "1",
+                        }}
+                        onClick={() => startEdit(name)}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "var(--bg-hover-base, var(--vscode-list-hoverBackground))"
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent"
                         }}
                       >
-                        {agent()!.description}
+                        <div style={{ flex: 1, "min-width": 0 }}>
+                          <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
+                            <div style={{ "font-weight": "500", "font-size": "13px" }}>{name}</div>
+                            <Show when={isCustom()}>
+                              <span
+                                style={{
+                                  "font-size": "10px",
+                                  padding: "1px 5px",
+                                  "border-radius": "3px",
+                                  background: "var(--bg-subtle-base, var(--vscode-badge-background))",
+                                  color: "var(--text-weak-base, var(--vscode-badge-foreground))",
+                                }}
+                              >
+                                custom
+                              </span>
+                            </Show>
+                            <Show when={agent()?.mode === "subagent"}>
+                              <span
+                                style={{
+                                  "font-size": "10px",
+                                  padding: "1px 5px",
+                                  "border-radius": "3px",
+                                  background: "var(--bg-subtle-base, var(--vscode-badge-background))",
+                                  color: "var(--text-weak-base, var(--vscode-badge-foreground))",
+                                }}
+                              >
+                                {language.t("settings.agentBehaviour.badge.subagent")}
+                              </span>
+                            </Show>
+                            <Show when={hidden()}>
+                              <span
+                                style={{
+                                  "font-size": "10px",
+                                  padding: "1px 5px",
+                                  "border-radius": "3px",
+                                  background: "var(--bg-subtle-base, var(--vscode-badge-background))",
+                                  color: "var(--text-weak-base, var(--vscode-badge-foreground))",
+                                }}
+                              >
+                                {language.t("settings.agentBehaviour.badge.hidden")}
+                              </span>
+                            </Show>
+                            <Show when={disabled()}>
+                              <span
+                                style={{
+                                  "font-size": "10px",
+                                  padding: "1px 5px",
+                                  "border-radius": "3px",
+                                  background: "var(--vscode-errorForeground, #f44)",
+                                  color: "var(--vscode-errorForeground-foreground, #fff)",
+                                }}
+                              >
+                                {language.t("settings.agentBehaviour.badge.disabled")}
+                              </span>
+                            </Show>
+                            <Show when={deprecated()}>
+                              <span
+                                style={{
+                                  "font-size": "10px",
+                                  padding: "1px 5px",
+                                  "border-radius": "3px",
+                                  background: "var(--vscode-editorWarning-foreground, #cca700)",
+                                  color: "var(--vscode-editorWarning-foreground-text, #1e1e1e)",
+                                }}
+                              >
+                                {language.t("settings.agentBehaviour.badge.deprecated")}
+                              </span>
+                            </Show>
+                          </div>
+                          <Show when={agent()?.description}>
+                            <div
+                              style={{
+                                "font-size": "11px",
+                                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                                "margin-top": "2px",
+                                overflow: "hidden",
+                                "text-overflow": "ellipsis",
+                                "white-space": "nowrap",
+                              }}
+                            >
+                              {agent()!.description}
+                            </div>
+                          </Show>
+                        </div>
+                        <div style={{ display: "flex", "align-items": "center", gap: "4px" }}>
+                          <Show when={isCustom()}>
+                            <IconButton
+                              size="small"
+                              variant="ghost"
+                              icon="close"
+                              onClick={(e: MouseEvent) => {
+                                e.stopPropagation()
+                                const a = agent()
+                                if (a) confirmRemoveMode(a)
+                              }}
+                            />
+                          </Show>
+                          <IconButton size="small" variant="ghost" icon="chevron-right" />
+                        </div>
                       </div>
-                    </Show>
-                  </div>
-                  <div style={{ display: "flex", "align-items": "center", gap: "4px" }}>
-                    <Show when={isCustom()}>
-                      <IconButton
-                        size="small"
-                        variant="ghost"
-                        icon="close"
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation()
-                          const a = agent()
-                          if (a) confirmRemoveMode(a)
-                        }}
-                      />
-                    </Show>
-                    <IconButton size="small" variant="ghost" icon="chevron-right" />
-                  </div>
-                </div>
-              )
-            }}
-          </For>
-        </Card>
-      </Show>
-      </Show>
-    </div>
+                    )
+                  }}
+                </For>
+              </Card>
+            </Show>
+          </Show>
+        </div>
       </Show>
     </>
   )

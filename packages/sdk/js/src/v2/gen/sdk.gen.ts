@@ -77,6 +77,11 @@ import type {
   McpLocalConfig,
   McpRemoteConfig,
   McpStatusResponses,
+  MemoryAddErrors,
+  MemoryAddResponses,
+  MemoryDeleteErrors,
+  MemoryDeleteResponses,
+  MemoryListResponses,
   NetworkListResponses,
   NetworkRejectErrors,
   NetworkRejectResponses,
@@ -130,6 +135,10 @@ import type {
   RemoteDisableResponses,
   RemoteEnableResponses,
   RemoteStatusResponses,
+  RepoMapGenerateErrors,
+  RepoMapGenerateResponses,
+  RepoMapInvalidateErrors,
+  RepoMapInvalidateResponses,
   SessionAbortErrors,
   SessionAbortResponses,
   SessionChildrenErrors,
@@ -4757,6 +4766,84 @@ export class Network extends HeyApiClient {
   }
 }
 
+export class RepoMap extends HeyApiClient {
+  /**
+   * Generate repository map
+   *
+   * Generate a token-budgeted repository map of the workspace
+   */
+  public generate<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      budget?: number
+      mentioned?: Array<string>
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "budget" },
+            { in: "body", key: "mentioned" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<RepoMapGenerateResponses, RepoMapGenerateErrors, ThrowOnError>({
+      url: "/repomap/generate",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Invalidate repository map cache
+   *
+   * Clears the parsed tag cache for specific files, or the entire cache if omitted.
+   */
+  public invalidate<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      files?: Array<string>
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "files" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<RepoMapInvalidateResponses, RepoMapInvalidateErrors, ThrowOnError>({
+      url: "/repomap/invalidate",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+}
+
 export class Suggestion extends HeyApiClient {
   /**
    * List pending suggestions
@@ -5599,6 +5686,116 @@ export class Stratacode extends HeyApiClient {
   }
 }
 
+export class Memory extends HeyApiClient {
+  /**
+   * List memory entries
+   *
+   * List all semantic project memory entries.
+   */
+  public list<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<MemoryListResponses, unknown, ThrowOnError>({
+      url: "/stratacode/memory",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Add memory entry
+   *
+   * Add a new semantic project memory entry.
+   */
+  public add<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      id?: string
+      title?: string
+      content?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "id" },
+            { in: "body", key: "title" },
+            { in: "body", key: "content" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<MemoryAddResponses, MemoryAddErrors, ThrowOnError>({
+      url: "/stratacode/memory",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Delete memory entry
+   *
+   * Delete a memory entry by ID.
+   */
+  public delete<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      id?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "id" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<MemoryDeleteResponses, MemoryDeleteErrors, ThrowOnError>({
+      url: "/stratacode/memory/delete",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+}
+
 export class Organization extends HeyApiClient {
   /**
    * Update Strata Gateway organization
@@ -6121,6 +6318,11 @@ export class StrataClient extends HeyApiClient {
     return (this._network ??= new Network({ client: this.client }))
   }
 
+  private _repoMap?: RepoMap
+  get repoMap(): RepoMap {
+    return (this._repoMap ??= new RepoMap({ client: this.client }))
+  }
+
   private _suggestion?: Suggestion
   get suggestion(): Suggestion {
     return (this._suggestion ??= new Suggestion({ client: this.client }))
@@ -6149,6 +6351,11 @@ export class StrataClient extends HeyApiClient {
   private _stratacode?: Stratacode
   get stratacode(): Stratacode {
     return (this._stratacode ??= new Stratacode({ client: this.client }))
+  }
+
+  private _memory?: Memory
+  get memory(): Memory {
+    return (this._memory ??= new Memory({ client: this.client }))
   }
 
   private _strata?: Strata

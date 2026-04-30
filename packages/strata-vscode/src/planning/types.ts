@@ -11,13 +11,13 @@ export interface PlanningTask {
   duration?: number // minutes
   priority: number // 1 (highest) - 5 (lowest)
   dependsOn?: string[] // task IDs
-  
+
   // Agent configuration
   prompt: string
   agent?: string
   providerID?: string
   modelID?: string
-  
+
   // Runtime tracking
   sessionID?: string
   worktreeID?: string

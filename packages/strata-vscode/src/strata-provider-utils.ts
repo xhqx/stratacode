@@ -361,7 +361,8 @@ export type WebviewMessage =
         args: Record<string, unknown>
         message: string
         tool?: { messageID: string; callID: string }
-        agent?: string       }
+        agent?: string
+      }
     }
   | { type: "todoUpdated"; sessionID: string; items: unknown[] }
   | {
@@ -389,6 +390,10 @@ export type WebviewMessage =
   | { type: "sessionUpdated"; session: ReturnType<typeof sessionToWebview> }
   | { type: "messageRemoved"; sessionID: string; messageID: string }
   | { type: "sessionError"; sessionID?: string; error?: unknown }
+  | {
+      type: "repoMapStatsLoaded"
+      stats: { files: number; symbols: number; chars: number; budget: number }
+    }
   | null
 
 export function mapSSEEventToWebviewMessage(event: Event, sessionID: string | undefined): WebviewMessage {
@@ -466,7 +471,8 @@ export function mapSSEEventToWebviewMessage(event: Event, sessionID: string | un
           args: event.properties.metadata,
           message: `Permission required: ${event.properties.permission}`,
           tool: event.properties.tool,
-          agent: event.properties.agent,         },
+          agent: event.properties.agent,
+        },
       }
     case "permission.replied":
       return {

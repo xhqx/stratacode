@@ -180,20 +180,31 @@ export const Info = Schema.Struct({
       enabled: Schema.optional(Schema.Boolean).annotate({
         description: "Enable automatic retry on transient agent errors (default: true)",
       }),
-      limit: Schema.optional(
-        Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThanOrEqualTo(0)),
-      ).annotate({
+      limit: Schema.optional(Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThanOrEqualTo(0))).annotate({
         description: "Maximum number of retry attempts (0 = no retries, default: unlimited)",
       }),
-      delay: Schema.optional(
-        Schema.Number.check(Schema.isGreaterThan(0)),
-      ).annotate({
+      delay: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))).annotate({
         description: "Base delay in seconds for exponential backoff (default: 2)",
       }),
-      max_delay: Schema.optional(
-        Schema.Number.check(Schema.isGreaterThan(0)),
-      ).annotate({
+      max_delay: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))).annotate({
         description: "Maximum delay in seconds for exponential backoff cap (default: 30)",
+      }),
+    }),
+  ), // stratacode_change
+  repomap: Schema.optional(
+    Schema.Struct({
+      budget: Schema.optional(Schema.Number.check(Schema.isGreaterThanOrEqualTo(0))).annotate({
+        description: "Character budget limit for the generated repository map (0 = disabled, default: 4096)",
+      }),
+    }),
+  ), // stratacode_change
+  project_memory: Schema.optional(
+    Schema.Struct({
+      enabled: Schema.optional(Schema.Boolean).annotate({
+        description: "Whether automatic memory extraction on branch change is enabled (default: false)",
+      }),
+      max_commits: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))).annotate({
+        description: "Maximum number of recent commits to analyze per pull/branch change (default: 10)",
       }),
     }),
   ), // stratacode_change

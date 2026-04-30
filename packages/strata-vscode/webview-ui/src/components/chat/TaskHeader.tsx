@@ -23,7 +23,6 @@ import { ChangedFilesPanel } from "./ChangedFilesPanel"
 import { useChangedFiles } from "../../hooks/useChangedFiles"
 import type { TodoItem, ExtensionMessage } from "../../types/messages"
 
-
 interface TaskHeaderProps {
   readonly?: boolean
 }

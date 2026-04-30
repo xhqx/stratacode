@@ -50,13 +50,19 @@ export function TaskBoardView(props: Props) {
         <span data-slot="task-board-title" style={{ flex: 1, "font-weight": 600 }}>
           {language.t("kanban.title")}
         </span>
-        <Tooltip value={kanban.layout() === "vertical" ? language.t("kanban.layout.horizontal") : language.t("kanban.layout.vertical")}>
-           <IconButton
-             icon={kanban.layout() === "vertical" ? "layout-right" : "bullet-list"}
-             size="small"
-             variant="ghost"
-             onClick={toggleLayout}
-           />
+        <Tooltip
+          value={
+            kanban.layout() === "vertical"
+              ? language.t("kanban.layout.horizontal")
+              : language.t("kanban.layout.vertical")
+          }
+        >
+          <IconButton
+            icon={kanban.layout() === "vertical" ? "layout-right" : "bullet-list"}
+            size="small"
+            variant="ghost"
+            onClick={toggleLayout}
+          />
         </Tooltip>
         <Tooltip value={language.t("kanban.addTask")}>
           <IconButton icon="plus" size="small" variant="ghost" onClick={() => setAdding(!adding())} />

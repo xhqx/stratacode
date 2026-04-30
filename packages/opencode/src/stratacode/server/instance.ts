@@ -14,6 +14,7 @@ import { RemoteRoutes } from "../../server/routes/instance/remote"
 import { NetworkRoutes } from "../../server/routes/instance/network"
 import { SuggestionRoutes } from "../suggestion/routes"
 import { IndexingRoutes } from "./routes/indexing"
+import { RepoMapRoutes } from "./routes/repomap" // stratacode_change
 import { createStrataRoutes } from "@stratacode/strata-gateway"
 import { Auth } from "../../auth"
 import { errors } from "../../server/error"
@@ -30,6 +31,7 @@ export function register(app: Hono): Hono {
     .route("/permission", PermissionStratacodeRoutes())
     .route("/network", NetworkRoutes())
     .route("/indexing", IndexingRoutes()) // stratacode_change
+    .route("/repomap", RepoMapRoutes()) // stratacode_change
     .route("/suggestion", SuggestionRoutes())
     .route("/telemetry", TelemetryRoutes())
     .route("/remote", RemoteRoutes())

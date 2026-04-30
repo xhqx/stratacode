@@ -39,7 +39,7 @@ class ModelPoolTracker {
   // Find the model with the lowest active count that is below max_concurrent
   private findAvailableModel(poolConfig: PoolConfig): { providerID: ProviderID; modelID: ModelID } | undefined {
     const max = poolConfig.max_concurrent ?? 2
-    
+
     let bestModel: { providerID: ProviderID; modelID: ModelID } | undefined
     let lowestCount = Infinity
 
@@ -106,12 +106,15 @@ class ModelPoolTracker {
         // Claim it for this waiter
         const availableKey = this.getModelKey(available.providerID, available.modelID)
         this.activeCounts.set(availableKey, (this.activeCounts.get(availableKey) ?? 0) + 1)
-        log.debug("acquired pool model for waiter", { model: availableKey, active: this.activeCounts.get(availableKey) })
-        
+        log.debug("acquired pool model for waiter", {
+          model: availableKey,
+          active: this.activeCounts.get(availableKey),
+        })
+
         // Remove from queue and resolve
         this.waiters.splice(i, 1)
         waiter.resolve(available)
-        
+
         // Since we claimed a slot, we need to restart the search loop or just break if we only released one slot
         // Safe to break since one release = one slot freed.
         break
@@ -128,7 +131,7 @@ const tracker = new ModelPoolTracker()
  * Returns a model immediately if a slot is free.
  * Blocks (suspends the Effect) if all models are at max capacity.
  */
-export const acquire = (poolConfig: PoolConfig | undefined | null) => 
+export const acquire = (poolConfig: PoolConfig | undefined | null) =>
   Effect.gen(function* () {
     if (!poolConfig?.enabled || !poolConfig.models.length) return undefined
 
@@ -166,4 +169,3 @@ export const release = (providerID: string, modelID: string) =>
   Effect.sync(() => {
     tracker.release(providerID, modelID)
   })
-

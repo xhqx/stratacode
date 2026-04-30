@@ -975,14 +975,12 @@ export type ExtensionMessage =
   | KanbanTasksLoadedMessage
   | ClearPendingPromptsMessage
   | ExtensionDataReadyMessage
-  
   | { type: "autoApproveTimerStarted"; requestId: string; timeLeft: number }
   | { type: "autoApproveTimerUpdated"; requestId: string; timeLeft: number }
   | { type: "autoApproveTimerCancelled"; requestId: string }
   | { type: "autoApproveTimerFired"; requestId: string }
-  
   | RemoteStatusMessage
-
+  | { type: "repoMapStatsLoaded"; stats: { files: number; symbols: number; chars: number; budget: number } }
 
 export interface KanbanTasksLoadedMessage {
   type: "kanbanTasksLoaded"

@@ -27,7 +27,7 @@ export function delay(
   baseDelay = RETRY_INITIAL_DELAY,
   maxDelayCap = RETRY_MAX_DELAY_NO_HEADERS,
 ) {
-// stratacode_change end
+  // stratacode_change end
   if (error) {
     const headers = error.data.responseHeaders
     if (headers) {

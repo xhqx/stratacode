@@ -29,6 +29,9 @@ interface ServerContextValue {
   workspaceDirectory: Accessor<string>
   gitInstalled: Accessor<boolean>
   pluginContributions: Accessor<RenderableUIContribution[]>
+  repoMapStats: Accessor<{ files: number; symbols: number; chars: number; budget: number } | undefined>
+  requestRepoMapStats: () => void
+  invalidateRepoMap: () => void
 }
 
 export const ServerContext = createContext<ServerContextValue>()
@@ -50,6 +53,9 @@ export const ServerProvider: ParentComponent = (props) => {
   const [workspaceDirectory, setWorkspaceDirectory] = createSignal<string>("")
   const [gitInstalled, setGitInstalled] = createSignal<boolean>(false)
   const [pluginContributions, setPluginContributions] = createSignal<RenderableUIContribution[]>([])
+  const [repoMapStats, setRepoMapStats] = createSignal<
+    { files: number; symbols: number; chars: number; budget: number } | undefined
+  >()
 
   const gitSub = vscode.onMessage((m: ExtensionMessage) => {
     if (m.type === "gitStatus") setGitInstalled(m.repo)
@@ -137,6 +143,10 @@ export const ServerProvider: ParentComponent = (props) => {
           console.log("[Strata New] Device auth cancelled")
           setDeviceAuth(initialDeviceAuth)
           break
+
+        case "repoMapStatsLoaded":
+          setRepoMapStats(message.stats)
+          break
       }
     })
 
@@ -176,6 +186,9 @@ export const ServerProvider: ParentComponent = (props) => {
     workspaceDirectory,
     gitInstalled,
     pluginContributions,
+    repoMapStats,
+    requestRepoMapStats: () => vscode.postMessage({ type: "requestRepoMapStats" }),
+    invalidateRepoMap: () => vscode.postMessage({ type: "invalidateRepoMap" }),
   }
 
   return <ServerContext.Provider value={value}>{props.children}</ServerContext.Provider>

@@ -105,20 +105,22 @@ export function TaskBoardCard(props: Props) {
                 </ContextMenu.Item>
               ))}
               <ContextMenu.Separator />
-              <ContextMenu.Item onSelect={handleDelete}>
-                {language.t("kanban.delete")}
-              </ContextMenu.Item>
+              <ContextMenu.Item onSelect={handleDelete}>{language.t("kanban.delete")}</ContextMenu.Item>
               <Show when={props.task.sessionID}>
                 <ContextMenu.Separator />
-                <ContextMenu.Item onSelect={jumpToSession}>
-                  {language.t("kanban.goToSession")}
-                </ContextMenu.Item>
+                <ContextMenu.Item onSelect={jumpToSession}>{language.t("kanban.goToSession")}</ContextMenu.Item>
               </Show>
             </ContextMenu.Content>
           </ContextMenu>
         </Show>
         <Show when={!isManual() && props.task.sessionID && props.task.sessionID !== session.currentSessionID()}>
-           <IconButton icon="arrow-right" size="small" variant="ghost" onClick={jumpToSession} title={language.t("kanban.goToSession")} />
+          <IconButton
+            icon="arrow-right"
+            size="small"
+            variant="ghost"
+            onClick={jumpToSession}
+            title={language.t("kanban.goToSession")}
+          />
         </Show>
       </div>
 

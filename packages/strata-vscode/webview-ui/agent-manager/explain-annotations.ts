@@ -17,10 +17,7 @@ export interface ExplainMeta {
   text: string
 }
 
-export function buildExplainAnnotations(
-  file: string,
-  items: ExplainAnnotation[],
-): DiffLineAnnotation<ExplainMeta>[] {
+export function buildExplainAnnotations(file: string, items: ExplainAnnotation[]): DiffLineAnnotation<ExplainMeta>[] {
   return items
     .filter((a) => a.file === file)
     .map((a) => ({
@@ -54,10 +51,7 @@ function icon(): SVGSVGElement {
   return svg
 }
 
-export function buildExplanationElement(
-  meta: ExplainMeta,
-  onDismiss: (id: string) => void,
-): HTMLElement {
+export function buildExplanationElement(meta: ExplainMeta, onDismiss: (id: string) => void): HTMLElement {
   const wrapper = document.createElement("div")
   wrapper.className = "am-annotation am-annotation-explanation"
 

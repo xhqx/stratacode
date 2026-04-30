@@ -465,11 +465,7 @@ export function patchAgents(
         displayName: agent.name,
         description: `External ACP Agent: ${agent.name ?? key}`,
         options: { isACP: true, acp_config: agent },
-        permission: Permission.merge(
-          defaults,
-          Permission.fromConfig({ "*": agent.trusted ? "allow" : "ask" }),
-          user,
-        ),
+        permission: Permission.merge(defaults, Permission.fromConfig({ "*": agent.trusted ? "allow" : "ask" }), user),
         mode: "primary",
         native: false,
       }

@@ -149,14 +149,14 @@ const mapAgent = (a: Agent) => ({
   model: a.model,
 })
 
-
 import { AutoApproveTimer } from "./strata-provider/auto-approve-timer"
 import { PlanningService } from "./planning"
-
+import { GitWatcher } from "./services/memory/GitWatcher"
 
 export class StrataProvider implements vscode.WebviewViewProvider, TelemetryPropertiesProvider {
   public static readonly viewType = "strata-code.SidebarProvider"
   private readonly instanceId = crypto.randomUUID()
+  private gitWatcher?: GitWatcher
 
   private webview: vscode.Webview | null = null
   private currentSession: Session | null = null
@@ -164,10 +164,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private contextSessionID: string | undefined
   private connectionState: "connecting" | "connected" | "disconnected" | "error" = "connecting"
   private loginAttempt = 0
-  
+
   private autoApproveTimer: AutoApproveTimer = new AutoApproveTimer(this)
   private planningService: PlanningService | null = null
-  
+
   private isWebviewReady = false
   private readonly extensionVersion =
     vscode.extensions.getExtension("stratacode.strata-code")?.packageJSON?.version ?? "unknown"
@@ -237,9 +237,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private viewStateDisposable: vscode.Disposable | null = null
   private visibilityDisposable: vscode.Disposable | null = null
   /** Whether the sidebar panel is currently visible to the user. */
-  private sidebarVisible = false   /** Reference to the WebviewView for badge updates. */
-  private view: vscode.WebviewView | null = null   /** Number of pending prompts (permissions + questions) — drives the Activity Bar badge. */
-  private pendingPrompts = 0 
+  private sidebarVisible = false /** Reference to the WebviewView for badge updates. */
+  private view: vscode.WebviewView | null =
+    null /** Number of pending prompts (permissions + questions) — drives the Activity Bar badge. */
+  private pendingPrompts = 0
   /** Lazily initialized ignore controller for .stratacodeignore filtering */
   private ignoreController: FileIgnoreController | null = null
   private ignoreControllerDir: string | null = null
@@ -293,6 +294,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         postToSidebar: (msg) => this.postMessage(msg),
       })
     }
+    
+    this.gitWatcher = new GitWatcher(this)
   }
 
   setRemoteService(service: RemoteStatusService): void {
@@ -481,12 +484,12 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         this.statsPoller.setEnabled(webviewView.visible)
         this.statsPoller.setVisible(webviewView.visible)
       }
-      
+
       if (webviewView.visible && this.pendingPrompts > 0) {
         this.pendingPrompts = 0
         this.updateBadge()
       }
-      
+
       this.focusSession(webviewView.visible ? this.currentSession?.id : undefined)
     })
     this.initializeConnection()
@@ -675,13 +678,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           this.recoverPendingPrompts()
           this.readyResolvers.splice(0).forEach((r) => r())
           break
-        
+
         case "cancelAutoApproveTimer":
           if (this.autoApproveTimer.isTimerRunningFor(message.requestId)) {
             this.autoApproveTimer.clearTimer()
           }
           break
-        
+
         case "executePluginContribution":
           pluginRegistry.executeContribution((message as any).id)
           break
@@ -738,7 +741,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             message.response,
             message.approvedAlways,
             message.deniedAlways,
-            message.scope,             message.agent,           )
+            message.scope,
+            message.agent,
+          )
           break
         case "createSession":
           await this.handleCreateSession()
@@ -1090,6 +1095,35 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         case "requestKanbanTasks": {
           const tasks = this.extensionContext?.globalState.get<any>("kanbanTasks") ?? []
           this.postMessage({ type: "kanbanTasksLoaded", tasks })
+          break
+        }
+        case "requestRepoMapStats": {
+          const sdkClient = this.connectionService.getClient()
+          if (sdkClient) {
+            sdkClient.repoMap.generate({ budget: 4096 }).then((res) => {
+              if (res.data) {
+                this.postMessage({ type: "repoMapStatsLoaded", stats: res.data.stats })
+              }
+            }).catch(e => {
+              console.error("[Strata] Failed to fetch repo map stats", e)
+            })
+          }
+          break
+        }
+        case "invalidateRepoMap": {
+          const sdkClient = this.connectionService.getClient()
+          if (sdkClient) {
+            sdkClient.repoMap.invalidate({}).then(() => {
+              // Re-fetch stats after invalidation
+              return sdkClient.repoMap.generate({ budget: 4096 })
+            }).then((res) => {
+              if (res && res.data) {
+                this.postMessage({ type: "repoMapStatsLoaded", stats: res.data.stats })
+              }
+            }).catch(e => {
+              console.error("[Strata] Failed to invalidate repo map", e)
+            })
+          }
           break
         }
 
@@ -3195,7 +3229,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       }
     }
 
-    
     if (event.type === "permission.asked" || event.type === "question.asked") {
       this.pendingPrompts++
       this.updateBadge()
@@ -3225,7 +3258,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.pendingPrompts--
       this.updateBadge()
     }
-    
 
     handleNetworkEvent(event.type as string, event.properties as any, this.client, (s) => this.getWorkspaceDirectory(s))
 
@@ -3246,7 +3278,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.streams.flush(sessionID)
     this.postMessage(msg)
 
-    
     if (msg.type === "permissionRequest" || msg.type === "questionRequest") {
       const config = (this.cachedConfigMessage as any)?.config
       if (config) {
@@ -3276,7 +3307,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
               // Simulate selecting the first option of the first question (or empty string if none)
               const firstQ: any = msg.question.questions[0]
               const answers = firstQ?.options?.length ? [firstQ.options[0].label] : [""]
-              handleQuestionReply(this.questionCtx, reqId, [answers], msg.question.sessionID)             }
+              handleQuestionReply(this.questionCtx, reqId, [answers], msg.question.sessionID)
+            }
           })
         }
       }
@@ -3291,9 +3323,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         this.autoApproveTimer.clearTimer()
       }
     }
-    
   }
-  
+
   /** Set or clear the Activity Bar badge based on pending prompt count. */
   private updateBadge(): void {
     if (!this.view) return
@@ -3305,7 +3336,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           }
         : undefined
   }
-  
 
   /** Wait until the webview has sent "webviewReady". Resolves immediately when already ready. */
   public waitForReady(): Promise<void> {
@@ -3447,11 +3477,46 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     // Shell
     const shell = vscode.env.shell || undefined
 
+    // Fetch RepoMap
+    let repoMap: string | undefined
+    let projectMemory: { id: string; title: string; content: string }[] | undefined
+    try {
+      const client = this.connectionService.getClient()
+      const config = (this.cachedConfigMessage as any)?.config
+      
+      if (client) {
+        // Fetch Memory
+        try {
+          const res = await client.stratacode.memory.list()
+          if (res.data) {
+            projectMemory = res.data
+          }
+        } catch (e) {
+          console.warn("[Strata New] Failed to fetch project memory:", e)
+        }
+
+        // Fetch RepoMap
+        const budget = config?.repomap?.budget ?? 4096
+        if (budget > 0) {
+          const result = await client.repoMap.generate({
+            budget,
+            mentioned: visibleFiles, // Boost visible files
+          })
+        if (result.data) {
+          repoMap = result.data.map
+        }
+      }
+    } catch (e) {
+      console.error("Failed to generate repo map", e)
+    }
+
     return {
       ...(visibleFiles.length > 0 ? { visibleFiles } : {}),
       ...(openTabs.length > 0 ? { openTabs } : {}),
       ...(activeFile ? { activeFile } : {}),
       ...(shell ? { shell } : {}),
+      ...(repoMap ? { repoMap } : {}),
+      ...(projectMemory ? { projectMemory } : {}),
     }
   }
 
@@ -3648,6 +3713,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.lastReconciledAt.clear()
     this.ignoreController?.dispose()
     this.chatAutocomplete?.dispose()
+    this.gitWatcher?.dispose()
     ;(this.marketplace?.dispose(), disposeGitChangesTarget())
   }
 }

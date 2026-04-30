@@ -9,11 +9,14 @@ import { ClientSideConnection, type InitializeRequest, type Client } from "@agen
 const log = Log.create({ service: "acp-manager" })
 
 export interface Interface {
-  readonly getConnection: (agentKey: string, config: ConfigACPAgent) => Effect.Effect<{ conn: ClientSideConnection, transport: StdioTransport }>
+  readonly getConnection: (
+    agentKey: string,
+    config: ConfigACPAgent,
+  ) => Effect.Effect<{ conn: ClientSideConnection; transport: StdioTransport }>
 }
 
 type State = {
-  transports: Map<string, { conn: ClientSideConnection, transport: StdioTransport }>
+  transports: Map<string, { conn: ClientSideConnection; transport: StdioTransport }>
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/ACPManager") {}
@@ -24,20 +27,20 @@ export const layer = Layer.effect(
     const state = yield* InstanceState.make<State>(
       Effect.fn("ACPManager.state")(function* () {
         return {
-          transports: new Map()
+          transports: new Map(),
         }
-      })
+      }),
     )
 
     const getConnection = Effect.fn("ACPManager.getConnection")(function* (agentKey: string, config: ConfigACPAgent) {
       const s = yield* InstanceState.get(state)
-      
+
       let entry = s.transports.get(agentKey)
       if (entry) return entry
 
       log.info("Initializing new ACP transport", { agentKey })
       const transport = new StdioTransport(config)
-      
+
       const { stream } = yield* Effect.promise(() => transport.start())
 
       // Create a dummy client implementation for now.
@@ -67,7 +70,7 @@ export const layer = Layer.effect(
           },
           unstable_completeElicitation: async (params: any) => {
             throw new Error("completeElicitation not implemented yet")
-          }
+          },
         } as unknown as Client
       }, stream)
 
@@ -76,8 +79,8 @@ export const layer = Layer.effect(
         clientInfo: { name: "stratacode", version: "1.0.0" },
         clientCapabilities: {
           fs: { readTextFile: true, writeTextFile: true },
-          terminal: true // the ACP spec for terminal capability might be boolean or object, in latest SDK it's likely boolean? Wait, SDK says `{ create?: boolean }` or similar? Let's check.
-        }
+          terminal: true, // the ACP spec for terminal capability might be boolean or object, in latest SDK it's likely boolean? Wait, SDK says `{ create?: boolean }` or similar? Let's check.
+        },
       }
       yield* Effect.promise(() => conn.initialize(initReq))
       log.info("ACP agent initialized successfully", { agentKey })
@@ -89,9 +92,9 @@ export const layer = Layer.effect(
     })
 
     return Service.of({
-      getConnection
+      getConnection,
     })
-  })
+  }),
 )
 
 export const defaultLayer = layer

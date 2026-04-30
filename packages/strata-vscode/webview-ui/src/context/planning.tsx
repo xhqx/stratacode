@@ -63,7 +63,7 @@ export function PlanningProvider(props: { children: any }) {
   const hasCycle = (id: string, newDeps: string[]): boolean => {
     const currentTasks = tasks()
     const taskMap = new Map<string, string[]>()
-    
+
     // Build adjacency list
     for (const t of currentTasks) {
       if (t.id === id) {

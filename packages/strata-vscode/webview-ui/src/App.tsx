@@ -37,12 +37,29 @@ import { KanbanProvider } from "./context/kanban"
 import { TaskBoardView } from "./components/kanban"
 import { PlanningProvider } from "./context/planning"
 import { lazy } from "solid-js"
-const PlanningView = lazy(() => import("./components/planning/PlanningView").then(m => ({ default: m.PlanningView })))
+const PlanningView = lazy(() => import("./components/planning/PlanningView").then((m) => ({ default: m.PlanningView })))
 import type { Message as SDKMessage, Part as SDKPart } from "@stratacode/sdk/v2"
 import "./styles/chat.css"
 
-type ViewType = "newTask" | "marketplace" | "history" | "profile" | "settings" | "subAgentViewer" | "kanban" | "planning"
-const VALID_VIEWS = new Set<string>(["newTask", "marketplace", "history", "profile", "settings", "subAgentViewer", "kanban", "planning"])
+type ViewType =
+  | "newTask"
+  | "marketplace"
+  | "history"
+  | "profile"
+  | "settings"
+  | "subAgentViewer"
+  | "kanban"
+  | "planning"
+const VALID_VIEWS = new Set<string>([
+  "newTask",
+  "marketplace",
+  "history",
+  "profile",
+  "settings",
+  "subAgentViewer",
+  "kanban",
+  "planning",
+])
 
 /**
  * Bridge our session store to the DataProvider's expected Data shape.

@@ -40,7 +40,7 @@ export interface AgentConfig {
   steps?: number
   permission?: PermissionConfig
   fallback_models?: string[] | null
-  
+
   model_pool?: {
     enabled?: boolean
     models?: string[]
@@ -59,5 +59,4 @@ export interface AgentConfig {
     delay?: number
     max_delay?: number
   } | null
-  
 }

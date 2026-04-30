@@ -126,12 +126,12 @@ export const TaskTool = Tool.define(
       const poolModel = yield* ModelPool.acquire(next.model_pool)
       const model = poolModel
         ? { modelID: poolModel.modelID, providerID: poolModel.providerID }
-        : saved ??
+        : (saved ??
           next.model ?? {
             modelID: msg.info.modelID,
             providerID: msg.info.providerID,
-          }
-      const variant = poolModel ? undefined : saved?.variant ?? (saved ? undefined : next.variant)
+          })
+      const variant = poolModel ? undefined : (saved?.variant ?? (saved ? undefined : next.variant))
       // stratacode_change end
 
       yield* ctx.metadata({

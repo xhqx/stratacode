@@ -24,7 +24,7 @@ export function KanbanProvider(props: { children: any }) {
 
   // Manual tasks store
   const [manualTasks, setManualTasks] = createStore<KanbanTask[]>([])
-  
+
   // Planned tasks store (read-only projection from PlanningService)
   const [plannedTasks, setPlannedTasks] = createSignal<KanbanTask[]>([])
 
@@ -119,20 +119,12 @@ export function KanbanProvider(props: { children: any }) {
 
   const moveTask = (id: string, column: KanbanColumn) => {
     if (id.startsWith("agent-") || id.startsWith("planned-")) return // Agent and planned tasks move automatically
-    setManualTasks(
-      (task) => task.id === id,
-      "column",
-      column,
-    )
+    setManualTasks((task) => task.id === id, "column", column)
   }
 
   const linkSession = (taskId: string, sessionID: string) => {
     if (taskId.startsWith("agent-") || taskId.startsWith("planned-")) return
-    setManualTasks(
-      (task) => task.id === taskId,
-      "sessionID",
-      sessionID,
-    )
+    setManualTasks((task) => task.id === taskId, "sessionID", sessionID)
   }
 
   return (

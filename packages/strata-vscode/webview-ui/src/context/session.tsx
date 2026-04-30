@@ -214,7 +214,9 @@ interface SessionContextValue {
     response: "once" | "always" | "reject",
     approvedAlways: string[],
     deniedAlways: string[],
-    scope?: "global" | "agent",     agent?: string,   ) => void
+    scope?: "global" | "agent",
+    agent?: string,
+  ) => void
   replyToQuestion: (requestID: string, answers: string[][]) => void
   rejectQuestion: (requestID: string) => void
   acceptSuggestion: (requestID: string, index: number) => void
@@ -233,10 +235,8 @@ interface SessionContextValue {
   draftSessionID: Accessor<string | undefined>
   setDraftSessionID: (id: string | undefined) => void
 
-  
   timers: Accessor<Record<string, number>>
   cancelTimer: (requestId: string) => void
-  
 }
 
 export const SessionContext = createContext<SessionContextValue>()
@@ -362,7 +362,6 @@ export const SessionProvider: ParentComponent = (props) => {
     { files: number; additions: number; deletions: number } | undefined
   >()
 
-  
   const [timers, setTimers] = createSignal<Record<string, number>>({})
   const cancelTimer = (requestId: string) => {
     vscode.postMessage({ type: "cancelAutoApproveTimer", requestId })
@@ -372,7 +371,6 @@ export const SessionProvider: ParentComponent = (props) => {
       return next
     })
   }
-  
 
   // Tracks optimistic messageIDs that haven't been confirmed by the server yet.
   // Prevents handleMessagesLoaded from wiping them when it replaces the array.
@@ -789,7 +787,6 @@ export const SessionProvider: ParentComponent = (props) => {
         setRespondingSuggestions(new Set<string>())
         break
 
-      
       case "autoApproveTimerStarted":
       case "autoApproveTimerUpdated":
         setTimers((prev) => ({ ...prev, [message.requestId]: message.timeLeft }))
@@ -802,7 +799,6 @@ export const SessionProvider: ParentComponent = (props) => {
           return next
         })
         break
-      
 
       case "sessionsLoaded":
         handleSessionsLoaded(message.sessions, message.preserveSessionIds)
@@ -1811,7 +1807,9 @@ export const SessionProvider: ParentComponent = (props) => {
     response: "once" | "always" | "reject",
     approvedAlways: string[],
     deniedAlways: string[],
-    scope?: "global" | "agent",     agent?: string,   ) {
+    scope?: "global" | "agent",
+    agent?: string,
+  ) {
     // Resolve sessionID from the stored permission request
     const permission = permissions().find((p) => p.id === permissionId)
     const sessionID = permission?.sessionID ?? currentSessionID() ?? ""
@@ -1827,7 +1825,9 @@ export const SessionProvider: ParentComponent = (props) => {
       response,
       approvedAlways,
       deniedAlways,
-      scope,       agent,     })
+      scope,
+      agent,
+    })
   }
 
   function clearQuestionError(requestID: string) {
@@ -2263,10 +2263,9 @@ export const SessionProvider: ParentComponent = (props) => {
     selectCloudSession,
     draftSessionID,
     setDraftSessionID,
-    
+
     timers,
     cancelTimer,
-    
   }
 
   return <SessionContext.Provider value={value}>{props.children}</SessionContext.Provider>

@@ -75,7 +75,7 @@ export class PlanningService {
         sessionID: t.sessionID,
         created: t.created,
       }))
-    
+
     this.postToSidebar({
       type: "plannedKanbanTasks",
       tasks: kanbanTasks,
@@ -89,10 +89,10 @@ export class PlanningService {
         const props = event.properties as any
         const sessionId = props.sessionID
         const status = props.status
-        
+
         if (sessionId && status) {
           const task = this.tasks.find((t) => t.sessionID === sessionId && t.status === "dispatched")
-          
+
           if (task) {
             if (status.type === "idle") {
               task.status = "needs_review"
@@ -121,7 +121,7 @@ export class PlanningService {
     dependsOn?: string[]
   }) {
     const id = `ptask-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    
+
     // Validate dependencies
     if (opts.dependsOn && opts.dependsOn.length > 0) {
       if (hasCycle(this.tasks, id, opts.dependsOn)) {
@@ -161,7 +161,12 @@ export class PlanningService {
     this.save()
   }
 
-  public update(id: string, updates: Partial<Omit<PlanningTask, "id" | "created" | "sessionID" | "worktreeID" | "dispatchedAt" | "completedAt" | "error">>) {
+  public update(
+    id: string,
+    updates: Partial<
+      Omit<PlanningTask, "id" | "created" | "sessionID" | "worktreeID" | "dispatchedAt" | "completedAt" | "error">
+    >,
+  ) {
     const task = this.tasks.find((t) => t.id === id)
     if (!task) return
 
@@ -208,8 +213,18 @@ export class PlanningService {
       return
     }
 
-    if (task.status !== "planned" && task.status !== "ready" && task.status !== "failed" && task.status !== "needs_review") {
-      this.postToSidebar({ type: "planningDispatchResult", taskId: id, success: false, error: "Task is already running or done" })
+    if (
+      task.status !== "planned" &&
+      task.status !== "ready" &&
+      task.status !== "failed" &&
+      task.status !== "needs_review"
+    ) {
+      this.postToSidebar({
+        type: "planningDispatchResult",
+        taskId: id,
+        success: false,
+        error: "Task is already running or done",
+      })
       return
     }
 
@@ -220,20 +235,26 @@ export class PlanningService {
       if (!root) throw new Error("No workspace folder open")
 
       // 1. Create Session
-      const { data: session, error: createError } = await client.session.create({ directory: root }, { throwOnError: false })
+      const { data: session, error: createError } = await client.session.create(
+        { directory: root },
+        { throwOnError: false },
+      )
       if (createError || !session) {
         throw new Error(`Failed to create session: ${String(createError)}`)
       }
 
       // 2. Dispatch Prompt
       const parts = [{ type: "text" as const, text: task.prompt }]
-      const { error: promptError } = await client.session.promptAsync({
-        sessionID: session.id,
-        directory: root,
-        parts,
-        agent: task.agent,
-        model: task.providerID && task.modelID ? { providerID: task.providerID, modelID: task.modelID } : undefined,
-      }, { throwOnError: false })
+      const { error: promptError } = await client.session.promptAsync(
+        {
+          sessionID: session.id,
+          directory: root,
+          parts,
+          agent: task.agent,
+          model: task.providerID && task.modelID ? { providerID: task.providerID, modelID: task.modelID } : undefined,
+        },
+        { throwOnError: false },
+      )
 
       if (promptError) {
         throw new Error(`Failed to dispatch prompt: ${String(promptError)}`)
@@ -244,11 +265,10 @@ export class PlanningService {
       task.sessionID = session.id
       task.dispatchedAt = new Date().toISOString()
       task.error = undefined
-      
-      this.save()
-      
-      this.postToSidebar({ type: "planningDispatchResult", taskId: id, success: true, sessionID: session.id })
 
+      this.save()
+
+      this.postToSidebar({ type: "planningDispatchResult", taskId: id, success: true, sessionID: session.id })
     } catch (err) {
       task.status = "failed"
       task.error = err instanceof Error ? err.message : String(err)
@@ -262,7 +282,7 @@ export class PlanningService {
     if (!task) return
 
     task.status = "done"
-    
+
     // Evaluate readiness of dependent tasks
     const now = new Date()
     let changed = true // since we changed the task status
@@ -273,7 +293,7 @@ export class PlanningService {
         }
       }
     }
-    
+
     if (changed) this.save()
   }
 }

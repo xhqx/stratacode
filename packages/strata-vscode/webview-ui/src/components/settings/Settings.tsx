@@ -25,6 +25,7 @@ import ExperimentalTab from "./ExperimentalTab"
 import LanguageTab from "./LanguageTab"
 import AboutStrataCodeTab from "./AboutStrataCodeTab"
 import IndexingTab from "./IndexingTab"
+import ProjectMemoryTab from "./ProjectMemoryTab"
 import PluginSettingsTab from "./PluginSettingsTab"
 import { useServer } from "../../context/server"
 import { usePluginConfig } from "../../context/plugin-config"
@@ -249,6 +250,10 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="server" />
             <span class="label">{language.t("settings.context.title")}</span>
           </Tabs.Trigger>
+          <Tabs.Trigger value="projectMemory">
+            <Icon name="server" />
+            <span class="label">Project Memory</span>
+          </Tabs.Trigger>
 
           <Show when={features().indexing}>
             <Tabs.Trigger value="indexing">
@@ -347,6 +352,10 @@ const Settings: Component<SettingsProps> = (props) => {
         <Tabs.Content value="context">
           <h3>{language.t("settings.context.title")}</h3>
           <ContextTab />
+        </Tabs.Content>
+        <Tabs.Content value="projectMemory">
+          <h3>Project Memory</h3>
+          <ProjectMemoryTab />
         </Tabs.Content>
 
         <Show when={features().indexing}>

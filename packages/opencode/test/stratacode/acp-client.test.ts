@@ -12,7 +12,7 @@ describe("ACP Client Configuration Schema", () => {
       transport: "stdio",
       trusted: true,
     }
-    
+
     const parsed = Schema.decodeUnknownSync(ConfigACPAgent)(input)
     expect(parsed.command).toEqual(["python", "-m", "my_acp_agent"])
     expect(parsed.env).toEqual({ MY_API_KEY: "secret123" })
@@ -26,7 +26,7 @@ describe("ACP Client Configuration Schema", () => {
       transport: "http",
       url: "http://localhost:3000/sse",
     }
-    
+
     const parsed = Schema.decodeUnknownSync(ConfigACPAgent)(input)
     expect(parsed.transport).toBe("http")
     expect(parsed.url).toBe("http://localhost:3000/sse")
@@ -37,7 +37,7 @@ describe("ACP Client Configuration Schema", () => {
       transport: "websocket", // Invalid transport
       url: "ws://localhost:3000",
     }
-    
+
     expect(() => Schema.decodeUnknownSync(ConfigACPAgent)(input)).toThrow()
   })
 })

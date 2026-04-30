@@ -144,7 +144,7 @@ describe("session.retry.delay", () => {
       fn: async () => {
         const error = apiError({ "retry-after-ms": "0" })
         const setMock = mock(() => Effect.succeed(undefined))
-        
+
         await Effect.runPromise(
           Effect.gen(function* () {
             const step = yield* Schedule.toStepWithMetadata(
@@ -172,7 +172,7 @@ describe("session.retry.delay", () => {
       fn: async () => {
         const error = apiError({ "retry-after-ms": "0" })
         const setMock = mock(() => Effect.succeed(undefined))
-        
+
         await Effect.runPromise(
           Effect.gen(function* () {
             const step = yield* Schedule.toStepWithMetadata(

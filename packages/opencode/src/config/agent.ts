@@ -62,7 +62,7 @@ const AgentSchema = Schema.StructWithRest(
         models: Schema.mutable(Schema.Array(ConfigModelID)),
         max_concurrent: Schema.optional(Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThan(0))),
         timeout: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))),
-      })
+      }),
     ).annotate({
       description: "Model pool configuration for concurrent load-balanced subagent dispatch.",
     }), // stratacode_change

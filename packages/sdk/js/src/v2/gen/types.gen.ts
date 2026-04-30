@@ -1588,6 +1588,15 @@ export type AgentConfig = {
    * Ordered list of fallback models (provider/model) to try when the active model is unavailable.
    */
   fallback_models?: Array<string>
+  /**
+   * Model pool configuration for concurrent load-balanced subagent dispatch.
+   */
+  model_pool?: {
+    enabled?: boolean
+    models: Array<string>
+    max_concurrent?: number
+    timeout?: number
+  }
   auto_approve?: {
     /**
      * Auto-approve permissions after N seconds of inaction (0 = disabled)
@@ -1597,6 +1606,12 @@ export type AgentConfig = {
      * Auto-answer questions after N seconds (0 = disabled, selects first option)
      */
     question_timeout?: number
+  }
+  retry?: {
+    enabled?: boolean
+    limit?: number
+    delay?: number
+    max_delay?: number
   }
   [key: string]:
     | unknown
@@ -1626,6 +1641,12 @@ export type AgentConfig = {
     | PermissionConfig
     | Array<string>
     | {
+        enabled?: boolean
+        models: Array<string>
+        max_concurrent?: number
+        timeout?: number
+      }
+    | {
         /**
          * Auto-approve permissions after N seconds of inaction (0 = disabled)
          */
@@ -1634,6 +1655,12 @@ export type AgentConfig = {
          * Auto-answer questions after N seconds (0 = disabled, selects first option)
          */
         question_timeout?: number
+      }
+    | {
+        enabled?: boolean
+        limit?: number
+        delay?: number
+        max_delay?: number
       }
     | undefined
 }
@@ -1907,6 +1934,40 @@ export type Config = {
    */
   remote_control?: boolean
   indexing?: IndexingConfig
+  retry?: {
+    /**
+     * Enable automatic retry on transient agent errors (default: true)
+     */
+    enabled?: boolean
+    /**
+     * Maximum number of retry attempts (0 = no retries, default: unlimited)
+     */
+    limit?: number
+    /**
+     * Base delay in seconds for exponential backoff (default: 2)
+     */
+    delay?: number
+    /**
+     * Maximum delay in seconds for exponential backoff cap (default: 30)
+     */
+    max_delay?: number
+  }
+  repomap?: {
+    /**
+     * Character budget limit for the generated repository map (0 = disabled, default: 4096)
+     */
+    budget?: number
+  }
+  project_memory?: {
+    /**
+     * Whether automatic memory extraction on branch change is enabled (default: false)
+     */
+    enabled?: boolean
+    /**
+     * Maximum number of recent commits to analyze per pull/branch change (default: 10)
+     */
+    max_commits?: number
+  }
   /**
    * Model to use in the format of provider/model, eg anthropic/claude-2
    */
@@ -2093,6 +2154,43 @@ export type Config = {
      * Auto-answer questions after N seconds (0 = disabled, selects first option)
      */
     question_timeout?: number
+  }
+  /**
+   * External ACP (Agent Client Protocol) agents
+   */
+  acp_agents?: {
+    [key: string]: {
+      /**
+       * Display name
+       */
+      name?: string
+      /**
+       * Command to execute the ACP agent
+       */
+      command?: Array<string>
+      /**
+       * Environment variables for the ACP agent
+       */
+      env?: {
+        [key: string]: string
+      }
+      /**
+       * Working directory for the ACP agent
+       */
+      cwd?: string
+      /**
+       * Transport type (stdio or http)
+       */
+      transport?: "stdio" | "http"
+      /**
+       * URL for HTTP transport
+       */
+      url?: string
+      /**
+       * Auto-approve file operations from this agent
+       */
+      trusted?: boolean
+    }
   }
 }
 
@@ -2614,6 +2712,18 @@ export type Agent = {
   }
   steps?: number
   fallback_models?: Array<string>
+  model_pool?: {
+    enabled?: boolean
+    models: Array<string>
+    max_concurrent?: number
+    timeout?: number
+  }
+  retry?: {
+    enabled?: boolean
+    limit?: number
+    delay?: number
+    max_delay?: number
+  }
 }
 
 export type LspStatus = {
@@ -6269,6 +6379,86 @@ export type NetworkRejectResponses = {
 
 export type NetworkRejectResponse = NetworkRejectResponses[keyof NetworkRejectResponses]
 
+export type RepoMapGenerateData = {
+  body?: {
+    /**
+     * Character budget limit
+     */
+    budget?: number
+    /**
+     * Boost files that are mentioned
+     */
+    mentioned?: Array<string>
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/repomap/generate"
+}
+
+export type RepoMapGenerateErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type RepoMapGenerateError = RepoMapGenerateErrors[keyof RepoMapGenerateErrors]
+
+export type RepoMapGenerateResponses = {
+  /**
+   * Repository map generated successfully
+   */
+  200: {
+    map: string
+    stats: {
+      files: number
+      symbols: number
+      chars: number
+      budget: number
+    }
+  }
+}
+
+export type RepoMapGenerateResponse = RepoMapGenerateResponses[keyof RepoMapGenerateResponses]
+
+export type RepoMapInvalidateData = {
+  body?: {
+    /**
+     * Specific files to invalidate
+     */
+    files?: Array<string>
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/repomap/invalidate"
+}
+
+export type RepoMapInvalidateErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type RepoMapInvalidateError = RepoMapInvalidateErrors[keyof RepoMapInvalidateErrors]
+
+export type RepoMapInvalidateResponses = {
+  /**
+   * Cache invalidated
+   */
+  200: {
+    success: boolean
+  }
+}
+
+export type RepoMapInvalidateResponse = RepoMapInvalidateResponses[keyof RepoMapInvalidateResponses]
+
 export type SuggestionListData = {
   body?: never
   path?: never
@@ -6864,6 +7054,91 @@ export type StratacodeSessionImportPartResponses = {
 
 export type StratacodeSessionImportPartResponse =
   StratacodeSessionImportPartResponses[keyof StratacodeSessionImportPartResponses]
+
+export type MemoryListData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/stratacode/memory"
+}
+
+export type MemoryListResponses = {
+  /**
+   * List of entries
+   */
+  200: Array<{
+    id: string
+    title: string
+    content: string
+  }>
+}
+
+export type MemoryListResponse = MemoryListResponses[keyof MemoryListResponses]
+
+export type MemoryAddData = {
+  body?: {
+    id: string
+    title: string
+    content: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/stratacode/memory"
+}
+
+export type MemoryAddErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type MemoryAddError = MemoryAddErrors[keyof MemoryAddErrors]
+
+export type MemoryAddResponses = {
+  /**
+   * Entry added
+   */
+  200: boolean
+}
+
+export type MemoryAddResponse = MemoryAddResponses[keyof MemoryAddResponses]
+
+export type MemoryDeleteData = {
+  body?: {
+    id: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/stratacode/memory/delete"
+}
+
+export type MemoryDeleteErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type MemoryDeleteError = MemoryDeleteErrors[keyof MemoryDeleteErrors]
+
+export type MemoryDeleteResponses = {
+  /**
+   * Entry deleted
+   */
+  200: boolean
+}
+
+export type MemoryDeleteResponse = MemoryDeleteResponses[keyof MemoryDeleteResponses]
 
 export type StratacodeHeapSnapshotData = {
   body?: never

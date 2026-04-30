@@ -3,6 +3,8 @@ export interface EditorContext {
   openTabs?: string[]
   activeFile?: string
   shell?: string
+  repoMap?: string
+  projectMemory?: { id: string; title: string; content: string }[]
 }
 
 /**
@@ -52,6 +54,19 @@ export function environmentDetails(ctx?: EditorContext): string {
     for (const f of ctx.openTabs) {
       lines.push(`  ${f}`)
     }
+  }
+  if (ctx?.projectMemory && ctx.projectMemory.length > 0) {
+    lines.push(`<project_memory>`)
+    for (const entry of ctx.projectMemory) {
+      lines.push(`<memory_entry id="${entry.id}" title="${entry.title}">`)
+      lines.push(entry.content)
+      lines.push(`</memory_entry>`)
+    }
+    lines.push(`</project_memory>`)
+  }
+  if (ctx?.repoMap) {
+    // repoMap includes its own <repo_map> XML tags
+    lines.push(ctx.repoMap)
   }
   return ["<environment_details>", ...lines, "</environment_details>"].join("\n")
 }

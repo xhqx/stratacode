@@ -1232,7 +1232,8 @@ export const dict = {
     "Ordered list of models to try if the primary model encounters an error (e.g., rate limit, auth, or service outage).",
   "settings.agentBehaviour.fallbackModels.add": "Add fallback model",
   "settings.agentBehaviour.modelPool.title": "Model Pool",
-  "settings.agentBehaviour.modelPool.description": "Distribute subagent workload across multiple models for parallel execution.",
+  "settings.agentBehaviour.modelPool.description":
+    "Distribute subagent workload across multiple models for parallel execution.",
   "settings.agentBehaviour.modelPool.enabled": "Use Model Pool",
   "settings.agentBehaviour.modelPool.models": "Pool Models",
   "settings.agentBehaviour.modelPool.models.description": "Models to rotate between for subagent execution.",
@@ -1401,7 +1402,7 @@ export const dict = {
     "Search web or code. Allows performing external web or code searches.",
   "settings.autoApprove.tool.doom_loop":
     "Prevent repeated identical actions. Triggered when the same tool call repeats with identical input.",
-  
+
   "permission.agent.badge": "Agent: {{agent}}",
   "permission.scope.global": "For all agents",
   "permission.scope.agent": "For {{agent}} only",
@@ -1417,7 +1418,8 @@ export const dict = {
   "settings.agent.permissions.description": "Override global permission rules for this agent.",
   "settings.agent.timer.useGlobal": "Use global default ({{value}}s)",
   "settings.agentBehaviour.permissions.agentOverridesTitle": "Agent Permission Overrides",
-  "settings.agentBehaviour.permissions.agentOverridesDesc": "Override global tool permissions for this agent. Unset values inherit from global settings.",
+  "settings.agentBehaviour.permissions.agentOverridesDesc":
+    "Override global tool permissions for this agent. Unset values inherit from global settings.",
 
   "settings.checkpoints.enable.title": "Enable Snapshots",
   "settings.checkpoints.enable.description": "Create checkpoints before file edits so you can restore previous states",

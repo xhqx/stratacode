@@ -131,7 +131,7 @@ export interface Config {
   layout?: "auto" | "stretch"
   experimental?: ExperimentalConfig
   indexing?: IndexingConfig
-  
+
   auto_approve?: {
     timeout?: number
     question_timeout?: number
@@ -143,7 +143,15 @@ export interface Config {
     delay?: number
     max_delay?: number
   } | null
-  
+
+  repomap?: {
+    budget?: number
+  } | null
+
+  project_memory?: {
+    enabled?: boolean
+    max_commits?: number
+  } | null
 }
 
 export interface FeatureFlags {

@@ -41,7 +41,9 @@ export async function handlePermissionResponse(
   response: "once" | "always" | "reject",
   approvedAlways: string[],
   deniedAlways: string[],
-  scope?: "global" | "agent",   agent?: string, ): Promise<void> {
+  scope?: "global" | "agent",
+  agent?: string,
+): Promise<void> {
   if (!ctx.client) {
     ctx.postMessage({ type: "permissionError", permissionID: permissionId })
     return
@@ -60,9 +62,7 @@ export async function handlePermissionResponse(
     // Save per-pattern rules before replying (reply deletes the pending request)
     if (approvedAlways.length > 0 || deniedAlways.length > 0) {
       if (scope === "agent" && agent) {
-        
         await saveAgentPermissionRules(ctx, agent, approvedAlways, deniedAlways, permissionId, dir)
-        
       } else {
         await ctx.client.permission.saveAlwaysRules(
           {
@@ -85,7 +85,6 @@ export async function handlePermissionResponse(
     ctx.postMessage({ type: "permissionError", permissionID: permissionId })
   }
 }
-
 
 async function saveAgentPermissionRules(
   ctx: PermissionContext,
@@ -115,7 +114,6 @@ async function saveAgentPermissionRules(
   })
 }
 
-
 /**
  * Fetch all pending permissions from the backend and forward any that belong
  * to tracked sessions to the webview. Called after SSE reconnects and after
@@ -143,7 +141,8 @@ export async function fetchAndSendPendingPermissions(ctx: PermissionContext): Pr
             args: perm.metadata,
             message: `Permission required: ${perm.permission}`,
             tool: perm.tool,
-            agent: perm.agent,           },
+            agent: perm.agent,
+          },
         })
       }
     }

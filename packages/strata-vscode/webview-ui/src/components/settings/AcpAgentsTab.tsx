@@ -214,19 +214,13 @@ const AcpAgentsTab: Component = () => {
                             {Array.isArray(acp.command) ? acp.command[0] : acp.command}
                           </span>
                         </div>
-                        <Show
-                          when={
-                            (Array.isArray(acp.command) && acp.command.length > 1)
-                          }
-                        >
+                        <Show when={Array.isArray(acp.command) && acp.command.length > 1}>
                           <div style={{ "margin-bottom": "4px" }}>
                             <span style={{ "font-weight": "500" }}>
                               {language.t("settings.agentBehaviour.acpDetail.args")}:{" "}
                             </span>
                             <span style={{ "font-family": "var(--vscode-editor-font-family, monospace)" }}>
-                              {Array.isArray(acp.command)
-                                ? (acp.command as string[]).slice(1).join(" ")
-                                : ""}
+                              {Array.isArray(acp.command) ? (acp.command as string[]).slice(1).join(" ") : ""}
                             </span>
                           </div>
                         </Show>

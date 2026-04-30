@@ -136,10 +136,13 @@ export const ChatView: Component<ChatViewProps> = (props) => {
     response: "once" | "always" | "reject",
     approvedAlways: string[],
     deniedAlways: string[],
-    scope?: "global" | "agent",     agent?: string,   ) => {
+    scope?: "global" | "agent",
+    agent?: string,
+  ) => {
     const perm = permissionRequest()
     if (!perm || session.respondingPermissions().has(perm.id)) return
-    session.respondToPermission(perm.id, response, approvedAlways, deniedAlways, scope, agent)   }
+    session.respondToPermission(perm.id, response, approvedAlways, deniedAlways, scope, agent)
+  }
 
   const startSession = () => window.dispatchEvent(new CustomEvent("newTaskRequest"))
 
@@ -330,14 +333,12 @@ export const ChatView: Component<ChatViewProps> = (props) => {
     <div
       class="chat-view"
       onMouseDown={() => {
-        
         const timers = session.timers()
         if (Object.keys(timers).length > 0) {
           for (const requestId of Object.keys(timers)) {
             session.cancelTimer(requestId)
           }
         }
-        
       }}
     >
       <TaskHeader readonly={props.readonly} />

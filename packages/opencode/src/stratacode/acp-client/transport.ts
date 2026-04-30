@@ -12,7 +12,7 @@ export class StdioTransport {
 
   constructor(private config: ConfigACPAgent) {}
 
-  async start(): Promise<{ child: ChildProcess, stream: import("@agentclientprotocol/sdk").Stream }> {
+  async start(): Promise<{ child: ChildProcess; stream: import("@agentclientprotocol/sdk").Stream }> {
     if (this.child) throw new Error("Agent already running")
 
     if (!this.config.command || this.config.command.length === 0) {
@@ -25,7 +25,7 @@ export class StdioTransport {
     this.child = spawn(cmd, args, {
       env: { ...process.env, ...(this.config.env ?? {}) },
       cwd: this.config.cwd ?? process.cwd(),
-      stdio: ["pipe", "pipe", "pipe"]
+      stdio: ["pipe", "pipe", "pipe"],
     })
 
     this.child.stderr?.on("data", (data) => {
@@ -44,7 +44,7 @@ export class StdioTransport {
     const { Writable, Readable } = await import("stream")
     const stream = ndJsonStream(
       Writable.toWeb(this.child.stdin!) as unknown as WritableStream<Uint8Array>,
-      Readable.toWeb(this.child.stdout!) as unknown as ReadableStream<Uint8Array>
+      Readable.toWeb(this.child.stdout!) as unknown as ReadableStream<Uint8Array>,
     )
 
     return { child: this.child, stream }

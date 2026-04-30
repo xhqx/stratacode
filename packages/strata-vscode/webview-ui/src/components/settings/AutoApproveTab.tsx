@@ -227,15 +227,26 @@ const AutoApproveTab: Component = () => {
         {language.t("settings.autoApprove.description")}
       </div>
 
-      
-      <div style={{ "padding-top": "12px", "padding-bottom": "12px", "border-bottom": "1px solid var(--border-weak-base)" }}>
+      <div
+        style={{
+          "padding-top": "12px",
+          "padding-bottom": "12px",
+          "border-bottom": "1px solid var(--border-weak-base)",
+        }}
+      >
         <div style={{ display: "flex", "align-items": "center", gap: "12px", "margin-bottom": "8px" }}>
           <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
             Auto-approve timeout (seconds)
           </label>
           <input
             type="number"
-            style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+            style={{
+              width: "80px",
+              padding: "4px 8px",
+              "background-color": "var(--vscode-input-background)",
+              color: "var(--vscode-input-foreground)",
+              border: "1px solid var(--vscode-input-border)",
+            }}
             value={config().auto_approve?.timeout ?? 0}
             min="0"
             max="300"
@@ -248,7 +259,13 @@ const AutoApproveTab: Component = () => {
           </label>
           <input
             type="number"
-            style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+            style={{
+              width: "80px",
+              padding: "4px 8px",
+              "background-color": "var(--vscode-input-background)",
+              color: "var(--vscode-input-foreground)",
+              border: "1px solid var(--vscode-input-border)",
+            }}
             value={config().auto_approve?.question_timeout ?? 0}
             min="0"
             max="300"
@@ -256,7 +273,6 @@ const AutoApproveTab: Component = () => {
           />
         </div>
       </div>
-      
 
       <For each={GRANULAR_TOOLS}>
         {(tool) => (

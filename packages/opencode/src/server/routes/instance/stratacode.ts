@@ -10,10 +10,12 @@ import { lazy } from "@/util/lazy"
 import { errors } from "../../error"
 import { SessionImportRoutes } from "@/stratacode/session-import/routes"
 import { HeapSnapshot } from "@/stratacode/cli/heap-snapshot"
+import { MemoryRoutes } from "@/stratacode/memory/routes"
 
 export const StratacodeRoutes = lazy(() =>
   new Hono()
     .route("/session-import", SessionImportRoutes())
+    .route("/memory", MemoryRoutes())
     .post(
       "/heap/snapshot",
       describeRoute({

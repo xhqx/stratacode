@@ -36,4 +36,5 @@ export interface PermissionRequest {
   }
   message?: string
   tool?: { messageID: string; callID: string }
-  agent?: string }
+  agent?: string
+}
