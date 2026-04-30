@@ -80,6 +80,86 @@ const ExperimentalTab: Component = () => {
           </div>
         </div>
 
+        {/* Global Retry config */}
+        <SettingsRow
+          title={language.t("settings.agentBehaviour.retry.title")}
+          description={language.t("settings.agentBehaviour.retry.description")}
+        >
+          <div style={{ display: "flex", "flex-direction": "column", gap: "8px", width: "100%" }}>
+            <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+              <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                Enabled
+              </label>
+              <Switch
+                checked={config().retry?.enabled !== false}
+                onChange={(checked) => {
+                  const existing = config().retry ?? {}
+                  const updated = { ...existing, enabled: checked }
+                  updateConfig({ retry: updated })
+                }}
+                hideLabel
+              >
+                Enabled
+              </Switch>
+            </div>
+            <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+              <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                Limit (attempts)
+              </label>
+              <input
+                type="number"
+                style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+                value={config().retry?.limit ?? ""}
+                placeholder="2"
+                min="0"
+                max="10"
+                onChange={(e) => {
+                  const parsed = parseInt(e.currentTarget.value, 10)
+                  const existing = config().retry ?? {}
+                  const updated = { ...existing, limit: isNaN(parsed) ? undefined : parsed }
+                  updateConfig({ retry: Object.keys(updated).length === 0 && updated.limit === undefined ? null : updated })
+                }}
+              />
+            </div>
+            <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+              <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                Base Delay (seconds)
+              </label>
+              <input
+                type="number"
+                style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+                value={config().retry?.delay ?? ""}
+                placeholder="5"
+                min="1"
+                onChange={(e) => {
+                  const parsed = parseFloat(e.currentTarget.value)
+                  const existing = config().retry ?? {}
+                  const updated = { ...existing, delay: isNaN(parsed) ? undefined : parsed }
+                  updateConfig({ retry: Object.keys(updated).length === 0 && updated.delay === undefined ? null : updated })
+                }}
+              />
+            </div>
+            <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+              <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                Max Delay Cap (seconds)
+              </label>
+              <input
+                type="number"
+                style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+                value={config().retry?.max_delay ?? ""}
+                placeholder="60"
+                min="1"
+                onChange={(e) => {
+                  const parsed = parseFloat(e.currentTarget.value)
+                  const existing = config().retry ?? {}
+                  const updated = { ...existing, max_delay: isNaN(parsed) ? undefined : parsed }
+                  updateConfig({ retry: Object.keys(updated).length === 0 && updated.max_delay === undefined ? null : updated })
+                }}
+              />
+            </div>
+          </div>
+        </SettingsRow>
+
         {/* Share mode */}
         <SettingsRow
           title={language.t("settings.experimental.share.title")}

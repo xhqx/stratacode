@@ -57,6 +57,14 @@ const AgentSchema = Schema.StructWithRest(
       description: "Ordered list of fallback models (provider/model) to try when the active model is unavailable.",
     }), // stratacode_change
     auto_approve: Schema.optional(ConfigAutoApprove.Info), // stratacode_change
+    retry: Schema.optional(
+      Schema.Struct({
+        enabled: Schema.optional(Schema.Boolean),
+        limit: Schema.optional(Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThanOrEqualTo(0))),
+        delay: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))),
+        max_delay: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))),
+      }),
+    ), // stratacode_change
   }),
   [Schema.Record(Schema.String, Schema.Any)],
 )
@@ -80,6 +88,7 @@ const KNOWN_KEYS = new Set([
   "tools",
   "fallback_models", // stratacode_change
   "auto_approve", // stratacode_change
+  "retry", // stratacode_change
 ])
 
 // Post-parse normalisation:

@@ -84,4 +84,8 @@ export const dict = {
   "plan.followup.answer.continue": "Continue here",
   "plan.followup.answer.continue.description": "Implement the plan in this session",
   "settings.agentBehaviour.importOpenCodeSettings": "Import settings from OpenCode",
+
+  // Retry UI keys
+  "settings.agentBehaviour.retry.title": "Resilience & Retries",
+  "settings.agentBehaviour.retry.description": "Configure automatic retry logic and backoff delays when the agent experiences transient failures.",
 }

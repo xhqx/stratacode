@@ -45,5 +45,12 @@ export interface AgentConfig {
     timeout?: number
     question_timeout?: number
   } | null
+
+  retry?: {
+    enabled?: boolean
+    limit?: number
+    delay?: number
+    max_delay?: number
+  } | null
   
 }

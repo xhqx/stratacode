@@ -174,6 +174,28 @@ export const Info = Schema.Struct({
     description: "Enable remote control of sessions via Strata Cloud. Equivalent to running /remote on startup.",
   }),
   indexing: Schema.optional(IndexingRef).annotate({ description: "Codebase indexing configuration" }), // stratacode_change
+  retry: Schema.optional(
+    Schema.Struct({
+      enabled: Schema.optional(Schema.Boolean).annotate({
+        description: "Enable automatic retry on transient agent errors (default: true)",
+      }),
+      limit: Schema.optional(
+        Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThanOrEqualTo(0)),
+      ).annotate({
+        description: "Maximum number of retry attempts (0 = no retries, default: unlimited)",
+      }),
+      delay: Schema.optional(
+        Schema.Number.check(Schema.isGreaterThan(0)),
+      ).annotate({
+        description: "Base delay in seconds for exponential backoff (default: 2)",
+      }),
+      max_delay: Schema.optional(
+        Schema.Number.check(Schema.isGreaterThan(0)),
+      ).annotate({
+        description: "Maximum delay in seconds for exponential backoff cap (default: 30)",
+      }),
+    }),
+  ), // stratacode_change
   // stratacode_change end
   // stratacode_change start - nullable for delete sentinel
   model: Schema.optional(Schema.NullOr(ConfigModelID)).annotate({

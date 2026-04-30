@@ -80,6 +80,15 @@ export function parseImport(json: string, taken: string[]): ImportResult {
   const perms = parsePermission(obj.permission)
   if (perms) partial.permission = perms
 
+  if (typeof obj.retry === "object" && obj.retry !== null && !Array.isArray(obj.retry)) {
+    const r = obj.retry as Record<string, unknown>
+    partial.retry = {}
+    if (typeof r.enabled === "boolean") partial.retry.enabled = r.enabled
+    if (typeof r.limit === "number") partial.retry.limit = r.limit
+    if (typeof r.delay === "number") partial.retry.delay = r.delay
+    if (typeof r.max_delay === "number") partial.retry.max_delay = r.max_delay
+  }
+
   return {
     ok: true,
     name,

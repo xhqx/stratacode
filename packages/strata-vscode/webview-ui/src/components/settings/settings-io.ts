@@ -34,6 +34,7 @@ export const KNOWN_KEYS: ReadonlyArray<string> = [
   "layout",
   "indexing",
   "experimental",
+  "retry",
 ]
 
 export type ImportError = "invalidJson" | "invalidConfig" | "tooLarge"

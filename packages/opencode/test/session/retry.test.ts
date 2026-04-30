@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test"
+import { describe, expect, test, mock } from "bun:test"
 import type { NamedError } from "@opencode-ai/shared/util/error"
 import { APICallError } from "ai"
 import { setTimeout as sleep } from "node:timers/promises"
@@ -32,6 +32,20 @@ describe("session.retry.delay", () => {
     const delays = Array.from({ length: 10 }, (_, index) => SessionRetry.delay(index + 1, error))
     expect(delays).toStrictEqual([2000, 4000, 8000, 16000, 30000, 30000, 30000, 30000, 30000, 30000])
   })
+
+  // stratacode_change start
+  test("honors custom base delay and cap", () => {
+    const error = apiError()
+    // 1s base, 10s max cap
+    const delays = Array.from({ length: 6 }, (_, index) => SessionRetry.delay(index + 1, error, 1000, 10000))
+    expect(delays).toStrictEqual([1000, 2000, 4000, 8000, 10000, 10000])
+  })
+
+  test("headers override custom delay constraints", () => {
+    const error = apiError({ "retry-after-ms": "50000" })
+    expect(SessionRetry.delay(1, error, 1000, 10000)).toBe(50000)
+  })
+  // stratacode_change end
 
   test("prefers retry-after-ms when shorter than exponential", () => {
     const error = apiError({ "retry-after-ms": "1500" })
@@ -121,6 +135,61 @@ describe("session.retry.delay", () => {
       },
     })
   })
+
+  // stratacode_change start
+  test("policy aborts when limit is reached", async () => {
+    await using tmp = await tmpdir()
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const error = apiError({ "retry-after-ms": "0" })
+        const setMock = mock(() => Effect.succeed(undefined))
+        
+        await Effect.runPromise(
+          Effect.gen(function* () {
+            const step = yield* Schedule.toStepWithMetadata(
+              SessionRetry.policy({
+                parse: (err) => err as MessageV2.APIError,
+                set: setMock,
+                limit: 1, // Only 1 attempt allowed
+              }),
+            )
+            // Initial failure (attempt 1 -> ok)
+            yield* step(error)
+            // Second failure (attempt 2 -> rejected by limit)
+            const result = yield* Effect.flip(step(error))
+            expect((result as any).value).toBe(2) // Returns the attempt number on Cause.done
+          }),
+        )
+      },
+    })
+  })
+
+  test("policy respects limit=0", async () => {
+    await using tmp = await tmpdir()
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const error = apiError({ "retry-after-ms": "0" })
+        const setMock = mock(() => Effect.succeed(undefined))
+        
+        await Effect.runPromise(
+          Effect.gen(function* () {
+            const step = yield* Schedule.toStepWithMetadata(
+              SessionRetry.policy({
+                parse: (err) => err as MessageV2.APIError,
+                set: setMock,
+                limit: 0, // No retries allowed
+              }),
+            )
+            const result = yield* Effect.flip(step(error))
+            expect((result as any).value).toBe(1) // immediate fail, returns attempt 1
+          }),
+        )
+      },
+    })
+  })
+  // stratacode_change end
 })
 
 describe("session.retry.retryable", () => {

@@ -20,7 +20,12 @@ function cap(ms: number) {
   return Math.min(ms, RETRY_MAX_DELAY)
 }
 
-export function delay(attempt: number, error?: MessageV2.APIError) {
+export function delay(
+  attempt: number,
+  error?: MessageV2.APIError,
+  baseDelay = RETRY_INITIAL_DELAY, // stratacode_change
+  maxDelayCap = RETRY_MAX_DELAY_NO_HEADERS, // stratacode_change
+) {
   if (error) {
     const headers = error.data.responseHeaders
     if (headers) {
@@ -46,11 +51,11 @@ export function delay(attempt: number, error?: MessageV2.APIError) {
         }
       }
 
-      return cap(RETRY_INITIAL_DELAY * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1))
+      return cap(baseDelay * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1)) // stratacode_change
     }
   }
 
-  return cap(Math.min(RETRY_INITIAL_DELAY * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1), RETRY_MAX_DELAY_NO_HEADERS))
+  return cap(Math.min(baseDelay * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1), maxDelayCap)) // stratacode_change
 }
 
 export function retryable(error: Err) {
@@ -119,6 +124,8 @@ export function policy(opts: {
   set: (input: { attempt: number; message: string; next: number }) => Effect.Effect<void>
   // stratacode_change start
   limit?: number
+  delay?: number
+  max_delay?: number
   offline?: (input: { error: unknown; message: string }) => Effect.Effect<"retry" | "blocked" | "aborted">
   // stratacode_change end
 }) {
@@ -148,9 +155,12 @@ export function policy(opts: {
         }
         // stratacode_change end
 
-        const wait = delay(meta.attempt, MessageV2.APIError.isInstance(error) ? error : undefined)
-        const now = yield* Clock.currentTimeMillis
-        yield* opts.set({ attempt: meta.attempt, message, next: now + wait })
+        // stratacode_change start — use custom delay constants if provided
+        const base = opts.delay !== undefined ? opts.delay * 1000 : undefined
+        const maxCap = opts.max_delay !== undefined ? opts.max_delay * 1000 : undefined
+        const wait = delay(meta.attempt, MessageV2.APIError.isInstance(error) ? error : undefined, base, maxCap)
+        // stratacode_change end
+        yield* opts.set({ attempt: meta.attempt, message, next: Date.now() + wait })
         return [meta.attempt, Duration.millis(wait)] as [number, Duration.Duration]
       })
     }),

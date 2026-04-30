@@ -99,9 +99,17 @@ export namespace StrataSessionProcessor {
     sessionID: SessionID
     abort: AbortSignal
     set: (sessionID: SessionID, status: SessionStatus.Info) => Effect.Effect<void>
+    retry?: { enabled?: boolean; limit?: number; delay?: number; max_delay?: number } // stratacode_change
   }) {
+    // stratacode_change start - determine limit from new config structure
+    const cfg = input.retry
+    const limit = cfg?.enabled === false ? 0 : (cfg?.limit ?? Flag.STRATA_SESSION_RETRY_LIMIT)
+    // stratacode_change end
+
     return {
-      limit: Flag.STRATA_SESSION_RETRY_LIMIT,
+      limit,
+      delay: cfg?.delay, // stratacode_change
+      max_delay: cfg?.max_delay, // stratacode_change
       offline: (info: { error: unknown; message: string }) =>
         handleOffline({
           error: info.error,

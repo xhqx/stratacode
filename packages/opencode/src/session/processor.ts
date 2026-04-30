@@ -613,6 +613,11 @@ export const layer: Layer.Layer<
       const process = Effect.fn("SessionProcessor.process")(function* (streamInput: LLM.StreamInput) {
         slog.info("process")
         ctx.needsCompaction = false
+        // stratacode_change start - get global and agent retry config
+        const globalRetry = (yield* config.get()).retry
+        const agentRetry = streamInput.agent.retry
+        const retry = { ...globalRetry, ...agentRetry } // per-agent overrides global
+        // stratacode_change end
         ctx.shouldBreak = (yield* config.get()).experimental?.continue_loop_on_deny !== true
 
         return yield* Effect.gen(function* () {
@@ -644,7 +649,7 @@ export const layer: Layer.Layer<
               SessionRetry.policy({
                 parse,
                 // stratacode_change start
-                ...StrataSessionProcessor.retryOpts({ sessionID: ctx.sessionID, abort: ac.signal, set: status.set }),
+                ...StrataSessionProcessor.retryOpts({ sessionID: ctx.sessionID, abort: ac.signal, set: status.set, retry }),
                 // stratacode_change end
                 set: (info) =>
                   status.set(ctx.sessionID, {
