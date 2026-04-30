@@ -23,6 +23,10 @@ import { NotFoundError } from "@/storage" // stratacode_change
 import { errorMessage } from "@/util/error"
 import { Log } from "@/util"
 import { isRecord } from "@/util/record"
+// stratacode_change start
+import { Service as ACPAdapterService, defaultLayer as ACPAdapterLayer } from "@/stratacode/acp-client/adapter"
+import { defaultLayer as ACPManagerLayer } from "@/stratacode/acp-client/manager"
+// stratacode_change end
 
 const DOOM_LOOP_THRESHOLD = 3
 const log = Log.create({ service: "session.processor" })
@@ -108,6 +112,9 @@ export const layer: Layer.Layer<
     const summary = yield* SessionSummary.Service
     const scope = yield* Scope.Scope
     const status = yield* SessionStatus.Service
+    // stratacode_change start
+    const acpAdapter = yield* ACPAdapterService
+    // stratacode_change end
 
     const create = Effect.fn("SessionProcessor.create")(function* (input: Input) {
       // Pre-capture snapshot before the LLM stream starts. The AI SDK
@@ -624,7 +631,11 @@ export const layer: Layer.Layer<
           yield* Effect.gen(function* () {
             ctx.currentText = undefined
             ctx.reasoningMap = {}
-            const stream = llm.stream(streamInput)
+            // stratacode_change start
+            const stream = streamInput.agent.options?.isACP
+              ? acpAdapter.stream(streamInput)
+              : llm.stream(streamInput)
+            // stratacode_change end
 
             yield* stream.pipe(
               Stream.tap((event) => handleEvent(event)),
@@ -682,6 +693,11 @@ export const layer: Layer.Layer<
 
     return Service.of({ create })
   }),
+).pipe(
+  // stratacode_change start
+  Layer.provide(ACPAdapterLayer),
+  Layer.provide(ACPManagerLayer),
+  // stratacode_change end
 )
 
 export const defaultLayer = Layer.suspend(() =>

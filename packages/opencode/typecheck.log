@@ -1,0 +1,61 @@
+$ tsgo --noEmit
+src/effect/app-runtime.ts(100,32): error TS2345: Argument of type 'Layer<AppFileSystem.Service | Service | Service | Service | Service | Service | Service | Service | Service | ... 36 more ... | Service, any, any>' is not assignable to parameter of type 'Layer<AppFileSystem.Service | Service | Service | Service | Service | Service | Service | Service | Service | ... 36 more ... | Service, any, never>'.
+  Type 'any' is not assignable to type 'never'.
+src/session/compaction.ts(609,45): error TS2345: Argument of type 'Layer<Service, any, any>' is not assignable to parameter of type 'Layer<Service, any, never>'.
+  Type 'any' is not assignable to type 'never'.
+src/session/processor.ts(713,25): error TS2339: Property 'unwrapEffect' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Layer")'.
+src/session/processor.ts(714,25): error TS2339: Property 'unwrapEffect' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Layer")'.
+src/session/prompt.ts(2006,45): error TS2345: Argument of type 'Layer<Service, any, any>' is not assignable to parameter of type 'Layer<Service, any, never>'.
+  Type 'any' is not assignable to type 'never'.
+src/stratacode/acp-client/adapter.ts(10,31): error TS1484: 'PromptRequest' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/stratacode/acp-client/adapter.ts(27,21): error TS2551: Property 'async' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Stream")'. Did you mean 'sync'?
+src/stratacode/acp-client/adapter.ts(27,48): error TS7006: Parameter 'emit' implicitly has an 'any' type.
+src/stratacode/acp-client/adapter.ts(36,13): error TS2353: Object literal may only specify known properties, and 'method' does not exist in type 'PromptRequest'.
+src/stratacode/acp-client/adapter.ts(44,107): error TS2339: Property 'result' does not exist on type 'ToolResultPart'.
+src/stratacode/acp-client/adapter.ts(67,69): error TS2339: Property 'request' does not exist on type 'ClientSideConnection'.
+src/stratacode/acp-client/config.ts(9,43): error TS2740: Type 'Literal<"stdio">' is missing the following properties from type 'readonly Top[]': length, concat, join, slice, and 26 more.
+src/stratacode/acp-client/manager.ts(7,32): error TS1484: 'InitializeRequest' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/stratacode/acp-client/manager.ts(48,13): error TS2353: Object literal may only specify known properties, and 'method' does not exist in type 'InitializeRequest'.
+src/stratacode/acp-client/manager.ts(57,22): error TS2339: Property 'request' does not exist on type 'ClientSideConnection'.
+src/stratacode/acp-client/transport.ts(45,7): error TS2554: Expected 2 arguments, but got 1.
+src/stratacode/acp-client/transport.ts(45,7): error TS2345: Argument of type 'Stream' is not assignable to parameter of type '(agent: Agent) => Client'.
+  Type 'Stream' provides no match for the signature '(agent: Agent): Client'.
+src/stratacode/acp-client/transport.ts(46,8): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+src/stratacode/plan-followup.ts(58,60): error TS2345: Argument of type 'Layer<Service, any, any>' is not assignable to parameter of type 'Layer<Service, any, never>'.
+  Type 'any' is not assignable to type 'never'.
+test/acp/agent-interface.test.ts(40,5): error TS2820: Type '"unstable_resumeSession"' is not assignable to type 'keyof Agent'. Did you mean '"unstable_forkSession"'?
+test/session/compaction.test.ts(281,5): error TS2345: Argument of type 'Layer<Service | Service | Service | Service, never, Service>' is not assignable to parameter of type 'Layer<Service | Service | Service | Service, never, never>'.
+  Type 'Service' is not assignable to type 'never'.
+test/session/processor-effect.test.ts(175,23): error TS2345: Argument of type 'Layer<ChildProcessSpawner | FileSystem | Service | Service | Service | Service | Service | Service | ... 6 more ... | TestLLMServer, ServeError, Service>' is not assignable to parameter of type 'Layer<ChildProcessSpawner | FileSystem | Service | Service | Service | Service | Service | Service | ... 6 more ... | TestLLMServer, ServeError, never>'.
+  Type 'Service' is not assignable to type 'never'.
+test/session/prompt.test.ts(203,23): error TS2345: Argument of type 'Layer<ChildProcessSpawner | FileSystem | AppFileSystem.Service | Service | Service | Service | Service | Service | ... 18 more ... | TestLLMServer, ServeError, Service>' is not assignable to parameter of type 'Layer<ChildProcessSpawner | FileSystem | AppFileSystem.Service | Service | Service | Service | Service | Service | ... 18 more ... | TestLLMServer, ServeError, never>'.
+  Type 'Service' is not assignable to type 'never'.
+test/session/snapshot-tool-race.test.ts(158,23): error TS2345: Argument of type 'Layer<ChildProcessSpawner | FileSystem | AppFileSystem.Service | Service | Service | Service | Service | Service | ... 19 more ... | TestLLMServer, ServeError, Service>' is not assignable to parameter of type 'Layer<ChildProcessSpawner | FileSystem | AppFileSystem.Service | Service | Service | Service | Service | Service | ... 19 more ... | TestLLMServer, ServeError, never>'.
+  Type 'Service' is not assignable to type 'never'.
+test/session/structured-output-integration.test.ts(26,5): error TS2345: Argument of type 'Effect<A, any, any>' is not assignable to parameter of type 'Effect<A, any, never>'.
+  Type 'any' is not assignable to type 'never'.
+test/stratacode/model-pool.test.ts(5,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+test/stratacode/model-pool.test.ts(13,3): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+test/stratacode/model-pool.test.ts(15,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(18,3): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+test/stratacode/model-pool.test.ts(21,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(22,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(23,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(27,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(28,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(29,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(36,3): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+test/stratacode/model-pool.test.ts(48,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(49,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(56,3): error TS2593: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+test/stratacode/model-pool.test.ts(71,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(72,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/model-pool.test.ts(73,5): error TS2304: Cannot find name 'expect'.
+test/stratacode/session-compaction-cap.test.ts(172,23): error TS2345: Argument of type 'Layer<ChildProcessSpawner | FileSystem | AppFileSystem.Service | Service | Service | Service | Service | Service | ... 18 more ... | TestLLMServer, ServeError, Service>' is not assignable to parameter of type 'Layer<ChildProcessSpawner | FileSystem | AppFileSystem.Service | Service | Service | Service | Service | Service | ... 18 more ... | TestLLMServer, ServeError, never>'.
+  Type 'Service' is not assignable to type 'never'.
+test/stratacode/session-processor-empty-tool-calls.test.ts(109,23): error TS2345: Argument of type 'Layer<ChildProcessSpawner | FileSystem | Service | Service | Service | Service | Service | Service | ... 6 more ... | TestLLM, never, Service>' is not assignable to parameter of type 'Layer<ChildProcessSpawner | FileSystem | Service | Service | Service | Service | Service | Service | ... 6 more ... | TestLLM, never, never>'.
+  Type 'Service' is not assignable to type 'never'.
+test/stratacode/session-processor-network-offline.test.ts(109,23): error TS2345: Argument of type 'Layer<ChildProcessSpawner | FileSystem | Service | Service | Service | Service | Service | Service | ... 6 more ... | TestLLM, never, Service>' is not assignable to parameter of type 'Layer<ChildProcessSpawner | FileSystem | Service | Service | Service | Service | Service | Service | ... 6 more ... | TestLLM, never, never>'.
+  Type 'Service' is not assignable to type 'never'.
+test/stratacode/session-processor-retry-limit.test.ts(122,23): error TS2345: Argument of type 'Layer<ChildProcessSpawner | FileSystem | Service | Service | Service | Service | Service | Service | ... 6 more ... | TestLLM, never, Service>' is not assignable to parameter of type 'Layer<ChildProcessSpawner | FileSystem | Service | Service | Service | Service | Service | Service | ... 6 more ... | TestLLM, never, never>'.
+  Type 'Service' is not assignable to type 'never'.

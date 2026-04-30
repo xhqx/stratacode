@@ -1,6 +1,8 @@
+import { describe, test, expect } from "bun:test"
 import { Effect } from "effect"
 import { Provider } from "../../src/provider"
 import * as ModelPool from "../../src/stratacode/model-pool"
+import { ProviderID, ModelID } from "../../src/provider/schema"
 
 describe("ModelPool", () => {
   const poolConfig = {
@@ -19,14 +21,14 @@ describe("ModelPool", () => {
     // Acquire first model
     const m1 = await Effect.runPromise(ModelPool.acquire(poolConfig))
     expect(m1).toBeDefined()
-    expect(m1?.providerID).toBe("openai")
-    expect(m1?.modelID).toBe("gpt-4")
+    expect(m1?.providerID).toBe(ProviderID.make("openai"))
+    expect(m1?.modelID).toBe(ModelID.make("gpt-4"))
 
     // Acquire second model since first is at capacity
     const m2 = await Effect.runPromise(ModelPool.acquire(poolConfig))
     expect(m2).toBeDefined()
-    expect(m2?.providerID).toBe("anthropic")
-    expect(m2?.modelID).toBe("claude-3")
+    expect(m2?.providerID).toBe(ProviderID.make("anthropic"))
+    expect(m2?.modelID).toBe(ModelID.make("claude-3"))
 
     // Cleanup
     await Effect.runPromise(ModelPool.release(m1!.providerID, m1!.modelID))

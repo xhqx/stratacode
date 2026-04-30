@@ -1,0 +1,8 @@
+@@ -296,6 +296,7 @@
+   "settings.agentBehaviour.subtab.rules": "Rules",
+   "settings.agentBehaviour.subtab.workflows": "Workflows",
+   "settings.agentBehaviour.subtab.mcpServers": "MCP Servers",
++  "settings.agentBehaviour.subtab.acpAgents": "ACP Agents",
+ 
+   "settings.agentBehaviour.card.addMode": "Add custom mode",
+   "settings.agentBehaviour.card.addMcp": "Add MCP server",

@@ -25,6 +25,7 @@ export class DiffViewerProvider implements vscode.Disposable {
   private gitOps: GitOps
   private outputChannel: vscode.OutputChannel
   private onSendComments: ((comments: unknown[], autoSend: boolean) => void) | undefined
+  private onExplainTask: ((prompt: string) => void) | undefined
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -40,6 +41,10 @@ export class DiffViewerProvider implements vscode.Disposable {
 
   public setCommentHandler(handler: (comments: unknown[], autoSend: boolean) => void): void {
     this.onSendComments = handler
+  }
+
+  public setExplainHandler(handler: (prompt: string) => void): void {
+    this.onExplainTask = handler
   }
 
   public openPanel(): void {
@@ -115,7 +120,28 @@ export class DiffViewerProvider implements vscode.Disposable {
 
     if (type === "openFile" && typeof msg.filePath === "string") {
       openWorkspaceRelativeFile(msg.filePath, typeof msg.line === "number" ? msg.line : undefined)
+      return
     }
+
+    if (type === "diffViewer.explainFile" && typeof msg.file === "string" && typeof msg.patch === "string") {
+      this.explainFile(msg.file, msg.patch)
+      return
+    }
+
+    if (type === "diffViewer.explainAll") {
+      this.triggerExplainAll()
+      return
+    }
+  }
+
+  private explainFile(file: string, patch: string): void {
+    const prompt = `Explain the changes in **${file}**:\n\n\`\`\`diff\n${patch}\n\`\`\`\n\nDescribe:\n**What changed**: What was modified.\n**Why it likely changed**: Your best guess at intent.\n**Watch out for**: What a reviewer should focus on.\n\nKeep it concise and factual. No code blocks in your answer.`
+    this.onExplainTask?.(prompt)
+  }
+
+  /** Trigger explain-all from the extension host (e.g. via command palette) */
+  public triggerExplainAll(): void {
+    this.post({ type: "diffViewer.triggerExplainAll" })
   }
 
   private async revertFile(file: string): Promise<void> {

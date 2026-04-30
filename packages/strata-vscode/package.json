@@ -142,6 +142,36 @@
         "category": "Strata Code"
       },
       {
+        "command": "strata-code.new.explainChanges",
+        "title": "Explain Changes",
+        "category": "Strata Code",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "strata-code.new.explainBranch",
+        "title": "Explain Branch Changes",
+        "category": "Strata Code",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "strata-code.new.explainMerge",
+        "title": "Explain Merge Changes…",
+        "category": "Strata Code",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "strata-code.new.explainFile",
+        "title": "Explain This File's Changes",
+        "category": "Strata Code",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "strata-code.new.explainHunk",
+        "title": "Explain This Change",
+        "category": "Strata Code",
+        "icon": "$(lightbulb)"
+      },
+      {
         "command": "strata-code.new.openMigrationWizard",
         "title": "Migrate Settings from Legacy Version",
         "category": "Strata Code"
@@ -450,6 +480,16 @@
           "command": "strata-code.new.generateCommitMessage",
           "group": "navigation",
           "when": "scmProvider == git"
+        },
+        {
+          "command": "strata-code.new.explainChanges",
+          "group": "1_strata@1",
+          "when": "scmProvider == git"
+        },
+        {
+          "command": "strata-code.new.explainBranch",
+          "group": "1_strata@2",
+          "when": "scmProvider == git"
         }
       ],
       "editor/title": [
@@ -491,6 +531,10 @@
         {
           "command": "strata-code.new.addToContext",
           "group": "1_actions@4"
+        },
+        {
+          "command": "strata-code.new.explainFile",
+          "group": "2_explain@1"
         }
       ],
       "terminal/context": [
@@ -515,6 +559,11 @@
       ]
     },
     "keybindings": [
+      {
+        "command": "strata-code.new.explainChanges",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e"
+      },
       {
         "command": "strata-code.new.focusChatInput",
         "key": "ctrl+shift+a",

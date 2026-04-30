@@ -31,8 +31,16 @@ import {
 } from "./review-annotations"
 import { LONG_DIFF_MARKER_FILE_COUNT, initialOpenFiles, isLargeDiffFile } from "./diff-open-policy"
 import { DiffEndMarker } from "./DiffEndMarker"
+import {
+  buildExplainAnnotations,
+  buildExplanationElement,
+  type ExplainAnnotation,
+  type ExplainMeta,
+} from "./explain-annotations"
 
 type DiffStyle = "unified" | "split"
+
+type CombinedMeta = AnnotationMeta | ExplainMeta
 
 interface FullScreenDiffViewProps {
   diffs: WorktreeFileDiff[]
@@ -50,6 +58,18 @@ interface FullScreenDiffViewProps {
   onRevertFile?: (file: string) => void
   revertingFiles?: Set<string>
   onClose: () => void
+  /** AI-generated per-file/hunk explanations */
+  explanations?: ExplainAnnotation[]
+  /** Callback to request an explanation for a single file */
+  onExplainFile?: (file: string) => void
+  /** Callback to request explanations for all files */
+  onExplainAll?: () => void
+  /** Callback to dismiss a single explanation annotation */
+  onDismissExplanation?: (id: string) => void
+  /** Whether an explanation request is in progress */
+  explaining?: boolean
+  /** Set of file paths currently being explained */
+  explainingFiles?: Set<string>
 }
 
 export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) => {
@@ -265,14 +285,25 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
     return map
   })
 
-  const annotationsForFile = (file: string): DiffLineAnnotation<AnnotationMeta>[] => {
+  const annotationsForFile = (file: string): DiffLineAnnotation<CombinedMeta>[] => {
     const result = buildFileAnnotations(file, commentsByFile().get(file) ?? [], editing(), draft(), draftMeta)
     draftMeta = result.draftMeta
-    return result.annotations
+    const combined: DiffLineAnnotation<CombinedMeta>[] = [...result.annotations]
+    // Merge explanation annotations if provided
+    if (props.explanations) {
+      combined.push(...buildExplainAnnotations(file, props.explanations))
+    }
+    return combined
   }
 
-  const buildAnnotation = (annotation: DiffLineAnnotation<AnnotationMeta>): HTMLElement | undefined => {
-    return buildReviewAnnotation(annotation, {
+  const buildAnnotation = (annotation: DiffLineAnnotation<CombinedMeta>): HTMLElement | undefined => {
+    const meta = annotation.metadata
+    if (!meta) return undefined
+    // Dispatch to explanation renderer for explanation annotations
+    if (meta.type === "explanation") {
+      return buildExplanationElement(meta as ExplainMeta, (id) => props.onDismissExplanation?.(id))
+    }
+    return buildReviewAnnotation(annotation as DiffLineAnnotation<AnnotationMeta>, {
       diffs: props.diffs,
       editing: editing(),
       setEditing: setEditState,
@@ -438,6 +469,20 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
           </span>
         </div>
         <div class="am-review-toolbar-right">
+          <Show when={props.onExplainAll}>
+            <Tooltip value={t("explainChange.explainAll")} placement="bottom">
+              <Button
+                size="small"
+                variant="ghost"
+                class="am-explain-all-btn"
+                onClick={() => props.onExplainAll?.()}
+                disabled={props.explaining}
+              >
+                <Icon name="brain" size="small" />
+                {props.explaining ? t("explainChange.explaining") : t("explainChange.explainAll")}
+              </Button>
+            </Tooltip>
+          </Show>
           <Button size="small" variant="ghost" onClick={handleExpandAll}>
             <Icon name="chevron-grabber-vertical" size="small" />
             {open().length === props.diffs.length ? t("ui.sessionReview.collapseAll") : t("ui.sessionReview.expandAll")}
@@ -550,6 +595,22 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
                                 <Show when={diff.generatedLike === true}>
                                   <span class="am-diff-summary-pill">generated</span>
                                 </Show>
+                                <Show when={props.onExplainFile}>
+                                  <Tooltip value={t("explainChange.explainFile")} placement="top">
+                                    <IconButton
+                                      icon="brain"
+                                      size="small"
+                                      variant="ghost"
+                                      class="am-diff-explain-btn"
+                                      label={t("explainChange.explainFile")}
+                                      disabled={props.explainingFiles?.has(diff.file) ?? false}
+                                      onClick={(e: MouseEvent) => {
+                                        e.stopPropagation()
+                                        props.onExplainFile?.(diff.file)
+                                      }}
+                                    />
+                                  </Tooltip>
+                                </Show>
                                 <Show when={props.onOpenFile && !isDeleted()}>
                                   <Tooltip value={t("agentManager.diff.openFile")} placement="top">
                                     <IconButton
@@ -602,7 +663,7 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
                                 </div>
                               }
                             >
-                              <Diff<AnnotationMeta>
+                              <Diff<CombinedMeta>
                                 before={{ name: diff.file, contents: diff.before }}
                                 after={{ name: diff.file, contents: diff.after }}
                                 diffStyle={props.diffStyle}

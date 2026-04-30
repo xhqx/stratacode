@@ -16,7 +16,6 @@ import NotificationsTab from "./NotificationsTab"
 import ContextTab from "./ContextTab"
 
 import McpServersTab from "./McpServersTab"
-import AcpAgentsTab from "./AcpAgentsTab"
 import RulesTab from "./RulesTab"
 import WorkflowsTab from "./agent-behaviour/WorkflowsTab"
 import SkillsTab from "./SkillsTab"
@@ -209,10 +208,6 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="server" />
             <span class="label">{language.t("settings.agentBehaviour.subtab.mcpServers")}</span>
           </Tabs.Trigger>
-          <Tabs.Trigger value="acpAgents">
-            <Icon name="server" />
-            <span class="label">{language.t("settings.agentBehaviour.subtab.acpAgents")}</span>
-          </Tabs.Trigger>
           <Tabs.Trigger value="rules">
             <Icon name="bullet-list" />
             <span class="label">{language.t("settings.agentBehaviour.subtab.rules")}</span>
@@ -307,10 +302,6 @@ const Settings: Component<SettingsProps> = (props) => {
         <Tabs.Content value="mcpServers">
           <h3>{language.t("settings.agentBehaviour.subtab.mcpServers")}</h3>
           <McpServersTab />
-        </Tabs.Content>
-        <Tabs.Content value="acpAgents">
-          <h3>{language.t("settings.agentBehaviour.subtab.acpAgents")}</h3>
-          <AcpAgentsTab />
         </Tabs.Content>
         <Tabs.Content value="rules">
           <h3>{language.t("settings.agentBehaviour.subtab.rules")}</h3>

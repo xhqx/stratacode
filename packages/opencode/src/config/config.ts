@@ -29,6 +29,7 @@ import { withStatics } from "@/util/schema"
 import { ConfigAgent } from "./agent"
 // stratacode_change start
 import * as ConfigAutoApprove from "./auto-approve"
+import { ConfigACPAgent } from "../stratacode/acp-client/config"
 // stratacode_change end
 import { ConfigCommand } from "./command"
 import { ConfigFormatter } from "./formatter"
@@ -326,6 +327,9 @@ export const Info = Schema.Struct({
   ),
   // stratacode_change start
   auto_approve: Schema.optional(ConfigAutoApprove.Info),
+  acp_agents: Schema.optional(Schema.Record(Schema.String, ConfigACPAgent)).annotate({
+    description: "External ACP (Agent Client Protocol) agents",
+  }),
   // stratacode_change end
 })
   .annotate({ identifier: "Config" })

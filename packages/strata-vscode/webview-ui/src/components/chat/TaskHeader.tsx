@@ -19,7 +19,10 @@ import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
 import { TaskTimeline } from "./TaskTimeline"
 import { ContextProgress } from "./ContextProgress"
+import { ChangedFilesPanel } from "./ChangedFilesPanel"
+import { useChangedFiles } from "../../hooks/useChangedFiles"
 import type { TodoItem, ExtensionMessage } from "../../types/messages"
+
 
 interface TaskHeaderProps {
   readonly?: boolean
@@ -86,6 +89,9 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
 
   const vscode = useVSCode()
   const [expanded, setExpanded] = createSignal(true)
+  const [filesOpen, setFilesOpen] = createSignal(false)
+  const { files: changedFiles } = useChangedFiles()
+  const fileCount = createMemo(() => changedFiles().length)
 
   // Read initial value from VS Code settings
   onMount(() => vscode.postMessage({ type: "requestTimelineSetting" }))
@@ -154,6 +160,21 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
             </Tooltip>
           </Show>
           <Show when={hasMessages()}>
+            <Tooltip value={language.t("chat.changedFiles.title")} placement="bottom">
+              <button
+                data-slot="task-header-files-btn"
+                onClick={() => setFilesOpen((v) => !v)}
+                aria-expanded={filesOpen()}
+                aria-label={language.t("chat.changedFiles.title")}
+              >
+                <Icon name="branch" size="small" />
+                <Show when={fileCount() > 0}>
+                  <span data-slot="task-header-files-badge">{fileCount()}</span>
+                </Show>
+              </button>
+            </Tooltip>
+          </Show>
+          <Show when={hasMessages()}>
             <button
               data-slot="task-header-expand"
               onClick={toggle}
@@ -204,6 +225,9 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
             )}
           </Show>
         </div>
+      </Show>
+      <Show when={filesOpen() && hasMessages()}>
+        <ChangedFilesPanel />
       </Show>
       <Show when={hasTodos()}>
         <div data-component="task-header-todos">

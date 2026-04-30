@@ -456,6 +456,25 @@ export function patchAgents(
     mode: "subagent",
     native: true,
   }
+
+  // Add ACP agents from config
+  if (cfg.acp_agents) {
+    for (const [key, agent] of Object.entries(cfg.acp_agents)) {
+      agents[key] = {
+        name: key,
+        displayName: agent.name,
+        description: `External ACP Agent: ${agent.name ?? key}`,
+        options: { isACP: true, acp_config: agent },
+        permission: Permission.merge(
+          defaults,
+          Permission.fromConfig({ "*": agent.trusted ? "allow" : "ask" }),
+          user,
+        ),
+        mode: "primary",
+        native: false,
+      }
+    }
+  }
 }
 
 export const RemoveError = NamedError.create(

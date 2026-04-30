@@ -471,3 +471,89 @@
   color: var(--text-weaker);
   font-size: 11px;
 }
+
+/* ============ Explanation annotations ============ */
+
+.am-annotation-explanation {
+  border-left: 3px solid var(--vscode-editorInfo-foreground, #3794ff);
+  background: color-mix(in srgb, var(--vscode-editorInfo-foreground, #3794ff) 6%, transparent);
+  border-radius: 0 4px 4px 0;
+  padding: 8px 12px;
+  margin: 4px 0;
+}
+
+.am-annotation-explanation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.am-annotation-explanation-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vscode-editorInfo-foreground, #3794ff);
+}
+
+.am-annotation-explanation-label svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.am-annotation-explanation-dismiss {
+  font-size: 16px;
+  line-height: 1;
+  color: var(--text-weaker);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+.am-annotation-explanation-dismiss:hover {
+  color: var(--text-base);
+  background: var(--surface-inset-base-hover, rgba(128, 128, 128, 0.15));
+}
+
+.am-annotation-explanation-body {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-base);
+}
+
+.am-annotation-explanation-body strong {
+  color: var(--text-strong, var(--text-base));
+}
+
+/* Explain button in diff file header (same row as revert/open) */
+
+.am-diff-explain-btn {
+  color: var(--text-weaker);
+}
+
+.am-diff-explain-btn:not(:disabled):hover {
+  color: var(--vscode-editorInfo-foreground, #3794ff);
+}
+
+/* Toolbar "Explain All" button */
+
+.am-review-toolbar .am-explain-all-btn {
+  color: var(--vscode-editorInfo-foreground, #3794ff);
+}
+
+/* Spinner for in-progress explanation */
+
+.am-explain-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-weak);
+  padding: 8px 12px;
+  margin: 4px 0;
+}

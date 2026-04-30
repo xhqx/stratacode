@@ -22,6 +22,7 @@ import { RemoteStatusService } from "./services/RemoteStatusService"
 import { createPluginAPI } from "./plugin-api"
 import type { StrataPluginAPI, SendOptions } from "@stratacode/vscode-api"
 import { SelectionTipService } from "./stratacode/selection-tip"
+import { registerExplainChangeCommands } from "./commands/explain-change"
 
 // Activated via "onStartupFinished" (package.json) so that commands, code actions, keybindings,
 // autocomplete, commit-message generation, and URI deep links all work immediately — without
@@ -177,6 +178,11 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
   diffViewerProvider.setCommentHandler((comments, autoSend) => {
     void provider.appendReviewComments(comments, autoSend)
   })
+  diffViewerProvider.setExplainHandler(async (prompt) => {
+    await vscode.commands.executeCommand("strata-code.SidebarProvider.focus")
+    await provider.waitForReady()
+    provider.postMessage({ type: "triggerTask", text: prompt })
+  })
   context.subscriptions.push(diffViewerProvider)
 
   // Create diff virtual provider (lightweight single-file diff for permission approval)
@@ -306,6 +312,12 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
     vscode.commands.registerCommand("strata-code.new.openSubAgentViewer", (sessionID: string, title?: string) => {
       subAgentViewerProvider.openPanel(sessionID, title)
     }),
+  )
+
+  // Register explain-change commands (Per-Change Explanator)
+  registerExplainChangeCommands(context, provider, diffViewerProvider)
+
+  context.subscriptions.push(
     vscode.commands.registerCommand("strata-code.new.agentManager.previousSession", () => {
       agentManagerProvider.postMessage({ type: "action", action: "sessionPrevious" })
     }),

@@ -525,6 +525,13 @@ export const dict = {
   "session.review.empty": "No changes in this session yet",
   "session.review.noChanges": "No changes",
 
+  "explainChange.explainAll": "Explain All Changes",
+  "explainChange.explainFile": "Explain",
+  "explainChange.explaining": "Generating explanation…",
+  "explainChange.aiExplanation": "AI Explanation",
+  "explainChange.dismiss": "Dismiss",
+  "explainChange.noChanges": "No changes to explain.",
+
   "session.files.selectToOpen": "Select a file to open",
   "session.files.all": "All files",
   "session.files.binaryContent": "Binary file (content cannot be displayed)",
