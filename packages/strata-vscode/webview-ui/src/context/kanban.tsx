@@ -24,6 +24,10 @@ export function KanbanProvider(props: { children: any }) {
 
   // Manual tasks store
   const [manualTasks, setManualTasks] = createStore<KanbanTask[]>([])
+  
+  // Planned tasks store (read-only projection from PlanningService)
+  const [plannedTasks, setPlannedTasks] = createSignal<KanbanTask[]>([])
+
   const [layout, setLayout] = createSignal<"vertical" | "horizontal">("vertical")
 
   // Load initial tasks
@@ -32,6 +36,8 @@ export function KanbanProvider(props: { children: any }) {
       const message = event.data
       if (message?.type === "kanbanTasksLoaded" && Array.isArray(message.tasks)) {
         setManualTasks(message.tasks)
+      } else if (message?.type === "plannedKanbanTasks" && Array.isArray(message.tasks)) {
+        setPlannedTasks(message.tasks)
       }
     }
     window.addEventListener("message", handler)
@@ -78,7 +84,7 @@ export function KanbanProvider(props: { children: any }) {
 
   // Merged tasks
   const tasks = createMemo(() => {
-    return [...agentTasks(), ...manualTasks]
+    return [...plannedTasks(), ...agentTasks(), ...manualTasks]
   })
 
   const addTask = (title: string, description?: string) => {
@@ -97,7 +103,7 @@ export function KanbanProvider(props: { children: any }) {
   }
 
   const updateTask = (id: string, updates: Partial<KanbanTask>) => {
-    if (id.startsWith("agent-")) return // Cannot update agent tasks
+    if (id.startsWith("agent-") || id.startsWith("planned-")) return // Cannot update agent or planned tasks
     setManualTasks(
       (task) => task.id === id,
       produce((task) => {
@@ -107,12 +113,12 @@ export function KanbanProvider(props: { children: any }) {
   }
 
   const deleteTask = (id: string) => {
-    if (id.startsWith("agent-")) return // Cannot delete agent tasks
+    if (id.startsWith("agent-") || id.startsWith("planned-")) return // Cannot delete agent or planned tasks
     setManualTasks((tasks) => tasks.filter((t) => t.id !== id))
   }
 
   const moveTask = (id: string, column: KanbanColumn) => {
-    if (id.startsWith("agent-")) return // Agent tasks move automatically based on SSE
+    if (id.startsWith("agent-") || id.startsWith("planned-")) return // Agent and planned tasks move automatically
     setManualTasks(
       (task) => task.id === id,
       "column",
@@ -121,7 +127,7 @@ export function KanbanProvider(props: { children: any }) {
   }
 
   const linkSession = (taskId: string, sessionID: string) => {
-    if (taskId.startsWith("agent-")) return
+    if (taskId.startsWith("agent-") || taskId.startsWith("planned-")) return
     setManualTasks(
       (task) => task.id === taskId,
       "sessionID",

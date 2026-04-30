@@ -50,6 +50,14 @@ export const Info = z
     steps: z.number().int().positive().optional(),
     fallback_models: z.array(z.string()).optional(), // stratacode_change
     // stratacode_change start
+    model_pool: z
+      .object({
+        enabled: z.boolean().optional(),
+        models: z.array(z.string()),
+        max_concurrent: z.number().int().positive().optional(),
+        timeout: z.number().positive().optional(),
+      })
+      .optional(),
     retry: z
       .object({
         enabled: z.boolean().optional(),
@@ -295,8 +303,9 @@ export const layer = Layer.effect(
           item.name = value.name ?? item.name
           item.steps = value.steps ?? item.steps
           item.options = mergeDeep(item.options, value.options ?? {})
-          // stratacode_change start - propagate fallback_models and retry from config
+          // stratacode_change start - propagate fallback_models, model_pool, and retry from config
           if (value.fallback_models?.length) item.fallback_models = value.fallback_models
+          if (value.model_pool?.models?.length) item.model_pool = value.model_pool
           if (value.retry) item.retry = value.retry
           // stratacode_change end
           StrataAgent.processConfigItem(item) // stratacode_change - populate displayName from options

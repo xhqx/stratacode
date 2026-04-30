@@ -56,6 +56,16 @@ const AgentSchema = Schema.StructWithRest(
     fallback_models: Schema.optional(Schema.mutable(Schema.Array(ConfigModelID))).annotate({
       description: "Ordered list of fallback models (provider/model) to try when the active model is unavailable.",
     }), // stratacode_change
+    model_pool: Schema.optional(
+      Schema.Struct({
+        enabled: Schema.optional(Schema.Boolean),
+        models: Schema.mutable(Schema.Array(ConfigModelID)),
+        max_concurrent: Schema.optional(Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThan(0))),
+        timeout: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))),
+      })
+    ).annotate({
+      description: "Model pool configuration for concurrent load-balanced subagent dispatch.",
+    }), // stratacode_change
     auto_approve: Schema.optional(ConfigAutoApprove.Info), // stratacode_change
     // stratacode_change start
     retry: Schema.optional(
@@ -89,6 +99,7 @@ const KNOWN_KEYS = new Set([
   "disable",
   "tools",
   "fallback_models", // stratacode_change
+  "model_pool", // stratacode_change
   "auto_approve", // stratacode_change
   "retry", // stratacode_change
 ])

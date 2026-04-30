@@ -1108,6 +1108,12 @@ export type WebviewMessage =
   | SavePluginConfigMessage
   | SaveKanbanTasksRequest
   | RequestKanbanTasksMessage
+  | PlanningAddMessage
+  | PlanningUpdateMessage
+  | PlanningRemoveMessage
+  | PlanningDispatchMessage
+  | PlanningConfirmMessage
+  | PlanningRequestStateMessage
   
   | { type: "cancelAutoApproveTimer"; requestId: string }
   
@@ -1121,6 +1127,45 @@ export interface RequestKanbanTasksMessage {
   type: "requestKanbanTasks"
 }
 
+export interface PlanningAddMessage {
+  type: "planning.add"
+  title: string
+  description?: string
+  prompt: string
+  agent?: string
+  providerID?: string
+  modelID?: string
+  startAt?: string
+  deadline?: string
+  duration?: number
+  priority?: number
+  dependsOn?: string[]
+}
+
+export interface PlanningUpdateMessage {
+  type: "planning.update"
+  taskId: string
+  updates: Partial<Omit<import("./planning").PlanningTask, "id" | "created" | "sessionID" | "worktreeID" | "dispatchedAt" | "completedAt" | "error">>
+}
+
+export interface PlanningRemoveMessage {
+  type: "planning.remove"
+  taskId: string
+}
+
+export interface PlanningDispatchMessage {
+  type: "planning.dispatch"
+  taskId: string
+}
+
+export interface PlanningConfirmMessage {
+  type: "planning.confirm"
+  taskId: string
+}
+
+export interface PlanningRequestStateMessage {
+  type: "planning.requestState"
+}
 export interface ExecutePluginContributionMessage {
   type: "executePluginContribution"
   id: string

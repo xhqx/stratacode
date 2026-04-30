@@ -41,6 +41,13 @@ export interface AgentConfig {
   permission?: PermissionConfig
   fallback_models?: string[] | null
   
+  model_pool?: {
+    enabled?: boolean
+    models?: string[]
+    max_concurrent?: number
+    timeout?: number
+  } | null
+
   auto_approve?: {
     timeout?: number
     question_timeout?: number

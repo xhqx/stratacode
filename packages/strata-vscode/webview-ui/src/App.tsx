@@ -35,11 +35,14 @@ import { MigrationWizard } from "./components/migration" // legacy-migration
 import { NotificationsProvider } from "./context/notifications"
 import { KanbanProvider } from "./context/kanban"
 import { TaskBoardView } from "./components/kanban"
+import { PlanningProvider } from "./context/planning"
+import { lazy } from "solid-js"
+const PlanningView = lazy(() => import("./components/planning/PlanningView").then(m => ({ default: m.PlanningView })))
 import type { Message as SDKMessage, Part as SDKPart } from "@stratacode/sdk/v2"
 import "./styles/chat.css"
 
-type ViewType = "newTask" | "marketplace" | "history" | "profile" | "settings" | "subAgentViewer" | "kanban"
-const VALID_VIEWS = new Set<string>(["newTask", "marketplace", "history", "profile", "settings", "subAgentViewer", "kanban"])
+type ViewType = "newTask" | "marketplace" | "history" | "profile" | "settings" | "subAgentViewer" | "kanban" | "planning"
+const VALID_VIEWS = new Set<string>(["newTask", "marketplace", "history", "profile", "settings", "subAgentViewer", "kanban", "planning"])
 
 /**
  * Bridge our session store to the DataProvider's expected Data shape.
@@ -212,6 +215,9 @@ const AppContent: Component = () => {
       case "kanbanButtonClicked":
         setCurrentView("kanban")
         break
+      case "planningButtonClicked":
+        setCurrentView("planning")
+        break
       case "cycleAgentMode":
         if (document.hasFocus()) cycleAgent(1)
         break
@@ -336,6 +342,9 @@ const AppContent: Component = () => {
                 <TaskBoardView onBack={() => setCurrentView("newTask")} />
               </KanbanProvider>
             </Match>
+            <Match when={currentView() === "planning"}>
+              <PlanningView onBack={() => setCurrentView("newTask")} />
+            </Match>
           </Switch>
         }
       >
@@ -365,7 +374,9 @@ const App: Component = () => {
                               <NotificationsProvider>
                                 <SessionProvider>
                                   <DataBridge>
-                                    <AppContent />
+                                    <PlanningProvider>
+                                      <AppContent />
+                                    </PlanningProvider>
                                   </DataBridge>
                                 </SessionProvider>
                               </NotificationsProvider>

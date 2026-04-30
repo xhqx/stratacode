@@ -12,6 +12,7 @@ import { StrataTask } from "../stratacode/tool/task" // stratacode_change
 import { StrataCostPropagation } from "../stratacode/session/cost-propagation" // stratacode_change
 import { StrataTaskRegistry } from "../stratacode/tool/task-registry" // stratacode_change
 import { Scope } from "effect" // stratacode_change
+import * as ModelPool from "../stratacode/model-pool" // stratacode_change
 
 export interface TaskPromptOps {
   cancel(sessionID: SessionID): void
@@ -122,12 +123,15 @@ export const TaskTool = Tool.define(
 
       // stratacode_change start — prefer user's CLI-saved pick for this subagent
       const saved = yield* StrataTask.resolveModel(next.name)
-      const model = saved ??
-        next.model ?? {
-          modelID: msg.info.modelID,
-          providerID: msg.info.providerID,
-        }
-      const variant = saved?.variant ?? (saved ? undefined : next.variant)
+      const poolModel = yield* ModelPool.acquire(next.model_pool)
+      const model = poolModel
+        ? { modelID: poolModel.modelID, providerID: poolModel.providerID }
+        : saved ??
+          next.model ?? {
+            modelID: msg.info.modelID,
+            providerID: msg.info.providerID,
+          }
+      const variant = poolModel ? undefined : saved?.variant ?? (saved ? undefined : next.variant)
       // stratacode_change end
 
       yield* ctx.metadata({
@@ -177,6 +181,7 @@ export const TaskTool = Tool.define(
             (costBefore) =>
               Effect.gen(function* () {
                 ctx.abort.removeEventListener("abort", cancel)
+                if (poolModel) yield* ModelPool.release(poolModel.providerID, poolModel.modelID)
                 const costAfter = yield* StrataCostPropagation.childCost(sessions, nextSession.id)
                 yield* StrataCostPropagation.propagate(sessions, ctx.sessionID, ctx.messageID, costAfter - costBefore)
               }),
@@ -263,6 +268,7 @@ export const TaskTool = Tool.define(
         (costBefore) =>
           Effect.gen(function* () {
             ctx.abort.removeEventListener("abort", cancel)
+            if (poolModel) yield* ModelPool.release(poolModel.providerID, poolModel.modelID)
             const costAfter = yield* StrataCostPropagation.childCost(sessions, nextSession.id)
             yield* StrataCostPropagation.propagate(sessions, ctx.sessionID, ctx.messageID, costAfter - costBefore)
           }),

@@ -21,6 +21,7 @@ export function TaskBoardCard(props: Props) {
   const session = useSession()
 
   const isManual = () => props.task.source === "manual"
+  const isPlanned = () => props.task.source === "planned"
 
   const otherColumns = createMemo(() => {
     return KANBAN_COLUMNS.filter((c) => c !== props.task.column)
@@ -28,6 +29,8 @@ export function TaskBoardCard(props: Props) {
 
   const columnLabel = (col: KanbanColumn) => {
     switch (col) {
+      case "planned":
+        return language.t("kanban.columns.planned")
       case "todo":
         return language.t("kanban.columns.todo")
       case "progress":
@@ -71,15 +74,22 @@ export function TaskBoardCard(props: Props) {
     }
   }
 
+  const handleClick = () => {
+    if (isPlanned()) {
+      vscode.postMessage({ type: "planningButtonClicked" } as any)
+    }
+  }
+
   return (
     <Card
       data-component="task-board-card"
       data-source={props.task.source}
       draggable={isManual()}
       onDragStart={handleDragStart}
+      onClick={handleClick}
     >
       <div data-slot="task-board-card-header">
-        <Icon name={isManual() ? "pencil-line" : "brain"} size="small" />
+        <Icon name={(isPlanned() ? "clock" : isManual() ? "pencil-line" : "brain") as any} size="small" />
         <span data-slot="task-board-card-title" title={props.task.title}>
           {props.task.title}
         </span>

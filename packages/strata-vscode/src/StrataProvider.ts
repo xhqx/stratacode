@@ -151,6 +151,7 @@ const mapAgent = (a: Agent) => ({
 
 
 import { AutoApproveTimer } from "./strata-provider/auto-approve-timer"
+import { PlanningService } from "./planning"
 
 
 export class StrataProvider implements vscode.WebviewViewProvider, TelemetryPropertiesProvider {
@@ -165,6 +166,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private loginAttempt = 0
   
   private autoApproveTimer: AutoApproveTimer = new AutoApproveTimer(this)
+  private planningService: PlanningService | null = null
   
   private isWebviewReady = false
   private readonly extensionVersion =
@@ -283,6 +285,14 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.slimEditMetadata = options?.slimEditMetadata ?? true
 
     TelemetryProxy.getInstance().setProvider(this)
+
+    if (this.extensionContext) {
+      this.planningService = new PlanningService({
+        context: this.extensionContext,
+        connectionService: this.connectionService,
+        postToSidebar: (msg) => this.postMessage(msg),
+      })
+    }
   }
 
   setRemoteService(service: RemoteStatusService): void {
@@ -746,6 +756,25 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             before: message.before,
             limit: message.limit,
           })
+          break
+        case "planning.requestState":
+          this.planningService?.pushState()
+          this.planningService?.pushKanbanTasks()
+          break
+        case "planning.add":
+          this.planningService?.add(message as any)
+          break
+        case "planning.update":
+          this.planningService?.update(message.taskId, message.updates)
+          break
+        case "planning.remove":
+          this.planningService?.remove(message.taskId)
+          break
+        case "planning.dispatch":
+          this.planningService?.dispatch(message.taskId)
+          break
+        case "planning.confirm":
+          this.planningService?.confirm(message.taskId)
           break
         case "syncSession":
           this.handleSyncSession(message.sessionID, message.parentSessionID).catch((e) =>

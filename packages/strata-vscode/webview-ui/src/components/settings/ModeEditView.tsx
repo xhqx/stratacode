@@ -428,6 +428,129 @@ const ModeEditView: Component<Props> = (props) => {
             </Card>
           </Show>
 
+          {/* Model Pool Overrides */}
+          <Card data-variant="wide-input" style={{ "margin-bottom": "12px" }}>
+            <SettingsRow
+              title={language.t("settings.agentBehaviour.modelPool.title")}
+              description={language.t("settings.agentBehaviour.modelPool.description")}
+              last={!cfg().model_pool?.enabled}
+            >
+              <Switch
+                checked={cfg().model_pool?.enabled ?? false}
+                onChange={(val) => {
+                  const existing = cfg().model_pool ?? { models: [] }
+                  const updated = val ? { ...existing, enabled: true } : { ...existing, enabled: false }
+                  // Only remove enabled flag if it's the only key remaining 
+                  update({ model_pool: Object.keys(updated).length === 1 && !updated.enabled ? null : updated })
+                }}
+                hideLabel
+              >
+                {language.t("settings.agentBehaviour.modelPool.enabled")}
+              </Switch>
+            </SettingsRow>
+
+            <Show when={cfg().model_pool?.enabled}>
+              <div style={{ "padding-top": "8px", "padding-bottom": "8px", "border-top": "1px solid var(--border-weak-base, var(--vscode-panel-border))" }}>
+                <SettingsRow
+                  title={language.t("settings.agentBehaviour.modelPool.models")}
+                  description={language.t("settings.agentBehaviour.modelPool.models.description")}
+                >
+                  <div style={{ display: "flex", "flex-direction": "column", gap: "6px", width: "100%" }}>
+                    <For each={cfg().model_pool?.models ?? []}>
+                      {(entry, index) => (
+                        <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
+                          <span
+                            style={{
+                              "min-width": "18px",
+                              "text-align": "right",
+                              "font-size": "11px",
+                              color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                            }}
+                          >
+                            {index() + 1}.
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            <ModelSelectorBase
+                              value={parseModelString(entry)}
+                              onSelect={(providerID, modelID) => {
+                                if (!providerID || !modelID) return
+                                const existing = cfg().model_pool ?? { models: [] }
+                                const list = [...(existing.models || [])]
+                                list[index()] = `${providerID}/${modelID}`
+                                update({ model_pool: { ...existing, models: list } })
+                              }}
+                              placement="bottom-start"
+                            />
+                          </div>
+                          <IconButton
+                            size="small"
+                            variant="ghost"
+                            icon="close"
+                            onClick={() => {
+                              const existing = cfg().model_pool ?? { models: [] }
+                              const list = [...(existing.models || [])]
+                              list.splice(index(), 1)
+                              update({ model_pool: { ...existing, models: list } })
+                            }}
+                          />
+                        </div>
+                      )}
+                    </For>
+                    <div>
+                      <ModelSelectorBase
+                        value={null}
+                        onSelect={(providerID, modelID) => {
+                          if (!providerID || !modelID) return
+                          const existing = cfg().model_pool ?? { models: [] }
+                          const list = [...(existing.models || []), `${providerID}/${modelID}`]
+                          update({ model_pool: { ...existing, models: list } })
+                        }}
+                        placement="bottom-start"
+                        clearLabel={language.t("settings.agentBehaviour.modelPool.add")}
+                        allowClear
+                      />
+                    </div>
+                  </div>
+                </SettingsRow>
+                <SettingsRow
+                  title={language.t("settings.agentBehaviour.modelPool.maxConcurrent")}
+                  description={""}
+                >
+                  <input
+                    type="number"
+                    style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+                    value={cfg().model_pool?.max_concurrent ?? ""}
+                    placeholder="2"
+                    min="1"
+                    onChange={(e) => {
+                      const parsed = parseInt(e.currentTarget.value, 10)
+                      const existing = cfg().model_pool ?? { models: [] }
+                      update({ model_pool: { ...existing, max_concurrent: isNaN(parsed) ? undefined : parsed } })
+                    }}
+                  />
+                </SettingsRow>
+                <SettingsRow
+                  title={language.t("settings.agentBehaviour.modelPool.timeout")}
+                  description={""}
+                  last
+                >
+                  <input
+                    type="number"
+                    style={{ width: "80px", padding: "4px 8px", "background-color": "var(--vscode-input-background)", color: "var(--vscode-input-foreground)", border: "1px solid var(--vscode-input-border)" }}
+                    value={cfg().model_pool?.timeout ?? ""}
+                    placeholder="120"
+                    min="1"
+                    onChange={(e) => {
+                      const parsed = parseInt(e.currentTarget.value, 10)
+                      const existing = cfg().model_pool ?? { models: [] }
+                      update({ model_pool: { ...existing, timeout: isNaN(parsed) ? undefined : parsed } })
+                    }}
+                  />
+                </SettingsRow>
+              </div>
+            </Show>
+          </Card>
+
           {/* Config overrides (wider inputs) */}
           <Card data-variant="wide-input" style={{ "margin-bottom": "12px" }}>
             <SettingsRow

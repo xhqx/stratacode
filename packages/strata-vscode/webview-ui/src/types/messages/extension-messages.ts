@@ -276,7 +276,7 @@ export interface DeviceAuthCancelledMessage {
 
 export interface NavigateMessage {
   type: "navigate"
-  view: "newTask" | "marketplace" | "history" | "profile" | "settings" | "subAgentViewer" | "kanban"
+  view: "newTask" | "marketplace" | "history" | "profile" | "settings" | "subAgentViewer" | "kanban" | "planning"
   tab?: string
 }
 
@@ -879,6 +879,9 @@ export type ExtensionMessage =
   | PluginConfigUpdatedMessage
   | PluginConfigUpdateFailedMessage
   | NavigateMessage
+  | PlanningStateMessage
+  | PlanningDispatchResultMessage
+  | PlannedKanbanTasksMessage
   | IndexingStatusLoadedMessage
   | ProvidersLoadedMessage
   | AgentsLoadedMessage
@@ -984,4 +987,22 @@ export type ExtensionMessage =
 export interface KanbanTasksLoadedMessage {
   type: "kanbanTasksLoaded"
   tasks: KanbanTask[]
+}
+
+export interface PlanningStateMessage {
+  type: "planningState"
+  tasks: import("./planning").PlanningTask[]
+}
+
+export interface PlanningDispatchResultMessage {
+  type: "planningDispatchResult"
+  taskId: string
+  success: boolean
+  sessionID?: string
+  error?: string
+}
+
+export interface PlannedKanbanTasksMessage {
+  type: "plannedKanbanTasks"
+  tasks: import("./kanban").KanbanTask[]
 }

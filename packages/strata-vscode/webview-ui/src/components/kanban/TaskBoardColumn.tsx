@@ -21,6 +21,8 @@ export function TaskBoardColumn(props: Props) {
 
   const columnLabel = () => {
     switch (props.column) {
+      case "planned":
+        return language.t("kanban.columns.planned")
       case "todo":
         return language.t("kanban.columns.todo")
       case "progress":
@@ -34,6 +36,8 @@ export function TaskBoardColumn(props: Props) {
 
   const columnIcon = () => {
     switch (props.column) {
+      case "planned":
+        return "clock" as any
       case "todo":
         return "dash" as any
       case "progress":
@@ -46,6 +50,7 @@ export function TaskBoardColumn(props: Props) {
   }
 
   const handleDragOver = (e: DragEvent) => {
+    if (props.column === "planned") return // Cannot drop into planned
     if (e.dataTransfer?.types.includes("application/x-strata-task")) {
       e.preventDefault() // Allow drop
       e.dataTransfer.dropEffect = "move"
