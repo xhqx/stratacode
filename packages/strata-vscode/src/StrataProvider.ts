@@ -347,6 +347,18 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     }
   }
 
+  // stratacode_change start
+  /** Hide a session from the chat/sidebar UI (e.g. explainer sessions). */
+  public hideSession(sessionId: string): void {
+    this.connectionService.hideSession(sessionId)
+  }
+
+  /** Unhide a session previously hidden via hideSession(). */
+  public unhideSession(sessionId: string): void {
+    this.connectionService.unhideSession(sessionId)
+  }
+  // stratacode_change end
+
   // Strip edit-tool metadata.filediff.before/after (multi-MB for edit-heavy
   // sessions) to keep session switches fast. Logic in strata-provider/slim-metadata.ts.
   private slimPart<T>(part: T): T {
@@ -3201,6 +3213,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     }
 
     const sessionID = this.connectionService.resolveEventSessionId(event)
+
+    // stratacode_change start
+    // Drop all events for hidden sessions (e.g. the diff viewer explainer).
+    // This prevents them from appearing in the sidebar session list.
+    if (sessionID && this.connectionService.isSessionHidden(sessionID)) return
+    if (event.type === "session.created" && this.connectionService.isSessionHidden(event.properties.info.id)) return
+    // stratacode_change end
 
     // Events without sessionID (server.connected, server.heartbeat, indexing.status) → always forward
     // Events with sessionID → only forward if this webview tracks that session

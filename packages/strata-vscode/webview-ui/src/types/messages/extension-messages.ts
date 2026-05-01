@@ -24,9 +24,11 @@ import type {
   RunStatus,
   SectionState,
   WorktreeErrorCode,
-  WorktreeFileDiff,
   WorktreeGitStats,
   WorktreeState,
+  ReviewThread,
+  ReviewMessage,
+  WorktreeFileDiff,
 } from "./agent-manager"
 import type {
   LegacyMigrationCompleteMessage,
@@ -43,7 +45,7 @@ export interface RenderableUIContribution {
   type: "button"
   label?: string
   icon?: string
-  tooltip?: string
+  // tooltip?: string
 }
 
 // ============================================
@@ -726,6 +728,23 @@ export interface DiffViewerLoadingMessage {
   loading: boolean
 }
 
+export interface DiffViewerExplainResultMessage {
+  type: "diffViewer.explainResult"
+  threads: ReviewThread[]
+  summary: string
+}
+
+export interface DiffViewerThreadReplyMessage {
+  type: "diffViewer.threadReply"
+  threadId: string
+  message: ReviewMessage
+}
+
+export interface DiffViewerExplainErrorMessage {
+  type: "diffViewer.explainError"
+  error: string
+}
+
 export interface DiffViewerRevertFileResultMessage {
   type: "diffViewer.revertFileResult"
   file: string
@@ -971,6 +990,9 @@ export type ExtensionMessage =
   | DiffViewerDiffFileMessage
   | DiffViewerLoadingMessage
   | DiffViewerRevertFileResultMessage
+  | DiffViewerExplainResultMessage
+  | DiffViewerThreadReplyMessage
+  | DiffViewerExplainErrorMessage
   | MarketplaceDataMessage
   | MarketplaceInstallResultMessage
   | MarketplaceRemoveResultMessage

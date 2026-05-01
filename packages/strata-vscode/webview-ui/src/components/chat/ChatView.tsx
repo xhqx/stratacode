@@ -307,7 +307,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
         <Show when={server.pluginContributions().length > 0}>
           <For each={server.pluginContributions().filter((c) => c.placement === "input-toolbar")}>
             {(contrib) => (
-              <Tooltip value={contrib.tooltip ?? contrib.label ?? ""} placement="top">
+              <Tooltip value={contrib.label ?? ""} placement="top">
                 <Button
                   variant="ghost"
                   size="small"

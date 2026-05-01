@@ -7,10 +7,34 @@ import { Agent } from "@/agent/agent"
 
 const log = Log.create({ service: "enhance-prompt" })
 
-const FALLBACK =
-  "Generate an enhanced version of this prompt (reply with only the enhanced prompt - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes):"
+const FALLBACK = `Generate an enhanced version of this prompt.
+
+Respond with ONLY a JSON object with this exact structure (no markdown fences, no extra text):
+{
+  "enhanced_prompt": "The fully enhanced prompt..."
+}`
 
 export function clean(text: string) {
+  let jsonStr = text.trim()
+  const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+  if (match && match[1]) {
+    jsonStr = match[1].trim()
+  } else {
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0].trim()
+    }
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr)
+    if (parsed.enhanced_prompt) {
+      return parsed.enhanced_prompt.trim()
+    }
+  } catch (err) {
+    // fallback if model failed to output JSON
+  }
+
   const stripped = text.replace(/^```\w*\n?|```$/g, "").trim()
   return stripped.replace(/^(['"])([\s\S]*)\1$/, "$2").trim()
 }

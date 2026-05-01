@@ -17,7 +17,7 @@ import { Spinner } from "@stratacode/strata-ui/spinner"
 import { ResizeHandle } from "@stratacode/strata-ui/resize-handle"
 import { Tooltip, TooltipKeybind } from "@stratacode/strata-ui/tooltip"
 import type { DiffLineAnnotation, AnnotationSide, SelectedLineRange } from "@pierre/diffs"
-import type { WorktreeFileDiff } from "../src/types/messages"
+import type { WorktreeFileDiff, ReviewThread } from "../src/types/messages"
 import { STRATA_FILE_PATH_MIME } from "../src/utils/path-mentions"
 import { useLanguage } from "../src/context/language"
 import { FileTree } from "./FileTree"
@@ -32,15 +32,14 @@ import {
 import { LONG_DIFF_MARKER_FILE_COUNT, initialOpenFiles, isLargeDiffFile } from "./diff-open-policy"
 import { DiffEndMarker } from "./DiffEndMarker"
 import {
-  buildExplainAnnotations,
-  buildExplanationElement,
-  type ExplainAnnotation,
-  type ExplainMeta,
-} from "./explain-annotations"
+  buildThreadAnnotations,
+  buildThreadElement,
+  type ThreadMeta,
+} from "./review-thread-annotations"
 
 type DiffStyle = "unified" | "split"
 
-type CombinedMeta = AnnotationMeta | ExplainMeta
+type CombinedMeta = AnnotationMeta | ThreadMeta
 
 interface FullScreenDiffViewProps {
   diffs: WorktreeFileDiff[]
@@ -60,18 +59,19 @@ interface FullScreenDiffViewProps {
   onRevertFile?: (file: string) => void
   revertingFiles?: Set<string>
   onClose: () => void
-  /** AI-generated per-file/hunk explanations */
-  explanations?: ExplainAnnotation[]
-  /** Callback to request an explanation for a single file */
-  onExplainFile?: (file: string) => void
   /** Callback to request explanations for all files */
   onExplainAll?: () => void
-  /** Callback to dismiss a single explanation annotation */
-  onDismissExplanation?: (id: string) => void
   /** Whether an explanation request is in progress */
   explaining?: boolean
   /** Set of file paths currently being explained */
   explainingFiles?: Set<string>
+  
+  /** AI-generated batch review threads */
+  reviewThreads?: ReviewThread[]
+  /** AI-generated review summary */
+  reviewSummary?: string
+  /** Callback to reply to a review thread */
+  onThreadReply?: (threadId: string, text: string) => void
 }
 
 export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) => {
@@ -300,9 +300,9 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
     const result = buildFileAnnotations(file, commentsByFile().get(file) ?? [], editing(), draft(), draftMeta)
     draftMeta = result.draftMeta
     const combined: DiffLineAnnotation<CombinedMeta>[] = [...result.annotations]
-    // Merge explanation annotations if provided
-    if (props.explanations) {
-      combined.push(...buildExplainAnnotations(file, props.explanations))
+    // Merge review threads
+    if (props.reviewThreads) {
+      combined.push(...buildThreadAnnotations(file, props.reviewThreads))
     }
     return combined
   }
@@ -310,9 +310,9 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
   const buildAnnotation = (annotation: DiffLineAnnotation<CombinedMeta>): HTMLElement | undefined => {
     const meta = annotation.metadata
     if (!meta) return undefined
-    // Dispatch to explanation renderer for explanation annotations
-    if (meta.type === "explanation") {
-      return buildExplanationElement(meta as ExplainMeta, (id) => props.onDismissExplanation?.(id))
+    // Dispatch to thread renderer for review threads
+    if (meta.type === "thread") {
+      return buildThreadElement(meta as ThreadMeta, (id, text) => props.onThreadReply?.(id, text))
     }
     return buildReviewAnnotation(annotation as DiffLineAnnotation<AnnotationMeta>, {
       diffs: props.diffs,
@@ -522,6 +522,7 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
               activeFile={activeFile()}
               onFileSelect={handleFileSelect}
               comments={comments()}
+              reviewThreads={props.reviewThreads}
               onRevertFile={props.onRevertFile}
               revertingFiles={props.revertingFiles}
             />
@@ -605,22 +606,6 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
                                 </Show>
                                 <Show when={diff.generatedLike === true}>
                                   <span class="am-diff-summary-pill">generated</span>
-                                </Show>
-                                <Show when={props.onExplainFile}>
-                                  <Tooltip value={t("explainChange.explainFile")} placement="top">
-                                    <IconButton
-                                      icon="brain"
-                                      size="small"
-                                      variant="ghost"
-                                      class="am-diff-explain-btn"
-                                      label={t("explainChange.explainFile")}
-                                      disabled={props.explainingFiles?.has(diff.file) ?? false}
-                                      onClick={(e: MouseEvent) => {
-                                        e.stopPropagation()
-                                        props.onExplainFile?.(diff.file)
-                                      }}
-                                    />
-                                  </Tooltip>
                                 </Show>
                                 <Show when={props.onOpenFile && !isDeleted()}>
                                   <Tooltip value={t("agentManager.diff.openFile")} placement="top">

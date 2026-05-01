@@ -453,6 +453,12 @@
         "title": "Open Strata Diff Viewer",
         "category": "Strata Code",
         "icon": "$(diff)"
+      },
+      {
+        "command": "strata-code.new.replyComment",
+        "title": "Reply to Strata AI",
+        "category": "Strata Code",
+        "icon": "$(reply)"
       }
     ],
     "submenus": [
@@ -466,6 +472,13 @@
       }
     ],
     "menus": {
+      "comments/commentThread/context": [
+        {
+          "command": "strata-code.new.replyComment",
+          "group": "navigation",
+          "when": "commentController == strata-explain"
+        }
+      ],
       "view/title": [
         {
           "command": "strata-code.new.plusButtonClicked",
@@ -972,11 +985,6 @@
           "default": "strata",
           "description": "Choose whether to show AI change explanations in the Strata Diff Viewer or as native VS Code comments."
         },
-        "strata-code.new.explainer.autoExplain": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically generate AI explanations when opening a changed file in the diff viewer. Explanations are cached for 90 minutes."
-        },
         "strata-code.new.explainer.effort": {
           "type": "string",
           "enum": [
@@ -990,7 +998,7 @@
             "High (All except very simple changes)"
           ],
           "default": "medium",
-          "description": "Control which changes the AI explains. Low skips most things; High explains almost everything."
+          "description": "Control which changes the AI comments on. Low skips most things; High comments on almost everything."
         }
       }
     }

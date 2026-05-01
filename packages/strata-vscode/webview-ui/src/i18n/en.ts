@@ -643,6 +643,11 @@ export const dict = {
   "settings.general.row.explainerMode.description": "Choose how AI explanations for code changes are displayed.",
   "settings.general.row.explainerMode.strata": "Strata Diff Viewer",
   "settings.general.row.explainerMode.native": "Native VS Code Comments",
+  "settings.general.row.explainerEffort.title": "Explain Changes Effort",
+  "settings.general.row.explainerEffort.description": "Choose the level of detail for AI explanations.",
+  "settings.general.row.explainerEffort.low": "Low",
+  "settings.general.row.explainerEffort.medium": "Medium",
+  "settings.general.row.explainerEffort.high": "High",
 
 
   "settings.general.row.releaseNotes.title": "Release notes",

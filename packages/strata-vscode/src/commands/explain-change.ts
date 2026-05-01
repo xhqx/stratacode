@@ -27,7 +27,7 @@ export function registerExplainChangeCommands(
       void commentController.explainAllNative()
     } else {
       diffViewer.openPanel()
-      setTimeout(() => diffViewer.triggerExplainAll(), 800)
+      // Webview will handle triggering explain when button is clicked
     }
   }
 
@@ -42,6 +42,10 @@ export function registerExplainChangeCommands(
 
     vscode.commands.registerCommand("strata-code.new.explainBranch", () => {
       handleExplainAll()
+    }),
+
+    vscode.commands.registerCommand("strata-code.new.replyComment", (reply: vscode.CommentReply) => {
+      void commentController.replyToThread(reply)
     }),
 
     vscode.commands.registerCommand("strata-code.new.explainMerge", async () => {

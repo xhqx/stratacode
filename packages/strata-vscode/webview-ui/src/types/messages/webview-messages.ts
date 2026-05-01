@@ -751,6 +751,16 @@ export interface DiffViewerRequestDiffMessage {
   file: string
 }
 
+export interface DiffViewerExplainAllMessage {
+  type: "diffViewer.explainAll"
+}
+
+export interface DiffViewerReplyToThreadMessage {
+  type: "diffViewer.replyToThread"
+  threadId: string
+  text: string
+}
+
 // Open diff virtual (permission diff) in the lightweight diff virtual panel
 export interface OpenDiffVirtualRequest {
   type: "openDiffVirtual"
@@ -1079,6 +1089,8 @@ export type WebviewMessage =
   | EnhancePromptRequest
   | OpenChangesRequest
   | DiffViewerRequestDiffMessage
+  | DiffViewerExplainAllMessage
+  | DiffViewerReplyToThreadMessage
   | OpenDiffVirtualRequest
   | RetryConnectionRequest
   | OpenSubAgentViewerRequest

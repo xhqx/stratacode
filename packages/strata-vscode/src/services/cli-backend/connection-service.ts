@@ -68,6 +68,9 @@ export class StrataConnectionService {
   private readonly clearPendingPromptsListeners: Set<ClearPendingPromptsListener> = new Set()
   private readonly directoryProviders: Set<DirectoryProvider> = new Set()
 
+  /** Session IDs that should be hidden from the chat/sidebar UI (e.g. explainer sessions). */
+  private readonly hiddenSessionIds: Set<string> = new Set()
+
   /**
    * Shared mapping used to resolve session scope for events that don't reliably include a sessionID.
    * Used primarily for message.part.updated where only messageID may be present.
@@ -232,6 +235,21 @@ export class StrataConnectionService {
       (messageId) => this.messageSessionIdsByMessageId.get(messageId),
       (messageId, sessionId) => this.recordMessageSessionId(messageId, sessionId),
     )
+  }
+
+  /** Mark a session as hidden — its events will be suppressed in the chat UI. */
+  hideSession(sessionId: string): void {
+    this.hiddenSessionIds.add(sessionId)
+  }
+
+  /** Unmark a session as hidden. */
+  unhideSession(sessionId: string): void {
+    this.hiddenSessionIds.delete(sessionId)
+  }
+
+  /** Check whether a session is hidden from the chat UI. */
+  isSessionHidden(sessionId: string): boolean {
+    return this.hiddenSessionIds.has(sessionId)
   }
 
   /**

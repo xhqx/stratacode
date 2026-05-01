@@ -3,7 +3,7 @@ import { FileIcon } from "@stratacode/strata-ui/file-icon"
 import { Icon } from "@stratacode/strata-ui/icon"
 import { IconButton } from "@stratacode/strata-ui/icon-button"
 import { Tooltip } from "@stratacode/strata-ui/tooltip"
-import type { WorktreeFileDiff } from "../src/types/messages"
+import type { WorktreeFileDiff, ReviewThread } from "../src/types/messages"
 import { useLanguage } from "../src/context/language"
 import { buildFileTree, flatten, type FileTreeNode } from "./file-tree-utils"
 import type { ReviewComment } from "./review-comments"
@@ -13,6 +13,7 @@ interface FileTreeProps {
   activeFile: string | null
   onFileSelect: (path: string) => void
   comments?: ReviewComment[]
+  reviewThreads?: ReviewThread[]
   selectedFiles?: Set<string>
   onFileToggle?: (path: string, checked: boolean) => void
   onRevertFile?: (path: string) => void
@@ -140,7 +141,10 @@ const FileNode: Component<{
         <FileIcon node={{ path: props.node.path, type: "file" }} />
         <span class="am-file-tree-name">{props.node.name}</span>
         <Show when={comments() > 0}>
-          <span class="am-file-tree-comment-badge">{comments()}</span>
+          <span class="am-file-tree-comment-badge">
+            <Icon name="comment" />
+            {comments()}
+          </span>
         </Show>
         <Show when={props.node.diff}>
           {(diff) => (
@@ -188,6 +192,9 @@ export const FileTree: Component<FileTreeProps> = (props) => {
     const map = new Map<string, number>()
     for (const comment of props.comments ?? []) {
       map.set(comment.file, (map.get(comment.file) ?? 0) + 1)
+    }
+    for (const thread of props.reviewThreads ?? []) {
+      map.set(thread.file, (map.get(thread.file) ?? 0) + 1)
     }
     return map
   })

@@ -8,4 +8,7 @@ Guidelines:
 - Keep the enhanced prompt concise — do not pad with boilerplate
 - Do not add tool instructions, file paths, or implementation details the user did not mention
 
-Reply with ONLY the enhanced prompt. No conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes.
+Respond with ONLY a JSON object with this exact structure (no markdown fences, no extra text):
+{
+  "enhanced_prompt": "The fully enhanced prompt..."
+}

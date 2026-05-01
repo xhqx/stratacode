@@ -3637,6 +3637,7 @@ body.am-wt-dragging-active * {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
@@ -3648,6 +3649,11 @@ body.am-wt-dragging-active * {
   line-height: 1;
   margin-left: 6px;
   flex-shrink: 0;
+}
+
+.am-file-tree-comment-badge [data-component="icon"] {
+  width: 12px;
+  height: 12px;
 }
 
 .am-file-tree-badge-deleted {

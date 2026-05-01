@@ -3,6 +3,7 @@ import type { StrataProvider } from "../../StrataProvider"
 import { GitOps } from "../../agent-manager/GitOps"
 import { getWorkspaceRoot, resolveLocalDiffTarget } from "../../review-utils"
 import { getErrorMessage } from "../../strata-provider-utils"
+import { buildIndexedPatches, parseExplainResponse, shouldPreSkip } from "../../explain-skip"
 
 const CACHE_TTL_MS = 90 * 60 * 1000 // 90 minutes
 
@@ -24,6 +25,7 @@ export class ExplainCommentController implements vscode.Disposable {
 
   constructor(private provider: StrataProvider) {
     this.controller = vscode.comments.createCommentController("strata-explain", "Strata AI Explain")
+    this.controller.options = { prompt: "Ask Strata AI..." }
     this.controller.commentingRangeProvider = {
       provideCommentingRanges: (document: vscode.TextDocument) => {
         return [new vscode.Range(0, 0, document.lineCount - 1, 0)]
@@ -51,280 +53,243 @@ export class ExplainCommentController implements vscode.Disposable {
   }
 
   /**
-   * Explain only files currently visible in the editor — never batch all.
-   * Each file is explained sequentially to respect rate limits.
+   * Explains all changed files at once using the new batch JSON review model.
+   * Creates native VS Code threads for each comment returned.
    */
   public async explainAllNative(): Promise<void> {
     const root = getWorkspaceRoot()
-    if (!root) return
-
-    const target = await resolveLocalDiffTarget(this.gitOps, () => {}, root)
-    if (!target) {
-      vscode.window.showErrorMessage("Could not resolve diff target.")
+    if (!root) {
+      vscode.window.showErrorMessage("Strata Code: Please open a workspace first.")
       return
     }
-
-    try {
-      const client = this.provider.client
-      if (!client) {
-        vscode.window.showErrorMessage("Strata connection is not available.")
-        return
-      }
-
-      const { data: diffs } = await client.worktree.diff(
-        { directory: target.directory, base: target.baseBranch },
-        { throwOnError: true },
-      )
-
-      if (diffs.length === 0) {
-        vscode.window.showInformationMessage("No changes to explain.")
-        return
-      }
-
-      // Only explain files the user currently has open in visible editors
-      const visible = new Set(
-        vscode.window.visibleTextEditors
-          .map((e) => e.document.uri.fsPath.replace(root + "/", ""))
-      )
-      const targets = diffs.filter((d) => visible.has(d.file))
-
-      if (targets.length === 0) {
-        vscode.window.showInformationMessage("No open changed files to explain. Open a changed file first.")
-        return
-      }
-
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Generating explanations...",
-          cancellable: true,
-        },
-        async (progress, token) => {
-          const total = targets.length
-          for (const diff of targets) {
-            if (token.isCancellationRequested) break
-            progress.report({ increment: (1 / total) * 100, message: diff.file })
-            await this.explainSingle(diff, root, target.baseBranch)
-          }
-        },
-      )
-    } catch (err) {
-      console.error("Failed to explain changes natively:", err)
-      vscode.window.showErrorMessage("Failed to generate explanations natively.")
-    }
-  }
-
-  /**
-   * Explains a single file by fetching its diff locally.
-   * Optionally opens the native diff view.
-   */
-  public async explainSingleNative(file: string, openDiffView = true): Promise<void> {
-    const root = getWorkspaceRoot()
-    if (!root) return
 
     const target = await resolveLocalDiffTarget(this.gitOps, () => {}, root)
     if (!target) return
 
-    if (openDiffView) {
-      const fileUri = vscode.Uri.file(`${root}/${file}`)
-      const tracked = await this.gitOps.execGit(["ls-files", "--error-unmatch", "--", file], root)
-      if (tracked.code === 0) {
-        const headUri = vscode.Uri.parse(`git:${file}?${JSON.stringify({ path: `${root}/${file}`, ref: "HEAD" })}`)
-        vscode.commands.executeCommand("vscode.diff", headUri, fileUri, `${file} (Working Changes)`).then(
-          undefined,
-          () => {
-            vscode.workspace.openTextDocument(fileUri).then(
-              (doc) => vscode.window.showTextDocument(doc, { preview: true }),
-            )
-          },
-        )
-      } else {
-        vscode.workspace.openTextDocument(fileUri).then(
-          (doc) => vscode.window.showTextDocument(doc, { preview: true }),
-        )
-      }
-    }
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: "Strata AI: Reviewing Changes...",
+        cancellable: false,
+      },
+      async (progress) => {
+        try {
+          const { diffSummary, diffFile } = await import("../../agent-manager/local-diff")
+          const diffs = await diffSummary(this.gitOps, target.directory, target.baseBranch)
+          
+          const effort = vscode.workspace.getConfiguration("strata-code.new.explainer").get<string>("effort", "medium")
+          
+          const validDiffs: { file: string, patch: string }[] = []
+          for (const d of diffs) {
+            if (d.generatedLike) continue
+            
+            const entry = await diffFile(this.gitOps, target.directory, target.baseBranch, d.file)
+            if (!entry || !entry.patch) continue
+            
+            if (shouldPreSkip(entry.patch, effort)) continue
 
-    try {
-      const { diffFile } = await import("../../agent-manager/local-diff")
-      const diff = await diffFile(this.gitOps, target.directory, target.baseBranch, file, () => {})
-      if (!diff) return
-      
-      await this.explainSingle(diff, root, target.baseBranch)
-    } catch (err) {
-      console.error(`Failed to explain ${file} natively:`, err)
-    }
+            validDiffs.push({ file: d.file, patch: entry.patch })
+          }
+
+          const { annotatedDiffs, lineMap } = buildIndexedPatches(validDiffs)
+
+          if (!annotatedDiffs.trim()) {
+            vscode.window.showInformationMessage("Strata AI: No complex changes to explain.")
+            return
+          }
+
+          const client = this.provider.client
+          if (!client) {
+            vscode.window.showErrorMessage("Strata connection is not available.")
+            return
+          }
+          
+          if (!this.explainSession) {
+            const { data } = await client.session.create({ directory: root }, { throwOnError: true })
+            this.explainSession = data.id
+            this.provider.hideSession(data.id)
+          }
+
+          const prompt = [
+            "You are an expert code reviewer. Below are all changed files as unified diffs.",
+            "",
+            "IMPORTANT: Each changed line (+ or -) is prefixed with an ID in brackets, e.g., [1], [2].",
+            "These IDs uniquely identify that specific changed line.",
+            "",
+            "Leave inline comments ONLY at lines where you see actual changes.",
+            "Focus on:",
+            "- Potential bugs or logic errors",
+            "- Performance issues",
+            "- Security concerns",
+            "- Non-obvious design decisions that deserve explanation",
+            "- Suggestions for improvement",
+            "",
+            "Do NOT comment on trivially obvious changes (renames, imports, formatting, version bumps).",
+            "",
+            "Respond with ONLY this JSON (no markdown fences, no extra text):",
+            "{",
+            "  \"summary\": \"Brief 1-2 sentence summary of the overall changeset\",",
+            "  \"comments\": {",
+            "    \"1\": \"Your comment for the change at ID [1]...\"",
+            "  }",
+            "}",
+            "",
+            "If a line number ID is skipped in your comments, that means you have no comment for it.",
+            "If there is nothing worth commenting on, return: { \"summary\": \"...\", \"comments\": {} }",
+            "",
+            "--- DIFFS ---",
+            annotatedDiffs,
+          ].join("\n")
+
+          let timer: ReturnType<typeof setTimeout> | undefined
+          const timeout = new Promise<never>((_, reject) => {
+            timer = setTimeout(() => reject(new Error("Explanation timed out after 60s")), 60_000)
+          })
+
+          try {
+            const res = await Promise.race([
+              client.session.prompt(
+                {
+                  sessionID: this.explainSession,
+                  directory: root,
+                  agent: "explainer",
+                  parts: [{ type: "text", text: prompt }],
+                },
+                { throwOnError: true },
+              ),
+              timeout,
+            ])
+
+            const part = res.data?.parts?.find((p: any) => p.type === "text")
+            if (part && "text" in part) {
+              const raw = part.text.trim()
+              const parsed = parseExplainResponse(raw, lineMap)
+              
+              if (parsed.summary) {
+                // Attach the summary to the first file's CodeLens for now
+                if (diffs.length > 0) {
+                  const firstFile = vscode.Uri.joinPath(vscode.Uri.file(root), diffs[0].file).fsPath
+                  this.summaries.set(firstFile, parsed.summary)
+                  this.lensEmitter.fire()
+                }
+              }
+
+              for (const comment of parsed.comments) {
+                const uri = vscode.Uri.joinPath(vscode.Uri.file(root), comment.file)
+                const line = Math.max(0, comment.line - 1)
+                
+                // Construct a deterministic ID for this thread
+                const threadId = `${uri.fsPath}:${line}`
+                
+                let thread = this.threadMap.get(threadId)
+                if (!thread) {
+                  thread = this.controller.createCommentThread(
+                    uri,
+                    new vscode.Range(line, 0, line, 0),
+                    [],
+                  )
+                  thread.canReply = true
+                  this.threadMap.set(threadId, thread)
+                }
+
+                thread.comments = [...thread.comments, {
+                  author: { name: "Strata AI" },
+                  body: new vscode.MarkdownString(comment.text),
+                  mode: vscode.CommentMode.Preview,
+                }]
+              }
+
+
+            } else {
+              vscode.window.showErrorMessage("Strata AI: Received invalid response.")
+            }
+          } finally {
+            clearTimeout(timer)
+          }
+        } catch (err) {
+          const msg = getErrorMessage(err)
+          vscode.window.showErrorMessage(`Strata AI: Failed to explain changes: ${msg}`)
+          this.explainSession = undefined
+        }
+      }
+    )
   }
 
-  /**
-   * Explain a single file. Uses TTL cache when the diff content hasn't changed.
-   */
-  public async explainSingle(diff: any, root?: string, branch?: string): Promise<void> {
-    const resolved = root ?? getWorkspaceRoot()
-    if (!resolved) return
-
-    const hash = this.hashDiff(diff)
-
-    // Check cache
-    const cached = this.cache.get(diff.file)
-    if (cached && cached.hash === hash && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-      // Reuse cached thread
-      const existing = this.threadMap.get(diff.file)
-      if (existing) return
-      this.showThread(diff.file, resolved, cached.text)
-      this.updateSummary(resolved, diff.file, cached.text)
-      return
+  public async replyToThread(reply: vscode.CommentReply): Promise<void> {
+    const thread = reply.thread
+    const text = reply.text
+    
+    // Add user's comment to the thread
+    const userComment: vscode.Comment = {
+      author: { name: "You" },
+      body: new vscode.MarkdownString(text),
+      mode: vscode.CommentMode.Preview,
     }
+    thread.comments = [...thread.comments, userComment]
 
     const client = this.provider.client
     if (!client) {
-      console.warn(`ExplainCommentController: no client available for ${diff.file}`)
+      vscode.window.showErrorMessage("Strata connection is not available.")
       return
     }
 
-    const fileUri = vscode.Uri.file(`${resolved}/${diff.file}`)
-    const patch = this.buildPatch(diff)
-    const context = branch ? ` (changes relative to \`${branch}\`)` : ""
+    const root = getWorkspaceRoot()
+    if (!root) return
 
-    const effort = vscode.workspace.getConfiguration("strata-code.new.explainer").get<string>("effort", "medium")
-    let skipInstruction = ""
-    if (effort === "low") {
-      skipInstruction = "If this file's changes are simple or trivial, you MUST skip it. To skip, reply with the exact text `<SKIP>` and nothing else."
-    } else if (effort === "medium") {
-      skipInstruction = "If this file's changes are extremely obvious, you MUST skip it. To skip, reply with the exact text `<SKIP>` and nothing else."
+    if (!this.explainSession) {
+      const { data } = await client.session.create({ directory: root }, { throwOnError: true })
+      this.explainSession = data.id
+      this.provider.hideSession(data.id)
     }
+
+    const file = vscode.workspace.asRelativePath(thread.uri)
+    const line = thread.range ? thread.range.start.line + 1 : 0
+    
+    // Build context from previous messages
+    const conversation = thread.comments.map((c: any) => `${c.author.name}: ${c.body.value}`).join("\n\n")
 
     const prompt = [
-      `Briefly explain the changes in **${diff.file}**${context}.`,
-      "Provide EXACTLY one comment for this file as a single short paragraph. Do NOT use lists. Keep your answer to 2–3 sentences: what changed and why it matters.",
-      skipInstruction,
-      "",
-      "```diff",
-      patch,
-      "```",
-    ].filter(Boolean).join("\n")
+      `You are an expert code reviewer. The user is asking a follow-up question about your explanation of a code change.`,
+      `File: ${file}`,
+      `Line: ${line}`,
+      `Thread so far:`,
+      conversation,
+      ``,
+      `Please reply directly to the user's latest question. Provide your answer in markdown format. Do NOT wrap your answer in JSON.`
+    ].join("\n")
 
-    // Dispose any existing thread before creating a new one
-    const prev = this.threadMap.get(diff.file)
-    if (prev) {
-      prev.dispose()
-      this.threadMap.delete(diff.file)
-    }
+    // Show a loading indicator by creating a temporary comment or using VS Code progress
+    await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: "Strata AI: Thinking...", cancellable: false },
+      async () => {
+        try {
+          const res = await client.session.prompt(
+            {
+              sessionID: this.explainSession!,
+              directory: root,
+              agent: "copilot", // Use copilot agent to return plain markdown
+              parts: [{ type: "text", text: prompt }],
+            },
+            { throwOnError: true }
+          )
 
-    const thread = this.controller.createCommentThread(fileUri, new vscode.Range(0, 0, 0, 0), [
-      {
-        author: { name: "Strata AI", iconPath: vscode.Uri.parse("https://github.com/strata.png") },
-        body: "Generating explanation...",
-        mode: vscode.CommentMode.Preview,
-      },
-    ])
-    thread.canReply = false
-    this.threadMap.set(diff.file, thread)
-
-    if (patch.split("\n").length > 500 || patch.length > 25000) {
-      thread.comments = [
-        {
-          author: { name: "Strata AI" },
-          body: new vscode.MarkdownString("Change too big to be analyzed."),
-          mode: vscode.CommentMode.Preview,
-        },
-      ]
-      return
-    }
-
-    try {
-      let timeoutId: any
-      const timeout = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error("Explanation timed out after 15s")), 15_000)
-      })
-
-      // Lazily create an ephemeral session for explanations
-      if (!this.explainSession) {
-        const { data } = await client.session.create({ directory: resolved }, { throwOnError: true })
-        this.explainSession = data.id
-      }
-
-      const res = await Promise.race([
-        client.session.prompt(
-          {
-            sessionID: this.explainSession,
-            directory: resolved,
-            agent: "explainer",
-            parts: [{ type: "text", text: prompt }],
-          },
-          { throwOnError: true },
-        ),
-        timeout,
-      ])
-
-      clearTimeout(timeoutId)
-
-      const textPart = res.data?.parts?.find((p: any) => p.type === "text")
-      if (textPart && "text" in textPart) {
-        const text = (textPart.text as string).trim()
-        
-        const cleanText = text.replace(/`/g, "")
-        const isSkipped = /^\s*<?skip>?\s*$/i.test(cleanText)
-        if (isSkipped) {
-          thread.dispose()
-          this.threadMap.delete(diff.file)
-          return
-        }
-
-        thread.comments = [
-          {
-            author: { name: "Strata AI" },
-            body: new vscode.MarkdownString(text),
-            mode: vscode.CommentMode.Preview,
-          },
-        ]
-        // Cache the result
-        this.cache.set(diff.file, { text, hash, timestamp: Date.now() })
-        this.updateSummary(resolved, diff.file, text)
-      } else {
-        thread.dispose()
-        this.threadMap.delete(diff.file)
-      }
-    } catch (err) {
-      const msg = getErrorMessage(err)
-      console.error(`Failed to explain ${diff.file}:`, msg)
-      this.explainSession = undefined
-
-      if (msg.toLowerCase().includes("model") || msg.toLowerCase().includes("agent")) {
-        thread.dispose()
-        this.threadMap.delete(diff.file)
-        vscode.window.showErrorMessage(
-          `Strata Explainer is restricted: ${msg}. Please select an agent/model in settings.`,
-          "Open Settings"
-        ).then((action) => {
-          if (action === "Open Settings") {
-            vscode.commands.executeCommand("strata-code.new.openSettings")
+          const part = res.data?.parts?.find((p: any) => p.type === "text")
+          if (part && "text" in part) {
+            const aiReply: vscode.Comment = {
+              author: { name: "Strata AI" },
+              body: new vscode.MarkdownString(part.text.trim()),
+              mode: vscode.CommentMode.Preview,
+            }
+            thread.comments = [...thread.comments, aiReply]
+          } else {
+            vscode.window.showErrorMessage("Strata AI: Received invalid response.")
           }
-        })
-        return
+        } catch (err) {
+          const msg = getErrorMessage(err)
+          vscode.window.showErrorMessage(`Strata AI: Failed to reply: ${msg}`)
+        }
       }
-
-      thread.comments = [
-        {
-          author: { name: "Strata AI" },
-          body: new vscode.MarkdownString(`*Failed to generate explanation:* ${msg}`),
-          mode: vscode.CommentMode.Preview,
-        },
-      ]
-    }
-  }
-
-  private showThread(file: string, root: string, text: string): void {
-    const fileUri = vscode.Uri.file(`${root}/${file}`)
-    const thread = this.controller.createCommentThread(fileUri, new vscode.Range(0, 0, 0, 0), [
-      {
-        author: { name: "Strata AI" },
-        body: new vscode.MarkdownString(text),
-        mode: vscode.CommentMode.Preview,
-      },
-    ])
-    thread.canReply = false
-    this.threadMap.set(file, thread)
+    )
   }
 
   public clearThreads(): void {
@@ -415,6 +380,7 @@ export class ExplainCommentController implements vscode.Disposable {
   public dispose() {
     this.clearThreads()
     if (this.explainSession) {
+      this.provider.unhideSession(this.explainSession)
       const root = getWorkspaceRoot()
       if (root) {
         this.provider.client?.session

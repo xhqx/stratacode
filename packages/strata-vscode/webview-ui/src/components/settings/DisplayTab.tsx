@@ -24,6 +24,12 @@ const EXPLAINER_MODE_OPTIONS: LayoutOption[] = [
   { value: "native", labelKey: "settings.general.row.explainerMode.native" },
 ]
 
+const EXPLAINER_EFFORT_OPTIONS: LayoutOption[] = [
+  { value: "low", labelKey: "settings.general.row.explainerEffort.low" },
+  { value: "medium", labelKey: "settings.general.row.explainerEffort.medium" },
+  { value: "high", labelKey: "settings.general.row.explainerEffort.high" },
+]
+
 const DisplayTab: Component = () => {
   const { config, updateConfig } = useConfig()
   const language = useLanguage()
@@ -31,6 +37,7 @@ const DisplayTab: Component = () => {
 
   const [showTaskTimeline, setShowTaskTimeline] = createSignal(false)
   const [explainerMode, setExplainerMode] = createSignal<"strata" | "native">("strata")
+  const [explainerEffort, setExplainerEffort] = createSignal<"low" | "medium" | "high">("medium")
   const [autoExplain, setAutoExplain] = createSignal(true)
 
   const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
@@ -38,6 +45,8 @@ const DisplayTab: Component = () => {
       setShowTaskTimeline(message.visible)
     } else if (message.type === "settingLoaded" && message.key === "explainer.mode") {
       setExplainerMode(message.value as "strata" | "native")
+    } else if (message.type === "settingLoaded" && message.key === "explainer.effort") {
+      setExplainerEffort(message.value as "low" | "medium" | "high")
     } else if (message.type === "settingLoaded" && message.key === "explainer.autoExplain") {
       setAutoExplain(message.value as boolean)
     }
@@ -45,6 +54,7 @@ const DisplayTab: Component = () => {
   onCleanup(unsubscribe)
   vscode.postMessage({ type: "requestTimelineSetting" })
   vscode.postMessage({ type: "requestSetting", key: "explainer.mode" })
+  vscode.postMessage({ type: "requestSetting", key: "explainer.effort" })
   vscode.postMessage({ type: "requestSetting", key: "explainer.autoExplain" })
 
   return (
@@ -99,6 +109,28 @@ const DisplayTab: Component = () => {
               if (next === explainerMode()) return
               setExplainerMode(next)
               vscode.postMessage({ type: "updateSetting", key: "explainer.mode", value: next })
+            }}
+            variant="secondary"
+            size="small"
+            triggerVariant="settings"
+          />
+        </SettingsRow>
+
+        <SettingsRow
+          title={language.t("settings.general.row.explainerEffort.title")}
+          description={language.t("settings.general.row.explainerEffort.description")}
+        >
+          <Select
+            options={EXPLAINER_EFFORT_OPTIONS}
+            current={EXPLAINER_EFFORT_OPTIONS.find((o) => o.value === explainerEffort())}
+            value={(o) => o.value}
+            label={(o) => language.t(o.labelKey)}
+            onSelect={(o) => {
+              if (!o) return
+              const next = o.value as "low" | "medium" | "high"
+              if (next === explainerEffort()) return
+              setExplainerEffort(next)
+              vscode.postMessage({ type: "updateSetting", key: "explainer.effort", value: next })
             }}
             variant="secondary"
             size="small"

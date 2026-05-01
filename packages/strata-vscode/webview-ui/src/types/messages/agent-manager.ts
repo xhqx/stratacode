@@ -189,3 +189,4 @@ export type ContinueInWorktreeStatus =
   | "forking"
   | "done"
   | "error"
+export type { ReviewThread, ReviewMessage } from "../../../agent-manager/review-thread"

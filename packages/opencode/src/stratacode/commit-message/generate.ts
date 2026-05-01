@@ -10,79 +10,43 @@ const log = Log.create({ service: "commit-message" })
 const SYSTEM_PROMPT = `You are an expert Git commit message generator that creates conventional commit messages based on staged changes. Analyze the provided git diff output and generate an appropriate conventional commit message following the specification.
 
 ## Conventional Commits Format
-Generate commit messages following this exact structure:
-\`\`\`
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
-\`\`\`
-
-### Core Types (Required)
-- **feat**: New feature or functionality (MINOR version bump)
-- **fix**: Bug fix or error correction (PATCH version bump)
-
-### Additional Types (Extended)
+Use the following types:
+- **feat**: New feature or functionality
+- **fix**: Bug fix or error correction
 - **docs**: Documentation changes only
-- **style**: Code style changes (whitespace, formatting, semicolons, etc.)
-- **refactor**: Code refactoring without feature changes or bug fixes
+- **style**: Code style changes
+- **refactor**: Code refactoring
 - **perf**: Performance improvements
 - **test**: Adding or fixing tests
-- **build**: Build system or external dependency changes
+- **build**: Build system or dependency changes
 - **ci**: CI/CD configuration changes
-- **chore**: Maintenance tasks, tooling changes
+- **chore**: Maintenance tasks
 - **revert**: Reverting previous commits
 
-### Scope Guidelines
-- Use parentheses: \`feat(api):\`, \`fix(ui):\`
-- Common scopes: \`api\`, \`ui\`, \`auth\`, \`db\`, \`config\`, \`deps\`, \`docs\`
-- For monorepos: package or module names
-- Keep scope concise and lowercase
+Return ONLY a JSON object with this exact structure (no markdown fences, no extra text):
+{
+  "type": "feat",
+  "scope": "api",
+  "description": "add new endpoint",
+  "body": "Detailed explanation...",
+  "footer": "BREAKING CHANGE: description"
+}
 
-### Description Rules
-- Use imperative mood ("add" not "added" or "adds")
-- Start with lowercase letter
-- No period at the end
-- Maximum 72 characters
-- Be concise but descriptive
-
-### Body Guidelines (Optional)
-- Start one blank line after description
-- Explain the "what" and "why", not the "how"
-- Wrap at 72 characters per line
-- Use for complex changes requiring explanation
-
-### Footer Guidelines (Optional)
-- Start one blank line after body
-- **Breaking Changes**: \`BREAKING CHANGE: description\`
-
-## Analysis Instructions
-When analyzing staged changes:
-1. Determine Primary Type based on the nature of changes
-2. Identify Scope from modified directories or modules
-3. Craft Description focusing on the most significant change
-4. Determine if there are Breaking Changes
-5. For complex changes, include a detailed body explaining what and why
-6. Add appropriate footers for issue references or breaking changes
-
-For significant changes, include a detailed body explaining the changes.
-
-Return ONLY the commit message in the conventional format, nothing else.`
+- "type" and "description" are REQUIRED.
+- "scope", "body", and "footer" are OPTIONAL (omit them if not needed).
+- "description" should be imperative mood, lowercase start, max 72 chars.
+`
 
 const SIMPLE_PROMPT = `You are an expert Git commit message generator. Analyze the provided git diff output and generate a short, simple commit message.
 The message should be a single line, under 72 characters, describing the main change.
 Do not use conventional commits format or gitmoji. Start with a capitalized action verb in the imperative mood (e.g. "Add", "Fix", "Update").
 
-Return ONLY the generated commit message without quotes or markdown blocks.`
+Return ONLY a JSON object with this exact structure (no markdown fences, no extra text):
+{
+  "message": "Update styling"
+}`
 
 const GITMOJI_PROMPT = `You are an expert Git commit message generator that creates commit messages using gitmoji based on staged changes. Analyze the provided git diff output and generate an appropriate commit message.
-
-## Gitmoji Format
-Generate commit messages following this structure:
-\`\`\`
-<emoji> <description>
-\`\`\`
 
 Common gitmojis:
 - 🐛 (bug) Bug fix
@@ -93,9 +57,11 @@ Common gitmojis:
 - ⚡️ (zap) Performance
 - 🔧 (wrench) Configuration
 
-The description should use imperative mood and start with a capital letter.
-
-Return ONLY the generated commit message without quotes or markdown blocks.`
+Return ONLY a JSON object with this exact structure (no markdown fences, no extra text):
+{
+  "emoji": "🐛",
+  "description": "Fix login bug"
+}`
 
 function buildUserMessage(ctx: GitContext): string {
   const fileList = ctx.files.map((f) => `${f.status} ${f.path}`).join("\n")
@@ -117,9 +83,40 @@ Diffs:
 ${diffs}`
 }
 
-function clean(text: string): string {
-  let result = text.trim()
-  // Strip code block markers
+function parseCommitResponse(raw: string, format: string): string {
+  let jsonStr = raw.trim()
+  const match = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+  if (match && match[1]) {
+    jsonStr = match[1].trim()
+  } else {
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0].trim()
+    }
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr)
+    if (format === "simple" && parsed.message) {
+      return parsed.message.trim()
+    }
+    if (format === "gitmoji" && parsed.emoji && parsed.description) {
+      return `${parsed.emoji.trim()} ${parsed.description.trim()}`
+    }
+    if ((format === "conventional" || !format) && parsed.type && parsed.description) {
+      let msg = parsed.type.trim()
+      if (parsed.scope) msg += `(${parsed.scope.trim()})`
+      msg += `: ${parsed.description.trim()}`
+      if (parsed.body) msg += `\n\n${parsed.body.trim()}`
+      if (parsed.footer) msg += `\n\n${parsed.footer.trim()}`
+      return msg
+    }
+  } catch (err) {
+    // fallback if model failed to output JSON
+  }
+
+  // Fallback to old clean method
+  let result = raw.trim()
   if (result.startsWith("```")) {
     const first = result.indexOf("\n")
     if (first !== -1) {
@@ -130,7 +127,6 @@ function clean(text: string): string {
     result = result.slice(0, -3)
   }
   result = result.trim()
-  // Strip surrounding quotes
   if ((result.startsWith('"') && result.endsWith('"')) || (result.startsWith("'") && result.endsWith("'"))) {
     result = result.slice(1, -1)
   }
@@ -235,7 +231,7 @@ export async function generateCommitMessage(request: CommitMessageRequest): Prom
     }
 
     log.info("generated", { message: result })
-    return { message: clean(result) }
+    return { message: parseCommitResponse(result, request.format || "conventional") }
   } catch (err) {
     if (controller.signal.aborted) {
       throw new Error("Commit message generation timed out after 30 seconds")
