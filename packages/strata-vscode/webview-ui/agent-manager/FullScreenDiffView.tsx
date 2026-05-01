@@ -15,6 +15,7 @@ import { Button } from "@stratacode/strata-ui/button"
 import { IconButton } from "@stratacode/strata-ui/icon-button"
 import { Spinner } from "@stratacode/strata-ui/spinner"
 import { ResizeHandle } from "@stratacode/strata-ui/resize-handle"
+import { Markdown } from "@stratacode/strata-ui/markdown"
 import { Tooltip, TooltipKeybind } from "@stratacode/strata-ui/tooltip"
 import type { DiffLineAnnotation, AnnotationSide, SelectedLineRange } from "@pierre/diffs"
 import type { WorktreeFileDiff, ReviewThread } from "../src/types/messages"
@@ -551,6 +552,11 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
           </Show>
 
           <Show when={props.diffs.length > 0}>
+            <Show when={props.reviewSummary}>
+              <div class="am-review-summary-banner">
+                <Markdown text={props.reviewSummary!} />
+              </div>
+            </Show>
             <div class="am-review-diff-content" data-component="session-review">
               <Accordion multiple value={open()} onChange={setOpen}>
                 <For each={sorted()}>
