@@ -6,13 +6,13 @@ import { hasCycle, isReady } from "./planning-validation"
 export interface PlanningServiceOptions {
   context: vscode.ExtensionContext
   connectionService: StrataConnectionService
-  postToSidebar: (message: any) => void
+  postToSidebar: (message: unknown) => void
 }
 
 export class PlanningService {
   private context: vscode.ExtensionContext
   private connectionService: StrataConnectionService
-  private postToSidebar: (message: any) => void
+  private postToSidebar: (message: unknown) => void
   private tasks: PlanningTask[] = []
   private unsubscribeStatus: (() => void) | null = null
 
@@ -39,14 +39,14 @@ export class PlanningService {
       this.tasks = []
     }
     // Update any "planned" tasks to "ready" if they are ready on load
-    let changed = false
     const now = new Date()
-    for (const t of this.tasks) {
+    const changed = this.tasks.reduce((acc, t) => {
       if (t.status === "planned" && isReady(t, this.tasks, now)) {
         t.status = "ready"
-        changed = true
+        return true
       }
-    }
+      return acc
+    }, false)
     if (changed) this.save()
   }
 
@@ -86,11 +86,11 @@ export class PlanningService {
     // Listen for session status changes to move dispatched -> needs_review or failed
     this.unsubscribeStatus = this.connectionService.onEvent((event) => {
       if (event.type === "session.status" && event.properties) {
-        const props = event.properties as any
+        const props = event.properties as Record<string, unknown>
         const sessionId = props.sessionID
-        const status = props.status
+        const status = props.status as { type: string } | undefined
 
-        if (sessionId && status) {
+        if (typeof sessionId === "string" && status) {
           const task = this.tasks.find((t) => t.sessionID === sessionId && t.status === "dispatched")
 
           if (task) {
@@ -285,7 +285,6 @@ export class PlanningService {
 
     // Evaluate readiness of dependent tasks
     const now = new Date()
-    let changed = true // since we changed the task status
     for (const t of this.tasks) {
       if (t.status === "planned" && t.dependsOn?.includes(id)) {
         if (isReady(t, this.tasks, now)) {
@@ -294,6 +293,6 @@ export class PlanningService {
       }
     }
 
-    if (changed) this.save()
+    this.save()
   }
 }

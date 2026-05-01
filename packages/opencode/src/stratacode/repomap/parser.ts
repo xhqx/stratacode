@@ -125,7 +125,7 @@ class Engine {
           const type = name.split(".").pop() || "unknown"
           // For the signature, we grab the text of the line the node starts on
           // Extract the full line text up to the node's position to show context
-          const lines = content.split("\\n")
+          const lines = content.split("\n")
           const lineText = lines[node.startPosition.row]?.trim()
 
           tags.push({
@@ -135,7 +135,10 @@ class Engine {
             line: node.startPosition.row + 1, // 1-indexed
             signature: lineText,
           })
-        } else if (name.startsWith("name.reference.")) {
+          continue
+        }
+        
+        if (name.startsWith("name.reference.")) {
           // imports, requires, etc. (for ranking)
           // Strip quotes from import strings
           const refName = node.text.replace(/^['"]|['"]$/g, "")

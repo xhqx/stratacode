@@ -79,10 +79,7 @@ export const defaultLayer = Layer.effect(
           yield* ensureDir()
           const filePath = path.join(getMemoryDir(), `${id}.md`)
 
-          let finalContent = content
-          if (!content.startsWith("# ")) {
-            finalContent = `# ${title}\n\n${content}`
-          }
+          const finalContent = content.startsWith("# ") ? content : `# ${title}\n\n${content}`
 
           yield* fsService.writeFileString(filePath, finalContent)
         }).pipe(Effect.catch(() => Effect.void)),

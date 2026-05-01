@@ -2,6 +2,13 @@ import * as vscode from "vscode"
 import { MemoryExtractor } from "./MemoryExtractor"
 import { StrataProvider } from "../../StrataProvider"
 
+interface GitRepository {
+  state: {
+    HEAD?: { commit?: string }
+    onDidChange: (cb: () => void) => vscode.Disposable
+  }
+}
+
 export class GitWatcher {
   private extractor: MemoryExtractor
   private disposables: vscode.Disposable[] = []
@@ -20,13 +27,13 @@ export class GitWatcher {
       if (!api) return
 
       api.onDidOpenRepository(this.setupRepo, this, this.disposables)
-      api.repositories.forEach((repo: any) => this.setupRepo(repo))
+      api.repositories.forEach((repo: GitRepository) => this.setupRepo(repo))
     } catch (e) {
       console.warn("[Strata New] GitWatcher initialization failed:", e)
     }
   }
 
-  private setupRepo(repo: any) {
+  private setupRepo(repo: GitRepository) {
     if (!repo?.state) return
     
     // Subscribe to state changes (includes HEAD changes like checkout and pull)

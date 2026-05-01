@@ -31,25 +31,18 @@ export namespace RankerService {
     const mentionedSet = new Set(mentionedFiles)
 
     for (const [file, entry] of store.entries()) {
-      let score = 0
       const defTags = entry.tags.filter((t) => t.kind === "def")
 
       // A file's base score is the sum of reference counts for symbols it defines
-      for (const tag of defTags) {
-        score += refCounts.get(tag.name) || 0
-      }
+      const baseScore = defTags.reduce((acc, tag) => acc + (refCounts.get(tag.name) || 0), 0)
 
       // If a file defines nothing that is referenced, but it has definitions,
       // give it a minimal base score so it isn't completely ignored.
       // If it has NO definitions, it's effectively a 0 score (nothing to show).
-      if (score === 0 && defTags.length > 0) {
-        score = 0.5
-      }
+      const adjustedScore = baseScore === 0 && defTags.length > 0 ? 0.5 : baseScore
 
       // Boost mentioned files by 3x
-      if (mentionedSet.has(file)) {
-        score = Math.max(score * 3, 5) // At least 5 if mentioned
-      }
+      const score = mentionedSet.has(file) ? Math.max(adjustedScore * 3, 5) : adjustedScore
 
       ranked.push({
         file,
