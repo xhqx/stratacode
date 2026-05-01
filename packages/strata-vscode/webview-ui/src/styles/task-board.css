@@ -54,7 +54,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   cursor: pointer;
   user-select: none;
 }
@@ -63,6 +63,10 @@
   flex: 1;
   font-weight: 600;
   color: var(--text-base);
+}
+
+.task-board-section {
+  border-bottom: 1px solid var(--border-weak-base);
 }
 
 /* Columns (Horizontal) */
@@ -80,7 +84,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border-weak-base);
 }
 
@@ -105,7 +109,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 4px 12px 12px 12px;
-  min-height: 20px;
+  min-height: 24px;
 }
 
 /* Drop zone indicators */

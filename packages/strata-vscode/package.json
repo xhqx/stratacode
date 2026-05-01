@@ -829,12 +829,12 @@
         },
         "strata-code.new.model.providerID": {
           "type": "string",
-          "default": "strata",
+          "default": "",
           "description": "Default model provider ID for new sessions"
         },
         "strata-code.new.model.modelID": {
           "type": "string",
-          "default": "strata-auto/free",
+          "default": "",
           "description": "Default model ID for new sessions"
         },
         "strata-code.new.autocomplete.model": {

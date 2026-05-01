@@ -9,7 +9,7 @@ import {
   sanitizeCustomProviderConfig,
   withCustomProviderDeletions,
 } from "./shared/custom-provider"
-import { STRATA_AUTO, parseModelString } from "./shared/provider-model"
+import { parseModelString } from "./shared/provider-model"
 import { configFeatures } from "./features"
 
 /**
@@ -118,7 +118,7 @@ export function computeDefaultSelection(
   const configured = parseModelString(cachedConfig?.config?.model)
   if (configured) return configured
   if (vscodePID && vscodeMID) return { providerID: vscodePID, modelID: vscodeMID }
-  return { ...STRATA_AUTO }
+  return { providerID: "", modelID: "" }
 }
 
 type PostMessage = (message: unknown) => void

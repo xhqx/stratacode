@@ -65,48 +65,46 @@ const AcpAgentsTab: Component = () => {
   const statusLabel = (name: string) => ""
   const isConnected = (name: string) => false
 
-  if (creatingAcp()) {
-    return (
-      <AcpEditView
-        name=""
-        mode="create"
-        taken={Object.keys(config().acp_agents ?? {})}
-        onBack={() => setCreatingAcp(false)}
-        onRemove={() => setCreatingAcp(false)}
-      />
-    )
-  }
-
-  if (editingAcp()) {
-    return (
-      <AcpEditView
-        name={editingAcp()}
-        onBack={() => setEditingAcp("")}
-        onRemove={(name) => {
-          confirmRemoveAcp(name)
-          setEditingAcp("")
-        }}
-      />
-    )
-  }
-
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          "align-items": "center",
-          "justify-content": "flex-end",
-          "margin-bottom": "8px",
-        }}
-      >
-        <Button variant="secondary" size="small" onClick={() => setCreatingAcp(true)}>
-          {language.t("settings.agentBehaviour.addAcpAgent")}
-        </Button>
-        <Button variant="secondary" size="small" onClick={browse}>
-          {language.t("settings.agentBehaviour.acpBrowseMarketplace")}
-        </Button>
-      </div>
+      <Show when={creatingAcp()}>
+        <AcpEditView
+          name=""
+          mode="create"
+          taken={Object.keys(config().acp_agents ?? {})}
+          onBack={() => setCreatingAcp(false)}
+          onRemove={() => setCreatingAcp(false)}
+        />
+      </Show>
+
+      <Show when={!creatingAcp() && editingAcp()}>
+        <AcpEditView
+          name={editingAcp()}
+          onBack={() => setEditingAcp("")}
+          onRemove={(name) => {
+            confirmRemoveAcp(name)
+            setEditingAcp("")
+          }}
+        />
+      </Show>
+
+      <Show when={!creatingAcp() && !editingAcp()}>
+        <>
+          <div
+            style={{
+              display: "flex",
+              "align-items": "center",
+              "justify-content": "flex-end",
+              "margin-bottom": "8px",
+            }}
+          >
+            <Button variant="secondary" size="small" onClick={() => setCreatingAcp(true)}>
+              {language.t("settings.agentBehaviour.addAcpAgent")}
+            </Button>
+            <Button variant="secondary" size="small" onClick={browse}>
+              {language.t("settings.agentBehaviour.acpBrowseMarketplace")}
+            </Button>
+          </div>
       <Show
         when={acpEntries().length > 0}
         fallback={
@@ -275,6 +273,8 @@ const AcpAgentsTab: Component = () => {
             }}
           </For>
         </Card>
+      </Show>
+      </>
       </Show>
     </div>
   )

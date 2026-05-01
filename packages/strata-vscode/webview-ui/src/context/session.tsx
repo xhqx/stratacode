@@ -47,7 +47,7 @@ import { Identifier } from "../utils/id"
 import { resolveModelSelection } from "./model-selection"
 import { resolveSessionAgent } from "./session-agent"
 import { PartStash } from "./part-stash"
-import { STRATA_AUTO, parseModelString } from "../../../src/shared/provider-model"
+import { parseModelString } from "../../../src/shared/provider-model"
 
 const RECENT_LIMIT = 5
 const MESSAGE_PAGE_LIMIT = 80
@@ -419,7 +419,7 @@ export const SessionProvider: ParentComponent = (props) => {
       mode: getModeModel(agentName),
       global: getGlobalModel(),
       recent: store.recentModels,
-      fallback: STRATA_AUTO,
+      fallback: null,
     })
   }
 
@@ -433,7 +433,7 @@ export const SessionProvider: ParentComponent = (props) => {
   })
 
   // Global model selection per agent/mode
-  // Precedence: per-session override > user override > per-mode config > global config model > VS Code default > strata-auto/free
+  // Precedence: per-session override > user override > per-mode config > global config model > VS Code default > null
   // Each candidate is validated against the provider catalog; invalid models fall through.
   const selected = createMemo<ModelSelection | null>(() => {
     const sid = currentSessionID()

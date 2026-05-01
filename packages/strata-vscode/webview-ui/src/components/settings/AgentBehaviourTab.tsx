@@ -219,7 +219,14 @@ const AgentBehaviourTab: Component = () => {
   return (
     <>
       <Show when={agentView() === "create"}>
-        <ModeCreateView taken={agentNames()} onBack={back} />
+        <ModeCreateView
+          taken={agentNames()}
+          onBack={back}
+          onCreate={(name) => {
+            setEditingAgent(name)
+            setAgentView("edit")
+          }}
+        />
       </Show>
       <Show when={agentView() === "edit"}>
         <ModeEditView name={editingAgent()} onBack={back} onRemove={confirmRemoveMode} />

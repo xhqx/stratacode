@@ -13,6 +13,7 @@ interface Props {
   /** Names already taken (used for uniqueness validation). */
   taken: string[]
   onBack: () => void
+  onCreate?: (name: string) => void
 }
 
 const ModeCreateView: Component<Props> = (props) => {
@@ -60,7 +61,11 @@ const ModeCreateView: Component<Props> = (props) => {
       agent: { ...existing, [slug]: { ...(existing[slug] ?? {}), ...partial } },
     })
     reset()
-    props.onBack()
+    if (props.onCreate) {
+      props.onCreate(slug)
+    } else {
+      props.onBack()
+    }
   }
 
   return (

@@ -53,55 +53,53 @@ const WorkflowsTab: Component = () => {
   }
 
   // --- Sub-views ---
-  if (creatingCmd()) {
-    return (
-      <WorkflowEditView
-        name=""
-        mode="create"
-        taken={Object.keys(config().command ?? {})}
-        onBack={() => setCreatingCmd(false)}
-      />
-    )
-  }
-
-  if (editingCmd()) {
-    return (
-      <WorkflowEditView
-        name={editingCmd()}
-        mode="edit"
-        taken={Object.keys(config().command ?? {}).filter((n) => n !== editingCmd())}
-        onBack={() => setEditingCmd("")}
-      />
-    )
-  }
-
   return (
     <div>
-      {/* Description */}
-      <div
-        style={{
-          "font-size": "12px",
-          color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-          "margin-bottom": "12px",
-          "line-height": "1.5",
-        }}
-      >
-        {language.t("settings.agentBehaviour.workflows.description")}
-      </div>
+      <Show when={creatingCmd()}>
+        <WorkflowEditView
+          name=""
+          mode="create"
+          taken={Object.keys(config().command ?? {})}
+          onBack={() => setCreatingCmd(false)}
+        />
+      </Show>
 
-      {/* Toolbar */}
-      <div
-        style={{
-          display: "flex",
-          "align-items": "center",
-          "justify-content": "flex-end",
-          "margin-bottom": "8px",
-        }}
-      >
-        <Button variant="secondary" size="small" onClick={() => setCreatingCmd(true)}>
-          {language.t("settings.agentBehaviour.addWorkflow")}
-        </Button>
-      </div>
+      <Show when={!creatingCmd() && editingCmd() !== ""}>
+        <WorkflowEditView
+          name={editingCmd()}
+          mode="edit"
+          taken={Object.keys(config().command ?? {}).filter((n) => n !== editingCmd())}
+          onBack={() => setEditingCmd("")}
+        />
+      </Show>
+
+      <Show when={!creatingCmd() && editingCmd() === ""}>
+        <>
+          {/* Description */}
+          <div
+            style={{
+              "font-size": "12px",
+              color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+              "margin-bottom": "12px",
+              "line-height": "1.5",
+            }}
+          >
+            {language.t("settings.agentBehaviour.workflows.description")}
+          </div>
+
+          {/* Toolbar */}
+          <div
+            style={{
+              display: "flex",
+              "align-items": "center",
+              "justify-content": "flex-end",
+              "margin-bottom": "8px",
+            }}
+          >
+            <Button variant="secondary" size="small" onClick={() => setCreatingCmd(true)}>
+              {language.t("settings.agentBehaviour.addWorkflow")}
+            </Button>
+          </div>
 
       <Show
         when={cmds().length > 0}
@@ -236,6 +234,8 @@ const WorkflowsTab: Component = () => {
             }}
           </For>
         </Card>
+      </Show>
+      </>
       </Show>
     </div>
   )

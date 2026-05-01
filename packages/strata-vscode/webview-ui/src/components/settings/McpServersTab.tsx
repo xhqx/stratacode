@@ -83,48 +83,46 @@ const McpServersTab: Component = () => {
 
   const isConnected = (name: string) => session.mcpStatus()[name]?.status === "connected"
 
-  if (creatingMcp()) {
-    return (
-      <McpEditView
-        name=""
-        mode="create"
-        taken={Object.keys(config().mcp ?? {})}
-        onBack={() => setCreatingMcp(false)}
-        onRemove={() => setCreatingMcp(false)}
-      />
-    )
-  }
-
-  if (editingMcp()) {
-    return (
-      <McpEditView
-        name={editingMcp()}
-        onBack={() => setEditingMcp("")}
-        onRemove={(name) => {
-          confirmRemoveMcp(name)
-          setEditingMcp("")
-        }}
-      />
-    )
-  }
-
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          "align-items": "center",
-          "justify-content": "flex-end",
-          "margin-bottom": "8px",
-        }}
-      >
-        <Button variant="secondary" size="small" onClick={() => setCreatingMcp(true)}>
-          {language.t("settings.agentBehaviour.addMcpServer")}
-        </Button>
-        <Button variant="secondary" size="small" onClick={browse}>
-          {language.t("settings.agentBehaviour.mcpBrowseMarketplace")}
-        </Button>
-      </div>
+      <Show when={creatingMcp()}>
+        <McpEditView
+          name=""
+          mode="create"
+          taken={Object.keys(config().mcp ?? {})}
+          onBack={() => setCreatingMcp(false)}
+          onRemove={() => setCreatingMcp(false)}
+        />
+      </Show>
+
+      <Show when={!creatingMcp() && editingMcp()}>
+        <McpEditView
+          name={editingMcp()}
+          onBack={() => setEditingMcp("")}
+          onRemove={(name) => {
+            confirmRemoveMcp(name)
+            setEditingMcp("")
+          }}
+        />
+      </Show>
+
+      <Show when={!creatingMcp() && !editingMcp()}>
+        <>
+          <div
+            style={{
+              display: "flex",
+              "align-items": "center",
+              "justify-content": "flex-end",
+              "margin-bottom": "8px",
+            }}
+          >
+            <Button variant="secondary" size="small" onClick={() => setCreatingMcp(true)}>
+              {language.t("settings.agentBehaviour.addMcpServer")}
+            </Button>
+            <Button variant="secondary" size="small" onClick={browse}>
+              {language.t("settings.agentBehaviour.mcpBrowseMarketplace")}
+            </Button>
+          </div>
 
       <h4 style={{ "margin-top": "0", "margin-bottom": "8px" }}>General Settings</h4>
       <Card style={{ "margin-bottom": "16px" }}>
@@ -344,6 +342,8 @@ const McpServersTab: Component = () => {
             }}
           </For>
         </Card>
+      </Show>
+      </>
       </Show>
     </div>
   )
