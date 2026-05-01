@@ -20,6 +20,7 @@ const AcpAgentsTab: Component = () => {
   const vscode = useVSCode()
 
   const [editingAcp, setEditingAcp] = createSignal<string>("")
+  const [creatingAcp, setCreatingAcp] = createSignal(false)
   const [expanded, setExpanded] = createSignal<Record<string, boolean>>({})
 
   const browse = () => vscode.postMessage({ type: "openMarketplacePanel" })
@@ -64,6 +65,18 @@ const AcpAgentsTab: Component = () => {
   const statusLabel = (name: string) => ""
   const isConnected = (name: string) => false
 
+  if (creatingAcp()) {
+    return (
+      <AcpEditView
+        name=""
+        mode="create"
+        taken={Object.keys(config().acp_agents ?? {})}
+        onBack={() => setCreatingAcp(false)}
+        onRemove={() => setCreatingAcp(false)}
+      />
+    )
+  }
+
   if (editingAcp()) {
     return (
       <AcpEditView
@@ -87,6 +100,9 @@ const AcpAgentsTab: Component = () => {
           "margin-bottom": "8px",
         }}
       >
+        <Button variant="secondary" size="small" onClick={() => setCreatingAcp(true)}>
+          {language.t("settings.agentBehaviour.addAcpAgent")}
+        </Button>
         <Button variant="secondary" size="small" onClick={browse}>
           {language.t("settings.agentBehaviour.acpBrowseMarketplace")}
         </Button>

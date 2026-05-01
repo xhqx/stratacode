@@ -17,6 +17,7 @@ import PROMPT_ASK from "../../agent/prompt/ask.txt"
 import PROMPT_EXPLORE from "../../agent/prompt/explore.txt"
 import PROMPT_COMMIT from "./prompt/commit.txt"
 import PROMPT_AUTOCOMPLETE from "./prompt/autocomplete.txt"
+import PROMPT_ENHANCE from "./prompt/enhance.txt"
 
 // Safe bash commands that don't need user approval.
 // Only commands that cannot execute arbitrary code or subprocesses.
@@ -432,6 +433,23 @@ export function patchAgents(
     ),
     mode: "primary",
     native: true,
+  }
+
+  // Add enhance agent
+  agents.enhance = {
+    name: "enhance",
+    description: "Rewrite prompts into clearer, more specific, and more effective instructions.",
+    prompt: PROMPT_ENHANCE,
+    options: {},
+    permission: Permission.merge(
+      defaults,
+      Permission.fromConfig({ "*": "deny" }),
+      user,
+    ),
+    mode: "primary",
+    native: true,
+    hidden: true,
+    temperature: 0.7,
   }
 
   // Add shell agent

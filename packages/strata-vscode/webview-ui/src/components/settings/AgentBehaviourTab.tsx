@@ -1,16 +1,19 @@
-import { Component, createSignal, createMemo, For, Show } from "solid-js"
+import { Component, createSignal, createMemo, For, Show, onCleanup, onMount } from "solid-js"
+import { Switch } from "@stratacode/strata-ui/switch"
 import { Select } from "@stratacode/strata-ui/select"
 import { Card } from "@stratacode/strata-ui/card"
 import { Button } from "@stratacode/strata-ui/button"
 import { IconButton } from "@stratacode/strata-ui/icon-button"
+import { Icon } from "@stratacode/strata-ui/icon"
 import { Dialog } from "@stratacode/strata-ui/dialog"
+import { DropdownMenu } from "@stratacode/strata-ui/dropdown-menu"
 import { useDialog } from "@stratacode/strata-ui/context/dialog"
 
 import { useConfig } from "../../context/config"
 import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
-import type { AgentInfo } from "../../types/messages"
+import type { AgentInfo, ExtensionMessage } from "../../types/messages"
 import ModeEditView from "./ModeEditView"
 import ModeCreateView from "./ModeCreateView"
 import { parseImport, MAX_IMPORT_SIZE } from "./mode-io"
@@ -41,6 +44,20 @@ const AgentBehaviourTab: Component = () => {
   // Agent view state
   const [agentView, setAgentView] = createSignal<AgentView>("list")
   const [editingAgent, setEditingAgent] = createSignal<string>("")
+
+  const [activeRemote, setActiveRemote] = createSignal(false)
+
+  const handler = (msg: ExtensionMessage) => {
+    if (msg.type === "remoteStatus") {
+      setActiveRemote(msg.enabled)
+    }
+  }
+
+  onMount(() => {
+    const unsub = vscode.onMessage(handler)
+    vscode.postMessage({ type: "requestRemoteStatus" })
+    onCleanup(unsub)
+  })
 
   const PINNED = ["commit", "autocomplete"] as const
 
@@ -219,8 +236,8 @@ const AgentBehaviourTab: Component = () => {
           >
             <For
               each={[
-                { id: "agents", label: language.t("settings.agentBehaviour.title") || "Agents" },
-                { id: "models", label: language.t("settings.providers.title") || "Models" },
+                { id: "agents", label: language.t("settings.tab.general") || "General" },
+                { id: "models", label: language.t("settings.agentBehaviour.subtab.globals") || "Globals" },
               ]}
             >
               {(tab) => (
@@ -265,7 +282,6 @@ const AgentBehaviourTab: Component = () => {
               <SettingsRow
                 title={language.t("settings.providers.smallModel.title")}
                 description={language.t("settings.providers.smallModel.description")}
-                last
               >
                 <ModelSelectorBase
                   value={parseModelString(config().small_model ?? undefined)}
@@ -276,16 +292,9 @@ const AgentBehaviourTab: Component = () => {
                   includeAutoSmall
                 />
               </SettingsRow>
-            </Card>
-          </Show>
-
-          {/* Agents Section */}
-          <Show when={activeMainTab() === "agents"}>
-            <Card style={{ "margin-bottom": "12px" }}>
               <SettingsRow
                 title={language.t("settings.agentBehaviour.defaultAgent.title")}
                 description={language.t("settings.agentBehaviour.defaultAgent.description")}
-                last
               >
                 <Select
                   options={defaultAgentOptions()}
@@ -303,32 +312,219 @@ const AgentBehaviourTab: Component = () => {
                   triggerVariant="settings"
                 />
               </SettingsRow>
+              <SettingsRow
+                title={language.t("settings.experimental.remote.title")}
+                description={language.t("settings.experimental.remote.description")}
+                vertical
+              >
+                <div style={{ display: "flex", "flex-direction": "column", gap: "8px", width: "100%" }}>
+                  <div style={{ display: "flex", "align-items": "center", "justify-content": "space-between" }}>
+                    <span style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))" }}>{language.t("settings.experimental.remote.current")}</span>
+                    <span style={{ "font-size": "13px", color: activeRemote() ? "var(--vscode-testing-iconPassed, #4caf50)" : "var(--text-weak-base, var(--vscode-descriptionForeground))" }}>
+                      {activeRemote()
+                        ? language.t("settings.experimental.remote.active")
+                        : language.t("settings.experimental.remote.inactive")}
+                    </span>
+                  </div>
+                  <div style={{ "font-size": "12px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))", "margin-bottom": "8px" }}>{language.t("settings.experimental.remote.hint")}</div>
+                  <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+                    <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                      {language.t("settings.experimental.remote.startup")}
+                    </label>
+                    <Switch
+                      checked={config().remote_control ?? false}
+                      onChange={(checked) => updateConfig({ remote_control: checked })}
+                      hideLabel
+                    >
+                      {language.t("settings.experimental.remote.startup")}
+                    </Switch>
+                  </div>
+                </div>
+              </SettingsRow>
+              <SettingsRow
+                title={language.t("settings.agentBehaviour.retry.title")}
+                description={language.t("settings.agentBehaviour.retry.description")}
+                vertical
+              >
+                <div style={{ display: "flex", "flex-direction": "column", gap: "8px", width: "100%" }}>
+                  <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+                    <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                      Enabled
+                    </label>
+                    <Switch
+                      checked={config().retry?.enabled !== false}
+                      onChange={(checked) => {
+                        const existing = config().retry ?? {}
+                        const updated = { ...existing, enabled: checked }
+                        updateConfig({ retry: updated })
+                      }}
+                      hideLabel
+                    >
+                      Enabled
+                    </Switch>
+                  </div>
+                  <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+                    <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                      Limit (attempts)
+                    </label>
+                    <input
+                      type="number"
+                      style={{
+                        width: "80px",
+                        padding: "4px 8px",
+                        "background-color": "var(--vscode-input-background)",
+                        color: "var(--vscode-input-foreground)",
+                        border: "1px solid var(--vscode-input-border)",
+                      }}
+                      value={config().retry?.limit ?? ""}
+                      placeholder="2"
+                      min="0"
+                      max="10"
+                      onChange={(e) => {
+                        const parsed = parseInt(e.currentTarget.value, 10)
+                        const existing = config().retry ?? {}
+                        const updated = { ...existing, limit: isNaN(parsed) ? undefined : parsed }
+                        updateConfig({
+                          retry: Object.keys(updated).length === 0 && updated.limit === undefined ? null : updated,
+                        })
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+                    <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                      Base Delay (seconds)
+                    </label>
+                    <input
+                      type="number"
+                      style={{
+                        width: "80px",
+                        padding: "4px 8px",
+                        "background-color": "var(--vscode-input-background)",
+                        color: "var(--vscode-input-foreground)",
+                        border: "1px solid var(--vscode-input-border)",
+                      }}
+                      value={config().retry?.delay ?? ""}
+                      placeholder="5"
+                      min="1"
+                      onChange={(e) => {
+                        const parsed = parseFloat(e.currentTarget.value)
+                        const existing = config().retry ?? {}
+                        const updated = { ...existing, delay: isNaN(parsed) ? undefined : parsed }
+                        updateConfig({
+                          retry: Object.keys(updated).length === 0 && updated.delay === undefined ? null : updated,
+                        })
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+                    <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                      Max Delay Cap (seconds)
+                    </label>
+                    <input
+                      type="number"
+                      style={{
+                        width: "80px",
+                        padding: "4px 8px",
+                        "background-color": "var(--vscode-input-background)",
+                        color: "var(--vscode-input-foreground)",
+                        border: "1px solid var(--vscode-input-border)",
+                      }}
+                      value={config().retry?.max_delay ?? ""}
+                      placeholder="60"
+                      min="1"
+                      onChange={(e) => {
+                        const parsed = parseFloat(e.currentTarget.value)
+                        const existing = config().retry ?? {}
+                        const updated = { ...existing, max_delay: isNaN(parsed) ? undefined : parsed }
+                        updateConfig({
+                          retry: Object.keys(updated).length === 0 && updated.max_delay === undefined ? null : updated,
+                        })
+                      }}
+                    />
+                  </div>
+                </div>
+              </SettingsRow>
+              <SettingsRow
+                title={language.t("settings.experimental.share.title")}
+                description={language.t("settings.experimental.share.description")}
+              >
+                <Select
+                  options={[
+                    { value: "manual", labelKey: "settings.experimental.share.manual" },
+                    { value: "auto", labelKey: "settings.experimental.share.auto" },
+                    { value: "disabled", labelKey: "settings.experimental.share.disabled" },
+                  ]}
+                  current={[
+                    { value: "manual", labelKey: "settings.experimental.share.manual" },
+                    { value: "auto", labelKey: "settings.experimental.share.auto" },
+                    { value: "disabled", labelKey: "settings.experimental.share.disabled" },
+                  ].find((o) => o.value === (config().share ?? "manual"))}
+                  value={(o) => o.value}
+                  label={(o) => language.t(o.labelKey)}
+                  onSelect={(o) => {
+                    if (!o) return
+                    const next = o.value as "manual" | "auto" | "disabled"
+                    if (next === (config().share ?? "manual")) return
+                    updateConfig({ share: next })
+                  }}
+                  variant="secondary"
+                  size="small"
+                  triggerVariant="settings"
+                />
+              </SettingsRow>
+              <SettingsRow
+                title={language.t("settings.experimental.formatter.title")}
+                description={language.t("settings.experimental.formatter.description")}
+                last
+              >
+                <Switch
+                  checked={config().formatter !== false}
+                  onChange={(checked) => updateConfig({ formatter: checked ? {} : false })}
+                  hideLabel
+                >
+                  {language.t("settings.experimental.formatter.title")}
+                </Switch>
+              </SettingsRow>
             </Card>
+          </Show>
 
-            {/* Available agents list header + create button */}
+          {/* Agents Section */}
+          <Show when={activeMainTab() === "agents"}>
+
+            {/* Action buttons */}
             <div
               style={{
                 display: "flex",
                 "align-items": "center",
-                "justify-content": "space-between",
+                "justify-content": "flex-end",
                 "margin-bottom": "8px",
                 "margin-top": "16px",
               }}
             >
-              <div data-slot="settings-row-label-title">{language.t("settings.agentBehaviour.availableAgents")}</div>
               <div style={{ display: "flex", gap: "8px" }}>
-                <Button variant="ghost" size="small" onClick={triggerImportSettings}>
-                  {language.t("settings.agentBehaviour.importOpenCodeSettings")}
+                <Button variant="secondary" size="small" icon="plus" onClick={() => setAgentView("create")}>
+                  {language.t("common.add")}
                 </Button>
-                <Button variant="ghost" size="small" onClick={triggerImport}>
-                  {language.t("settings.agentBehaviour.importMode")}
-                </Button>
-                <Button variant="ghost" size="small" onClick={browse}>
-                  {language.t("settings.agentBehaviour.mcpBrowseMarketplace")}
-                </Button>
-                <Button variant="secondary" size="small" onClick={() => setAgentView("create")}>
-                  {language.t("settings.agentBehaviour.createMode")}
-                </Button>
+                <DropdownMenu placement="bottom-end">
+                  <DropdownMenu.Trigger as={Button} variant="secondary" size="small">
+                    {language.t("settings.agentBehaviour.importMode")}
+                    <Icon name="chevron-down" />
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content>
+                      <DropdownMenu.Item onSelect={triggerImportSettings}>
+                        <DropdownMenu.ItemLabel>{language.t("settings.agentBehaviour.importOpenCodeSettings")}</DropdownMenu.ItemLabel>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item onSelect={triggerImport}>
+                        <DropdownMenu.ItemLabel>{language.t("settings.agentBehaviour.importMode")}</DropdownMenu.ItemLabel>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Separator />
+                      <DropdownMenu.Item onSelect={browse}>
+                        <DropdownMenu.ItemLabel>{language.t("settings.agentBehaviour.mcpBrowseMarketplace")}</DropdownMenu.ItemLabel>
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu>
               </div>
             </div>
 

@@ -11,7 +11,7 @@ export class MemoryExtractor {
     if (this.isExtracting) return
     
     // Check config
-    const config = (this.provider as any).cachedConfigMessage?.config
+    const config = this.provider.currentConfig
     if (!config?.project_memory?.enabled) return
     
     // Check git extension
@@ -33,7 +33,7 @@ export class MemoryExtractor {
       return
     }
 
-    const client = this.provider.getConnectionService().getClient()
+    const client = this.provider.client
     if (!client) return
 
     this.isExtracting = true
@@ -44,7 +44,7 @@ export class MemoryExtractor {
       // Get the diff between previous and current
       const maxCommits = config?.project_memory?.max_commits ?? 10
       
-      const workspaceDir = this.provider.getWorkspaceDirectory()
+      const workspaceDir = this.provider.getWorkspaceDirectoryPublic()
       if (!workspaceDir) return
       
       // Get the commit logs and diff using simple git command execution or use the commit diff
@@ -58,19 +58,18 @@ Only document systemic rules and architectural migrations. Ignore trivial bug fi
       // Since we don't have a specific UI session, we'll create a background session or just run a direct request
       // We can use client.session.create to create a temporary background session
       const createRes = await client.session.create({
-        agent: "memory_extractor",
         workspace: workspaceDir,
         title: "Memory Extraction Task",
-        project_uuid: "", // Use active project
       })
 
       if (createRes.data) {
-        const sessionUuid = createRes.data.uuid
+        const sessionId = createRes.data.id
         
         // Push the prompt message
-        await client.session.message({
-          uuid: sessionUuid,
-          content: promptText,
+        await client.session.prompt({
+          sessionID: sessionId,
+          parts: [{ type: "text", text: promptText }],
+          agent: "memory_extractor",
         })
       }
     } catch (err) {

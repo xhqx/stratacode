@@ -11,15 +11,18 @@ import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
 import McpEditView from "./McpEditView"
+import { TextField } from "@stratacode/strata-ui/text-field"
+import SettingsRow from "./SettingsRow"
 
 const McpServersTab: Component = () => {
   const language = useLanguage()
-  const { config } = useConfig()
+  const { config, updateConfig } = useConfig()
   const session = useSession()
   const dialog = useDialog()
   const vscode = useVSCode()
 
   const [editingMcp, setEditingMcp] = createSignal<string>("")
+  const [creatingMcp, setCreatingMcp] = createSignal(false)
   const [expanded, setExpanded] = createSignal<Record<string, boolean>>({})
 
   const browse = () => vscode.postMessage({ type: "openMarketplacePanel" })
@@ -80,6 +83,18 @@ const McpServersTab: Component = () => {
 
   const isConnected = (name: string) => session.mcpStatus()[name]?.status === "connected"
 
+  if (creatingMcp()) {
+    return (
+      <McpEditView
+        name=""
+        mode="create"
+        taken={Object.keys(config().mcp ?? {})}
+        onBack={() => setCreatingMcp(false)}
+        onRemove={() => setCreatingMcp(false)}
+      />
+    )
+  }
+
   if (editingMcp()) {
     return (
       <McpEditView
@@ -103,10 +118,36 @@ const McpServersTab: Component = () => {
           "margin-bottom": "8px",
         }}
       >
+        <Button variant="secondary" size="small" onClick={() => setCreatingMcp(true)}>
+          {language.t("settings.agentBehaviour.addMcpServer")}
+        </Button>
         <Button variant="secondary" size="small" onClick={browse}>
           {language.t("settings.agentBehaviour.mcpBrowseMarketplace")}
         </Button>
       </div>
+
+      <h4 style={{ "margin-top": "0", "margin-bottom": "8px" }}>General Settings</h4>
+      <Card style={{ "margin-bottom": "16px" }}>
+        <SettingsRow
+          title={language.t("settings.experimental.mcpTimeout.title")}
+          description={language.t("settings.experimental.mcpTimeout.description")}
+          last
+        >
+          <div style={{ width: "160px" }}>
+            <TextField
+              value={String(config().experimental?.mcp_timeout ?? 60000)}
+              onChange={(val) => {
+                const num = parseInt(val, 10)
+                if (!isNaN(num) && num > 0) {
+                  updateConfig({ experimental: { ...(config().experimental ?? {}), mcp_timeout: num } })
+                }
+              }}
+            />
+          </div>
+        </SettingsRow>
+      </Card>
+      
+      <h4 style={{ "margin-top": "0", "margin-bottom": "8px" }}>Servers</h4>
       <Show
         when={mcpEntries().length > 0}
         fallback={

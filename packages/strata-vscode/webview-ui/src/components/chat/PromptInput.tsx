@@ -68,7 +68,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const session = useSession()
   const server = useServer()
   const indexing = useIndexing()
-  const { features } = useConfig()
+  const { config, features } = useConfig()
   const language = useLanguage()
   const vscode = useVSCode()
   const worktree = useWorktreeMode()
@@ -138,6 +138,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const [enhancing, setEnhancing] = createSignal(false)
   let enhanceCounter = 0
   let preEnhanceText: string | null = null
+  let pendingSend = false
 
   const ghost = useGhostText(vscode, text, () => server.isConnected())
 
@@ -323,6 +324,20 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     }
   }
 
+  const applyEnhanced = (enhanced: string) => {
+    setText(enhanced)
+    setEnhancing(false)
+    if (textareaRef) {
+      textareaRef.value = enhanced
+      adjustHeight()
+      textareaRef.focus()
+    }
+    if (pendingSend) {
+      pendingSend = false
+      void handleSend()
+    }
+  }
+
   const unsubscribe = vscode.onMessage((message) => {
     if (message.type === "setChatBoxMessage") {
       setText(message.text)
@@ -419,13 +434,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     if (message.type === "enhancePromptResult") {
       const result = message as import("../../types/messages").EnhancePromptResultMessage
       if (result.requestId === `enhance-${draftKey()}-${enhanceCounter}`) {
-        setText(result.text)
-        setEnhancing(false)
-        if (textareaRef) {
-          textareaRef.value = result.text
-          adjustHeight()
-          textareaRef.focus()
-        }
+        applyEnhanced(result.text)
       }
     }
 
@@ -433,6 +442,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       const result = message as import("../../types/messages").EnhancePromptErrorMessage
       if (result.requestId === `enhance-${draftKey()}-${enhanceCounter}`) {
         setEnhancing(false)
+        pendingSend = false
       }
     }
   })
@@ -613,7 +623,20 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     vscode.postMessage({ type: "enhancePrompt", text: draft, requestId: `enhance-${draftKey()}-${enhanceCounter}` })
   }
 
+  const shouldAutoEnhance = () => {
+    const draft = text().trim()
+    return config()?.experimental?.auto_improve_prompts && !pendingSend && !enhancing() && draft && !draft.startsWith("/")
+  }
+
   const handleSend = async () => {
+    // Auto-enhance interception: if auto_improve_prompts is enabled and
+    // we haven't already enhanced in this send cycle, trigger enhance first.
+    if (shouldAutoEnhance()) {
+      pendingSend = true
+      handleEnhance()
+      return
+    }
+
     const draft = text().trim()
 
     // Detect slash command (hoisted for both client and server command checks).

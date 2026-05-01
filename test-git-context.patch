@@ -1,0 +1,26 @@
+--- packages/opencode/src/stratacode/commit-message/git-context.ts
++++ packages/opencode/src/stratacode/commit-message/git-context.ts
+@@ -136,6 +136,9 @@
+     stderr: "pipe",
+     windowsHide: true,
+   })
++  if (result.exitCode !== 0) {
++    console.log("GIT FAILED", args, result.stderr.toString())
++  }
+   return result.stdout.toString().trimEnd()
+ }
+ 
+@@ -184,8 +187,13 @@
+ 
+   // Check staged files first
+-  const staged = parseNameStatus(git(["diff", "--name-status", "--cached"], repoPath))
++  const rawStaged = git(["diff", "--name-status", "--cached"], repoPath)
++  if (rawStaged.length > 0 && !rawStaged.includes("\t")) console.log("RAW STAGED WEIRD:", rawStaged)
++  const staged = parseNameStatus(rawStaged)
+   const useStaged = staged.length > 0
+ 
+   // Fall back to all changes if nothing staged
+-  const raw = useStaged ? staged : parsePorcelain(git(["status", "--porcelain"], repoPath))
++  const rawPorcelain = useStaged ? "" : git(["status", "--porcelain"], repoPath)
++  if (!useStaged && rawPorcelain.length > 0 && !rawPorcelain.includes(" ")) console.log("RAW PORCELAIN WEIRD:", rawPorcelain)
++  const raw = useStaged ? staged : parsePorcelain(rawPorcelain)

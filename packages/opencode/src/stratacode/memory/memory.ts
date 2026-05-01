@@ -30,7 +30,7 @@ export const defaultLayer = Layer.effect(
       Effect.tryPromise(async () => {
         const dir = getMemoryDir()
         await fs.mkdir(dir, { recursive: true })
-      })
+      }).pipe(Effect.catch(() => Effect.void))
 
     return Service.of({
       list: () =>
@@ -38,54 +38,41 @@ export const defaultLayer = Layer.effect(
           yield* ensureDir()
           const dir = getMemoryDir()
 
-          let files: string[] = []
-          try {
-            files = yield* Effect.tryPromise(() => fs.readdir(dir))
-          } catch {
-            return []
-          }
+          const files = yield* Effect.tryPromise(() => fs.readdir(dir)).pipe(Effect.catch(() => Effect.succeed([] as string[])))
 
           const mdFiles = files.filter((f) => f.endsWith(".md"))
           const entries: MemoryEntry[] = []
 
           for (const file of mdFiles) {
-            try {
-              const id = file.replace(/\.md$/, "")
-              const filePath = path.join(dir, file)
-              const content = yield* fsService.read(filePath)
-              if (content) {
-                // Try to extract a title from the first line if it's a heading
-                const firstLine = content.split("\n")[0] ?? ""
-                const title = firstLine.startsWith("#") ? firstLine.replace(/^#+\s*/, "").trim() : id
+            const id = file.replace(/\.md$/, "")
+            const filePath = path.join(dir, file)
+            const content = yield* fsService.readFileString(filePath).pipe(Effect.catch(() => Effect.succeed("")))
+            if (content) {
+              // Try to extract a title from the first line if it's a heading
+              const firstLine = content.split("\n")[0] ?? ""
+              const title = firstLine.startsWith("#") ? firstLine.replace(/^#+\s*/, "").trim() : id
 
-                entries.push({
-                  id,
-                  title,
-                  content,
-                })
-              }
-            } catch (e) {
-              console.warn(`Failed to read memory file ${file}:`, e)
+              entries.push({
+                id,
+                title,
+                content,
+              })
             }
           }
 
           return entries
-        }),
+        }).pipe(Effect.catch(() => Effect.succeed([] as MemoryEntry[]))),
 
       get: (id: string) =>
         Effect.gen(function* () {
           yield* ensureDir()
           const filePath = path.join(getMemoryDir(), `${id}.md`)
-          try {
-            const content = yield* fsService.read(filePath)
-            if (!content) return null
-            const firstLine = content.split("\n")[0] ?? ""
-            const title = firstLine.startsWith("#") ? firstLine.replace(/^#+\s*/, "").trim() : id
-            return { id, title, content }
-          } catch {
-            return null
-          }
-        }),
+          const content = yield* fsService.readFileString(filePath).pipe(Effect.catch(() => Effect.succeed(null)))
+          if (!content) return null
+          const firstLine = content.split("\n")[0] ?? ""
+          const title = firstLine.startsWith("#") ? firstLine.replace(/^#+\s*/, "").trim() : id
+          return { id, title, content }
+        }).pipe(Effect.catch(() => Effect.succeed(null))),
 
       add: (id: string, title: string, content: string) =>
         Effect.gen(function* () {
@@ -97,14 +84,14 @@ export const defaultLayer = Layer.effect(
             finalContent = `# ${title}\n\n${content}`
           }
 
-          yield* fsService.write(filePath, finalContent)
-        }),
+          yield* fsService.writeFileString(filePath, finalContent)
+        }).pipe(Effect.catch(() => Effect.void)),
 
       delete: (id: string) =>
         Effect.gen(function* () {
           const filePath = path.join(getMemoryDir(), `${id}.md`)
-          yield* Effect.tryPromise(() => fs.unlink(filePath).catch(() => {}))
-        }),
+          yield* Effect.tryPromise(() => fs.unlink(filePath))
+        }).pipe(Effect.catch(() => Effect.void)),
     })
   }),
-)
+).pipe(Layer.provide(AppFileSystem.defaultLayer))

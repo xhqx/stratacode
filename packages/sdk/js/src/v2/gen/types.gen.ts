@@ -2144,6 +2144,10 @@ export type Config = {
      * Timeout in milliseconds for model context protocol (MCP) requests
      */
     mcp_timeout?: number
+    /**
+     * Auto-enhance prompts before sending when enabled
+     */
+    auto_improve_prompts?: boolean
   }
   auto_approve?: {
     /**

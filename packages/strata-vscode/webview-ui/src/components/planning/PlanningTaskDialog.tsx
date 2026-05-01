@@ -1,9 +1,14 @@
-import { createSignal, Show, For } from "solid-js"
+import { createSignal } from "solid-js"
 import { Button } from "@stratacode/strata-ui/button"
 import { TextField } from "@stratacode/strata-ui/text-field"
 import { Dialog } from "@stratacode/strata-ui/dialog"
 import { useLanguage } from "../../context/language"
+import { useVSCode } from "../../context/vscode"
+import { useConfig } from "../../context/config"
 import { usePlanning } from "../../context/planning"
+import { useEnhancePrompt } from "../../hooks/useEnhancePrompt"
+import { EnhanceablePrompt } from "./EnhanceablePrompt"
+import { DependencySelector } from "./DependencySelector"
 import type { PlanningTask } from "../../types/messages/planning"
 
 interface Props {
@@ -12,45 +17,69 @@ interface Props {
   onSave: (updates: any) => void
 }
 
+function buildPayload(
+  title: string,
+  prompt: string,
+  description: string,
+  startAt: string,
+  duration: string,
+  priority: string,
+  dependsOn: string[],
+) {
+  return {
+    title: title.trim(),
+    description: description.trim() || undefined,
+    prompt: prompt.trim(),
+    startAt: startAt ? new Date(startAt).toISOString() : undefined,
+    duration: duration ? parseInt(duration, 10) : undefined,
+    priority: parseInt(priority, 10),
+    dependsOn: dependsOn.length > 0 ? dependsOn : undefined,
+  }
+}
+
+function toggle(deps: string[], id: string) {
+  return deps.includes(id) ? deps.filter((d) => d !== id) : [...deps, id]
+}
+
 export function PlanningTaskDialog(props: Props) {
   const language = useLanguage()
+  const vscode = useVSCode()
+  const { config } = useConfig()
   const planning = usePlanning()
+  const ep = useEnhancePrompt(vscode, "planning")
 
   const isEdit = !!props.task
   const [title, setTitle] = createSignal(props.task?.title ?? "")
   const [description, setDescription] = createSignal(props.task?.description ?? "")
   const [prompt, setPrompt] = createSignal(props.task?.prompt ?? "")
-  const [startAt, setStartAt] = createSignal(
-    props.task?.startAt ? new Date(props.task.startAt).toISOString().slice(0, 16) : "",
-  )
+  const start = props.task?.startAt ? new Date(props.task.startAt).toISOString().slice(0, 16) : ""
+  const [startAt, setStartAt] = createSignal(start)
   const [duration, setDuration] = createSignal(props.task?.duration?.toString() ?? "")
   const [priority, setPriority] = createSignal(props.task?.priority?.toString() ?? "3")
   const [dependsOn, setDependsOn] = createSignal<string[]>(props.task?.dependsOn ?? [])
+
+  const handleEnhance = () => ep.enhance(prompt(), (text) => setPrompt(text))
 
   const availableTasks = () => planning.tasks().filter((t) => t.id !== props.task?.id)
 
   const handleSave = () => {
     if (!title().trim() || !prompt().trim()) return
-
     if (isEdit && planning.hasCycle(props.task!.id, dependsOn())) {
       alert(language.t("planning.cycleDetected"))
       return
     }
-
-    props.onSave({
-      title: title().trim(),
-      description: description().trim() || undefined,
-      prompt: prompt().trim(),
-      startAt: startAt() ? new Date(startAt()).toISOString() : undefined,
-      duration: duration() ? parseInt(duration(), 10) : undefined,
-      priority: parseInt(priority(), 10),
-      dependsOn: dependsOn().length > 0 ? dependsOn() : undefined,
-    })
+    const save = (p: string) => props.onSave(buildPayload(title(), p, description(), startAt(), duration(), priority(), dependsOn()))
+    if (config()?.experimental?.auto_improve_prompts && !ep.enhancing()) {
+      ep.enhance(prompt(), (text) => { setPrompt(text); save(text) })
+      return
+    }
+    save(prompt())
   }
 
-  const toggleDep = (id: string) => {
-    setDependsOn((prev) => (prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]))
-  }
+
+  const handleToggle = (id: string) => setDependsOn((prev) => toggle(prev, id))
+  const canSave = () => !!title().trim() && !!prompt().trim() && !ep.enhancing()
+  const saveLabel = () => ep.enhancing() ? language.t("planning.enhancing") : language.t("common.save")
 
   return (
     <Dialog title={isEdit ? language.t("planning.editTask") : language.t("planning.addTask")} fit>
@@ -68,24 +97,16 @@ export function PlanningTaskDialog(props: Props) {
             />
           </div>
 
-          <div>
-            <label style={{ "font-size": "0.9em", "font-weight": 600, display: "block", "margin-bottom": "4px" }}>
-              Prompt *
-            </label>
-            <textarea
-              value={prompt()}
-              onInput={(e) => setPrompt(e.currentTarget.value)}
-              placeholder="Instructions for the agent..."
-              style={{
-                width: "100%",
-                "min-height": "80px",
-                background: "var(--vscode-input-background)",
-                color: "var(--vscode-input-foreground)",
-                border: "1px solid var(--vscode-input-border)",
-                padding: "4px",
-              }}
-            />
-          </div>
+          <EnhanceablePrompt
+            label="Prompt *"
+            tooltip={language.t("planning.enhancePrompt")}
+            busy={language.t("planning.enhancing")}
+            prompt={prompt}
+            enhancing={ep.enhancing}
+            onInput={setPrompt}
+            onEnhance={handleEnhance}
+            onUndo={ep.undo}
+          />
 
           <div>
             <label style={{ "font-size": "0.9em", "font-weight": 600, display: "block", "margin-bottom": "4px" }}>
@@ -148,42 +169,24 @@ export function PlanningTaskDialog(props: Props) {
             </select>
           </div>
 
-          <Show when={availableTasks().length > 0}>
-            <div>
-              <label style={{ "font-size": "0.9em", "font-weight": 600, display: "block", "margin-bottom": "4px" }}>
-                {language.t("planning.dependsOn")}
-              </label>
-              <div
-                style={{
-                  "max-height": "100px",
-                  "overflow-y": "auto",
-                  border: "1px solid var(--vscode-input-border)",
-                  padding: "4px",
-                }}
-              >
-                <For each={availableTasks()}>
-                  {(task) => (
-                    <label style={{ display: "flex", "align-items": "center", gap: "8px", "margin-bottom": "4px" }}>
-                      <input
-                        type="checkbox"
-                        checked={dependsOn().includes(task.id)}
-                        onChange={() => toggleDep(task.id)}
-                      />
-                      <span>{task.title}</span>
-                    </label>
-                  )}
-                </For>
-              </div>
-            </div>
-          </Show>
+          <DependencySelector
+            label={language.t("planning.dependsOn")}
+            availableTasks={availableTasks()}
+            dependsOn={dependsOn}
+            onToggle={handleToggle}
+          />
         </div>
 
         <div style={{ display: "flex", "justify-content": "flex-end", gap: "8px", "margin-top": "16px" }}>
           <Button variant="secondary" onClick={props.onClose}>
             {language.t("kanban.cancel")}
           </Button>
-          <Button variant="primary" onClick={handleSave} disabled={!title().trim() || !prompt().trim()}>
-            {language.t("common.save")}
+          <Button
+            variant="primary"
+            onClick={handleSave}
+            disabled={!canSave()}
+          >
+            {saveLabel()}
           </Button>
         </div>
       </div>

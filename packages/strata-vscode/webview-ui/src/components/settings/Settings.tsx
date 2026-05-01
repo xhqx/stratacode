@@ -21,7 +21,6 @@ import RulesTab from "./RulesTab"
 import WorkflowsTab from "./agent-behaviour/WorkflowsTab"
 import SkillsTab from "./SkillsTab"
 
-import ExperimentalTab from "./ExperimentalTab"
 import LanguageTab from "./LanguageTab"
 import AboutStrataCodeTab from "./AboutStrataCodeTab"
 import IndexingTab from "./IndexingTab"
@@ -211,7 +210,7 @@ const Settings: Component<SettingsProps> = (props) => {
             <span class="label">{language.t("settings.agentBehaviour.subtab.mcpServers")}</span>
           </Tabs.Trigger>
           <Tabs.Trigger value="acpAgents">
-            <Icon name="server" />
+            <Icon name="circuit-board" />
             <span class="label">{language.t("settings.agentBehaviour.subtab.acpAgents")}</span>
           </Tabs.Trigger>
           <Tabs.Trigger value="rules">
@@ -247,24 +246,20 @@ const Settings: Component<SettingsProps> = (props) => {
             <span class="label">{language.t("settings.notifications.title")}</span>
           </Tabs.Trigger>
           <Tabs.Trigger value="context">
-            <Icon name="server" />
+            <Icon name="layers" />
             <span class="label">{language.t("settings.context.title")}</span>
           </Tabs.Trigger>
           <Tabs.Trigger value="projectMemory">
-            <Icon name="server" />
+            <Icon name="archive" />
             <span class="label">Project Memory</span>
           </Tabs.Trigger>
 
           <Show when={features().indexing}>
             <Tabs.Trigger value="indexing">
-              <Icon name="server" />
+              <Icon name="magnifying-glass" />
               <span class="label">{language.t("settings.indexing.title")}</span>
             </Tabs.Trigger>
           </Show>
-          <Tabs.Trigger value="experimental">
-            <Icon name="settings-gear" />
-            <span class="label">{language.t("settings.experimental.title")}</span>
-          </Tabs.Trigger>
           <Tabs.Trigger value="language">
             <Icon name="speech-bubble" />
             <span class="label">{language.t("settings.language.title")}</span>
@@ -364,10 +359,6 @@ const Settings: Component<SettingsProps> = (props) => {
             <IndexingTab />
           </Tabs.Content>
         </Show>
-        <Tabs.Content value="experimental">
-          <h3>{language.t("settings.experimental.title")}</h3>
-          <ExperimentalTab />
-        </Tabs.Content>
         <Tabs.Content value="language">
           <h3>{language.t("settings.language.title")}</h3>
           <LanguageTab />

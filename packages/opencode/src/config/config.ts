@@ -334,6 +334,11 @@ export const Info = Schema.Struct({
       mcp_timeout: Schema.optional(PositiveInt).annotate({
         description: "Timeout in milliseconds for model context protocol (MCP) requests",
       }),
+      // stratacode_change start
+      auto_improve_prompts: Schema.optional(Schema.Boolean).annotate({
+        description: "Auto-enhance prompts before sending when enabled",
+      }),
+      // stratacode_change end
     }),
   ),
   // stratacode_change start

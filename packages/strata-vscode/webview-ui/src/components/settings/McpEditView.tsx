@@ -11,6 +11,9 @@ import SettingsRow from "./SettingsRow"
 
 interface Props {
   name: string
+  mode?: "edit" | "create"
+  /** Names already taken — used for uniqueness validation in create mode. */
+  taken?: string[]
   onBack: () => void
   onRemove: (name: string) => void
 }
@@ -19,6 +22,18 @@ const McpEditView: Component<Props> = (props) => {
   const language = useLanguage()
   const { config, updateConfig } = useConfig()
 
+  const creating = () => props.mode === "create"
+
+  // --- Create-mode local draft signals ---
+  const [draftName, setDraftName] = createSignal("")
+  const [draftTransport, setDraftTransport] = createSignal<"local" | "remote">("local")
+  const [draftCmd, setDraftCmd] = createSignal("")
+  const [draftArgs, setDraftArgs] = createSignal("")
+  const [draftUrl, setDraftUrl] = createSignal("")
+  const [draftEnv, setDraftEnv] = createSignal<[string, string][]>([])
+  const [nameError, setNameError] = createSignal("")
+
+  // --- Edit-mode: live config access ---
   const cfg = createMemo<McpConfig>(() => config().mcp?.[props.name] ?? {})
 
   const [envKey, setEnvKey] = createSignal("")
@@ -32,36 +47,80 @@ const McpEditView: Component<Props> = (props) => {
     })
   }
 
-  const transport = () => cfg().type ?? (cfg().url ? "remote" : "local")
+  // Transport resolution
+  const transport = () => {
+    if (creating()) return draftTransport()
+    return cfg().type ?? (cfg().url ? "remote" : "local")
+  }
 
   const cmd = () => {
+    if (creating()) return draftCmd()
     const c = cfg().command
     if (Array.isArray(c)) return c[0] ?? ""
     return c ?? ""
   }
 
   const args = () => {
+    if (creating()) return draftArgs()
     const c = cfg().command
     if (Array.isArray(c)) return c.slice(1).join("\n")
     return ""
   }
 
-  const env = createMemo(() => Object.entries(cfg().environment ?? cfg().env ?? {}))
+  const env = createMemo(() => {
+    if (creating()) return draftEnv()
+    return Object.entries(cfg().environment ?? cfg().env ?? {})
+  })
 
   const addEnv = () => {
     const key = envKey().trim()
     const val = envVal().trim()
     if (!key) return
-    const existing = cfg().environment ?? cfg().env ?? {}
-    update({ environment: { ...existing, [key]: val } })
+    if (creating()) {
+      setDraftEnv((prev) => [...prev.filter(([k]) => k !== key), [key, val]])
+    } else {
+      const existing = cfg().environment ?? cfg().env ?? {}
+      update({ environment: { ...existing, [key]: val } })
+    }
     setEnvKey("")
     setEnvVal("")
   }
 
   const removeEnv = (key: string) => {
-    const existing = { ...(cfg().environment ?? cfg().env ?? {}) }
-    delete existing[key]
-    update({ environment: existing })
+    if (creating()) {
+      setDraftEnv((prev) => prev.filter(([k]) => k !== key))
+    } else {
+      const existing = { ...(cfg().environment ?? cfg().env ?? {}) }
+      delete existing[key]
+      update({ environment: existing })
+    }
+  }
+
+  // --- Create-mode validation & submit ---
+  const validate = (val: string): string => {
+    if (!val.trim()) return language.t("settings.agentBehaviour.mcpCreate.name.required")
+    if (!/^[a-z][a-z0-9-]*$/.test(val.trim())) return language.t("settings.agentBehaviour.mcpCreate.name.invalid")
+    if ((props.taken ?? []).includes(val.trim())) return language.t("settings.agentBehaviour.mcpCreate.name.taken")
+    return ""
+  }
+
+  const submit = () => {
+    const slug = draftName().trim()
+    const msg = validate(slug)
+    if (msg) {
+      setNameError(msg)
+      return
+    }
+    const existing = config().mcp ?? {}
+    const entry: McpConfig =
+      draftTransport() === "local"
+        ? {
+            command: [draftCmd().trim(), ...draftArgs().split(/\n/).filter(Boolean)],
+            environment: Object.fromEntries(draftEnv()),
+          }
+        : { url: draftUrl().trim() }
+    updateConfig({ mcp: { ...existing, [slug]: entry } })
+    props.onBack()
   }
 
   return (
@@ -77,25 +136,84 @@ const McpEditView: Component<Props> = (props) => {
         <div style={{ display: "flex", "align-items": "center" }}>
           <IconButton size="small" variant="ghost" icon="arrow-left" onClick={props.onBack} />
           <span style={{ "font-weight": "600", "font-size": "14px", "margin-left": "8px" }}>
-            {language.t("settings.agentBehaviour.editMcp")} — {props.name}
+            {creating()
+              ? language.t("settings.agentBehaviour.mcpCreate")
+              : `${language.t("settings.agentBehaviour.editMcp")} — ${props.name}`}
           </span>
         </div>
-        <IconButton size="small" variant="ghost" icon="close" onClick={() => props.onRemove(props.name)} />
+        <Show when={!creating()}>
+          <IconButton size="small" variant="ghost" icon="close" onClick={() => props.onRemove(props.name)} />
+        </Show>
       </div>
 
-      {/* Transport info */}
+      {/* Name (create mode only) */}
+      <Show when={creating()}>
+        <Card data-variant="wide-input" style={{ "margin-bottom": "12px" }}>
+          <SettingsRow
+            title={language.t("settings.agentBehaviour.mcpCreate.name")}
+            last
+          >
+            <TextField
+              value={draftName()}
+              placeholder={language.t("settings.agentBehaviour.mcpCreate.name.placeholder")}
+              onChange={(val) => {
+                setDraftName(val)
+                setNameError("")
+              }}
+            />
+            <Show when={nameError()}>
+              <div
+                style={{
+                  "font-size": "11px",
+                  color: "var(--vscode-errorForeground)",
+                  "margin-top": "4px",
+                }}
+              >
+                {nameError()}
+              </div>
+            </Show>
+          </SettingsRow>
+        </Card>
+      </Show>
+
+      {/* Transport selector (create mode) / Transport info (edit mode) */}
       <Card style={{ "margin-bottom": "12px" }}>
-        <div
-          style={{
-            "font-size": "12px",
-            color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-            padding: "4px 0",
-          }}
+        <Show
+          when={creating()}
+          fallback={
+            <div
+              style={{
+                "font-size": "12px",
+                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                padding: "4px 0",
+              }}
+            >
+              {transport() === "local"
+                ? language.t("settings.agentBehaviour.editMcp.transportLocal")
+                : language.t("settings.agentBehaviour.editMcp.transportRemote")}
+            </div>
+          }
         >
-          {transport() === "local"
-            ? language.t("settings.agentBehaviour.editMcp.transportLocal")
-            : language.t("settings.agentBehaviour.editMcp.transportRemote")}
-        </div>
+          <div data-slot="settings-row-label-title" style={{ "margin-bottom": "8px" }}>
+            {language.t("settings.agentBehaviour.mcpCreate.transport")}
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <Button
+              variant={draftTransport() === "local" ? "primary" : "secondary"}
+              size="small"
+              onClick={() => setDraftTransport("local")}
+            >
+              {language.t("settings.agentBehaviour.mcpCreate.transportLocal")}
+            </Button>
+            <Button
+              variant={draftTransport() === "remote" ? "primary" : "secondary"}
+              size="small"
+              onClick={() => setDraftTransport("remote")}
+            >
+              {language.t("settings.agentBehaviour.mcpCreate.transportRemote")}
+            </Button>
+          </div>
+        </Show>
       </Card>
 
       {/* Command / URL */}
@@ -108,9 +226,13 @@ const McpEditView: Component<Props> = (props) => {
             value={cmd()}
             placeholder={language.t("settings.agentBehaviour.addMcp.command.placeholder")}
             onChange={(val) => {
-              const existing = cfg().command
-              const rest = Array.isArray(existing) ? existing.slice(1) : []
-              update({ command: [val.trim(), ...rest] })
+              if (creating()) {
+                setDraftCmd(val)
+              } else {
+                const existing = cfg().command
+                const rest = Array.isArray(existing) ? existing.slice(1) : []
+                update({ command: [val.trim(), ...rest] })
+              }
             }}
           />
         </Card>
@@ -126,8 +248,12 @@ const McpEditView: Component<Props> = (props) => {
             placeholder={language.t("settings.agentBehaviour.addMcp.args.placeholder")}
             multiline
             onChange={(val) => {
-              const parts = val.split(/\n/).filter(Boolean)
-              update({ command: [cmd(), ...parts] })
+              if (creating()) {
+                setDraftArgs(val)
+              } else {
+                const parts = val.split(/\n/).filter(Boolean)
+                update({ command: [cmd(), ...parts] })
+              }
             }}
           />
         </Card>
@@ -139,14 +265,20 @@ const McpEditView: Component<Props> = (props) => {
             {language.t("settings.agentBehaviour.addMcp.url")}
           </div>
           <TextField
-            value={cfg().url ?? ""}
+            value={creating() ? draftUrl() : cfg().url ?? ""}
             placeholder={language.t("settings.agentBehaviour.addMcp.url.placeholder")}
-            onChange={(val) => update({ url: val.trim() || undefined })}
+            onChange={(val) => {
+              if (creating()) {
+                setDraftUrl(val)
+              } else {
+                update({ url: val.trim() || undefined })
+              }
+            }}
           />
         </Card>
       </Show>
 
-      {/* Environment variables (local servers only) */}
+      {/* Environment variables (local only) */}
       <Show when={transport() === "local"}>
         <Card style={{ "margin-bottom": "12px" }}>
           <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
@@ -209,10 +341,15 @@ const McpEditView: Component<Props> = (props) => {
         </Card>
       </Show>
 
-      <div style={{ display: "flex", "justify-content": "flex-end" }}>
+      <div style={{ display: "flex", gap: "8px", "justify-content": "flex-end" }}>
         <Button variant="ghost" onClick={props.onBack}>
           {language.t("settings.agentBehaviour.editMode.back")}
         </Button>
+        <Show when={creating()}>
+          <Button variant="primary" onClick={submit}>
+            {language.t("settings.agentBehaviour.mcpCreate.button")}
+          </Button>
+        </Show>
       </div>
     </div>
   )

@@ -1,19 +1,78 @@
 import { Component, createMemo, createSignal, For, Show } from "solid-js"
 import { Card } from "@stratacode/strata-ui/card"
+import { Button } from "@stratacode/strata-ui/button"
 import { IconButton } from "@stratacode/strata-ui/icon-button"
+import { Dialog } from "@stratacode/strata-ui/dialog"
+import { useDialog } from "@stratacode/strata-ui/context/dialog"
 
 import { useConfig } from "../../../context/config"
 import { useLanguage } from "../../../context/language"
+import WorkflowEditView from "./WorkflowEditView"
 
 const WorkflowsTab: Component = () => {
   const language = useLanguage()
-  const { config } = useConfig()
+  const { config, updateConfig } = useConfig()
+  const dialog = useDialog()
 
   const cmds = createMemo(() => Object.entries(config().command ?? {}))
   const [expanded, setExpanded] = createSignal<Record<string, boolean>>({})
+  const [editingCmd, setEditingCmd] = createSignal("")
+  const [creatingCmd, setCreatingCmd] = createSignal(false)
 
   const toggle = (name: string) => {
     setExpanded((prev) => ({ ...prev, [name]: !prev[name] }))
+  }
+
+  const confirmRemove = (name: string) => {
+    dialog.show(() => (
+      <Dialog title={language.t("settings.agentBehaviour.removeWorkflow.title")} fit>
+        <div class="dialog-confirm-body">
+          <span>{language.t("settings.agentBehaviour.removeWorkflow.confirm", { name })}</span>
+          <div class="dialog-confirm-actions">
+            <Button variant="ghost" size="large" onClick={() => dialog.close()}>
+              {language.t("common.cancel")}
+            </Button>
+            <Button
+              variant="primary"
+              size="large"
+              onClick={() => {
+                dialog.close()
+                setTimeout(() => {
+                  const existing = { ...(config().command ?? {}) }
+                  delete existing[name]
+                  updateConfig({ command: existing })
+                }, 150)
+              }}
+            >
+              {language.t("settings.agentBehaviour.removeWorkflow.button")}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+    ))
+  }
+
+  // --- Sub-views ---
+  if (creatingCmd()) {
+    return (
+      <WorkflowEditView
+        name=""
+        mode="create"
+        taken={Object.keys(config().command ?? {})}
+        onBack={() => setCreatingCmd(false)}
+      />
+    )
+  }
+
+  if (editingCmd()) {
+    return (
+      <WorkflowEditView
+        name={editingCmd()}
+        mode="edit"
+        taken={Object.keys(config().command ?? {}).filter((n) => n !== editingCmd())}
+        onBack={() => setEditingCmd("")}
+      />
+    )
   }
 
   return (
@@ -28,6 +87,20 @@ const WorkflowsTab: Component = () => {
         }}
       >
         {language.t("settings.agentBehaviour.workflows.description")}
+      </div>
+
+      {/* Toolbar */}
+      <div
+        style={{
+          display: "flex",
+          "align-items": "center",
+          "justify-content": "flex-end",
+          "margin-bottom": "8px",
+        }}
+      >
+        <Button variant="secondary" size="small" onClick={() => setCreatingCmd(true)}>
+          {language.t("settings.agentBehaviour.addWorkflow")}
+        </Button>
       </div>
 
       <Show
@@ -97,6 +170,26 @@ const WorkflowsTab: Component = () => {
                           {cmd.description}
                         </span>
                       </Show>
+                    </div>
+                    <div style={{ display: "flex", gap: "4px", "align-items": "center" }}>
+                      <IconButton
+                        size="small"
+                        variant="ghost"
+                        icon="pencil-line"
+                        onClick={(e: MouseEvent) => {
+                          e.stopPropagation()
+                          setEditingCmd(name)
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        variant="ghost"
+                        icon="close"
+                        onClick={(e: MouseEvent) => {
+                          e.stopPropagation()
+                          confirmRemove(name)
+                        }}
+                      />
                     </div>
                   </div>
 

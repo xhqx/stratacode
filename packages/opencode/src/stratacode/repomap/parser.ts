@@ -113,6 +113,7 @@ class Engine {
     try {
       this.parser.setLanguage(lq.language)
       const tree = this.parser.parse(content)
+      if (!tree) return []
       const captures = lq.query.captures(tree.rootNode)
 
       const tags: Tag[] = []

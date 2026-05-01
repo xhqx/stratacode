@@ -52,7 +52,6 @@ const ContextTab: Component = () => {
         <SettingsRow
           title={language.t("settings.context.compactionThreshold.title")}
           description={language.t("settings.context.compactionThreshold.description")}
-          last
         >
           <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
             <input
@@ -83,6 +82,31 @@ const ContextTab: Component = () => {
               {config().compaction?.threshold_percent ?? 100}%
             </span>
           </div>
+        </SettingsRow>
+        <SettingsRow
+          title={language.t("settings.experimental.lsp.title")}
+          description={language.t("settings.experimental.lsp.description")}
+        >
+          <Switch
+            checked={config().lsp !== false}
+            onChange={(checked) => updateConfig({ lsp: checked ? {} : false })}
+            hideLabel
+          >
+            {language.t("settings.experimental.lsp.title")}
+          </Switch>
+        </SettingsRow>
+        <SettingsRow
+          title={language.t("settings.experimental.pasteSummary.title")}
+          description={language.t("settings.experimental.pasteSummary.description")}
+          last
+        >
+          <Switch
+            checked={config().experimental?.disable_paste_summary ?? false}
+            onChange={(checked) => updateConfig({ experimental: { ...(config().experimental ?? {}), disable_paste_summary: checked } })}
+            hideLabel
+          >
+            {language.t("settings.experimental.pasteSummary.title")}
+          </Switch>
         </SettingsRow>
       </Card>
 

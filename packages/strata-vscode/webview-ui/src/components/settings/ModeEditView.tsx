@@ -479,6 +479,7 @@ const ModeEditView: Component<Props> = (props) => {
               <SettingsRow
                 title={language.t("settings.agentBehaviour.modelPool.models")}
                 description={language.t("settings.agentBehaviour.modelPool.models.description")}
+                vertical
               >
                 <div style={{ display: "flex", "flex-direction": "column", gap: "6px", width: "100%" }}>
                   <For each={cfg().model_pool?.models ?? []}>
@@ -586,6 +587,7 @@ const ModeEditView: Component<Props> = (props) => {
           <SettingsRow
             title={language.t("settings.agentBehaviour.fallbackModels.title")}
             description={language.t("settings.agentBehaviour.fallbackModels.description")}
+            vertical
           >
             <div style={{ display: "flex", "flex-direction": "column", gap: "6px", width: "100%" }}>
               <For each={cfg().fallback_models ?? []}>
@@ -687,6 +689,7 @@ const ModeEditView: Component<Props> = (props) => {
           <SettingsRow
             title="Auto-Approve Timeouts"
             description="Override global auto-approve settings for this specific agent."
+            vertical
           >
             <div style={{ display: "flex", "flex-direction": "column", gap: "8px" }}>
               <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
@@ -755,6 +758,7 @@ const ModeEditView: Component<Props> = (props) => {
           <SettingsRow
             title={language.t("settings.agentBehaviour.retry.title")}
             description={language.t("settings.agentBehaviour.retry.description")}
+            vertical
             last
           >
             <div style={{ display: "flex", "flex-direction": "column", gap: "8px" }}>

@@ -29,6 +29,7 @@ export interface CommandConfig {
   description?: string
   agent?: string
   model?: string
+  subtask?: boolean
 }
 
 export interface SkillsConfig {
@@ -54,6 +55,7 @@ export interface ExperimentalConfig {
   primary_tools?: string[]
   continue_loop_on_deny?: boolean
   mcp_timeout?: number
+  auto_improve_prompts?: boolean
 }
 
 export interface CommitMessageConfig {

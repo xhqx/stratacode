@@ -9,8 +9,11 @@ import { describeRoute, resolver, validator } from "hono-openapi"
 import z from "zod"
 import { errors } from "../../../server/error"
 
-// We need the same layers that Ripgrep uses
-const layer = Ripgrep.defaultLayer
+import { AppFileSystem } from "@opencode-ai/shared/filesystem"
+import { Layer } from "effect"
+
+// We need the same layers that Ripgrep uses plus FileSystem
+const layer = Layer.merge(Ripgrep.defaultLayer, AppFileSystem.defaultLayer)
 
 export const RepoMapRoutes = lazy(() => {
   return new Hono()

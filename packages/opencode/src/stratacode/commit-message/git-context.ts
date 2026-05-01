@@ -135,6 +135,9 @@ export function git(args: string[], cwd: string): string {
     stderr: "pipe",
     windowsHide: true, // stratacode_change - prevent cmd.exe flash on Windows
   })
+  if (result.exitCode !== 0) {
+    console.error(`GIT ERROR [${args.join(" ")}]: exitCode=${result.exitCode}, stderr=${result.stderr?.toString()}`)
+  }
   return result.stdout.toString().trimEnd()
 }
 

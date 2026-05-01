@@ -338,7 +338,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
    * Convenience getter that returns the shared SDK StrataClient or null if not yet connected.
    * Preserves the existing null-check pattern used throughout handler methods.
    */
-  private get client(): StrataClient | null {
+  public get client(): StrataClient | null {
     try {
       return this.connectionService.getClient()
     } catch (err) {
@@ -2497,6 +2497,17 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.cachedConfigMessage = { type: "configLoaded", config: merged, features: configFeatures(merged) }
       this.postMessage({ type: "configUpdated", config: merged, features: configFeatures(merged) })
       if (refreshProviders) await this.fetchAndSendProviders()
+      // stratacode_change start — refresh commands/skills caches after relevant config writes
+      if (partial.command !== undefined) {
+        this.clearCommandsCache()
+        await this.fetchAndSendCommands()
+      }
+      if (partial.skills !== undefined) {
+        this.cachedSkillsMessage = null
+        this.clearCommandsCache()
+        await Promise.all([this.fetchAndSendSkills(), this.fetchAndSendCommands()])
+      }
+      // stratacode_change end
     } catch (error) {
       console.error("[Strata New] StrataProvider: Config write succeeded but post-write refresh failed:", error)
       const cached = (this.cachedConfigMessage as { config?: unknown } | null)?.config
@@ -3487,7 +3498,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       if (client) {
         // Fetch Memory
         try {
-          const res = await client.stratacode.memory.list()
+          type SDKWithMemory = { memory: { list: () => Promise<{ data?: { id: string; title: string; content: string }[] }> } }
+          const stratacode = client.stratacode as unknown as SDKWithMemory
+          const res = await stratacode.memory.list()
           if (res.data) {
             projectMemory = res.data
           }
@@ -3502,8 +3515,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             budget,
             mentioned: visibleFiles, // Boost visible files
           })
-        if (result.data) {
-          repoMap = result.data.map
+          if (result.data) {
+            repoMap = result.data.map
+          }
         }
       }
     } catch (e) {
@@ -3530,6 +3544,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       sessionDirectories: this.sessionDirectories,
       workspaceDirectory: this.getRootDirectory(),
     })
+  }
+
+  public get currentConfig(): any {
+    return (this.cachedConfigMessage as { config?: any } | null)?.config
   }
 
   /** Public accessor for plugin API — resolves workspace directory for a session. */

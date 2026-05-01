@@ -1,4 +1,5 @@
 import { Component, For, Show, createEffect, createMemo, createSignal } from "solid-js"
+import { Switch } from "@stratacode/strata-ui/switch"
 import { Select } from "@stratacode/strata-ui/select"
 import { IconButton } from "@stratacode/strata-ui/icon-button"
 import { useConfig } from "../../context/config"
@@ -271,6 +272,18 @@ const AutoApproveTab: Component = () => {
             max="300"
             onChange={(e) => updateConfig({ auto_approve: { question_timeout: Number(e.currentTarget.value) } })}
           />
+        </div>
+        <div style={{ display: "flex", "align-items": "center", gap: "12px", "margin-top": "8px" }}>
+          <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+            {language.t("settings.experimental.continueOnDeny.title")}
+          </label>
+          <Switch
+            checked={config().experimental?.continue_loop_on_deny ?? false}
+            onChange={(checked) => updateConfig({ experimental: { ...(config().experimental ?? {}), continue_loop_on_deny: checked } })}
+            hideLabel
+          >
+            {language.t("settings.experimental.continueOnDeny.title")}
+          </Switch>
         </div>
       </div>
 

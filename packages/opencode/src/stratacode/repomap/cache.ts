@@ -87,7 +87,8 @@ export namespace CacheService {
 
         // 4. Cache mtime check
         const cached = store.get(filepath)
-        if (cached && cached.mtime >= stat.mtimeMs) {
+        const mtimeMs = stat.mtime._tag === "Some" ? stat.mtime.value.getTime() : 0
+        if (cached && cached.mtime >= mtimeMs) {
           continue // Cache is fresh
         }
 
@@ -99,7 +100,7 @@ export namespace CacheService {
         const tags = yield* ParserService.extract(filepath, content)
 
         store.set(filepath, {
-          mtime: stat.mtimeMs,
+          mtime: mtimeMs,
           tags,
         })
         updatedFiles.push(filepath)
