@@ -142,6 +142,18 @@
         "category": "Strata Code"
       },
       {
+        "command": "strata-code.new.applyPendingTasks",
+        "title": "Apply Pending Tasks from Plan Files",
+        "category": "Strata Code",
+        "icon": "$(file-symlink-file)"
+      },
+      {
+        "command": "strata-code.new.openPlanFile",
+        "title": "Open Plan File",
+        "category": "Strata Code",
+        "icon": "$(file-text)"
+      },
+      {
         "command": "strata-code.new.explainChanges",
         "title": "Explain Changes",
         "category": "Strata Code",
@@ -435,6 +447,12 @@
         "command": "strata-code.new.takeHeapSnapshot",
         "title": "Take Heap Snapshot",
         "category": "Strata Code"
+      },
+      {
+        "command": "strata-code.new.openDiffViewer",
+        "title": "Open Strata Diff Viewer",
+        "category": "Strata Code",
+        "icon": "$(diff)"
       }
     ],
     "submenus": [
@@ -489,6 +507,11 @@
         {
           "command": "strata-code.new.explainBranch",
           "group": "1_strata@2",
+          "when": "scmProvider == git"
+        },
+        {
+          "command": "strata-code.new.openDiffViewer",
+          "group": "navigation@10",
           "when": "scmProvider == git"
         }
       ],
@@ -935,6 +958,39 @@
           "type": "boolean",
           "default": true,
           "description": "Show the task timeline graph in the chat header"
+        },
+        "strata-code.new.explainer.mode": {
+          "type": "string",
+          "enum": [
+            "strata",
+            "native"
+          ],
+          "enumDescriptions": [
+            "Strata Diff Viewer",
+            "Native VS Code Comments"
+          ],
+          "default": "strata",
+          "description": "Choose whether to show AI change explanations in the Strata Diff Viewer or as native VS Code comments."
+        },
+        "strata-code.new.explainer.autoExplain": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically generate AI explanations when opening a changed file in the diff viewer. Explanations are cached for 90 minutes."
+        },
+        "strata-code.new.explainer.effort": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "enumDescriptions": [
+            "Low (Only complex changes)",
+            "Medium (Standard)",
+            "High (All except very simple changes)"
+          ],
+          "default": "medium",
+          "description": "Control which changes the AI explains. Low skips most things; High explains almost everything."
         }
       }
     }

@@ -525,7 +525,7 @@ export const dict = {
   "session.review.empty": "No changes in this session yet",
   "session.review.noChanges": "No changes",
 
-  "explainChange.explainAll": "Explain All Changes",
+  "explainChange.explainAll": "Explain Branch Changes",
   "explainChange.explainFile": "Explain",
   "explainChange.explaining": "Generating explanation…",
   "explainChange.aiExplanation": "AI Explanation",
@@ -639,6 +639,11 @@ export const dict = {
   "settings.general.row.theme.description": "Customise how Strata is themed.",
   "settings.general.row.font.title": "Font",
   "settings.general.row.font.description": "Customise the mono font used in code blocks",
+  "settings.general.row.explainerMode.title": "Explain Changes Mode",
+  "settings.general.row.explainerMode.description": "Choose how AI explanations for code changes are displayed.",
+  "settings.general.row.explainerMode.strata": "Strata Diff Viewer",
+  "settings.general.row.explainerMode.native": "Native VS Code Comments",
+
 
   "settings.general.row.releaseNotes.title": "Release notes",
   "settings.general.row.releaseNotes.description": "Show What's New popups after updates",
@@ -1541,6 +1546,8 @@ export const dict = {
   "settings.display.layout.description": "Layout mode for the chat interface",
   "settings.display.layout.auto": "Auto",
   "settings.display.layout.stretch": "Stretch",
+  "settings.display.autoExplain.title": "Auto Explain Changes",
+  "settings.display.autoExplain.description": "Automatically generate AI explanations when you expand a changed file in the diff viewer. Explanations are cached for 90 minutes.",
   "settings.display.taskTimeline.title": "Task Timeline",
   "settings.display.taskTimeline.description": "Show the task timeline view in the sidebar",
 
@@ -1738,5 +1745,11 @@ export const dict = {
   "kanban.columns.planned": "Planned",
   "planning.enhancePrompt": "Enhance prompt",
   "planning.enhancing": "Enhancing...",
+  "planning.applyMarkdown": "Apply Pending Tasks",
+  "planning.applyMarkdown.tooltip": "Import tasks from plan documents",
+  "planning.openPlanFile": "Open Plan File",
+  "planning.openInPlan": "Open in Plan File",
+  "planning.markdownPending": "{{count}} pending",
+  "planning.createPlanFile": "Create Plan File",
   "prompt.autoEnhancing": "Enhancing...",
 }

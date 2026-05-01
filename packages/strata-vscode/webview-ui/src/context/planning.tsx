@@ -3,6 +3,19 @@ import { useVSCode } from "./vscode"
 import type { PlanningTask } from "../types/messages/planning"
 import type { PlanningAddMessage, PlanningUpdateMessage } from "../types/messages/webview-messages"
 
+interface MarkdownPreview {
+  pending: number
+  files: string[]
+  tasks: Array<{
+    id: string
+    title: string
+    file: string
+    line: number
+    group: string
+    checked: boolean
+  }>
+}
+
 interface PlanningContextType {
   tasks: () => PlanningTask[]
   add: (opts: Omit<PlanningAddMessage, "type">) => void
@@ -11,6 +24,10 @@ interface PlanningContextType {
   dispatch: (id: string) => void
   confirm: (id: string) => void
   hasCycle: (id: string, deps: string[]) => boolean
+  applyMarkdown: () => void
+  requestMarkdownPreview: () => void
+  openPlanFile: (file: string, line?: number) => void
+  markdownPreview: () => MarkdownPreview | null
 }
 
 const PlanningContext = createContext<PlanningContextType>()
@@ -18,6 +35,7 @@ const PlanningContext = createContext<PlanningContextType>()
 export function PlanningProvider(props: { children: any }) {
   const vscode = useVSCode()
   const [tasks, setTasks] = createSignal<PlanningTask[]>([])
+  const [markdownPreview, setMarkdownPreview] = createSignal<MarkdownPreview | null>(null)
 
   onMount(() => {
     const handler = (event: MessageEvent) => {
@@ -29,6 +47,12 @@ export function PlanningProvider(props: { children: any }) {
           // Could show a toast here
           console.error("[Strata] Planning dispatch failed:", message.error)
         }
+      } else if (message?.type === "markdownPlanPreview") {
+        setMarkdownPreview({
+          pending: message.pending,
+          files: message.files,
+          tasks: message.tasks,
+        })
       }
     }
     window.addEventListener("message", handler)
@@ -57,6 +81,18 @@ export function PlanningProvider(props: { children: any }) {
 
   const confirm = (id: string) => {
     vscode.postMessage({ type: "planning.confirm", taskId: id })
+  }
+
+  const applyMarkdown = () => {
+    vscode.postMessage({ type: "planning.applyMarkdown" })
+  }
+
+  const requestMarkdownPreview = () => {
+    vscode.postMessage({ type: "planning.requestMarkdownPreview" })
+  }
+
+  const openPlanFile = (file: string, line?: number) => {
+    vscode.postMessage({ type: "planning.openPlanFile", file, line })
   }
 
   // Client-side quick cycle check for UX feedback
@@ -110,6 +146,10 @@ export function PlanningProvider(props: { children: any }) {
         dispatch,
         confirm,
         hasCycle,
+        applyMarkdown,
+        requestMarkdownPreview,
+        openPlanFile,
+        markdownPreview,
       }}
     >
       {props.children}

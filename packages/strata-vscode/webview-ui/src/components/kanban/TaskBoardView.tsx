@@ -1,10 +1,11 @@
-import { Show, createSignal, For } from "solid-js"
+import { Show, createSignal, For, onMount } from "solid-js"
 import { Button } from "@stratacode/strata-ui/button"
 import { IconButton } from "@stratacode/strata-ui/icon-button"
 import { TextField } from "@stratacode/strata-ui/text-field"
 import { Tooltip } from "@stratacode/strata-ui/tooltip"
 import { useKanban } from "../../context/kanban"
 import { useLanguage } from "../../context/language"
+import { usePlanning } from "../../context/planning"
 import { KANBAN_COLUMNS } from "../../types/messages/kanban"
 import { TaskBoardSection } from "./TaskBoardSection"
 import { TaskBoardColumn } from "./TaskBoardColumn"
@@ -16,10 +17,17 @@ interface Props {
 export function TaskBoardView(props: Props) {
   const kanban = useKanban()
   const language = useLanguage()
+  const planning = usePlanning()
 
   const [adding, setAdding] = createSignal(false)
   const [newTaskTitle, setNewTaskTitle] = createSignal("")
   const [newTaskDesc, setNewTaskDesc] = createSignal("")
+
+  onMount(() => {
+    planning.requestMarkdownPreview()
+  })
+
+  const pending = () => planning.markdownPreview()?.pending ?? 0
 
   const handleAdd = () => {
     if (!newTaskTitle().trim()) return
@@ -67,6 +75,13 @@ export function TaskBoardView(props: Props) {
         <Tooltip value={language.t("kanban.addTask")}>
           <IconButton icon="plus" size="small" variant="ghost" onClick={() => setAdding(!adding())} />
         </Tooltip>
+        <Show when={pending() > 0}>
+          <Tooltip value={language.t("planning.applyMarkdown.tooltip")}>
+            <Button size="small" variant="ghost" icon={"file-symlink-file" as any} onClick={() => planning.applyMarkdown()}>
+              {language.t("planning.applyMarkdown")} ({pending()})
+            </Button>
+          </Tooltip>
+        </Show>
       </div>
 
       <Show when={adding()}>

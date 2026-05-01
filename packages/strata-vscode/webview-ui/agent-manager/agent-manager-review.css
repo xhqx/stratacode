@@ -475,19 +475,14 @@
 /* ============ Explanation annotations ============ */
 
 .am-annotation-explanation {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   border-left: 3px solid var(--vscode-editorInfo-foreground, #3794ff);
   background: color-mix(in srgb, var(--vscode-editorInfo-foreground, #3794ff) 6%, transparent);
   border-radius: 0 4px 4px 0;
   padding: 8px 12px;
   margin: 4px 0;
-}
-
-.am-annotation-explanation-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
 }
 
 .am-annotation-explanation-label {
@@ -497,6 +492,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--vscode-editorInfo-foreground, #3794ff);
+  flex-shrink: 0;
 }
 
 .am-annotation-explanation-label svg {
@@ -513,6 +509,8 @@
   cursor: pointer;
   padding: 0 2px;
   border-radius: 3px;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .am-annotation-explanation-dismiss:hover {
@@ -524,6 +522,9 @@
   font-size: 12px;
   line-height: 1.5;
   color: var(--text-base);
+  flex: 1;
+  min-width: 0;
+  margin-top: -1px; /* Align with label text slightly better */
 }
 
 .am-annotation-explanation-body strong {

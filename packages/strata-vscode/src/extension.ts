@@ -309,6 +309,12 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
     vscode.commands.registerCommand("strata-code.new.showChanges", () => {
       diffViewerProvider.openPanel()
     }),
+    vscode.commands.registerCommand("strata-code.new.applyPendingTasks", () => {
+      provider.applyMarkdownTasks()
+    }),
+    vscode.commands.registerCommand("strata-code.new.openPlanFile", () => {
+      provider.openPlanFile()
+    }),
     vscode.commands.registerCommand("strata-code.new.openSubAgentViewer", (sessionID: string, title?: string) => {
       subAgentViewerProvider.openPanel(sessionID, title)
     }),

@@ -9,9 +9,13 @@ interface GitRepository {
   }
 }
 
+const DEBOUNCE_MS = 2000
+
 export class GitWatcher {
   private extractor: MemoryExtractor
   private disposables: vscode.Disposable[] = []
+  private repos = new WeakSet<GitRepository>()
+  private debounce: ReturnType<typeof setTimeout> | undefined
 
   constructor(private readonly provider: StrataProvider) {
     this.extractor = new MemoryExtractor(provider)
@@ -26,28 +30,37 @@ export class GitWatcher {
       const api = extension.isActive ? extension.exports?.getAPI(1) : (await extension.activate())?.getAPI(1)
       if (!api) return
 
-      api.onDidOpenRepository(this.setupRepo, this, this.disposables)
-      api.repositories.forEach((repo: GitRepository) => this.setupRepo(repo))
+      api.onDidOpenRepository(this.setup, this, this.disposables)
+      api.repositories.forEach((repo: GitRepository) => this.setup(repo))
     } catch (e) {
       console.warn("[Strata New] GitWatcher initialization failed:", e)
     }
   }
 
-  private setupRepo(repo: GitRepository) {
+  private setup(repo: GitRepository) {
     if (!repo?.state) return
-    
+
+    // Guard against duplicate listeners if the same repo fires onDidOpenRepository again
+    if (this.repos.has(repo)) return
+    this.repos.add(repo)
+
     // Subscribe to state changes (includes HEAD changes like checkout and pull)
+    // Debounce to avoid flooding on rapid git operations
     this.disposables.push(
       repo.state.onDidChange(() => {
-        const currentHash = repo.state.HEAD?.commit
-        if (currentHash) {
-          this.extractor.analyzeCommits(currentHash)
-        }
+        const hash = repo.state.HEAD?.commit
+        if (!hash) return
+
+        clearTimeout(this.debounce)
+        this.debounce = setTimeout(() => {
+          void this.extractor.analyze(hash)
+        }, DEBOUNCE_MS)
       })
     )
   }
 
   public dispose() {
+    clearTimeout(this.debounce)
     this.disposables.forEach((d) => d.dispose())
     this.disposables = []
   }

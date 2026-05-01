@@ -348,6 +348,11 @@ export interface UpdateSettingRequest {
   value: unknown
 }
 
+export interface RequestSettingMessage {
+  type: "requestSetting"
+  key: string
+}
+
 export interface RequestTimelineSettingMessage {
   type: "requestTimelineSetting"
 }
@@ -740,6 +745,12 @@ export interface OpenChangesRequest {
   type: "openChanges"
 }
 
+// Diff Viewer: request full diff for a single file (webview → extension)
+export interface DiffViewerRequestDiffMessage {
+  type: "diffViewer.requestDiff"
+  file: string
+}
+
 // Open diff virtual (permission diff) in the lightweight diff virtual panel
 export interface OpenDiffVirtualRequest {
   type: "openDiffVirtual"
@@ -995,6 +1006,7 @@ export type WebviewMessage =
   | ChatCompletionAcceptedMessage
   | UpdateSettingRequest
   | RequestTimelineSettingMessage
+  | RequestSettingMessage
   | RequestBrowserSettingsMessage
   | RequestClaudeCompatSettingMessage
   | RequestConfigMessage
@@ -1066,6 +1078,7 @@ export type WebviewMessage =
   | RevertWorktreeFileMessage
   | EnhancePromptRequest
   | OpenChangesRequest
+  | DiffViewerRequestDiffMessage
   | OpenDiffVirtualRequest
   | RetryConnectionRequest
   | OpenSubAgentViewerRequest
@@ -1114,6 +1127,9 @@ export type WebviewMessage =
   | PlanningDispatchMessage
   | PlanningConfirmMessage
   | PlanningRequestStateMessage
+  | PlanningApplyMarkdownMessage
+  | PlanningRequestMarkdownPreviewMessage
+  | PlanningOpenPlanFileMessage
   | { type: "cancelAutoApproveTimer"; requestId: string }
   | RequestRepoMapStatsMessage
   | InvalidateRepoMapMessage
@@ -1182,6 +1198,20 @@ export interface PlanningRequestStateMessage {
 export interface ExecutePluginContributionMessage {
   type: "executePluginContribution"
   id: string
+}
+
+export interface PlanningApplyMarkdownMessage {
+  type: "planning.applyMarkdown"
+}
+
+export interface PlanningRequestMarkdownPreviewMessage {
+  type: "planning.requestMarkdownPreview"
+}
+
+export interface PlanningOpenPlanFileMessage {
+  type: "planning.openPlanFile"
+  file: string
+  line?: number
 }
 
 // ============================================

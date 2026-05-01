@@ -106,6 +106,19 @@ export function registerCommitMessageService(
           }
           const msg = getErrorMessage(error)
           console.error("[Strata New] Failed to generate commit message:", msg)
+
+          if (msg.toLowerCase().includes("model") || msg.toLowerCase().includes("agent")) {
+            vscode.window.showErrorMessage(
+              `Commit message generation is restricted: ${msg}. Please select an agent/model in settings.`,
+              "Open Settings"
+            ).then((action) => {
+              if (action === "Open Settings") {
+                vscode.commands.executeCommand("strata-code.new.openSettings")
+              }
+            })
+            return
+          }
+
           vscode.window.showErrorMessage(`Failed to generate commit message: ${msg}`)
         })
     },

@@ -1,7 +1,10 @@
 import * as vscode from "vscode"
+import * as path from "node:path"
 import type { StrataConnectionService } from "../services/cli-backend/connection-service"
 import type { PlanningTask, PlanningStatus } from "./types"
 import { hasCycle, isReady } from "./planning-validation"
+import { MarkdownPlanWatcher } from "./MarkdownPlanWatcher"
+import type { MarkdownTask } from "./markdown-parser"
 
 export interface PlanningServiceOptions {
   context: vscode.ExtensionContext
@@ -15,6 +18,7 @@ export class PlanningService {
   private postToSidebar: (message: unknown) => void
   private tasks: PlanningTask[] = []
   private unsubscribeStatus: (() => void) | null = null
+  private watcher: MarkdownPlanWatcher | null = null
 
   constructor(options: PlanningServiceOptions) {
     this.context = options.context
@@ -23,12 +27,18 @@ export class PlanningService {
 
     this.load()
     this.setupListeners()
+
+    const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+    if (root) {
+      this.watcher = new MarkdownPlanWatcher(root, () => this.pushMarkdownPreview())
+    }
   }
 
   public dispose() {
     if (this.unsubscribeStatus) {
       this.unsubscribeStatus()
     }
+    this.watcher?.dispose()
   }
 
   private load() {
@@ -283,6 +293,11 @@ export class PlanningService {
 
     task.status = "done"
 
+    // Write back to markdown file if task originated from a plan document
+    if (task.markdownFile && task.markdownLine && this.watcher) {
+      this.watcher.writeBack(task.markdownFile, task.markdownLine, "x")
+    }
+
     // Evaluate readiness of dependent tasks
     const now = new Date()
     for (const t of this.tasks) {
@@ -294,5 +309,96 @@ export class PlanningService {
     }
 
     this.save()
+  }
+
+  public async pushMarkdownPreview() {
+    if (!this.watcher) return
+    try {
+      const pages = await this.watcher.scan()
+      const tasks = pages.flatMap((p) =>
+        p.tasks.map((t) => ({
+          id: t.id,
+          title: t.title,
+          file: t.file,
+          line: t.line,
+          group: t.group,
+          checked: t.checked,
+        })),
+      )
+      const pending = tasks.filter((t) => !t.checked).length
+      const files = [...new Set(pages.map((p) => p.path))]
+
+      this.postToSidebar({
+        type: "markdownPlanPreview",
+        pending,
+        files,
+        tasks,
+      })
+    } catch (err) {
+      console.warn("[Strata New] pushMarkdownPreview failed:", err)
+    }
+  }
+
+  public async applyMarkdownTasks() {
+    if (!this.watcher) return
+    try {
+      const pages = await this.watcher.scan()
+      const parsed = pages.flatMap((p) => p.tasks)
+      const ids = new Set(parsed.map((t) => t.id))
+
+      // Remove markdown-sourced tasks that no longer exist in files
+      this.tasks = this.tasks.filter((t) => !t.markdownFile || ids.has(t.id))
+
+      // Upsert each parsed task
+      for (const mt of parsed) {
+        const existing = this.tasks.find((t) => t.id === mt.id && t.markdownFile)
+        if (existing) {
+          // Update metadata
+          existing.title = mt.title
+          existing.description = mt.description || existing.description
+          existing.markdownLine = mt.line
+          existing.markdownGroup = mt.group
+          existing.priority = mt.meta.priority ?? existing.priority
+          existing.agent = mt.meta.agent ?? existing.agent
+          existing.providerID = mt.meta.provider ?? existing.providerID
+          existing.modelID = mt.meta.model ?? existing.modelID
+          if (mt.meta.depends) existing.dependsOn = mt.meta.depends
+          if (mt.checked && existing.status !== "done") existing.status = "done"
+        } else {
+          this.tasks.push(this.markdownToPlanning(mt))
+        }
+      }
+
+      await this.save()
+    } catch (err) {
+      console.warn("[Strata New] applyMarkdownTasks failed:", err)
+    }
+  }
+
+  private markdownToPlanning(mt: MarkdownTask): PlanningTask {
+    return {
+      id: mt.id,
+      title: mt.title,
+      description: mt.description || undefined,
+      status: mt.checked ? "done" : "planned",
+      created: new Date().toISOString(),
+      priority: mt.meta.priority ?? 3,
+      dependsOn: mt.meta.depends,
+      prompt: mt.description || mt.title,
+      agent: mt.meta.agent,
+      providerID: mt.meta.provider,
+      modelID: mt.meta.model,
+      markdownFile: mt.file,
+      markdownLine: mt.line,
+      markdownGroup: mt.group,
+    }
+  }
+
+  public openPlanFile(file?: string, line?: number) {
+    if (!this.watcher) return
+    const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+    if (!root) return
+    const target = file || path.join(root, ".strata", "plans", "index.md")
+    this.watcher.openFile(target, line)
   }
 }

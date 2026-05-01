@@ -1,5 +1,6 @@
 import { Component, Show, createSignal } from "solid-js"
 import { TextField } from "@stratacode/strata-ui/text-field"
+import MarkdownEditor from "./MarkdownEditor"
 import { Card } from "@stratacode/strata-ui/card"
 import { Button } from "@stratacode/strata-ui/button"
 import { IconButton } from "@stratacode/strata-ui/icon-button"
@@ -129,10 +130,9 @@ const ModeCreateView: Component<Props> = (props) => {
         <div data-slot="settings-row-label-subtitle" style={{ "margin-bottom": "8px" }}>
           {language.t("settings.agentBehaviour.createMode.prompt.help")}
         </div>
-        <TextField
+        <MarkdownEditor
           value={prompt()}
           placeholder={language.t("settings.agentBehaviour.createMode.prompt.placeholder")}
-          multiline
           onChange={(val) => setPrompt(val)}
         />
       </Card>

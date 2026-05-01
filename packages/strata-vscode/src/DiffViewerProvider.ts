@@ -3,6 +3,7 @@ import type { StrataConnectionService } from "./services/cli-backend"
 import { buildWebviewHtml } from "./utils"
 import { GitOps } from "./agent-manager/GitOps"
 import { WorktreeDiffClient, type DiffTarget } from "./worktree-diff-client"
+import { diffSummary } from "./agent-manager/local-diff"
 import {
   appendOutput,
   getWorkspaceRoot,
@@ -10,6 +11,8 @@ import {
   openWorkspaceRelativeFile,
   resolveLocalDiffTarget,
 } from "./review-utils"
+import { getErrorMessage } from "./strata-provider-utils"
+
 
 /**
  * DiffViewerProvider opens a full-screen diff viewer in an editor tab.
@@ -22,6 +25,7 @@ export class DiffViewerProvider implements vscode.Disposable {
   private diffInterval: ReturnType<typeof setInterval> | undefined
   private lastDiffHash: string | undefined
   private cachedDiffTarget: DiffTarget | undefined
+  private polling = false
   private gitOps: GitOps
   private outputChannel: vscode.OutputChannel
   private onSendComments: ((comments: unknown[], autoSend: boolean) => void) | undefined
@@ -46,6 +50,8 @@ export class DiffViewerProvider implements vscode.Disposable {
   public setExplainHandler(handler: (prompt: string) => void): void {
     this.onExplainTask = handler
   }
+
+
 
   public openPanel(): void {
     if (this.panel) {
@@ -89,11 +95,13 @@ export class DiffViewerProvider implements vscode.Disposable {
     const type = msg.type as string
 
     if (type === "webviewReady") {
+      const config = vscode.workspace.getConfiguration("strata-code.new")
       this.post({
         type: "ready",
         vscodeLanguage: vscode.env.language,
-        languageOverride: vscode.workspace.getConfiguration("strata-code.new").get<string>("language"),
+        languageOverride: config.get<string>("language"),
         workspaceDirectory: getWorkspaceRoot(),
+        autoExplain: config.get<boolean>("explainer.autoExplain", true),
       })
       this.startDiffPolling()
       return
@@ -119,12 +127,13 @@ export class DiffViewerProvider implements vscode.Disposable {
     }
 
     if (type === "openFile" && typeof msg.filePath === "string") {
-      openWorkspaceRelativeFile(msg.filePath, typeof msg.line === "number" ? msg.line : undefined)
+      this.openDiffView(msg.filePath)
       return
     }
 
     if (type === "diffViewer.explainFile" && typeof msg.file === "string" && typeof msg.patch === "string") {
-      this.explainFile(msg.file, msg.patch)
+      const line = typeof msg.line === "number" ? msg.line : 1
+      this.explainFile(msg.file, msg.patch, line)
       return
     }
 
@@ -132,11 +141,133 @@ export class DiffViewerProvider implements vscode.Disposable {
       this.triggerExplainAll()
       return
     }
+
+    if (type === "diffViewer.requestDiff" && typeof msg.file === "string") {
+      void this.handleRequestDiff(msg.file)
+      return
+    }
   }
 
-  private explainFile(file: string, patch: string): void {
-    const prompt = `Explain the changes in **${file}**:\n\n\`\`\`diff\n${patch}\n\`\`\`\n\nDescribe:\n**What changed**: What was modified.\n**Why it likely changed**: Your best guess at intent.\n**Watch out for**: What a reviewer should focus on.\n\nKeep it concise and factual. No code blocks in your answer.`
-    this.onExplainTask?.(prompt)
+  private async handleRequestDiff(file: string): Promise<void> {
+    const target = this.cachedDiffTarget ?? (await this.resolveLocalDiffTarget())
+    if (!target) return
+    try {
+      // Use dynamic import like others to ensure local-diff is available
+      const { diffFile } = await import("./agent-manager/local-diff")
+      const diff = await diffFile(this.gitOps, target.directory, target.baseBranch, file, (...args) => this.log(...args))
+      this.post({
+        type: "diffViewer.diffFile",
+        file,
+        diff,
+      })
+    } catch (err) {
+      this.log(`Failed to fetch diff for ${file}:`, err)
+    }
+  }
+
+  /** Open a file in the editor — tracked files get a diff view, new files open normally */
+  private async openDiffView(file: string): Promise<void> {
+    const root = getWorkspaceRoot()
+    if (!root) return
+    const uri = vscode.Uri.file(`${root}/${file}`)
+
+    // Check if the file is tracked by git
+    const result = await this.gitOps.execGit(["ls-files", "--error-unmatch", "--", file], root)
+    if (result.code === 0) {
+      // Tracked file — open side-by-side diff against HEAD
+      const headUri = vscode.Uri.parse(`git:${file}?${JSON.stringify({ path: `${root}/${file}`, ref: "HEAD" })}`)
+      vscode.commands.executeCommand("vscode.diff", headUri, uri, `${file} (Working Changes)`).then(
+        undefined,
+        () => {
+          // Fallback if git: URI scheme fails
+          vscode.workspace.openTextDocument(uri).then(
+            (doc) => vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.Beside, preview: true }),
+          )
+        },
+      )
+    } else {
+      // Untracked / new file — just open it
+      vscode.workspace.openTextDocument(uri).then(
+        (doc) => vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.Beside, preview: true }),
+      )
+    }
+  }
+
+  private explainSession: string | undefined
+
+  /** Generate explanation via the SDK and post the result back to the webview */
+  private async explainFile(file: string, patch: string, line = 1): Promise<void> {
+    try {
+      if (patch.split("\n").length > 300 || patch.length > 15000) {
+        this.post({ type: "diffViewer.explanationResult", file, line, text: "Change too big to be analyzed." })
+        return
+      }
+
+      const client = this.connectionService.getClient()
+      const root = getWorkspaceRoot()
+      if (!root) return
+
+      // Lazily create an ephemeral session for explanations
+      if (!this.explainSession) {
+        const { data } = await client.session.create({ directory: root }, { throwOnError: true })
+        this.explainSession = data.id
+      }
+
+      const branch = this.cachedDiffTarget?.baseBranch
+      const context = branch ? ` (branch: \`${branch}\`)` : ""
+
+      const effort = vscode.workspace.getConfiguration("strata-code.new.explainer").get<string>("effort", "medium")
+      let skipInstruction = ""
+      if (effort === "low") {
+        skipInstruction = "If this change is simple or trivial, you MUST skip it. To skip, reply with the exact text `<SKIP>` and nothing else."
+      } else if (effort === "medium") {
+        skipInstruction = "If this change is extremely obvious, you MUST skip it. To skip, reply with the exact text `<SKIP>` and nothing else."
+      }
+
+      const prompt = [
+        `Briefly explain this change in **${file}** near line ${line}${context}.`,
+        "Provide EXACTLY one comment for this change as a single short paragraph. Do NOT use lists. Answer in 1–2 sentences only: what changed and why.",
+        skipInstruction,
+        "",
+        "```diff",
+        patch,
+        "```",
+      ].filter(Boolean).join("\n")
+
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("Explanation timed out after 30s")), 30_000)
+      })
+
+      try {
+        const res = await Promise.race([
+          client.session.prompt(
+            {
+              sessionID: this.explainSession,
+              directory: root,
+              agent: "explainer",
+              parts: [{ type: "text", text: prompt }],
+            },
+            { throwOnError: true },
+          ),
+          timeout,
+        ])
+
+        const part = res.data?.parts?.find((p: any) => p.type === "text")
+        if (part && "text" in part) {
+          const text = part.text.trim()
+          this.post({ type: "diffViewer.explanationResult", file, line, text })
+        }
+      } finally {
+        clearTimeout(timer)
+      }
+    } catch (err) {
+      const msg = getErrorMessage(err)
+      this.log(`Failed to explain ${file}:`, msg)
+      // Reset session on failure so next attempt creates a fresh one
+      this.explainSession = undefined
+      this.post({ type: "diffViewer.explanationResult", file, line, text: `*Failed to generate explanation:* ${msg}` })
+    }
   }
 
   /** Trigger explain-all from the extension host (e.g. via command palette) */
@@ -182,47 +313,44 @@ export class DiffViewerProvider implements vscode.Disposable {
   private async initialFetch(): Promise<void> {
     this.post({ type: "diffViewer.loading", loading: true })
 
-    const target = await this.resolveLocalDiffTarget()
-    if (!target) {
-      this.post({ type: "diffViewer.diffs", diffs: [] })
-      this.post({ type: "diffViewer.loading", loading: false })
-      return
-    }
-
-    this.cachedDiffTarget = target
-
     try {
-      await this.connectionService.connect(target.directory)
-      const client = this.connectionService.getClient()
-      const { data: diffs } = await client.worktree.diff(
-        { directory: target.directory, base: target.baseBranch },
-        { throwOnError: true },
-      )
+      const target = await this.resolveLocalDiffTarget()
+      if (!target) {
+        this.post({ type: "diffViewer.diffs", diffs: [] })
+        return
+      }
+
+      this.cachedDiffTarget = target
+
+      this.log("initialFetch: fetching diffs locally...")
+      const diffs = await diffSummary(this.gitOps, target.directory, target.baseBranch, (...args) => this.log(...args))
 
       this.lastDiffHash = hashFileDiffs(diffs)
 
       this.log(`Initial diff: ${diffs.length} file(s)`)
       this.post({ type: "diffViewer.diffs", diffs })
+      // Send branch name so webview can show/hide "Explain Branch Changes"
+      this.post({ type: "diffViewer.branch", branch: target.baseBranch })
     } catch (err) {
-      this.log("Failed to fetch initial diff:", err)
+      const message = err instanceof Error ? err.message : String(err)
+      this.log("Failed to fetch initial diff:", message)
+      this.post({ type: "diffViewer.diffs", diffs: [] })
     } finally {
       this.post({ type: "diffViewer.loading", loading: false })
     }
   }
 
   private async pollDiff(): Promise<void> {
-    const target = this.cachedDiffTarget
-    if (!target) {
-      await this.initialFetch()
-      return
-    }
-
+    if (this.polling) return
+    this.polling = true
     try {
-      const client = this.connectionService.getClient()
-      const { data: diffs } = await client.worktree.diff(
-        { directory: target.directory, base: target.baseBranch },
-        { throwOnError: true },
-      )
+      const target = this.cachedDiffTarget
+      if (!target) {
+        await this.initialFetch()
+        return
+      }
+
+      const diffs = await diffSummary(this.gitOps, target.directory, target.baseBranch, (...args) => this.log(...args))
 
       const hash = hashFileDiffs(diffs)
 
@@ -230,7 +358,10 @@ export class DiffViewerProvider implements vscode.Disposable {
       this.lastDiffHash = hash
       this.post({ type: "diffViewer.diffs", diffs })
     } catch (err) {
-      this.log("Failed to poll diff:", err)
+      const message = err instanceof Error ? err.message : String(err)
+      this.log("Failed to poll diff:", message)
+    } finally {
+      this.polling = false
     }
   }
 
@@ -243,7 +374,7 @@ export class DiffViewerProvider implements vscode.Disposable {
       if (!this.panel) return
       this.diffInterval = setInterval(() => {
         void this.pollDiff()
-      }, 2500)
+      }, 5000)
     })
   }
 
@@ -255,6 +386,7 @@ export class DiffViewerProvider implements vscode.Disposable {
 
     this.lastDiffHash = undefined
     this.cachedDiffTarget = undefined
+    this.polling = false
   }
 
   private post(message: Record<string, unknown>): void {
@@ -274,6 +406,15 @@ export class DiffViewerProvider implements vscode.Disposable {
 
   public dispose(): void {
     this.stopDiffPolling()
+    if (this.explainSession) {
+      const root = getWorkspaceRoot()
+      if (root) {
+        this.connectionService.getClient()?.session
+          .delete({ sessionID: this.explainSession, directory: root })
+          .catch((err: unknown) => this.log("Failed to clean up explain session:", err))
+      }
+      this.explainSession = undefined
+    }
     this.gitOps.dispose()
     this.panel?.dispose()
     this.outputChannel.dispose()

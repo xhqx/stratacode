@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import type { StrataProvider } from "../StrataProvider"
 import type { DiffViewerProvider } from "../DiffViewerProvider"
+import { ExplainCommentController } from "../services/code-actions/ExplainCommentController"
 
 /**
  * Registers commands for the Per-Change Explanator feature.
@@ -17,16 +18,30 @@ export function registerExplainChangeCommands(
   provider: StrataProvider,
   diffViewer: DiffViewerProvider,
 ): void {
-  context.subscriptions.push(
-    vscode.commands.registerCommand("strata-code.new.explainChanges", () => {
+  const commentController = new ExplainCommentController(provider)
+  context.subscriptions.push(commentController)
+
+  const handleExplainAll = () => {
+    const mode = vscode.workspace.getConfiguration("strata-code.new").get<string>("explainer.mode", "strata")
+    if (mode === "native") {
+      void commentController.explainAllNative()
+    } else {
       diffViewer.openPanel()
-      // Small delay to let the panel initialize, then trigger explain-all
       setTimeout(() => diffViewer.triggerExplainAll(), 800)
+    }
+  }
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("strata-code.new.openDiffViewer", () => {
+      diffViewer.openPanel()
+    }),
+
+    vscode.commands.registerCommand("strata-code.new.explainChanges", () => {
+      handleExplainAll()
     }),
 
     vscode.commands.registerCommand("strata-code.new.explainBranch", () => {
-      diffViewer.openPanel()
-      setTimeout(() => diffViewer.triggerExplainAll(), 800)
+      handleExplainAll()
     }),
 
     vscode.commands.registerCommand("strata-code.new.explainMerge", async () => {
@@ -36,8 +51,7 @@ export function registerExplainChangeCommands(
       })
       if (!ref) return
 
-      diffViewer.openPanel()
-      setTimeout(() => diffViewer.triggerExplainAll(), 800)
+      handleExplainAll()
     }),
 
     vscode.commands.registerCommand("strata-code.new.explainFile", () => {

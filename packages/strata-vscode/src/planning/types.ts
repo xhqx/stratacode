@@ -24,4 +24,9 @@ export interface PlanningTask {
   dispatchedAt?: string // ISO date
   completedAt?: string // ISO date
   error?: string
+
+  // Markdown document sync (set when task originates from a .plan.md file)
+  markdownFile?: string // absolute path to source file
+  markdownLine?: number // 1-based line number of the checkbox
+  markdownGroup?: string // page title for display grouping
 }

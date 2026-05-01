@@ -6,7 +6,7 @@ import { ProviderIcon } from "@stratacode/strata-ui/provider-icon"
 import { Spinner } from "@stratacode/strata-ui/spinner"
 import { TextField } from "@stratacode/strata-ui/text-field"
 import { showToast } from "@stratacode/strata-ui/toast"
-import { For, Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js"
+import { Component, For, Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
@@ -52,6 +52,237 @@ export interface CustomProviderDialogProps {
   }
 }
 
+
+
+const ModelSelectionPicker = (props: {
+  fetchedModels: any[] | undefined
+  debouncedSearch: string
+  filtered: any[]
+  selected: Set<string>
+  search: string
+  language: any
+  setSearch: (s: string) => void
+  toggleModel: (id: string) => void
+  selectAll: () => void
+  deselectAll: () => void
+  addSelected: () => void
+  count: number
+  cancelFetch: () => void
+}) => {
+  return (
+    <Show when={props.fetchedModels}>
+      {(models) => (
+        <div
+          style={{
+            border: "1px solid var(--border-weak-base, var(--vscode-panel-border))",
+            "border-radius": "6px",
+            padding: "12px",
+            display: "flex",
+            "flex-direction": "column",
+            gap: "8px",
+          }}
+        >
+          {/* Header with count + toggle */}
+          <div
+            style={{
+              display: "flex",
+              "justify-content": "space-between",
+              "align-items": "center",
+            }}
+          >
+            <span style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}>
+              <Show
+                when={props.debouncedSearch}
+                fallback={props.language.t("provider.custom.models.fetch.found", {
+                  count: String(models().length),
+                })}
+              >
+                {props.language.t("provider.custom.models.fetch.showing", {
+                  shown: String(props.filtered.length),
+                  total: String(models().length),
+                })}
+              </Show>
+            </span>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <Button type="button" size="small" variant="ghost" onClick={props.selectAll}>
+                {props.language.t("provider.custom.models.fetch.selectAll")}
+              </Button>
+              <Button type="button" size="small" variant="ghost" onClick={props.deselectAll}>
+                {props.language.t("provider.custom.models.fetch.deselectAll")}
+              </Button>
+            </div>
+          </div>
+
+          {/* Search */}
+          <Show when={models().length > 10}>
+            <TextField
+              label={props.language.t("provider.custom.models.fetch.search")}
+              hideLabel
+              placeholder={props.language.t("provider.custom.models.fetch.search")}
+              value={props.search}
+              onChange={props.setSearch}
+            />
+          </Show>
+
+          {/* Model list */}
+          <div
+            style={{
+              "max-height": "200px",
+              "overflow-y": "auto",
+              display: "flex",
+              "flex-direction": "column",
+              gap: "2px",
+            }}
+          >
+            <For each={props.filtered}>
+              {(m) => (
+                <label
+                  style={{
+                    display: "flex",
+                    "align-items": "center",
+                    gap: "8px",
+                    padding: "4px 2px",
+                    cursor: "pointer",
+                    "font-size": "13px",
+                    color: "var(--text-base, var(--vscode-foreground))",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={props.selected.has(m.id)}
+                    onChange={() => props.toggleModel(m.id)}
+                    style={{ cursor: "pointer" }}
+                  />
+                  {m.id}
+                </label>
+              )}
+            </For>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: "8px", "margin-top": "4px" }}>
+            <Button type="button" size="small" variant="primary" onClick={props.addSelected} disabled={props.count === 0}>
+              {props.language.t("provider.custom.models.fetch.add", { count: String(props.count) })}
+            </Button>
+            <Button type="button" size="small" variant="ghost" onClick={props.cancelFetch}>
+              {props.language.t("common.cancel")}
+            </Button>
+          </div>
+        </div>
+      )}
+    </Show>
+  )
+}
+
+const HeadersSection: Component<{
+  headers: HeaderRow[]
+  errors: any[]
+  language: any
+  setForm: any
+  removeHeader: (i: number) => void
+  addHeader: () => void
+}> = (props) => {
+  return (
+    <div style={{ display: "flex", "flex-direction": "column", gap: "12px" }}>
+      <label style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}>
+        {props.language.t("provider.custom.headers.label")}
+      </label>
+      <For each={props.headers}>
+        {(h, i) => (
+          <div style={{ display: "flex", gap: "8px", "align-items": "start" }}>
+            <div style={{ flex: 1 }}>
+              <TextField
+                label={props.language.t("provider.custom.headers.key.label")}
+                hideLabel
+                placeholder={props.language.t("provider.custom.headers.key.placeholder")}
+                value={h.key}
+                onChange={(v) => props.setForm("headers", i(), "key", v)}
+                validationState={props.errors[i()]?.key ? "invalid" : undefined}
+                error={props.errors[i()]?.key}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <TextField
+                label={props.language.t("provider.custom.headers.value.label")}
+                hideLabel
+                placeholder={props.language.t("provider.custom.headers.value.placeholder")}
+                value={h.value}
+                onChange={(v) => props.setForm("headers", i(), "value", v)}
+                validationState={props.errors[i()]?.value ? "invalid" : undefined}
+                error={props.errors[i()]?.value}
+              />
+            </div>
+            <IconButton
+              type="button"
+              icon="trash"
+              variant="ghost"
+              onClick={() => props.removeHeader(i())}
+              disabled={props.headers.length <= 1}
+              aria-label={props.language.t("provider.custom.headers.remove")}
+              style={{ "margin-top": "6px" }}
+            />
+          </div>
+        )}
+      </For>
+      <Button type="button" size="small" variant="ghost" icon="plus-small" onClick={props.addHeader}>
+        {props.language.t("provider.custom.headers.add")}
+      </Button>
+    </div>
+  )
+}
+
+function initModels(existing?: CustomProviderDialogProps["existing"]): ModelEntry[] {
+  const cfg = existing?.config
+  if (!cfg?.models || typeof cfg.models !== "object") return [{ id: "", name: "", reasoning: false, variants: [] }]
+  const entries = Object.entries(cfg.models)
+  if (entries.length === 0) return [{ id: "", name: "", reasoning: false, variants: [] }]
+  return entries.map(([id, m]) => {
+    const raw = m as { name?: string; reasoning?: boolean; variants?: Record<string, Record<string, unknown>> }
+    const variants: VariantEntry[] = Object.entries(raw?.variants ?? {}).map(([vname, vcfg]) => ({
+      name: vname,
+      enableThinking: typeof vcfg.enable_thinking === "boolean" ? (vcfg.enable_thinking as boolean) : undefined,
+      thinking:
+        typeof vcfg.thinking === "object" && vcfg.thinking !== null
+          ? ((vcfg.thinking as { type?: string }).type as ThinkingTypeValue)
+          : undefined,
+      reasoningEffort:
+        typeof vcfg.reasoningEffort === "string" ? (vcfg.reasoningEffort as ReasoningEffortValue) : undefined,
+      chatTemplateArgs:
+        typeof vcfg.chat_template_args === "object" && vcfg.chat_template_args !== null
+          ? ((vcfg.chat_template_args as { enable_thinking?: boolean }).enable_thinking as ChatTemplateArgsValue)
+          : undefined,
+    }))
+    return {
+      id,
+      name: raw?.name ?? id,
+      reasoning: raw?.reasoning ?? false,
+      variants,
+    }
+  })
+}
+
+function initHeaders(existing?: CustomProviderDialogProps["existing"]): HeaderRow[] {
+  const opts = existing?.config?.options as { headers?: Record<string, string> } | undefined
+  const headers = opts?.headers
+  if (!headers || typeof headers !== "object") return [{ key: "", value: "" }]
+  const entries = Object.entries(headers)
+  if (entries.length === 0) return [{ key: "", value: "" }]
+  return entries.map(([key, value]) => ({ key, value }))
+}
+
+function buildInitialForm(existing: CustomProviderDialogProps["existing"], auth: any): FormState {
+  return {
+    providerID: existing?.providerID ?? "",
+    name: existing?.name ?? "",
+    baseURL: (existing?.config?.options as { baseURL?: string } | undefined)?.baseURL ?? "",
+    proxyURL: (existing?.config?.options as { proxy?: string } | undefined)?.proxy ?? "",
+    apiKey: resolveCustomProviderKey(auth),
+    models: initModels(existing),
+    headers: initHeaders(existing),
+    saving: false,
+  }
+}
+
 const CustomProviderDialog = (props: CustomProviderDialogProps) => {
   const dialog = useDialog()
   const { config } = useConfig()
@@ -63,61 +294,13 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
 
   const editing = () => !!props.existing
 
-  function initModels(): ModelEntry[] {
-    const cfg = props.existing?.config
-    if (!cfg?.models || typeof cfg.models !== "object") return [{ id: "", name: "", reasoning: false, variants: [] }]
-    const entries = Object.entries(cfg.models)
-    if (entries.length === 0) return [{ id: "", name: "", reasoning: false, variants: [] }]
-    return entries.map(([id, m]) => {
-      const raw = m as { name?: string; reasoning?: boolean; variants?: Record<string, Record<string, unknown>> }
-      const variants: VariantEntry[] = Object.entries(raw?.variants ?? {}).map(([vname, vcfg]) => ({
-        name: vname,
-        enableThinking: typeof vcfg.enable_thinking === "boolean" ? (vcfg.enable_thinking as boolean) : undefined,
-        thinking:
-          typeof vcfg.thinking === "object" && vcfg.thinking !== null
-            ? ((vcfg.thinking as { type?: string }).type as ThinkingTypeValue)
-            : undefined,
-        reasoningEffort:
-          typeof vcfg.reasoningEffort === "string" ? (vcfg.reasoningEffort as ReasoningEffortValue) : undefined,
-        chatTemplateArgs:
-          typeof vcfg.chat_template_args === "object" && vcfg.chat_template_args !== null
-            ? ((vcfg.chat_template_args as { enable_thinking?: boolean }).enable_thinking as ChatTemplateArgsValue)
-            : undefined,
-      }))
-      return {
-        id,
-        name: raw?.name ?? id,
-        reasoning: raw?.reasoning ?? false,
-        variants,
-      }
-    })
-  }
-
-  function initHeaders(): HeaderRow[] {
-    const opts = props.existing?.config?.options as { headers?: Record<string, string> } | undefined
-    const headers = opts?.headers
-    if (!headers || typeof headers !== "object") return [{ key: "", value: "" }]
-    const entries = Object.entries(headers)
-    if (entries.length === 0) return [{ key: "", value: "" }]
-    return entries.map(([key, value]) => ({ key, value }))
-  }
-
   const auth = props.existing?.config?.env?.length
     ? undefined
     : props.existing
       ? provider.authStates()[props.existing.providerID]
       : undefined
 
-  const [form, setForm] = createStore<FormState>({
-    providerID: props.existing?.providerID ?? "",
-    name: props.existing?.name ?? "",
-    baseURL: (props.existing?.config?.options as { baseURL?: string } | undefined)?.baseURL ?? "",
-    proxyURL: (props.existing?.config?.options as { proxy?: string } | undefined)?.proxy ?? "",
-    apiKey: resolveCustomProviderKey(auth),
-    models: initModels(),
-    headers: initHeaders(),
-    saving: false,
-  })
+  const [form, setForm] = createStore<FormState>(buildInitialForm(props.existing, auth))
 
   const [errors, setErrors] = createStore<FormErrors>({
     providerID: undefined,
@@ -581,156 +764,25 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
               )}
             </Show>
 
-            {/* Model selection picker */}
-            <Show when={fetchedModels()}>
-              {(models) => (
-                <div
-                  style={{
-                    border: "1px solid var(--border-weak-base, var(--vscode-panel-border))",
-                    "border-radius": "6px",
-                    padding: "12px",
-                    display: "flex",
-                    "flex-direction": "column",
-                    gap: "8px",
-                  }}
-                >
-                  {/* Header with count + toggle */}
-                  <div
-                    style={{
-                      display: "flex",
-                      "justify-content": "space-between",
-                      "align-items": "center",
-                    }}
-                  >
-                    <span style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}>
-                      <Show
-                        when={debouncedSearch()}
-                        fallback={language.t("provider.custom.models.fetch.found", {
-                          count: String(models().length),
-                        })}
-                      >
-                        {language.t("provider.custom.models.fetch.showing", {
-                          shown: String(filtered().length),
-                          total: String(models().length),
-                        })}
-                      </Show>
-                    </span>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <Button type="button" size="small" variant="ghost" onClick={selectAll}>
-                        {language.t("provider.custom.models.fetch.selectAll")}
-                      </Button>
-                      <Button type="button" size="small" variant="ghost" onClick={deselectAll}>
-                        {language.t("provider.custom.models.fetch.deselectAll")}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Search */}
-                  <Show when={models().length > 10}>
-                    <TextField
-                      label={language.t("provider.custom.models.fetch.search")}
-                      hideLabel
-                      placeholder={language.t("provider.custom.models.fetch.search")}
-                      value={search()}
-                      onChange={setSearch}
-                    />
-                  </Show>
-
-                  {/* Model list */}
-                  <div
-                    style={{
-                      "max-height": "200px",
-                      "overflow-y": "auto",
-                      display: "flex",
-                      "flex-direction": "column",
-                      gap: "2px",
-                    }}
-                  >
-                    <For each={filtered()}>
-                      {(m) => (
-                        <label
-                          style={{
-                            display: "flex",
-                            "align-items": "center",
-                            gap: "8px",
-                            padding: "4px 2px",
-                            cursor: "pointer",
-                            "font-size": "13px",
-                            color: "var(--text-base, var(--vscode-foreground))",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selected().has(m.id)}
-                            onChange={() => toggleModel(m.id)}
-                            style={{ cursor: "pointer" }}
-                          />
-                          {m.id}
-                        </label>
-                      )}
-                    </For>
-                  </div>
-
-                  {/* Actions */}
-                  <div style={{ display: "flex", gap: "8px", "margin-top": "4px" }}>
-                    <Button type="button" size="small" variant="primary" onClick={addSelected} disabled={count() === 0}>
-                      {language.t("provider.custom.models.fetch.add", { count: String(count()) })}
-                    </Button>
-                    <Button type="button" size="small" variant="ghost" onClick={cancelFetch}>
-                      {language.t("common.cancel")}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Show>
+            <ModelSelectionPicker
+              fetchedModels={fetchedModels()}
+              debouncedSearch={debouncedSearch()}
+              filtered={filtered()}
+              selected={selected()}
+              search={search()}
+              language={language}
+              setSearch={setSearch}
+              toggleModel={toggleModel}
+              selectAll={selectAll}
+              deselectAll={deselectAll}
+              addSelected={addSelected}
+              count={count()}
+              cancelFetch={cancelFetch}
+            />
           </div>
 
           {/* Headers */}
-          <div style={{ display: "flex", "flex-direction": "column", gap: "12px" }}>
-            <label style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}>
-              {language.t("provider.custom.headers.label")}
-            </label>
-            <For each={form.headers}>
-              {(h, i) => (
-                <div style={{ display: "flex", gap: "8px", "align-items": "start" }}>
-                  <div style={{ flex: 1 }}>
-                    <TextField
-                      label={language.t("provider.custom.headers.key.label")}
-                      hideLabel
-                      placeholder={language.t("provider.custom.headers.key.placeholder")}
-                      value={h.key}
-                      onChange={(v) => setForm("headers", i(), "key", v)}
-                      validationState={errors.headers[i()]?.key ? "invalid" : undefined}
-                      error={errors.headers[i()]?.key}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <TextField
-                      label={language.t("provider.custom.headers.value.label")}
-                      hideLabel
-                      placeholder={language.t("provider.custom.headers.value.placeholder")}
-                      value={h.value}
-                      onChange={(v) => setForm("headers", i(), "value", v)}
-                      validationState={errors.headers[i()]?.value ? "invalid" : undefined}
-                      error={errors.headers[i()]?.value}
-                    />
-                  </div>
-                  <IconButton
-                    type="button"
-                    icon="trash"
-                    variant="ghost"
-                    onClick={() => removeHeader(i())}
-                    disabled={form.headers.length <= 1}
-                    aria-label={language.t("provider.custom.headers.remove")}
-                    style={{ "margin-top": "6px" }}
-                  />
-                </div>
-              )}
-            </For>
-            <Button type="button" size="small" variant="ghost" icon="plus-small" onClick={addHeader}>
-              {language.t("provider.custom.headers.add")}
-            </Button>
-          </div>
+          <HeadersSection headers={form.headers} errors={errors.headers} language={language} setForm={setForm} removeHeader={removeHeader} addHeader={addHeader} />
 
           <Button type="submit" size="large" variant="primary" disabled={form.saving}>
             {form.saving ? language.t("common.saving") : language.t("common.submit")}

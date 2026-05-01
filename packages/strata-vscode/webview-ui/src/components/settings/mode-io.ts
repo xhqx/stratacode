@@ -44,6 +44,30 @@ function parsePermission(raw: unknown): PermissionConfig | undefined {
   return count > 0 ? out : undefined
 }
 
+/** Extract recognized AgentConfig fields from a raw object. */
+function extractConfig(obj: Record<string, unknown>): Partial<AgentConfig> {
+  const partial: Partial<AgentConfig> = {}
+  if (typeof obj.description === "string") partial.description = obj.description
+  if (typeof obj.prompt === "string") partial.prompt = obj.prompt
+  if (typeof obj.model === "string") partial.model = obj.model
+  if (typeof obj.mode === "string" && (MODES as readonly string[]).includes(obj.mode))
+    partial.mode = obj.mode as AgentConfig["mode"]
+  if (typeof obj.temperature === "number") partial.temperature = obj.temperature
+  if (typeof obj.top_p === "number") partial.top_p = obj.top_p
+  if (typeof obj.steps === "number") partial.steps = obj.steps
+  const perms = parsePermission(obj.permission)
+  if (perms) partial.permission = perms
+  if (typeof obj.retry === "object" && obj.retry !== null && !Array.isArray(obj.retry)) {
+    const r = obj.retry as Record<string, unknown>
+    partial.retry = {}
+    if (typeof r.enabled === "boolean") partial.retry.enabled = r.enabled
+    if (typeof r.limit === "number") partial.retry.limit = r.limit
+    if (typeof r.delay === "number") partial.retry.delay = r.delay
+    if (typeof r.max_delay === "number") partial.retry.max_delay = r.max_delay
+  }
+  return partial
+}
+
 /**
  * Parse a raw JSON string into a validated agent name + config.
  * Returns an error tag (matching the i18n key suffix) on failure.
@@ -68,26 +92,7 @@ export function parseImport(json: string, taken: string[]): ImportResult {
     return { ok: false, error: "nameTaken" }
   }
 
-  const partial: Partial<AgentConfig> = {}
-  if (typeof obj.description === "string") partial.description = obj.description
-  if (typeof obj.prompt === "string") partial.prompt = obj.prompt
-  if (typeof obj.model === "string") partial.model = obj.model
-  if (typeof obj.mode === "string" && (MODES as readonly string[]).includes(obj.mode))
-    partial.mode = obj.mode as AgentConfig["mode"]
-  if (typeof obj.temperature === "number") partial.temperature = obj.temperature
-  if (typeof obj.top_p === "number") partial.top_p = obj.top_p
-  if (typeof obj.steps === "number") partial.steps = obj.steps
-  const perms = parsePermission(obj.permission)
-  if (perms) partial.permission = perms
-
-  if (typeof obj.retry === "object" && obj.retry !== null && !Array.isArray(obj.retry)) {
-    const r = obj.retry as Record<string, unknown>
-    partial.retry = {}
-    if (typeof r.enabled === "boolean") partial.retry.enabled = r.enabled
-    if (typeof r.limit === "number") partial.retry.limit = r.limit
-    if (typeof r.delay === "number") partial.retry.delay = r.delay
-    if (typeof r.max_delay === "number") partial.retry.max_delay = r.max_delay
-  }
+  const partial = extractConfig(obj)
 
   return {
     ok: true,

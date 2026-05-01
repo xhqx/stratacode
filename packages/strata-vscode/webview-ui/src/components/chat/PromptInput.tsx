@@ -725,24 +725,24 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       class="prompt-input-container"
       classList={{
         "prompt-input-container--dragging": imageAttach.dragging(),
-        "prompt-input-container--empty": noModels(),
+        "prompt-input-container--empty": noModels() || !session.selected(),
       }}
       onDragOver={imageAttach.handleDragOver}
       onDragLeave={imageAttach.handleDragLeave}
       onDrop={imageAttach.handleDrop}
     >
-      <Show when={noModels()}>
+      <Show when={noModels() || !session.selected()}>
         <button
           type="button"
           class="prompt-input-no-models"
-          onClick={() => vscode.postMessage({ type: "openSettingsTab", tab: "providers" })}
-          aria-label={language.t("prompt.noModels")}
+          onClick={() => vscode.postMessage({ type: "openSettingsTab", tab: noModels() ? "providers" : "agents" })}
+          aria-label={noModels() ? language.t("prompt.noModels") : language.t("prompt.toast.modelAgentRequired.title")}
         >
           <span aria-hidden="true">+</span>
-          <span>{language.t("prompt.noModels")}</span>
+          <span>{noModels() ? language.t("prompt.noModels") : language.t("prompt.toast.modelAgentRequired.title")}</span>
         </button>
       </Show>
-      <Show when={!noModels()}>
+      <Show when={!noModels() && !!session.selected()}>
         <Show when={reviewComments().length > 0}>
           <div class="prompt-review-comments">
             <div class="prompt-review-comments-header">

@@ -127,18 +127,22 @@ function resolveEnv(rawEnv: string | undefined, savedEnv: string[] | undefined) 
   return {}
 }
 
-export function validateCustomProvider(input: ValidateArgs): ValidateResult {
-  const providerID = input.form.providerID.trim()
-  const name = input.form.name.trim()
-  const baseURL = input.form.baseURL.trim()
-  const proxyURL = input.form.proxyURL?.trim() || ""
-  const apiKey = input.form.apiKey.trim()
+function buildOptions(baseURL: string, proxyURL: string, formHeaders: HeaderRow[]) {
+  const headers = Object.fromEntries(
+    formHeaders
+      .map((h) => ({ key: h.key.trim(), value: h.value.trim() }))
+      .filter((h) => !!h.key && !!h.value)
+      .map((h) => [h.key, h.value]),
+  )
 
-  const rawEnv = apiKey.match(/^\{env:([^}]+)\}$/)?.[1]?.trim()
-  // When editing and apiKey is empty, preserve existing env from the original config
-  const savedEnv = input.editing && !apiKey ? input.existingEnv : undefined
-  const key = apiKey && !rawEnv ? apiKey : undefined
+  return {
+    baseURL,
+    ...(proxyURL ? { proxyURL } : {}),
+    ...(Object.keys(headers).length ? { headers } : {}),
+  }
+}
 
+function checkErrors(input: ValidateArgs, providerID: string, name: string, baseURL: string, proxyURL: string) {
   const { idErr, existsErr } = checkProviderID(
     providerID,
     input.editing,
@@ -177,20 +181,25 @@ export function validateCustomProvider(input: ValidateArgs): ValidateResult {
   }
 
   const ok = !idErr && !existsErr && !nameError && !urlError && !proxyUrlError && modelsValid && headersValid
+  
+  return { errors, ok }
+}
+
+export function validateCustomProvider(input: ValidateArgs): ValidateResult {
+  const providerID = input.form.providerID.trim()
+  const name = input.form.name.trim()
+  const baseURL = input.form.baseURL.trim()
+  const proxyURL = input.form.proxyURL?.trim() || ""
+  const apiKey = input.form.apiKey.trim()
+
+  const rawEnv = apiKey.match(/^\{env:([^}]+)\}$/)?.[1]?.trim()
+  // When editing and apiKey is empty, preserve existing env from the original config
+  const savedEnv = input.editing && !apiKey ? input.existingEnv : undefined
+  const key = apiKey && !rawEnv ? apiKey : undefined
+
+  const { errors, ok } = checkErrors(input, providerID, name, baseURL, proxyURL)
+
   if (!ok) return { errors }
-
-  const headers = Object.fromEntries(
-    input.form.headers
-      .map((h) => ({ key: h.key.trim(), value: h.value.trim() }))
-      .filter((h) => !!h.key && !!h.value)
-      .map((h) => [h.key, h.value]),
-  )
-
-  const options = {
-    baseURL,
-    ...(proxyURL ? { proxyURL } : {}),
-    ...(Object.keys(headers).length ? { headers } : {}),
-  }
 
   return {
     errors,
@@ -202,7 +211,7 @@ export function validateCustomProvider(input: ValidateArgs): ValidateResult {
         npm: OPENAI_COMPATIBLE,
         name,
         ...resolveEnv(rawEnv, savedEnv),
-        options,
+        options: buildOptions(baseURL, proxyURL, input.form.headers),
         models: Object.fromEntries(input.form.models.map(serializeModel)),
       },
     },

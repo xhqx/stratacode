@@ -65,87 +65,101 @@ export const ServerProvider: ParentComponent = (props) => {
     if (m.type === "pluginContributionsLoaded") setPluginContributions(m.contributions)
   })
 
+  const handleDeviceAuthMessage = (message: ExtensionMessage) => {
+    switch (message.type) {
+      case "deviceAuthStarted":
+        console.log("[Strata New] Device auth started")
+        setDeviceAuth({
+          status: "pending",
+          code: message.code,
+          verificationUrl: message.verificationUrl,
+          expiresIn: message.expiresIn,
+        })
+        break
+      case "deviceAuthComplete":
+        console.log("[Strata New] Device auth complete")
+        setDeviceAuth({ status: "success" })
+        setTimeout(() => setDeviceAuth(initialDeviceAuth), 1500)
+        break
+      case "deviceAuthFailed":
+        console.log("[Strata New] Device auth failed:", message.error)
+        setDeviceAuth({ status: "error", error: message.error })
+        break
+      case "deviceAuthCancelled":
+        console.log("[Strata New] Device auth cancelled")
+        setDeviceAuth(initialDeviceAuth)
+        break
+    }
+  }
+
+  const handleCoreMessage = (message: ExtensionMessage) => {
+    switch (message.type) {
+      case "ready":
+        console.log("[Strata New] Server ready:", message.serverInfo)
+        setServerInfo(message.serverInfo)
+        if (message.extensionVersion) setExtensionVersion(message.extensionVersion)
+        setConnectionState("connected")
+        setErrorMessage(undefined)
+        setErrorDetails(undefined)
+        if (message.vscodeLanguage) {
+          setVscodeLanguage(message.vscodeLanguage)
+        }
+        if (message.languageOverride) {
+          setLanguageOverride(message.languageOverride)
+        }
+        if (message.workspaceDirectory) {
+          setWorkspaceDirectory(message.workspaceDirectory)
+        }
+        break
+
+      case "workspaceDirectoryChanged":
+        setWorkspaceDirectory(message.directory)
+        break
+
+      case "languageChanged":
+        setLanguageOverride(message.locale || undefined)
+        break
+
+      case "connectionState":
+        console.log("[Strata New] Connection state changed:", message.state)
+        setConnectionState(message.state)
+        if (message.error) {
+          setErrorMessage(message.userMessage ?? message.error)
+          setErrorDetails(message.userDetails ?? message.error)
+        } else if (message.state === "connected") {
+          setErrorMessage(undefined)
+          setErrorDetails(undefined)
+        }
+        break
+
+      case "error":
+        console.error("[Strata New] Server error:", message.message)
+        setErrorMessage(message.message)
+        setErrorDetails(message.message)
+        break
+
+      case "profileData":
+        console.log("[Strata New] Profile data:", message.data ? "received" : "null")
+        setProfileData(message.data)
+        break
+
+      case "repoMapStatsLoaded":
+        setRepoMapStats(message.stats)
+        break
+    }
+  }
+
   onMount(() => {
     const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
       switch (message.type) {
-        case "ready":
-          console.log("[Strata New] Server ready:", message.serverInfo)
-          setServerInfo(message.serverInfo)
-          if (message.extensionVersion) setExtensionVersion(message.extensionVersion)
-          setConnectionState("connected")
-          setErrorMessage(undefined)
-          setErrorDetails(undefined)
-          if (message.vscodeLanguage) {
-            setVscodeLanguage(message.vscodeLanguage)
-          }
-          if (message.languageOverride) {
-            setLanguageOverride(message.languageOverride)
-          }
-          if (message.workspaceDirectory) {
-            setWorkspaceDirectory(message.workspaceDirectory)
-          }
-          break
-
-        case "workspaceDirectoryChanged":
-          setWorkspaceDirectory(message.directory)
-          break
-
-        case "languageChanged":
-          setLanguageOverride(message.locale || undefined)
-          break
-
-        case "connectionState":
-          console.log("[Strata New] Connection state changed:", message.state)
-          setConnectionState(message.state)
-          if (message.error) {
-            setErrorMessage(message.userMessage ?? message.error)
-            setErrorDetails(message.userDetails ?? message.error)
-          } else if (message.state === "connected") {
-            setErrorMessage(undefined)
-            setErrorDetails(undefined)
-          }
-          break
-
-        case "error":
-          console.error("[Strata New] Server error:", message.message)
-          setErrorMessage(message.message)
-          setErrorDetails(message.message)
-          break
-
-        case "profileData":
-          console.log("[Strata New] Profile data:", message.data ? "received" : "null")
-          setProfileData(message.data)
-          break
-
         case "deviceAuthStarted":
-          console.log("[Strata New] Device auth started")
-          setDeviceAuth({
-            status: "pending",
-            code: message.code,
-            verificationUrl: message.verificationUrl,
-            expiresIn: message.expiresIn,
-          })
-          break
-
         case "deviceAuthComplete":
-          console.log("[Strata New] Device auth complete")
-          setDeviceAuth({ status: "success" })
-          // Reset to idle after a short delay
-          setTimeout(() => setDeviceAuth(initialDeviceAuth), 1500)
-          break
-
         case "deviceAuthFailed":
-          console.log("[Strata New] Device auth failed:", message.error)
-          setDeviceAuth({ status: "error", error: message.error })
-          break
-
         case "deviceAuthCancelled":
-          console.log("[Strata New] Device auth cancelled")
-          setDeviceAuth(initialDeviceAuth)
+          handleDeviceAuthMessage(message)
           break
-
-        case "repoMapStatsLoaded":
-          setRepoMapStats(message.stats)
+        default:
+          handleCoreMessage(message)
           break
       }
     })

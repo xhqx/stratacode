@@ -55,16 +55,14 @@ export function buildExplanationElement(meta: ExplainMeta, onDismiss: (id: strin
   const wrapper = document.createElement("div")
   wrapper.className = "am-annotation am-annotation-explanation"
 
-  // Header: icon + label + dismiss
-  const header = document.createElement("div")
-  header.className = "am-annotation-explanation-header"
-
   const label = document.createElement("span")
   label.className = "am-annotation-explanation-label"
   label.appendChild(icon())
-  const title = document.createElement("span")
-  title.textContent = "AI Explanation"
-  label.appendChild(title)
+
+  // Body: formatted explanation text
+  const body = document.createElement("div")
+  body.className = "am-annotation-explanation-body"
+  body.innerHTML = format(meta.text)
 
   const dismiss = document.createElement("button")
   dismiss.className = "am-annotation-icon-btn am-annotation-explanation-dismiss"
@@ -75,16 +73,9 @@ export function buildExplanationElement(meta: ExplainMeta, onDismiss: (id: strin
     onDismiss(meta.id)
   })
 
-  header.appendChild(label)
-  header.appendChild(dismiss)
-
-  // Body: formatted explanation text
-  const body = document.createElement("div")
-  body.className = "am-annotation-explanation-body"
-  body.innerHTML = format(meta.text)
-
-  wrapper.appendChild(header)
+  wrapper.appendChild(label)
   wrapper.appendChild(body)
+  wrapper.appendChild(dismiss)
   return wrapper
 }
 

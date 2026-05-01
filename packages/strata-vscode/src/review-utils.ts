@@ -35,11 +35,19 @@ export async function resolveLocalDiffTarget(
   }
 
   const tracking = await gitOps.resolveTrackingBranch(root, branch)
-  const fallback = tracking ? undefined : await gitOps.resolveDefaultBranch(root, branch)
-  const raw = tracking || fallback || "HEAD"
+  const defaultBranch = await gitOps.resolveDefaultBranch(root, branch)
+  
+  const isDefault = defaultBranch && (branch === defaultBranch || branch === defaultBranch.replace(/^origin\//, ""))
+  
+  let raw = "HEAD"
+  if (!isDefault) {
+    const fallback = tracking ? undefined : defaultBranch
+    raw = tracking || fallback || "HEAD"
+  }
+  
   const base = await resolveBase(gitOps, root, raw)
 
-  log(`Local diff: branch=${branch} tracking=${tracking ?? "none"} default=${fallback ?? "none"} base=${base}`)
+  log(`Local diff: branch=${branch} tracking=${tracking ?? "none"} default=${defaultBranch ?? "none"} isDefault=${!!isDefault} base=${base}`)
 
   return { directory: root, baseBranch: base }
 }

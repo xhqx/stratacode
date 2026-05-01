@@ -1,6 +1,7 @@
 import { createSignal } from "solid-js"
 import { Button } from "@stratacode/strata-ui/button"
 import { TextField } from "@stratacode/strata-ui/text-field"
+import MarkdownEditor from "../settings/MarkdownEditor"
 import { Dialog } from "@stratacode/strata-ui/dialog"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
@@ -112,7 +113,12 @@ export function PlanningTaskDialog(props: Props) {
             <label style={{ "font-size": "0.9em", "font-weight": 600, display: "block", "margin-bottom": "4px" }}>
               Description
             </label>
-            <TextField value={description()} onInput={(e) => setDescription(e.currentTarget.value)} />
+            <MarkdownEditor
+              value={description()}
+              placeholder="Optional task details…"
+              minHeight="80px"
+              onChange={(val) => setDescription(val)}
+            />
           </div>
 
           <div style={{ display: "flex", gap: "12px" }}>

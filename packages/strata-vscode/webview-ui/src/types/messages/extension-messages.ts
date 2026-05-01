@@ -442,6 +442,12 @@ export interface NotificationSettingsLoadedMessage {
   }
 }
 
+export interface SettingLoadedMessage {
+  type: "settingLoaded"
+  key: string
+  value: unknown
+}
+
 export interface TimelineSettingLoadedMessage {
   type: "timelineSettingLoaded"
   visible: boolean
@@ -709,6 +715,12 @@ export interface DiffViewerDiffsMessage {
   diffs: WorktreeFileDiff[]
 }
 
+export interface DiffViewerDiffFileMessage {
+  type: "diffViewer.diffFile"
+  file: string
+  diff: WorktreeFileDiff | null
+}
+
 export interface DiffViewerLoadingMessage {
   type: "diffViewer.loading"
   loading: boolean
@@ -908,6 +920,7 @@ export type ExtensionMessage =
   | GlobalConfigLoadedMessage
   | NotificationSettingsLoadedMessage
   | TimelineSettingLoadedMessage
+  | SettingLoadedMessage
   | NotificationsLoadedMessage
   | AgentManagerSessionMetaMessage
   | AgentManagerRepoInfoMessage
@@ -955,6 +968,7 @@ export type ExtensionMessage =
   | EnhancePromptErrorMessage
   | ViewSubAgentSessionMessage
   | DiffViewerDiffsMessage
+  | DiffViewerDiffFileMessage
   | DiffViewerLoadingMessage
   | DiffViewerRevertFileResultMessage
   | MarketplaceDataMessage
@@ -980,6 +994,7 @@ export type ExtensionMessage =
   | { type: "autoApproveTimerCancelled"; requestId: string }
   | { type: "autoApproveTimerFired"; requestId: string }
   | RemoteStatusMessage
+  | MarkdownPlanPreviewMessage
   | { type: "repoMapStatsLoaded"; stats: { files: number; symbols: number; chars: number; budget: number } }
 
 export interface KanbanTasksLoadedMessage {
@@ -1003,4 +1018,18 @@ export interface PlanningDispatchResultMessage {
 export interface PlannedKanbanTasksMessage {
   type: "plannedKanbanTasks"
   tasks: import("./kanban").KanbanTask[]
+}
+
+export interface MarkdownPlanPreviewMessage {
+  type: "markdownPlanPreview"
+  pending: number
+  files: string[]
+  tasks: Array<{
+    id: string
+    title: string
+    file: string
+    line: number
+    group: string
+    checked: boolean
+  }>
 }

@@ -14,6 +14,9 @@ export interface PlanningTask {
   description?: string
   status: PlanningStatus
   created: string // ISO UTC timestamp
+  markdownFile?: string
+  markdownLine?: number
+
 
   // Scheduling
   startAt?: string // ISO UTC timestamp, minute precision

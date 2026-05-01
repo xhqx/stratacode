@@ -54,6 +54,8 @@ interface FullScreenDiffViewProps {
   diffStyle: DiffStyle
   onDiffStyleChange: (style: DiffStyle) => void
   onRequestDiff?: (file: string) => void
+  /** Called when a file accordion is expanded (used for lazy explain triggers) */
+  onFileOpened?: (file: string) => void
   onOpenFile?: (relativePath: string, line?: number) => void
   onRevertFile?: (file: string) => void
   revertingFiles?: Set<string>
@@ -99,6 +101,7 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
   // key changes (different worktree) we re-expand. Within the same key,
   // only pruning happens so the user's manual collapse state is preserved.
   let initializedKey: string | undefined
+  let previousOpen: Set<string> = new Set()
   let rootRef: HTMLDivElement | undefined
   let scrollRef: HTMLDivElement | undefined
   let syncFrame: number | undefined
@@ -192,12 +195,20 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
       () => [open(), props.diffs] as const,
       ([next]) => {
         const loading = props.loadingFiles ?? new Set<string>()
+        const current = new Set(next)
         for (const file of next) {
           if (loading.has(file)) continue
           const diff = props.diffs.find((item) => item.file === file)
           if (!diff || diff.summarized !== true) continue
           props.onRequestDiff?.(file)
         }
+        // Detect newly expanded files and notify for lazy explain
+        for (const file of next) {
+          if (!previousOpen.has(file)) {
+            props.onFileOpened?.(file)
+          }
+        }
+        previousOpen = current
       },
       { defer: true },
     ),

@@ -125,6 +125,27 @@ const svgSpritePlugin = {
   },
 }
 
+/**
+ * The SDK package.json exports point to .ts source files, but those files use
+ * .js extensions in relative imports (required by TypeScript nodenext module
+ * resolution). esbuild doesn't rewrite .js → .ts like tsc does, so we handle
+ * it here for any .ts file inside the SDK source tree.
+ *
+ * @type {import('esbuild').Plugin}
+ */
+const tsExtensionPlugin = {
+  name: "ts-extension-rewrite",
+  setup(build) {
+    const sdk = path.resolve(__dirname, "../sdk/js/src")
+    build.onResolve({ filter: /\.js$/ }, (args) => {
+      if (args.kind !== "import-statement") return
+      if (!args.resolveDir.startsWith(sdk)) return
+      const target = path.resolve(args.resolveDir, args.path.replace(/\.js$/, ".ts"))
+      return { path: target }
+    })
+  },
+}
+
 const cssPackageResolvePlugin = {
   name: "css-package-resolve",
   setup(build) {
@@ -156,6 +177,7 @@ function createBrowserWebviewContext(entryPoint, outfile) {
       ".ttf": "file",
     },
     plugins: [
+      tsExtensionPlugin,
       solidDedupePlugin,
       pierreWorkerStubPlugin,
       svgSpritePlugin,
@@ -179,7 +201,7 @@ async function main() {
     outfile: "dist/extension.js",
     external: ["vscode"],
     logLevel: "silent",
-    plugins: [esbuildProblemMatcherPlugin],
+    plugins: [tsExtensionPlugin, esbuildProblemMatcherPlugin],
   })
 
   // Build Agent Manager webview (SolidJS, shares components with sidebar)

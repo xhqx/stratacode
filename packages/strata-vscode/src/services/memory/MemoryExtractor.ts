@@ -2,80 +2,72 @@ import * as vscode from "vscode"
 import { StrataProvider } from "../../StrataProvider"
 
 export class MemoryExtractor {
-  private isExtracting = false
-  private lastCommitHash: string | null = null
+  private extracting = false
+  private lastHash: string | null = null
 
   constructor(private readonly provider: StrataProvider) {}
 
-  public async analyzeCommits(newHash: string): Promise<void> {
-    if (this.isExtracting) return
-    
-    // Check config
-    const config = this.provider.currentConfig
-    if (!config?.project_memory?.enabled) return
-    
-    // Check git extension
+  private async repoCommit(): Promise<string | undefined> {
     const extension = vscode.extensions.getExtension("vscode.git")
-    if (!extension) return
-    
+    if (!extension) return undefined
     const api = extension.isActive ? extension.exports?.getAPI(1) : (await extension.activate())?.getAPI(1)
-    if (!api) return
-    
-    const repo = api.repositories?.[0]
-    if (!repo) return
-    
-    const currentHash = repo.state.HEAD?.commit
-    if (!currentHash || currentHash === this.lastCommitHash) return
-    
-    // If lastCommitHash is null, we just set it and don't extract (first run)
-    if (!this.lastCommitHash) {
-      this.lastCommitHash = currentHash
-      return
-    }
+    return api?.repositories?.[0]?.state.HEAD?.commit
+  }
 
+  /** Create an ephemeral session, run the prompt, then delete the session. */
+  private async run(dir: string, prompt: string): Promise<void> {
     const client = this.provider.client
     if (!client) return
 
-    this.isExtracting = true
-    const previousHash = this.lastCommitHash
-    this.lastCommitHash = currentHash
+    const res = await client.session.create({ workspace: dir, title: "Memory Extraction Task" })
+    if (!res.data) return
+    const sid = res.data.id
 
     try {
-      // Get the diff between previous and current
-      const maxCommits = config?.project_memory?.max_commits ?? 10
-      
-      const workspaceDir = this.provider.getWorkspaceDirectoryPublic()
-      if (!workspaceDir) return
-      
-      // Get the commit logs and diff using simple git command execution or use the commit diff
-      // For simplicity, we trigger an agent prompt instructing it to analyze the diff of the recent commits
-      const promptText = `Please analyze the git history and diff from commit ${previousHash} to ${currentHash} (max ${maxCommits} commits). 
+      await client.session.prompt({
+        sessionID: sid,
+        parts: [{ type: "text", text: prompt }],
+        agent: "memory_extractor",
+      })
+    } finally {
+      await client.session.delete({ sessionID: sid, directory: dir })
+        .catch(err => console.warn("[Strata New] MemoryExtractor: session cleanup failed:", err))
+    }
+  }
+
+  public async analyze(hash: string): Promise<void> {
+    if (this.extracting) return
+
+    const config = this.provider.currentConfig
+    if (!config?.project_memory?.enabled) return
+
+    const current = await this.repoCommit()
+    if (!current || current === this.lastHash) return
+
+    if (!this.lastHash) {
+      this.lastHash = current
+      return
+    }
+
+    this.extracting = true
+    const previous = this.lastHash
+    this.lastHash = current
+
+    try {
+      const dir = this.provider.getWorkspaceDirectoryPublic()
+      if (!dir) return
+
+      const max = config?.project_memory?.max_commits ?? 10
+      const prompt = `Please analyze the git history and diff from commit ${previous} to ${current} (max ${max} commits). 
 Identify any new architectural decisions, coding rules, or significant contextual changes.
 If found, write them to .stratacode/memory/ using your available tools.
 Only document systemic rules and architectural migrations. Ignore trivial bug fixes or feature additions.`
 
-      // Execute agent through the SDK session API
-      // Since we don't have a specific UI session, we'll create a background session or just run a direct request
-      // We can use client.session.create to create a temporary background session
-      const createRes = await client.session.create({
-        workspace: workspaceDir,
-        title: "Memory Extraction Task",
-      })
-
-      if (createRes.data) {
-        const sessionId = createRes.data.id
-        
-        // Push the prompt message
-        await client.session.prompt({
-          sessionID: sessionId,
-          parts: [{ type: "text", text: promptText }],
-          agent: "memory_extractor",
-        })
-      }
+      await this.run(dir, prompt)
     } catch (err) {
       console.error("[Strata New] MemoryExtractor: Failed to analyze commits:", err)
     } finally {
-      this.isExtracting = false
+      this.extracting = false
     }
   }
 }

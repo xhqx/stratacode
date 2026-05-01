@@ -182,7 +182,7 @@ export const dict = {
   "agentManager.review.largeFileCollapsed": "Large file (collapsed)",
   "agentManager.review.endOfLongDiff": "You made it to the end!",
 
-  "explainChange.explainAll": "Explain All Changes",
+  "explainChange.explainAll": "Explain Branch Changes",
   "explainChange.explainFile": "Explain",
   "explainChange.explaining": "Generating explanation…",
   "explainChange.aiExplanation": "AI Explanation",

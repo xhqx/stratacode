@@ -1,4 +1,4 @@
-import { createSignal, Show, Switch, Match } from "solid-js"
+import { createSignal, Show, Switch, Match, onMount } from "solid-js"
 import { Button } from "@stratacode/strata-ui/button"
 import { useLanguage } from "../../context/language"
 import { usePlanning } from "../../context/planning"
@@ -19,6 +19,12 @@ export function PlanningView(props: Props) {
   const [viewMode, setViewMode] = createSignal<ViewMode>("list")
   const [isAdding, setIsAdding] = createSignal(false)
 
+  onMount(() => {
+    planning.requestMarkdownPreview()
+  })
+
+  const pending = () => planning.markdownPreview()?.pending ?? 0
+
   return (
     <div data-component="planning-view" style={{ display: "flex", "flex-direction": "column", height: "100%" }}>
       <div
@@ -31,6 +37,25 @@ export function PlanningView(props: Props) {
             {language.t("planning.back")}
           </Button>
           <span style={{ flex: 1, "font-weight": 600, "margin-left": "8px" }}>{language.t("planning.title")}</span>
+          <Button
+            size="small"
+            icon={"file-text" as any}
+            variant="ghost"
+            onClick={() => planning.openPlanFile(".strata/plans/index.md")}
+            title={language.t("planning.openPlanFile")}
+          >
+            {language.t("planning.openPlanFile")}
+          </Button>
+          <Show when={pending() > 0}>
+            <Button
+              size="small"
+              icon={"file-symlink-file" as any}
+              onClick={() => planning.applyMarkdown()}
+              title={language.t("planning.applyMarkdown.tooltip")}
+            >
+              {language.t("planning.applyMarkdown")} ({pending()})
+            </Button>
+          </Show>
           <Button size="small" icon={"add" as any} onClick={() => setIsAdding(true)}>
             {language.t("planning.addTask")}
           </Button>

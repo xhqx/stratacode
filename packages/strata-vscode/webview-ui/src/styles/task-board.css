@@ -69,6 +69,10 @@
   border-bottom: 1px solid var(--border-weak-base);
 }
 
+.task-board-section [data-slot="collapsible-trigger"] {
+  width: 100%;
+}
+
 /* Columns (Horizontal) */
 [data-component="task-board-column"] {
   display: flex;

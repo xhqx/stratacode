@@ -8,6 +8,7 @@ import { useKanban } from "../../context/kanban"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
 import { useSession } from "../../context/session"
+import { usePlanning } from "../../context/planning"
 import { KANBAN_COLUMNS, type KanbanColumn, type KanbanTask } from "../../types/messages/kanban"
 
 interface Props {
@@ -19,9 +20,16 @@ export function TaskBoardCard(props: Props) {
   const language = useLanguage()
   const vscode = useVSCode()
   const session = useSession()
+  const planning = usePlanning()
 
   const isManual = () => props.task.source === "manual"
   const isPlanned = () => props.task.source === "planned"
+  const isMarkdown = () => {
+    if (!isPlanned()) return false
+    // Check if this planned task has markdown metadata by looking at planning tasks
+    const planTask = planning.tasks().find((t) => `planned-${t.id}` === props.task.id)
+    return Boolean(planTask?.markdownFile)
+  }
 
   const otherColumns = createMemo(() => {
     return KANBAN_COLUMNS.filter((c) => c !== props.task.column)
@@ -89,7 +97,7 @@ export function TaskBoardCard(props: Props) {
       onClick={handleClick}
     >
       <div data-slot="task-board-card-header">
-        <Icon name={(isPlanned() ? "clock" : isManual() ? "pencil-line" : "brain") as any} size="small" />
+        <Icon name={(isMarkdown() ? "file-text" : isPlanned() ? "clock" : isManual() ? "pencil-line" : "brain") as any} size="small" />
         <span data-slot="task-board-card-title" title={props.task.title}>
           {props.task.title}
         </span>
@@ -112,6 +120,20 @@ export function TaskBoardCard(props: Props) {
               </Show>
             </ContextMenu.Content>
           </ContextMenu>
+        </Show>
+        <Show when={isMarkdown()}>
+          <IconButton
+            icon={"file-text" as any}
+            size="small"
+            variant="ghost"
+            onClick={() => {
+              const planTask = planning.tasks().find((t) => `planned-${t.id}` === props.task.id)
+              if (planTask?.markdownFile) {
+                planning.openPlanFile(planTask.markdownFile, planTask.markdownLine)
+              }
+            }}
+            title={language.t("planning.openInPlan")}
+          />
         </Show>
         <Show when={!isManual() && props.task.sessionID && props.task.sessionID !== session.currentSessionID()}>
           <IconButton

@@ -1,4 +1,5 @@
 import { Show } from "solid-js"
+import MarkdownEditor from "../settings/MarkdownEditor"
 import { Button } from "@stratacode/strata-ui/button"
 import { Tooltip } from "@stratacode/strata-ui/tooltip"
 import { WandSparkles } from "@stratacode/strata-ui/lucide"
@@ -35,9 +36,7 @@ export function EnhanceablePrompt(props: Props) {
           <span style={{ "font-size": "0.8em", opacity: 0.7 }}>{props.busy}</span>
         </Show>
       </div>
-      <textarea
-        value={props.prompt()}
-        onInput={(e) => props.onInput(e.currentTarget.value)}
+      <div
         onKeyDown={(e) => {
           if (!((e.metaKey || e.ctrlKey) && e.key === "z")) return
           const prev = props.onUndo()
@@ -45,16 +44,14 @@ export function EnhanceablePrompt(props: Props) {
           e.preventDefault()
           props.onInput(prev)
         }}
-        placeholder="Instructions for the agent..."
-        style={{
-          width: "100%",
-          "min-height": "80px",
-          background: "var(--vscode-input-background)",
-          color: "var(--vscode-input-foreground)",
-          border: "1px solid var(--vscode-input-border)",
-          padding: "4px",
-        }}
-      />
+      >
+        <MarkdownEditor
+          value={props.prompt()}
+          placeholder="Instructions for the agent..."
+          minHeight="80px"
+          onChange={(val) => props.onInput(val)}
+        />
+      </div>
     </div>
   )
 }

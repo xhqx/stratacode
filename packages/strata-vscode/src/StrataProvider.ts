@@ -781,6 +781,15 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         case "planning.confirm":
           this.planningService?.confirm(message.taskId)
           break
+        case "planning.applyMarkdown":
+          this.planningService?.applyMarkdownTasks()
+          break
+        case "planning.requestMarkdownPreview":
+          this.planningService?.pushMarkdownPreview()
+          break
+        case "planning.openPlanFile":
+          this.planningService?.openPlanFile(message.file, message.line)
+          break
         case "syncSession":
           this.handleSyncSession(message.sessionID, message.parentSessionID).catch((e) =>
             console.error("[Strata New] handleSyncSession failed:", e),
@@ -1006,6 +1015,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         case "requestNotificationSettings":
           this.sendNotificationSettings()
           break
+        case "requestSetting":
+          this.handleRequestSetting(message.key)
+          break
+
         case "requestTimelineSetting":
           this.sendTimelineSetting()
           break
@@ -3037,6 +3050,17 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
    * Handle a generic setting update from the webview.
    * The key uses dot notation relative to `strata-code.new` (e.g. "browserAutomation.enabled").
    */
+  private handleRequestSetting(key: string): void {
+    const { section, leaf } = buildSettingPath(key)
+    const config = vscode.workspace.getConfiguration(`strata-code.new${section ? `.${section}` : ""}`)
+    const value = config.get(leaf)
+    this.postMessage({
+      type: "settingLoaded",
+      key,
+      value
+    })
+  }
+
   private async handleUpdateSetting(key: string, value: unknown): Promise<void> {
     const { section, leaf } = buildSettingPath(key)
     const config = vscode.workspace.getConfiguration(`strata-code.new${section ? `.${section}` : ""}`)
@@ -3694,6 +3718,15 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
    * Dispose of the provider and clean up subscriptions.
    * Does NOT kill the server — that's the connection service's job.
    */
+
+  public applyMarkdownTasks() {
+    this.planningService?.applyMarkdownTasks()
+  }
+
+  public openPlanFile(file?: string, line?: number) {
+    this.planningService?.openPlanFile(file, line)
+  }
+
   dispose(): void {
     this.unsubscribeRemote?.()
     this.focusSession()
@@ -3732,6 +3765,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.ignoreController?.dispose()
     this.chatAutocomplete?.dispose()
     this.gitWatcher?.dispose()
+    this.planningService?.dispose()
     ;(this.marketplace?.dispose(), disposeGitChangesTarget())
   }
 }

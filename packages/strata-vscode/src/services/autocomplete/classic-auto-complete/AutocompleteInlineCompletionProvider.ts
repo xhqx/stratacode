@@ -144,6 +144,7 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
   private onFatalError: ((status: number | null) => void) | null = null
   /** Whether the fatal error notification has already been fired (avoid repeating) */
   private fatalNotified = false
+  private modelNotified = false
 
   constructor(
     context: vscode.ExtensionContext,
@@ -313,6 +314,38 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
     }
   }
 
+  private checkModelValidity(): boolean {
+    if (!this.model || !this.model.hasValidCredentials()) {
+      if (!this.modelNotified) {
+        this.modelNotified = true
+        vscode.window.showWarningMessage(
+          "Strata Autocomplete is restricted: No agent/model is selected or configured.",
+          "Open Settings"
+        ).then((action) => {
+          if (action === "Open Settings") {
+            vscode.commands.executeCommand("strata-code.new.openSettings")
+          }
+        })
+      }
+      return false
+    }
+    return true
+  }
+
+  private async isBlockedByBackoff(): Promise<boolean> {
+    if (this.backoff.blocked()) {
+      if (this.backoff.getFatalStatus() === 402 && this.backoff.shouldProbe()) {
+        const funded = await this.model.hasBalance()
+        if (funded) {
+          this.backoff.reset()
+          this.fatalNotified = false
+        }
+      }
+      if (this.backoff.blocked()) return true
+    }
+    return false
+  }
+
   public async provideInlineCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
@@ -346,28 +379,12 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
 
     this.telemetry?.captureSuggestionRequested(telemetryContext)
 
-    if (!this.model || !this.model.hasValidCredentials()) {
-      // bail if no model is available or no valid API credentials configured
-      // this prevents errors when autocomplete is enabled but no provider is set up
+    if (!this.checkModelValidity()) {
       return []
     }
 
-    // Circuit breaker / backoff: skip requests when the API is returning errors.
-    // This prevents flooding the API with thousands of failed requests when
-    // credits are depleted (402), auth is invalid (401/403), or the server
-    // is rate-limiting (429) / having issues (5xx).
-    if (this.backoff.blocked()) {
-      // For 402 (credits depleted), periodically check the balance endpoint
-      // instead of sending a probe FIM request. If the user has added credits,
-      // reset the backoff so autocomplete resumes.
-      if (this.backoff.getFatalStatus() === 402 && this.backoff.shouldProbe()) {
-        const funded = await this.model.hasBalance()
-        if (funded) {
-          this.backoff.reset()
-          this.fatalNotified = false
-        }
-      }
-      if (this.backoff.blocked()) return []
+    if (await this.isBlockedByBackoff()) {
+      return []
     }
 
     if (!document?.uri?.fsPath) {

@@ -18,6 +18,7 @@ import PROMPT_EXPLORE from "../../agent/prompt/explore.txt"
 import PROMPT_COMMIT from "./prompt/commit.txt"
 import PROMPT_AUTOCOMPLETE from "./prompt/autocomplete.txt"
 import PROMPT_ENHANCE from "./prompt/enhance.txt"
+import PROMPT_EXPLAINER from "./prompt/explainer.txt"
 
 // Safe bash commands that don't need user approval.
 // Only commands that cannot execute arbitrary code or subprocesses.
@@ -450,6 +451,28 @@ export function patchAgents(
     native: true,
     hidden: true,
     temperature: 0.7,
+  }
+
+  // Add explainer agent
+  agents.explainer = {
+    name: "explainer",
+    description: "Analyzes diffs and provides concise, factual code review explanations.",
+    prompt: PROMPT_EXPLAINER,
+    options: {},
+    permission: Permission.merge(
+      defaults,
+      Permission.fromConfig({
+        "*": "deny",
+        read: "allow",
+        bash: readOnlyBash,
+        grep: "allow",
+        glob: "allow",
+        list: "allow",
+      }),
+      user,
+    ),
+    mode: "primary",
+    native: true,
   }
 
   // Add shell agent

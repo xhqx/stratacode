@@ -5,6 +5,7 @@ import { useLanguage } from "../../context/language"
 interface Props {
   value: string
   placeholder?: string
+  minHeight?: string
   onChange: (value: string) => void
 }
 
@@ -222,7 +223,7 @@ const MarkdownEditor: Component<Props> = (props) => {
           <div
             style={{
               padding: "8px 12px",
-              "min-height": "200px",
+              "min-height": props.minHeight ?? "200px",
               "max-height": "400px",
               "overflow-y": "auto",
               "font-size": "13px",
@@ -230,7 +231,6 @@ const MarkdownEditor: Component<Props> = (props) => {
               color: "var(--text-base, var(--vscode-foreground))",
               "word-break": "break-word",
             }}
-            // eslint-disable-next-line solid/no-innerhtml
             innerHTML={rendered()}
           />
         }
@@ -244,7 +244,7 @@ const MarkdownEditor: Component<Props> = (props) => {
           onKeyDown={handleKeyDown}
           style={{
             width: "100%",
-            "min-height": "200px",
+            "min-height": props.minHeight ?? "200px",
             "max-height": "400px",
             padding: "8px 12px",
             border: "none",
