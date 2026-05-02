@@ -76,6 +76,7 @@ interface StateFile {
 }
 
 import { STRATA_DIR, migrateAgentManagerData, type MigrationResult } from "./constants"
+import { Logger } from "../stratacode/logger"
 
 const STATE_FILE = "agent-manager.json"
 

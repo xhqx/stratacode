@@ -3,8 +3,8 @@ import type { WorktreeFileDiff } from "../src/types/messages"
 import { extractLines, type ReviewComment } from "./review-comments"
 
 export interface AnnotationLabels {
-  commentOnLine: (line: number) => string
-  editCommentOnLine: (line: number) => string
+  commentOnLine: (line: number, endLine?: number) => string
+  editCommentOnLine: (line: number, endLine?: number) => string
   placeholder: string
   cancel: string
   comment: string
@@ -20,6 +20,7 @@ export interface AnnotationMeta {
   file: string
   side: AnnotationSide
   line: number
+  endLine?: number
   editing?: boolean
 }
 
@@ -27,7 +28,7 @@ interface AnnotationHandlers {
   diffs: WorktreeFileDiff[]
   editing: string | null
   setEditing: (id: string | null) => void
-  addComment: (file: string, side: AnnotationSide, line: number, text: string, selectedText: string) => void
+  addComment: (file: string, side: AnnotationSide, line: number, endLine: number | undefined, text: string, selectedText: string) => void
   updateComment: (id: string, text: string) => void
   deleteComment: (id: string) => void
   cancelDraft: () => void
@@ -76,7 +77,7 @@ export function buildFileAnnotations(
   file: string,
   fileComments: ReviewComment[],
   edit: string | null,
-  draft: { file: string; side: AnnotationSide; line: number } | null,
+  draft: { file: string; side: AnnotationSide; line: number; endLine?: number } | null,
   draftMeta: AnnotationMeta | null,
 ): { annotations: DiffLineAnnotation<AnnotationMeta>[]; draftMeta: AnnotationMeta | null } {
   const result: DiffLineAnnotation<AnnotationMeta>[] = fileComments.map((c) => ({
@@ -88,13 +89,14 @@ export function buildFileAnnotations(
       file: c.file,
       side: c.side,
       line: c.line,
+      ...(c.endLine !== undefined ? { endLine: c.endLine } : {}),
       editing: c.id === edit,
     },
   }))
 
   if (draft && draft.file === file) {
-    if (!draftMeta || draftMeta.file !== draft.file || draftMeta.side !== draft.side || draftMeta.line !== draft.line) {
-      draftMeta = { type: "draft", comment: null, file: draft.file, side: draft.side, line: draft.line }
+    if (!draftMeta || draftMeta.file !== draft.file || draftMeta.side !== draft.side || draftMeta.line !== draft.line || draftMeta.endLine !== draft.endLine) {
+      draftMeta = { type: "draft", comment: null, file: draft.file, side: draft.side, line: draft.line, ...(draft.endLine !== undefined ? { endLine: draft.endLine } : {}) }
     }
     result.push({ side: draft.side, lineNumber: draft.line, metadata: draftMeta })
   }
@@ -115,7 +117,7 @@ export function buildReviewAnnotation(
 
     const header = document.createElement("div")
     header.className = "am-annotation-header"
-    header.textContent = handlers.labels.commentOnLine(meta.line)
+    header.textContent = handlers.labels.commentOnLine(meta.line, meta.endLine)
 
     const textarea = document.createElement("textarea")
     textarea.className = "am-annotation-textarea"
@@ -146,8 +148,8 @@ export function buildReviewAnnotation(
       if (!text) return
       const diff = handlers.diffs.find((item) => item.file === meta.file)
       const content = meta.side === "deletions" ? (diff?.before ?? "") : (diff?.after ?? "")
-      const selected = extractLines(content, meta.line, meta.line)
-      handlers.addComment(meta.file, meta.side, meta.line, text, selected)
+      const selected = extractLines(content, meta.line, meta.endLine ?? meta.line)
+      handlers.addComment(meta.file, meta.side, meta.line, meta.endLine, text, selected)
     }
 
     cancelButton.addEventListener("click", (event) => {
@@ -181,7 +183,7 @@ export function buildReviewAnnotation(
 
     const header = document.createElement("div")
     header.className = "am-annotation-header"
-    header.textContent = handlers.labels.editCommentOnLine(comment.line)
+    header.textContent = handlers.labels.editCommentOnLine(comment.line, comment.endLine)
 
     const textarea = document.createElement("textarea")
     textarea.className = "am-annotation-textarea"

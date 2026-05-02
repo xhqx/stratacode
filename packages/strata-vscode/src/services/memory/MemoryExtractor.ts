@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import { StrataProvider } from "../../StrataProvider"
+import { Logger } from "../../stratacode/logger"
 
 export class MemoryExtractor {
   private extracting = false
@@ -31,7 +32,7 @@ export class MemoryExtractor {
       })
     } finally {
       await client.session.delete({ sessionID: sid, directory: dir })
-        .catch(err => console.warn("[Strata New] MemoryExtractor: session cleanup failed:", err))
+        .catch(err => Logger.warn("MemoryExtractor", "session cleanup failed:", err))
     }
   }
 
@@ -65,7 +66,7 @@ Only document systemic rules and architectural migrations. Ignore trivial bug fi
 
       await this.run(dir, prompt)
     } catch (err) {
-      console.error("[Strata New] MemoryExtractor: Failed to analyze commits:", err)
+      Logger.error("MemoryExtractor", "Failed to analyze commits:", err)
     } finally {
       this.extracting = false
     }

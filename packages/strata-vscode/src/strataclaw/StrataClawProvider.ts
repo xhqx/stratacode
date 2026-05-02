@@ -19,6 +19,7 @@ import type {
   ChatCredentials,
   ChatMessage,
 } from "./types"
+import { Logger } from "../stratacode/logger"
 
 const MAX_MESSAGES = 500
 const STATUS_POLL_MS = 10_000
@@ -180,7 +181,7 @@ export class StrataClawProvider implements vscode.Disposable {
       } catch (err: unknown) {
         if (this.stale(gen)) return
         const msg = err instanceof Error ? err.message : String(err)
-        console.error("[Strata New] StrataClaw chat connect failed:", msg)
+        Logger.error("StrataClawProvider", "StrataClaw chat connect failed:", msg)
         this.post({
           type: "strataclaw.state",
           state: {
@@ -275,14 +276,14 @@ export class StrataClawProvider implements vscode.Disposable {
         const dir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? homedir()
         await this.connection.connect(dir)
       } catch (err) {
-        console.debug("[Strata New] StrataClaw connect deferred:", (err as Error)?.message ?? err)
+        Logger.debug("StrataClawProvider", "StrataClaw connect deferred:", (err as Error)?.message ?? err)
         return null
       }
     }
     try {
       return this.connection.getClient()
     } catch (err) {
-      console.debug("[Strata New] StrataClaw getClient deferred:", (err as Error)?.message ?? err)
+      Logger.debug("StrataClawProvider", "StrataClaw getClient deferred:", (err as Error)?.message ?? err)
       return null
     }
   }
@@ -297,7 +298,7 @@ export class StrataClawProvider implements vscode.Disposable {
     // tear down the freshly-created client immediately to avoid leaked websockets.
     if (this.stale(gen)) {
       client.disconnect().catch((err) => {
-        console.error("[Strata New] StrataClaw stale disconnect failed:", err?.message ?? err)
+        Logger.error("StrataClawProvider", "StrataClaw stale disconnect failed:", err?.message ?? err)
       })
       return
     }
@@ -354,7 +355,7 @@ export class StrataClawProvider implements vscode.Disposable {
 
     if (this.chat) {
       this.chat.disconnect().catch((err) => {
-        console.error("[Strata New] StrataClaw disconnect failed:", err?.message ?? err)
+        Logger.error("StrataClawProvider", "StrataClaw disconnect failed:", err?.message ?? err)
       })
       this.chat = null
     }
@@ -371,7 +372,7 @@ export class StrataClawProvider implements vscode.Disposable {
     try {
       await this.chat.send(text)
     } catch (err) {
-      console.error("[Strata New] StrataClaw send failed:", err instanceof Error ? err.message : err)
+      Logger.error("StrataClawProvider", "StrataClaw send failed:", err instanceof Error ? err.message : err)
       this.post({ type: "strataclaw.error", error: "Failed to send message" })
     }
   }
@@ -396,7 +397,7 @@ export class StrataClawProvider implements vscode.Disposable {
         this.post({ type: "strataclaw.status", data: this.status })
       }
     } catch (err) {
-      console.debug("[Strata New] StrataClaw poll failed:", (err as Error)?.message ?? err)
+      Logger.debug("StrataClawProvider", "StrataClaw poll failed:", (err as Error)?.message ?? err)
     }
   }
 

@@ -5,6 +5,7 @@ import { spawn } from "../util/process"
 import simpleGit from "simple-git"
 import { parseWorktreeList, normalizePath } from "./git-import"
 import type { Semaphore } from "./semaphore"
+import { Logger } from "../stratacode/logger"
 
 interface GitOpsOptions {
   log: (...args: unknown[]) => void

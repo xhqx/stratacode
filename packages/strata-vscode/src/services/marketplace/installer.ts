@@ -2,6 +2,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import * as os from "os"
 import * as yaml from "yaml"
+import { modify, applyEdits } from "jsonc-parser"
 import { exec } from "../../util/process"
 import type {
   MarketplaceItem,
@@ -14,8 +15,11 @@ import type {
   RemoveResult,
 } from "./types"
 import { MarketplacePaths } from "./paths"
+import { Logger } from "../../stratacode/logger"
 
 export class MarketplaceInstaller {
+  private writeMutex = Promise.resolve()
+
   constructor(private paths: MarketplacePaths) {}
 
   async install(
@@ -41,10 +45,11 @@ export class MarketplaceInstaller {
       return { success: false, slug: item.id, error: "No workspace directory for project-scope install" }
     }
 
-    const config = await this.readConfig(scope, workspace)
-    if (!config.mcp) config.mcp = {}
+    if (!isSafeId(item.id)) return { success: false, slug: item.id, error: "Invalid MCP id" }
 
-    if (config.mcp[item.id]) {
+    const config = await this.readConfig(scope, workspace)
+
+    if (config.mcp?.[item.id]) {
       return { success: false, slug: item.id, error: "MCP server already installed. Remove it first." }
     }
 
@@ -53,13 +58,14 @@ export class MarketplaceInstaller {
       return { success: false, slug: item.id, error: "No installation content for MCP server" }
     }
 
+    let entry: Record<string, unknown>
     try {
-      config.mcp[item.id] = this.buildMcpEntry(content, options.parameters)
+      entry = this.buildMcpEntry(content, options.parameters)
     } catch (err) {
       return { success: false, slug: item.id, error: `Invalid MCP config: ${err}` }
     }
 
-    await this.writeConfig(scope, workspace, config)
+    await this.writeConfig(scope, workspace, ["mcp", item.id], entry)
     return { success: true, slug: item.id }
   }
 
@@ -92,16 +98,17 @@ export class MarketplaceInstaller {
       return { success: false, slug: item.id, error: "No workspace directory for project-scope install" }
     }
 
-    const config = await this.readConfig(scope, workspace)
-    if (!config.agent) config.agent = {}
+    if (!isSafeId(item.id)) return { success: false, slug: item.id, error: "Invalid Mode id" }
 
-    if (config.agent[item.id]) {
+    const config = await this.readConfig(scope, workspace)
+
+    if (config.agent?.[item.id]) {
       return { success: false, slug: item.id, error: "Mode already installed. Remove it first." }
     }
 
-    config.agent[item.id] = convertModeToAgent(item.content)
+    const entry = convertModeToAgent(item.content)
 
-    await this.writeConfig(scope, workspace, config)
+    await this.writeConfig(scope, workspace, ["agent", item.id], entry)
     return { success: true, slug: item.id }
   }
 
@@ -153,7 +160,7 @@ export class MarketplaceInstaller {
 
       const escaped = await findEscapedPaths(staging)
       if (escaped.length > 0) {
-        console.warn(`Skill archive ${item.id} contains escaped paths:`, escaped)
+        Logger.warn("MarketplaceInstaller", `Skill archive ${item.id} contains escaped paths:`, escaped)
         await fs.rm(staging, { recursive: true })
         return { success: false, slug: item.id, error: "Skill archive contains unsafe paths" }
       }
@@ -161,7 +168,7 @@ export class MarketplaceInstaller {
       try {
         await fs.access(path.join(staging, "SKILL.md"))
       } catch (err) {
-        console.warn(`Extracted skill ${item.id} missing SKILL.md, rolling back:`, err)
+        Logger.warn("MarketplaceInstaller", `Extracted skill ${item.id} missing SKILL.md, rolling back:`, err)
         await fs.rm(staging, { recursive: true })
         return { success: false, slug: item.id, error: "Extracted archive missing SKILL.md" }
       }
@@ -170,18 +177,18 @@ export class MarketplaceInstaller {
 
       return { success: true, slug: item.id, filePath: path.join(dir, "SKILL.md"), line: 1 }
     } catch (err) {
-      console.warn(`Failed to install skill ${item.id}:`, err)
+      Logger.warn("MarketplaceInstaller", `Failed to install skill ${item.id}:`, err)
       try {
         await fs.rm(staging, { recursive: true })
       } catch (err) {
-        console.warn(`Failed to clean up staging directory ${staging}:`, err)
+        Logger.warn("MarketplaceInstaller", `Failed to clean up staging directory ${staging}:`, err)
       }
       return { success: false, slug: item.id, error: String(err) }
     } finally {
       try {
         await fs.unlink(tarball)
       } catch (err) {
-        console.warn(`Failed to clean up temp file ${tarball}:`, err)
+        Logger.warn("MarketplaceInstaller", `Failed to clean up temp file ${tarball}:`, err)
       }
     }
   }
@@ -195,14 +202,24 @@ export class MarketplaceInstaller {
   }
 
   async removeMcp(item: McpMarketplaceItem, scope: "project" | "global", workspace?: string): Promise<RemoveResult> {
-    return this.removeConfigKey(this.paths.configPath(scope, workspace), ["mcp", item.id])
+    if (!isSafeId(item.id)) return { success: false, slug: item.id, error: "Invalid MCP id" }
+    const config = await this.readConfig(scope, workspace)
+    if (!config.mcp?.[item.id]) {
+      return { success: true, slug: item.id }
+    }
+    await this.writeConfig(scope, workspace, ["mcp", item.id], undefined)
+    return { success: true, slug: item.id }
   }
-
 
   async removeMode(item: ModeMarketplaceItem, scope: "project" | "global", workspace?: string): Promise<RemoveResult> {
-    return this.removeConfigKey(this.paths.configPath(scope, workspace), ["agent", item.id])
+    if (!isSafeId(item.id)) return { success: false, slug: item.id, error: "Invalid Mode id" }
+    const config = await this.readConfig(scope, workspace)
+    if (!config.agent?.[item.id]) {
+      return { success: true, slug: item.id }
+    }
+    await this.writeConfig(scope, workspace, ["agent", item.id], undefined)
+    return { success: true, slug: item.id }
   }
-
 
   async removeSkill(
     item: SkillMarketplaceItem,
@@ -225,41 +242,9 @@ export class MarketplaceInstaller {
       if ((err as NodeJS.ErrnoException).code === "ENOENT") {
         return { success: true, slug: item.id }
       }
-      console.warn(`Failed to remove skill ${item.id}:`, err)
+      Logger.warn("MarketplaceInstaller", `Failed to remove skill ${item.id}:`, err)
       return { success: false, slug: item.id, error: String(err) }
     }
-  }
-
-  // ── Removal helper ─────────────────────────────────────────────────
-
-  /**
-   * Remove a key at the given JSON path from the config file.
-   * Handles both .json and .jsonc files, preserving comments in JSONC.
-   * Returns success: true even if the key didn't exist (idempotent).
-   */
-  private async removeConfigKey(filepath: string, keypath: string[]): Promise<RemoveResult> {
-    const slug = keypath[keypath.length - 1]!
-    let content: string
-    try {
-      content = await fs.readFile(filepath, "utf-8")
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === "ENOENT") return { success: true, slug }
-      throw err
-    }
-
-    const { modify, applyEdits, findNodeAtLocation, parseTree } = await import("jsonc-parser")
-    const tree = parseTree(content)
-    if (!tree || !findNodeAtLocation(tree, keypath)) {
-      return { success: true, slug }
-    }
-
-    // Use modify with undefined value to delete the key (works for both json/jsonc)
-    const edits = modify(content, keypath, undefined, {
-      formattingOptions: { insertSpaces: true, tabSize: 2 },
-    })
-    const updated = applyEdits(content, edits)
-    await fs.writeFile(filepath, updated, "utf-8")
-    return { success: true, slug }
   }
 
   // ── Config helpers ──────────────────────────────────────────────────
@@ -271,9 +256,8 @@ export class MarketplaceInstaller {
     const filepath = this.paths.configPath(scope, workspace)
     try {
       const content = await fs.readFile(filepath, "utf-8")
-      // Use jsonc-parser to handle both .json and .jsonc (with comments)
-      const { parse } = await import("jsonc-parser")
-      return parse(content) ?? {}
+      // Strip single-line and multi-line comments for .jsonc compatibility
+      return JSON.parse(stripComments(content))
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code === "ENOENT") return {}
       throw err
@@ -283,39 +267,66 @@ export class MarketplaceInstaller {
   private async writeConfig(
     scope: "project" | "global",
     workspace: string | undefined,
-    config: Record<string, unknown>,
+    keyPath: string[],
+    value: unknown,
   ): Promise<void> {
-    const filepath = this.paths.configPath(scope, workspace)
-    await fs.mkdir(path.dirname(filepath), { recursive: true })
-
-    // For .jsonc files, use jsonc-parser's modify() to preserve comments.
-    // For .json files, use JSON.stringify as before.
-    if (filepath.endsWith(".jsonc")) {
+    return (this.writeMutex = this.writeMutex.then(async () => {
+      const filepath = this.paths.configPath(scope, workspace)
+      let content = "{}"
       try {
-        const existing = await fs.readFile(filepath, "utf-8")
-        const { modify, applyEdits } = await import("jsonc-parser")
-        let result = existing
-        for (const [key, value] of Object.entries(config)) {
-          const edits = modify(result, [key], value === null ? undefined : value, {
-            formattingOptions: { insertSpaces: true, tabSize: 2 },
-          })
-          result = applyEdits(result, edits)
-        }
-        await fs.writeFile(filepath, result, "utf-8")
+        content = await fs.readFile(filepath, "utf-8")
       } catch (err) {
-        if ((err as NodeJS.ErrnoException).code === "ENOENT") {
-          await fs.writeFile(filepath, JSON.stringify(config, null, 2) + "\n", "utf-8")
-        } else {
-          throw err
-        }
+        if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err
       }
-    } else {
-      await fs.writeFile(filepath, JSON.stringify(config, null, 2) + "\n", "utf-8")
-    }
+
+      const edits = modify(content, keyPath, value, { formattingOptions: { insertSpaces: true, tabSize: 2 } })
+      const updated = applyEdits(content, edits)
+
+      await fs.mkdir(path.dirname(filepath), { recursive: true })
+      await fs.writeFile(filepath, updated, "utf-8")
+    }))
   }
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Strip single-line (//) and multi-line comments from JSON(C) text.
+ * Preserves strings so comment-like content inside strings is untouched.
+ */
+function stripComments(text: string): string {
+  let result = ""
+  let i = 0
+  while (i < text.length) {
+    // String literal — copy verbatim
+    if (text[i] === '"') {
+      const start = i
+      i++
+      while (i < text.length && text[i] !== '"') {
+        if (text[i] === "\\") i++ // skip escaped char
+        i++
+      }
+      i++ // closing quote
+      result += text.slice(start, i)
+      continue
+    }
+    // Single-line comment
+    if (text[i] === "/" && text[i + 1] === "/") {
+      while (i < text.length && text[i] !== "\n") i++
+      continue
+    }
+    // Multi-line comment
+    if (text[i] === "/" && text[i + 1] === "*") {
+      i += 2
+      while (i < text.length && !(text[i] === "*" && text[i + 1] === "/")) i++
+      i += 2
+      continue
+    }
+    result += text[i]
+    i++
+  }
+  return result
+}
 
 /**
  * Normalize a marketplace MCP entry from the old Stratacode format to the CLI's expected format.

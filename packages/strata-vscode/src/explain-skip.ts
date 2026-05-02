@@ -6,6 +6,7 @@ export interface ReviewCommentPayload {
   file: string
   side: "additions" | "deletions"
   line: number
+  endLine?: number
   text: string
 }
 
@@ -26,6 +27,46 @@ export interface IndexedPatchResult {
 }
 
 const HUNK_RE = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/
+
+export function buildExplainPrompt(annotatedDiffs: string): string {
+  return `You are a strict, senior code reviewer analyzing an annotated multi-file diff.
+
+=== DIFF FORMAT ===
+Each file starts with "=== FILE: path ===".
+Changed lines are prefixed with an ID:
+-[123] deleted line
++[124] added line
+
+Context lines have no ID prefix. 
+Hunk headers (@@ ...) indicate line numbers.
+
+=== TASK ===
+1. Review the changes for substantive issues (bugs, logic errors, architectural flaws, security risks).
+2. Skip trivial changes (formatting, renamed variables, basic docstring updates) unless they introduce bugs.
+3. Keep comments extremely concise and factual.
+
+=== OUTPUT FORMAT ===
+Provide a JSON object containing:
+- \`summary\`: A brief 1-2 sentence overview of the substantive changes.
+- \`comments\`: An array of objects for specific substantive issues, each with:
+  - \`id\`: The exact integer ID of the line to attach the comment to (or "ID1-ID2" for a range, e.g. "123-125").
+  - \`text\`: The concise comment text.
+
+Example:
+\`\`\`json
+{
+  "summary": "Updated API to use batching and fixed race condition in auth.",
+  "comments": [
+    { "id": "124", "text": "This batch call is missing an error boundary." },
+    { "id": "130-135", "text": "This lock is acquired but never released if an exception occurs." }
+  ]
+}
+\`\`\`
+
+Here are the annotated diffs to review:
+
+${annotatedDiffs}`
+}
 
 export function buildIndexedPatches(diffs: { file: string, patch: string }[]): IndexedPatchResult {
   const lineMap = new Map<number, IndexedLine>();
@@ -87,19 +128,30 @@ function extractJsonStr(raw: string): string {
 }
 
 function processComment(key: unknown, text: unknown, map: Map<number, IndexedLine>, out: ReviewCommentPayload[]) {
-  const match = String(key).match(/\d+/)
+  const match = String(key).match(/\d+(?:-\d+)?/)
   if (!match) return
   
-  const id = parseInt(match[0], 10)
-  if (isNaN(id) || typeof text !== "string" || !text.trim()) return
+  const parts = match[0].split("-")
+  const idStart = parseInt(parts[0], 10)
+  const idEnd = parts[1] ? parseInt(parts[1], 10) : idStart
+  if (isNaN(idStart) || isNaN(idEnd) || typeof text !== "string" || !text.trim()) return
 
-  const mapped = map.get(id)
-  if (!mapped) return
+  const mappedStart = map.get(idStart)
+  if (!mappedStart) return
+
+  let endLine: number | undefined
+  if (idStart !== idEnd) {
+    const mappedEnd = map.get(idEnd)
+    if (mappedEnd && mappedEnd.file === mappedStart.file && mappedEnd.side === mappedStart.side) {
+      endLine = mappedEnd.line
+    }
+  }
 
   out.push({
-    file: mapped.file,
-    side: mapped.side,
-    line: mapped.line,
+    file: mappedStart.file,
+    side: mappedStart.side,
+    line: mappedStart.line,
+    ...(endLine !== undefined ? { endLine } : {}),
     text: text.trim(),
   })
 }

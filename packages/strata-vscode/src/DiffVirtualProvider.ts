@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import { buildWebviewHtml } from "./utils"
 import { appendOutput, getWorkspaceRoot } from "./review-utils"
+import { Logger } from "./stratacode/logger"
 
 export interface DiffVirtualFile {
   file: string

@@ -12,6 +12,7 @@ import AutoApproveTab from "./AutoApproveTab"
 import BrowserTab from "./BrowserTab"
 import CheckpointsTab from "./CheckpointsTab"
 import DisplayTab from "./DisplayTab"
+import DiffViewerTab from "./DiffViewerTab"
 import NotificationsTab from "./NotificationsTab"
 import ContextTab from "./ContextTab"
 
@@ -48,6 +49,9 @@ const Settings: Component<SettingsProps> = (props) => {
     const tab = props.tab ?? "agentBehaviour"
     if (tab === "autocomplete" || tab === "commitMessage" || tab === "models") {
       return "agentBehaviour"
+    }
+    if (tab === "display") {
+      return "appearance"
     }
     if (tab.startsWith("plugin:")) {
       const sectionId = tab.replace("plugin:", "")
@@ -237,9 +241,13 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="branch" />
             <span class="label">{language.t("settings.checkpoints.title")}</span>
           </Tabs.Trigger>
-          <Tabs.Trigger value="display">
+          <Tabs.Trigger value="diffViewer">
+            <Icon name="code-lines" />
+            <span class="label">{language.t("settings.diffViewer.title")}</span>
+          </Tabs.Trigger>
+          <Tabs.Trigger value="appearance">
             <Icon name="eye" />
-            <span class="label">{language.t("settings.display.title")}</span>
+            <span class="label">{language.t("settings.appearance.title")}</span>
           </Tabs.Trigger>
           <Tabs.Trigger value="notifications">
             <Icon name="circle-check" />
@@ -336,8 +344,12 @@ const Settings: Component<SettingsProps> = (props) => {
           <h3>{language.t("settings.checkpoints.title")}</h3>
           <CheckpointsTab />
         </Tabs.Content>
-        <Tabs.Content value="display">
-          <h3>{language.t("settings.display.title")}</h3>
+        <Tabs.Content value="diffViewer">
+          <h3>{language.t("settings.diffViewer.title")}</h3>
+          <DiffViewerTab />
+        </Tabs.Content>
+        <Tabs.Content value="appearance">
+          <h3>{language.t("settings.appearance.title")}</h3>
           <DisplayTab />
         </Tabs.Content>
         <Tabs.Content value="notifications">

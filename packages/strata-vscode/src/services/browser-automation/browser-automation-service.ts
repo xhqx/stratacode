@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import type { StrataClient, McpStatus } from "@stratacode/sdk/v2/client"
 import type { StrataConnectionService } from "../cli-backend"
+import { Logger } from "../../stratacode/logger"
 
 export type BrowserAutomationState = "disabled" | "registering" | "connected" | "failed" | "disconnected"
 
@@ -74,7 +75,7 @@ export class BrowserAutomationService implements vscode.Disposable {
 
     const client = this.getClient()
     if (!client) {
-      console.error("[Strata New] BrowserAutomationService: No SDK client available")
+      Logger.error("BrowserAutomationService", "No SDK client available")
       this.setState("failed")
       return
     }
@@ -112,8 +113,7 @@ export class BrowserAutomationService implements vscode.Disposable {
       if (serverStatus?.status === "connected") {
         this.setState("connected")
       } else if (serverStatus?.status === "failed") {
-        console.error(
-          "[Strata New] BrowserAutomationService: MCP server failed:",
+        Logger.error("BrowserAutomationService", "MCP server failed:",
           (serverStatus as { error?: string }).error,
         )
         this.setState("failed")
@@ -121,7 +121,7 @@ export class BrowserAutomationService implements vscode.Disposable {
         this.setState("disconnected")
       }
     } catch (error) {
-      console.error("[Strata New] BrowserAutomationService: Failed to register MCP server:", error)
+      Logger.error("BrowserAutomationService", "Failed to register MCP server:", error)
       this.setState("failed")
     }
   }
@@ -143,7 +143,7 @@ export class BrowserAutomationService implements vscode.Disposable {
           { throwOnError: true },
         )
       } catch (error) {
-        console.error("[Strata New] BrowserAutomationService: Failed to disconnect MCP server:", error)
+        Logger.error("BrowserAutomationService", "Failed to disconnect MCP server:", error)
       }
     }
 
@@ -164,7 +164,7 @@ export class BrowserAutomationService implements vscode.Disposable {
       const { data: allStatus } = await client.mcp.status({ directory }, { throwOnError: true })
       return allStatus[BrowserAutomationService.MCP_SERVER_NAME] ?? null
     } catch (err) {
-      console.debug("[Strata] BrowserAutomation: status fetch failed:", err)
+      Logger.debug("BrowserAutomationService", "BrowserAutomation: status fetch failed:", err)
       return null
     }
   }
@@ -173,7 +173,7 @@ export class BrowserAutomationService implements vscode.Disposable {
     try {
       return this.connectionService.getClient()
     } catch (err) {
-      console.debug("[Strata] BrowserAutomation: client unavailable:", err)
+      Logger.debug("BrowserAutomationService", "BrowserAutomation: client unavailable:", err)
       return null
     }
   }
@@ -190,7 +190,7 @@ export class BrowserAutomationService implements vscode.Disposable {
     if (this.state === state) {
       return
     }
-    console.log(`[Strata New] BrowserAutomationService: State ${this.state} → ${state}`)
+    Logger.info("BrowserAutomationService", `[Strata New] BrowserAutomationService: State ${this.state} → ${state}`)
     this.state = state
     for (const listener of this.stateListeners) {
       listener(state)

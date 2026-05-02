@@ -55,7 +55,7 @@ interface FullScreenDiffViewProps {
   onDiffStyleChange: (style: DiffStyle) => void
   onRequestDiff?: (file: string) => void
   /** Called when a file accordion is expanded (used for lazy explain triggers) */
-  onFileOpened?: (file: string) => void
+
   onOpenFile?: (relativePath: string, line?: number) => void
   onRevertFile?: (file: string) => void
   revertingFiles?: Set<string>
@@ -73,6 +73,12 @@ interface FullScreenDiffViewProps {
   reviewSummary?: string
   /** Callback to reply to a review thread */
   onThreadReply?: (threadId: string, text: string) => void
+  /** Callback to start a new inline AI thread */
+  onStartThread?: (threadId: string, file: string, side: AnnotationSide, line: number, endLine: number | undefined, text: string) => void
+  onScrollContainerChange?: (el: HTMLDivElement | undefined) => void
+  /** When true, all summarized diffs are fetched immediately on load */
+  eagerLoad?: boolean
+  instantComments?: boolean
 }
 
 export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) => {
@@ -81,8 +87,8 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
   const sendAllKeybind = () =>
     isMac ? t("agentManager.review.sendAllShortcut.mac") : t("agentManager.review.sendAllShortcut.other")
   const labels = (): AnnotationLabels => ({
-    commentOnLine: (line) => t("agentManager.review.commentOnLine", { line }),
-    editCommentOnLine: (line) => t("agentManager.review.editCommentOnLine", { line }),
+    commentOnLine: (line, endLine) => endLine && endLine !== line ? t("agentManager.review.commentOnLines", { start: line, end: endLine }) : t("agentManager.review.commentOnLine", { line }),
+    editCommentOnLine: (line, endLine) => endLine && endLine !== line ? t("agentManager.review.editCommentOnLines", { start: line, end: endLine }) : t("agentManager.review.editCommentOnLine", { line }),
     placeholder: t("agentManager.review.commentPlaceholder"),
     cancel: t("common.cancel"),
     comment: t("agentManager.review.commentAction"),
@@ -92,7 +98,7 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
     delete: t("common.delete"),
   })
   const [open, setOpen] = createSignal<string[]>([])
-  const [draft, setDraft] = createSignal<{ file: string; side: AnnotationSide; line: number } | null>(null)
+  const [draft, setDraft] = createSignal<{ file: string; side: AnnotationSide; line: number; endLine?: number } | null>(null)
   const [editing, setEditing] = createSignal<string | null>(null)
   const [activeFile, setActiveFile] = createSignal<string | null>(null)
   const [treeWidth, setTreeWidth] = createSignal(240)
@@ -106,6 +112,7 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
   let rootRef: HTMLDivElement | undefined
   let scrollRef: HTMLDivElement | undefined
   let syncFrame: number | undefined
+  let ignoreScrollTimeout: ReturnType<typeof setTimeout> | undefined
 
   // Reorder diffs to match the file-tree's depth-first visual order so
   // scrolling through the diff panel matches the tree on the left.
@@ -122,6 +129,13 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
       })
     })
   }
+
+  const setScrollRef = (el: HTMLDivElement) => {
+    scrollRef = el
+    props.onScrollContainerChange?.(el)
+  }
+
+  onCleanup(() => props.onScrollContainerChange?.(undefined))
 
   const keepNativeFocus = (target: EventTarget | null) => {
     if (target instanceof HTMLTextAreaElement || target instanceof HTMLInputElement) return true
@@ -203,13 +217,25 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
           if (!diff || diff.summarized !== true) continue
           props.onRequestDiff?.(file)
         }
-        // Detect newly expanded files and notify for lazy explain
-        for (const file of next) {
-          if (!previousOpen.has(file)) {
-            props.onFileOpened?.(file)
-          }
-        }
         previousOpen = current
+      },
+      { defer: true },
+    ),
+  )
+
+  // Eager-load: fetch full content for ALL summarized files immediately,
+  // regardless of which accordions are open.
+  createEffect(
+    on(
+      () => [props.eagerLoad, props.diffs] as const,
+      ([eager, diffs]) => {
+        if (!eager) return
+        const loading = props.loadingFiles ?? new Set<string>()
+        for (const diff of diffs) {
+          if (diff.summarized !== true) continue
+          if (loading.has(diff.file)) continue
+          props.onRequestDiff?.(diff.file)
+        }
       },
       { defer: true },
     ),
@@ -217,10 +243,14 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
 
   // --- CRUD ---
 
-  const addComment = (file: string, side: AnnotationSide, line: number, text: string, selectedText: string) => {
+  const addComment = (file: string, side: AnnotationSide, line: number, endLine: number | undefined, text: string, selectedText: string) => {
     preserveScroll(() => {
       const id = `c-${++nextId}-${Date.now()}`
-      updateComments((prev) => [...prev, { id, file, side, line, comment: text, selectedText }])
+      if (props.instantComments && props.onStartThread) {
+        props.onStartThread(id, file, side, line, endLine, text)
+      } else {
+        updateComments((prev) => [...prev, { id, file, side, line, ...(endLine !== undefined ? { endLine } : {}), comment: text, selectedText }])
+      }
       setDraft(null)
       draftMeta = null
     })
@@ -280,6 +310,8 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
         if (currentDraft.line < 1 || currentDraft.line > max) {
           setDraft(null)
           draftMeta = null
+        } else if (currentDraft.endLine && currentDraft.endLine > max) {
+          setDraft({ ...currentDraft, endLine: max })
         }
       },
     ),
@@ -330,8 +362,10 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
   const handleGutterClick = (file: string, range: SelectedLineRange) => {
     if (draft()) return
     const side: AnnotationSide = range.side === "deletions" ? "deletions" : "additions"
+    const startLine = Math.min(range.start, range.end)
+    const endLine = Math.max(range.start, range.end)
     preserveScroll(() => {
-      setDraft({ file, side, line: range.start })
+      setDraft({ file, side, line: startLine, ...(startLine !== endLine ? { endLine } : {}) })
     })
   }
 
@@ -358,6 +392,13 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
 
   const handleFileSelect = (path: string) => {
     setActiveFile(path)
+
+    // Ignore scroll events while the smooth scrolling animation runs
+    if (ignoreScrollTimeout) clearTimeout(ignoreScrollTimeout)
+    ignoreScrollTimeout = setTimeout(() => {
+      ignoreScrollTimeout = undefined
+    }, 1000)
+
     // Ensure the accordion is open for this file
     if (!open().includes(path)) {
       setOpen((prev) => [...prev, path])
@@ -381,12 +422,14 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
   }
 
   const syncActiveFileFromScroll = () => {
+    if (ignoreScrollTimeout !== undefined) return
     const container = scrollRef
     if (!container) return
     const headers = Array.from(container.querySelectorAll<HTMLElement>('[data-slot="accordion-item"][data-file-path]'))
     if (headers.length === 0) return
 
-    const top = container.getBoundingClientRect().top + 1
+    // Add 24px tolerance to account for the 8px scroll gap and scrolling inaccuracies
+    const top = container.getBoundingClientRect().top + 24
     const first = headers[0]?.dataset.filePath
     const selected = headers.reduce<string | undefined>((carry, header) => {
       const path = header.dataset.filePath
@@ -454,7 +497,7 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
         <div class="am-review-toolbar-left">
           <RadioGroup
             options={["unified", "split"] as const}
-            current={props.diffStyle}
+            current={props.diffStyle ?? "unified"}
             size="small"
             value={(style) => style}
             label={(style) =>
@@ -499,7 +542,7 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
             <Icon name="chevron-grabber-vertical" size="small" />
             {open().length === props.diffs.length ? t("ui.sessionReview.collapseAll") : t("ui.sessionReview.expandAll")}
           </Button>
-          <Show when={comments().length > 0}>
+          <Show when={comments().length > 0 && !props.instantComments}>
             <TooltipKeybind
               title={t("agentManager.review.sendAllToChat")}
               keybind={sendAllKeybind()}
@@ -537,7 +580,7 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
             onResize={(w) => setTreeWidth(Math.max(160, Math.min(w, 400)))}
           />
         </div>
-        <div class="am-review-diff" ref={scrollRef}>
+        <div class="am-review-diff" ref={setScrollRef}>
           <Show when={props.loading && props.diffs.length === 0}>
             <div class="am-diff-loading">
               <Spinner />
@@ -680,6 +723,8 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
                                 diffStyle={props.diffStyle}
                                 annotations={annotationsForFile(diff.file)}
                                 renderAnnotation={buildAnnotation}
+                                enableLineSelection={true}
+                                onLineSelectionEnd={(result) => result && handleGutterClick(diff.file, result)}
                                 enableGutterUtility={true}
                                 onGutterUtilityClick={(result) => handleGutterClick(diff.file, result)}
                                 onLineNumberClick={(event) => {

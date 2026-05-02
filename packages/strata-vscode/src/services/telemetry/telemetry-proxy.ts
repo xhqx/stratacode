@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import { TelemetryEventName, type TelemetryPropertiesProvider } from "./types"
 import { buildTelemetryPayload, buildTelemetryAuthHeader } from "./telemetry-proxy-utils"
+import { Logger } from "../../stratacode/logger"
 
 /**
  * Singleton proxy that captures telemetry events and forwards them to the CLI
@@ -20,7 +21,7 @@ export class TelemetryProxy {
   }
 
   static capture(event: TelemetryEventName, properties?: Record<string, unknown>) {
-    console.log("[telemetry]", event, properties ?? "")
+    Logger.info("TelemetryProxy", `[telemetry] ${event}`, properties)
     TelemetryProxy.getInstance().capture(event, properties)
   }
 
@@ -58,7 +59,7 @@ export class TelemetryProxy {
         "Content-Type": "application/json",
       },
       body: payload,
-    }).catch((err) => console.error("[Strata New] Telemetry capture failed:", err))
+    }).catch((err) => Logger.error("TelemetryProxy", "Telemetry capture failed:", err))
   }
 
   /**

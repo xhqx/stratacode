@@ -529,6 +529,11 @@ export const RemoveError = NamedError.create(
  * then also checks the .stratacodemodes files the ModesMigrator reads.
  */
 export async function remove(name: string) {
+  const SAFE_AGENT_NAME = /^[\w\-@.]+$/
+  if (!name || !SAFE_AGENT_NAME.test(name)) {
+    throw new RemoveError({ name, message: "invalid agent name" })
+  }
+
   const { Agent } = await import("../../agent/agent")
   const agents = makeRuntime(Agent.Service, Agent.defaultLayer)
   const agent = await agents.runPromise((svc) => svc.get(name))
@@ -584,6 +589,24 @@ export async function remove(name: string) {
       .replace(/\n---\n?$/, "")
     await writeFile(file, yaml)
     found = true
+  }
+
+  // 3. Delete from global config (handles config-only agents)
+  try {
+    // patchJsonc treats null as "delete this key"
+    // We use as unknown as typeof Config.Info.Type because TypeScript doesn't model deletion sentinels
+    const patch = { agent: { [name]: null } } as unknown as Config.Info
+    await Config.updateGlobal(patch, { dispose: false })
+    found = true
+  } catch {
+    // Config entry may not exist — that's fine
+  }
+
+  // 4. Clear default_agent if it matches
+  const cfg = await Config.get()
+  if (cfg.default_agent === name) {
+    const clear = { default_agent: null } as unknown as Config.Info
+    await Config.updateGlobal(clear, { dispose: false })
   }
 
   if (!found) throw new RemoveError({ name, message: "no agent file found on disk" })

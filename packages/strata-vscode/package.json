@@ -124,7 +124,8 @@
       {
         "command": "strata-code.new.settingsButtonClicked",
         "title": "Settings",
-        "icon": "$(settings-gear)"
+        "icon": "$(settings-gear)",
+        "category": "Strata Code"
       },
       {
         "command": "strata-code.new.kanbanButtonClicked",
@@ -459,6 +460,51 @@
         "title": "Reply to Strata AI",
         "category": "Strata Code",
         "icon": "$(reply)"
+      },
+      {
+        "command": "strata-code.new.openSettings",
+        "title": "Open Settings",
+        "category": "Strata Code"
+      },
+      {
+        "command": "strata-code.new.settings.appearance",
+        "title": "Settings: Appearance",
+        "category": "Strata Code"
+      },
+      {
+        "command": "strata-code.new.settings.diffViewer",
+        "title": "Settings: Diff Viewer",
+        "category": "Strata Code"
+      },
+      {
+        "command": "strata-code.new.settings.notifications",
+        "title": "Settings: Notifications",
+        "category": "Strata Code"
+      },
+      {
+        "command": "strata-code.new.settings.browser",
+        "title": "Settings: Browser Automation",
+        "category": "Strata Code"
+      },
+      {
+        "command": "strata-code.new.settings.providers",
+        "title": "Settings: Providers",
+        "category": "Strata Code"
+      },
+      {
+        "command": "strata-code.new.settings.agentBehaviour",
+        "title": "Settings: Agent Behaviour",
+        "category": "Strata Code"
+      },
+      {
+        "command": "strata-code.new.toggleSelectionTip",
+        "title": "Toggle Selection Tip",
+        "category": "Strata Code"
+      },
+      {
+        "command": "strata-code.new.toggleGateway",
+        "title": "Toggle Strata Gateway",
+        "category": "Strata Code"
       }
     ],
     "submenus": [
@@ -806,212 +852,294 @@
         "when": "editorTextFocus && editorHasSelection"
       }
     ],
-    "configuration": {
-      "title": "Strata Code",
-      "properties": {
-        "strata-code.new.showSelectionTip": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show an inline hint when selecting code, reminding you of the shortcut to add the selection to Strata chat."
-        },
-        "strata-code.new.language": {
-          "type": "string",
-          "default": "",
-          "description": "Override the UI language for Strata Code (e.g. en, de, ja). Empty means use VS Code's display language.",
-          "enum": [
-            "",
-            "en",
-            "zh",
-            "zht",
-            "ko",
-            "de",
-            "es",
-            "fr",
-            "da",
-            "ja",
-            "pl",
-            "ru",
-            "ar",
-            "no",
-            "br",
-            "th",
-            "bs",
-            "tr",
-            "nl",
-            "uk"
-          ],
-          "enumDescriptions": [
-            "Auto (VS Code language)",
-            "English",
-            "简体中文",
-            "繁體中文",
-            "한국어",
-            "Deutsch",
-            "Español",
-            "Français",
-            "Dansk",
-            "日本語",
-            "Polski",
-            "Русский",
-            "العربية",
-            "Norsk",
-            "Português (Brasil)",
-            "ภาษาไทย",
-            "Bosanski",
-            "Türkçe",
-            "Nederlands",
-            "Українська"
-          ]
-        },
-        "strata-code.new.model.providerID": {
-          "type": "string",
-          "default": "",
-          "description": "Default model provider ID for new sessions"
-        },
-        "strata-code.new.model.modelID": {
-          "type": "string",
-          "default": "",
-          "description": "Default model ID for new sessions"
-        },
-        "strata-code.new.autocomplete.model": {
-          "type": "string",
-          "enum": [
-            "mistralai/codestral-2508",
-            "inception/mercury-edit"
-          ],
-          "enumDescriptions": [
-            "Codestral by Mistral AI (default)",
-            "Mercury Edit by Inception"
-          ],
-          "description": "Model to use for inline autocomplete suggestions"
-        },
-        "strata-code.new.autocomplete.enableAutoTrigger": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable automatic inline completion suggestions"
-        },
-        "strata-code.new.autocomplete.enableSmartInlineTaskKeybinding": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable smart inline task keybinding"
-        },
-        "strata-code.new.autocomplete.enableChatAutocomplete": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable chat textarea autocomplete"
-        },
-        "strata-code.new.enableGateway": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable Strata Gateway provider. When disabled, the Strata Gateway and its models are hidden from the UI."
-        },
-        "strata-code.new.claudeCodeCompat": {
-          "type": "boolean",
-          "default": false,
-          "description": "Load CLAUDE.md instructions and skills from your Claude Code configuration directory into Strata sessions. Enable this if you want Strata to use your Claude Code instructions and skills."
-        },
-        "strata-code.new.browserAutomation.enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable browser automation powered by Playwright. When enabled, the AI agent can interact with web pages in a visible Chrome window."
-        },
-        "strata-code.new.browserAutomation.useSystemChrome": {
-          "type": "boolean",
-          "default": true,
-          "description": "Use your system's installed Chrome browser instead of downloading a separate Chromium instance."
-        },
-        "strata-code.new.browserAutomation.headless": {
-          "type": "boolean",
-          "default": false,
-          "description": "Run browser automation in headless mode (no visible window). When disabled, you can watch the agent interact with the browser."
-        },
-        "strata-code.new.notifications.agent": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show notification when agent completes a task"
-        },
-        "strata-code.new.notifications.permissions": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show notification on permission requests"
-        },
-        "strata-code.new.notifications.errors": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show notification on errors"
-        },
-        "strata-code.new.sounds.agent": {
-          "type": "string",
-          "default": "default",
-          "enum": [
-            "default",
-            "none"
-          ],
-          "description": "Sound to play when agent completes"
-        },
-        "strata-code.new.sounds.permissions": {
-          "type": "string",
-          "default": "default",
-          "enum": [
-            "default",
-            "none"
-          ],
-          "description": "Sound to play on permission requests"
-        },
-        "strata-code.new.sounds.errors": {
-          "type": "string",
-          "default": "default",
-          "enum": [
-            "default",
-            "none"
-          ],
-          "description": "Sound to play on errors"
-        },
-        "strata-code.new.showTaskTimeline": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the task timeline graph in the chat header"
-        },
-        "strata-code.new.explainer.mode": {
-          "type": "string",
-          "enum": [
-            "strata",
-            "native"
-          ],
-          "enumDescriptions": [
-            "Strata Diff Viewer",
-            "Native VS Code Comments"
-          ],
-          "default": "strata",
-          "description": "Choose whether to show AI change explanations in the Strata Diff Viewer or as native VS Code comments."
-        },
-        "strata-code.new.explainer.effort": {
-          "type": "string",
-          "enum": [
-            "low",
-            "medium",
-            "high"
-          ],
-          "enumDescriptions": [
-            "Low (Only complex changes)",
-            "Medium (Standard)",
-            "High (All except very simple changes)"
-          ],
-          "default": "medium",
-          "description": "Control which changes the AI comments on. Low skips most things; High comments on almost everything."
-        },
-        "strata-code.new.planning.taskView": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the planning task view (Kanban board) in the sidebar."
-        },
-        "strata-code.new.planning.documentDrivenTasks": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable document-driven tasks. Automatically syncs tasks with markdown plan files."
+    "configuration": [
+      {
+        "title": "Strata Code: General",
+        "order": 1,
+        "properties": {
+          "strata-code.new.language": {
+            "type": "string",
+            "default": "",
+            "order": 1,
+            "description": "Override the UI language for Strata Code (e.g. en, de, ja). Empty means use VS Code's display language.",
+            "enum": [
+              "",
+              "en",
+              "zh",
+              "zht",
+              "ko",
+              "de",
+              "es",
+              "fr",
+              "da",
+              "ja",
+              "pl",
+              "ru",
+              "ar",
+              "no",
+              "br",
+              "th",
+              "bs",
+              "tr",
+              "nl",
+              "uk"
+            ],
+            "enumDescriptions": [
+              "Auto (VS Code language)",
+              "English",
+              "简体中文",
+              "繁體中文",
+              "한국어",
+              "Deutsch",
+              "Español",
+              "Français",
+              "Dansk",
+              "日本語",
+              "Polski",
+              "Русский",
+              "العربية",
+              "Norsk",
+              "Português (Brasil)",
+              "ภาษาไทย",
+              "Bosanski",
+              "Türkçe",
+              "Nederlands",
+              "Українська"
+            ]
+          },
+          "strata-code.new.showSelectionTip": {
+            "type": "boolean",
+            "default": true,
+            "order": 2,
+            "description": "Show an inline hint when selecting code, reminding you of the shortcut to add the selection to Strata chat."
+          },
+          "strata-code.new.showTaskTimeline": {
+            "type": "boolean",
+            "default": true,
+            "order": 3,
+            "description": "Show the task timeline graph in the chat header."
+          },
+          "strata-code.new.enableGateway": {
+            "type": "boolean",
+            "default": true,
+            "order": 4,
+            "description": "Enable Strata Gateway provider. When disabled, the Strata Gateway and its models are hidden from the UI."
+          },
+          "strata-code.new.claudeCodeCompat": {
+            "type": "boolean",
+            "default": false,
+            "order": 5,
+            "markdownDescription": "Load `CLAUDE.md` instructions and skills from your Claude Code configuration directory into Strata sessions. Enable this if you want Strata to use your Claude Code instructions and skills."
+          },
+          "strata-code.new.logLevel": {
+            "type": "string",
+            "enum": [
+              "debug",
+              "info",
+              "warn",
+              "error",
+              "off"
+            ],
+            "default": "info",
+            "order": 6,
+            "description": "Log level for the Strata Code extension (defaults to debug in development)."
+          },
+          "strata-code.new.logRetentionDays": {
+            "type": "number",
+            "default": 7,
+            "order": 7,
+            "description": "Number of days to keep rotated log files."
+          }
+        }
+      },
+      {
+        "title": "Strata Code: Autocomplete",
+        "order": 2,
+        "properties": {
+          "strata-code.new.autocomplete.enableAutoTrigger": {
+            "type": "boolean",
+            "default": true,
+            "order": 1,
+            "description": "Enable automatic inline completion suggestions."
+          },
+          "strata-code.new.autocomplete.model": {
+            "type": "string",
+            "order": 2,
+            "enum": [
+              "mistralai/codestral-2508",
+              "inception/mercury-edit"
+            ],
+            "enumDescriptions": [
+              "Codestral by Mistral AI (default)",
+              "Mercury Edit by Inception"
+            ],
+            "description": "Model to use for inline autocomplete suggestions."
+          },
+          "strata-code.new.autocomplete.enableChatAutocomplete": {
+            "type": "boolean",
+            "default": false,
+            "order": 3,
+            "description": "Enable chat textarea autocomplete."
+          },
+          "strata-code.new.autocomplete.enableSmartInlineTaskKeybinding": {
+            "type": "boolean",
+            "default": false,
+            "order": 4,
+            "description": "Enable smart inline task keybinding."
+          }
+        }
+      },
+      {
+        "title": "Strata Code: Diff Viewer",
+        "order": 3,
+        "properties": {
+          "strata-code.new.explainer.mode": {
+            "type": "string",
+            "enum": [
+              "strata",
+              "native"
+            ],
+            "enumDescriptions": [
+              "Strata Diff Viewer",
+              "Native VS Code Comments"
+            ],
+            "default": "strata",
+            "order": 1,
+            "description": "Choose whether to show AI change explanations in the Strata Diff Viewer or as native VS Code comments."
+          },
+          "strata-code.new.explainer.effort": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "enumDescriptions": [
+              "Low (Only complex changes)",
+              "Medium (Standard)",
+              "High (All except very simple changes)"
+            ],
+            "default": "medium",
+            "order": 2,
+            "description": "Control which changes the AI comments on. Low skips most things; High comments on almost everything."
+          },
+          "strata-code.new.diffViewer.instantComments": {
+            "type": "boolean",
+            "default": true,
+            "order": 3,
+            "description": "When enabled, adding a comment in the diff viewer instantly asks the AI to answer it in a thread. When disabled, comments are saved as drafts and must be sent to chat manually."
+          },
+          "strata-code.new.diff.eagerLoad": {
+            "type": "boolean",
+            "default": false,
+            "order": 4,
+            "description": "When enabled, the diff viewer loads full file content for all changed files immediately on open instead of waiting until each file accordion is expanded."
+          }
+        }
+      },
+      {
+        "title": "Strata Code: Browser Automation",
+        "order": 4,
+        "properties": {
+          "strata-code.new.browserAutomation.enabled": {
+            "type": "boolean",
+            "default": false,
+            "order": 1,
+            "description": "Enable browser automation powered by Playwright. When enabled, the AI agent can interact with web pages in a visible Chrome window."
+          },
+          "strata-code.new.browserAutomation.useSystemChrome": {
+            "type": "boolean",
+            "default": true,
+            "order": 2,
+            "description": "Use your system's installed Chrome browser instead of downloading a separate Chromium instance."
+          },
+          "strata-code.new.browserAutomation.headless": {
+            "type": "boolean",
+            "default": false,
+            "order": 3,
+            "description": "Run browser automation in headless mode (no visible window). When disabled, you can watch the agent interact with the browser."
+          }
+        }
+      },
+      {
+        "title": "Strata Code: Planning",
+        "order": 5,
+        "properties": {
+          "strata-code.new.planning.taskView": {
+            "type": "boolean",
+            "default": true,
+            "order": 1,
+            "description": "Show the planning task view (Kanban board) in the sidebar."
+          },
+          "strata-code.new.planning.documentDrivenTasks": {
+            "type": "boolean",
+            "default": true,
+            "order": 2,
+            "description": "Enable document-driven tasks. Automatically syncs tasks with markdown plan files."
+          }
+        }
+      },
+      {
+        "title": "Strata Code: Notifications",
+        "order": 6,
+        "properties": {
+          "strata-code.new.notifications.agent": {
+            "type": "boolean",
+            "default": true,
+            "order": 1,
+            "description": "Show notification when agent completes a task."
+          },
+          "strata-code.new.notifications.permissions": {
+            "type": "boolean",
+            "default": true,
+            "order": 2,
+            "description": "Show notification on permission requests."
+          },
+          "strata-code.new.notifications.errors": {
+            "type": "boolean",
+            "default": true,
+            "order": 3,
+            "description": "Show notification on errors."
+          }
+        }
+      },
+      {
+        "title": "Strata Code: Sounds",
+        "order": 7,
+        "properties": {
+          "strata-code.new.sounds.agent": {
+            "type": "string",
+            "default": "default",
+            "enum": [
+              "default",
+              "none"
+            ],
+            "order": 1,
+            "description": "Sound to play when agent completes."
+          },
+          "strata-code.new.sounds.permissions": {
+            "type": "string",
+            "default": "default",
+            "enum": [
+              "default",
+              "none"
+            ],
+            "order": 2,
+            "description": "Sound to play on permission requests."
+          },
+          "strata-code.new.sounds.errors": {
+            "type": "string",
+            "default": "default",
+            "enum": [
+              "default",
+              "none"
+            ],
+            "order": 3,
+            "description": "Sound to play on errors."
+          }
         }
       }
-    }
+    ]
   },
   "scripts": {
     "prepare:cli-binary": "bun script/local-bin.ts",

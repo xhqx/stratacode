@@ -40,10 +40,15 @@ interface DiffPanelProps {
   onSendAll?: () => void
   onClose: () => void
   onExpand?: () => void
+  /** Callback to start a new inline AI thread */
+  onStartThread?: (threadId: string, file: string, side: AnnotationSide, line: number, endLine: number | undefined, text: string) => void
   onRequestDiff?: (file: string) => void
+  instantComments?: boolean
   onOpenFile?: (relativePath: string, line?: number) => void
   onRevertFile?: (file: string) => void
   revertingFiles?: Set<string>
+  /** When true, all summarized diffs are fetched immediately on load */
+  eagerLoad?: boolean
 }
 
 export const DiffPanel: Component<DiffPanelProps> = (props) => {
@@ -52,8 +57,8 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
   const sendAllKeybind = () =>
     isMac ? t("agentManager.review.sendAllShortcut.mac") : t("agentManager.review.sendAllShortcut.other")
   const labels = (): AnnotationLabels => ({
-    commentOnLine: (line) => t("agentManager.review.commentOnLine", { line }),
-    editCommentOnLine: (line) => t("agentManager.review.editCommentOnLine", { line }),
+    commentOnLine: (line, endLine) => endLine && endLine !== line ? t("agentManager.review.commentOnLines", { start: line, end: endLine }) : t("agentManager.review.commentOnLine", { line }),
+    editCommentOnLine: (line, endLine) => endLine && endLine !== line ? t("agentManager.review.editCommentOnLines", { start: line, end: endLine }) : t("agentManager.review.editCommentOnLine", { line }),
     placeholder: t("agentManager.review.commentPlaceholder"),
     cancel: t("common.cancel"),
     comment: t("agentManager.review.commentAction"),
@@ -63,7 +68,7 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
     delete: t("common.delete"),
   })
   const [open, setOpen] = createSignal<string[]>([])
-  const [draft, setDraft] = createSignal<{ file: string; side: AnnotationSide; line: number } | null>(null)
+  const [draft, setDraft] = createSignal<{ file: string; side: AnnotationSide; line: number; endLine?: number } | null>(null)
   const [editing, setEditing] = createSignal<string | null>(null)
   let nextId = 0
   // Tracks the session key for which auto-open has already run. When the
@@ -177,12 +182,39 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
     ),
   )
 
+  // Eager-load: fetch full content for ALL summarized files immediately,
+  // regardless of which accordions are open.
+  createEffect(
+    on(
+      () => [props.eagerLoad, props.diffs] as const,
+      ([eager, diffs]) => {
+        if (!eager) return
+        const loading = props.loadingFiles ?? new Set<string>()
+        for (const diff of diffs) {
+          if (diff.summarized !== true) continue
+          if (loading.has(diff.file)) continue
+          props.onRequestDiff?.(diff.file)
+        }
+      },
+      { defer: true },
+    ),
+  )
+
   // --- CRUD ---
 
-  const addComment = (file: string, side: AnnotationSide, line: number, text: string, selectedText: string) => {
+  const addComment = (file: string, side: AnnotationSide, line: number, endLine: number | undefined, text: string, selectedText: string) => {
     preserveScroll(() => {
       const id = `c-${++nextId}-${Date.now()}`
-      updateComments((prev) => [...prev, { id, file, side, line, comment: text, selectedText }])
+      if (props.instantComments && props.onStartThread) {
+        props.onStartThread(id, file, side, line, endLine, text)
+      } else if (props.instantComments && !props.onStartThread) {
+        const c = { id, file, side, line, ...(endLine !== undefined ? { endLine } : {}), comment: text, selectedText }
+        window.dispatchEvent(
+          new MessageEvent("message", { data: { type: "appendReviewComments", comments: [c], autoSend: true } }),
+        )
+      } else {
+        updateComments((prev) => [...prev, { id, file, side, line, ...(endLine !== undefined ? { endLine } : {}), comment: text, selectedText }])
+      }
       setDraft(null)
       draftMeta = null
     })
@@ -237,6 +269,8 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
         if (currentDraft.line < 1 || currentDraft.line > max) {
           setDraft(null)
           draftMeta = null
+        } else if (currentDraft.endLine && currentDraft.endLine > max) {
+          setDraft({ ...currentDraft, endLine: max })
         }
       },
     ),
@@ -283,8 +317,10 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
     // Don't open a second draft while one is active
     if (draft()) return
     const side: AnnotationSide = range.side === "deletions" ? "deletions" : "additions"
+    const startLine = Math.min(range.start, range.end)
+    const endLine = Math.max(range.start, range.end)
     preserveScroll(() => {
-      setDraft({ file, side, line: range.start })
+      setDraft({ file, side, line: startLine, ...(startLine !== endLine ? { endLine } : {}) })
     })
   }
 
@@ -536,6 +572,8 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
                             diffStyle={props.diffStyle ?? "unified"}
                             annotations={annotationsForFile(diff.file)}
                             renderAnnotation={buildAnnotation}
+                            enableLineSelection={true}
+                            onLineSelectionEnd={(result) => result && handleGutterClick(diff.file, result)}
                             enableGutterUtility={true}
                             onGutterUtilityClick={(result) => handleGutterClick(diff.file, result)}
                             onLineNumberClick={(event) => {
@@ -556,7 +594,7 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
           </Show>
         </div>
 
-        <Show when={comments().length > 0}>
+        <Show when={comments().length > 0 && !props.instantComments}>
           <div class="am-diff-comments-footer">
             <span class="am-diff-comments-count">
               {comments().length} comment{comments().length !== 1 ? "s" : ""}

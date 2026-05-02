@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import type { StrataClient } from "@stratacode/sdk/v2/client"
 import { t } from "./cli-backend/i18n"
+import { Logger } from "../stratacode/logger"
 
 export type RemoteState = { enabled: boolean; connected: boolean }
 
@@ -50,7 +51,7 @@ export class RemoteStatusService implements vscode.Disposable {
   async refresh(): Promise<void> {
     if (!this.client) return
     const res = await this.client.remote.status().catch((err: unknown) => {
-      console.warn("[Strata] remote status refresh failed:", err)
+      Logger.warn("RemoteStatusService", "remote status refresh failed:", err)
       return undefined
     })
     if (!res?.data) return

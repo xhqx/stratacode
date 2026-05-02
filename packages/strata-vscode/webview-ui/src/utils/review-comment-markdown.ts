@@ -16,7 +16,10 @@ function formatCode(value: string): string[] {
 }
 
 export function formatReviewCommentMarkdown(comment: ReviewComment): string {
-  const lines = [`**${escapeInline(comment.file)}** (line ${comment.line}):`]
+  const lineStr = comment.endLine && comment.endLine !== comment.line 
+    ? `lines ${comment.line}-${comment.endLine}`
+    : `line ${comment.line}`
+  const lines = [`**${escapeInline(comment.file)}** (${lineStr}):`]
   if (comment.selectedText) {
     lines.push(...formatCode(comment.selectedText))
   }

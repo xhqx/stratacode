@@ -81,7 +81,7 @@ export function buildThreadElement(meta: ThreadMeta, onReply: (threadId: string,
   })
 
   textarea.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       send()
     }

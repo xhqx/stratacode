@@ -46,6 +46,8 @@ import {
 } from "./strata-provider-utils"
 import { GitOps } from "./agent-manager/GitOps"
 import { GitStatsPoller, type LocalStats } from "./agent-manager/GitStatsPoller"
+import { buildIndexedPatches, parseExplainResponse, shouldPreSkip, buildExplainPrompt } from "./explain-skip"
+import type { ReviewThread } from "./DiffViewerProvider"
 import { diffSummary as localDiffSummary } from "./agent-manager/local-diff"
 import { getWorkspaceRoot } from "./review-utils"
 import { MarketplaceService, type MarketplaceItem, type RemoveResult } from "./services/marketplace"
@@ -152,6 +154,7 @@ const mapAgent = (a: Agent) => ({
 import { AutoApproveTimer } from "./strata-provider/auto-approve-timer"
 import { PlanningService } from "./planning"
 import { GitWatcher } from "./services/memory/GitWatcher"
+import { Logger } from "./stratacode/logger"
 
 export class StrataProvider implements vscode.WebviewViewProvider, TelemetryPropertiesProvider {
   public static readonly viewType = "strata-code.SidebarProvider"
@@ -162,6 +165,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private currentSession: Session | null = null
   /** Remembers the last selected session so /new can stay in the same worktree after clearSession. */
   private contextSessionID: string | undefined
+  /** Session used for instant AI comment threads in the Agent Manager diff viewer. */
+  private diffExplainSession: string | undefined
   private connectionState: "connecting" | "connected" | "disconnected" | "error" = "connecting"
   private loginAttempt = 0
 
@@ -342,7 +347,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     try {
       return this.connectionService.getClient()
     } catch (err) {
-      console.debug("[Strata] client unavailable:", err)
+      Logger.debug("StrataProvider", "client unavailable:", err)
       return null
     }
   }
@@ -382,7 +387,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
   private async syncWebviewState(reason: string): Promise<void> {
     const serverInfo = this.connectionService.getServerInfo()
-    console.log("[Strata New] StrataProvider: 🔄 syncWebviewState()", {
+    Logger.info("StrataProvider", "🔄 syncWebviewState()", {
       reason,
       isWebviewReady: this.isWebviewReady,
       connectionState: this.connectionState,
@@ -391,7 +396,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     })
 
     if (!this.isWebviewReady) {
-      console.log("[Strata New] StrataProvider: ⏭️ syncWebviewState skipped (webview not ready)")
+      Logger.info("StrataProvider", "⏭️ syncWebviewState skipped (webview not ready)")
       return
     }
 
@@ -427,10 +432,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     // Profile returns 401 when user isn't logged into Strata Gateway — that's expected.
     // Use fire-and-forget (no throwOnError) to match old getProfile() which returned null on error.
     if (this.connectionState === "connected" && this.client) {
-      console.log("[Strata New] StrataProvider: 👤 syncWebviewState fetching profile...")
+      Logger.info("StrataProvider", "👤 syncWebviewState fetching profile...")
       const profileResult = await retry(() => this.client!.strata.profile())
       const profileData = profileResult.data ?? null
-      console.log("[Strata New] StrataProvider: 👤 syncWebviewState profile:", profileData ? "received" : "null")
+      Logger.info("StrataProvider", "👤 syncWebviewState profile:", profileData ? "received" : "null")
       this.postMessage({
         type: "profileData",
         data: profileData,
@@ -653,13 +658,21 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     })
     // eslint-disable-next-line complexity
     this.webviewMessageDisposable = webview.onDidReceiveMessage(async (message) => {
+      if (message.type === "requestSetting") {
+        Logger.info("StrataProvider", `[DEBUG] requestSetting arrived at onDidReceiveMessage: key=${message.key}`)
+      }
       const intercepted = await interceptMessage(message, {
         workspaceDir: (sid) => this.getWorkspaceDirectory(sid ?? this.currentSession?.id),
         post: (m) => this.postMessage(m),
         error: getErrorMessage,
         before: this.onBeforeMessage,
       })
-      if (intercepted === null) return
+      if (intercepted === null) {
+        if (message.type === "requestSetting") {
+          Logger.warn("StrataProvider", `[DEBUG] requestSetting CONSUMED by interceptMessage (returned null): key=${message.key}`)
+        }
+        return
+      }
       message = intercepted
 
       await routeSuggestionWebviewMessage(this.questionCtx, message)
@@ -681,7 +694,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       }
       switch (message.type) {
         case "webviewReady":
-          console.log("[Strata New] StrataProvider: ✅ webviewReady received")
+          Logger.info("StrataProvider", "✅ webviewReady received")
           this.isWebviewReady = true
           await this.syncWebviewState("webviewReady")
           this.flushPendingReviewComments()
@@ -735,12 +748,12 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           break
         case "revertSession":
           this.handleRevertSession(message.sessionID, message.messageID).catch((e) =>
-            console.error("[Strata New] handleRevertSession failed:", e),
+            Logger.error("StrataProvider", "handleRevertSession failed:", e),
           )
           break
         case "unrevertSession":
           this.handleUnrevertSession(message.sessionID).catch((e) =>
-            console.error("[Strata New] handleUnrevertSession failed:", e),
+            Logger.error("StrataProvider", "handleUnrevertSession failed:", e),
           )
           break
         case "permissionResponse":
@@ -821,11 +834,11 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           break
         case "syncSession":
           this.handleSyncSession(message.sessionID, message.parentSessionID).catch((e) =>
-            console.error("[Strata New] handleSyncSession failed:", e),
+            Logger.error("StrataProvider", "handleSyncSession failed:", e),
           )
           break
         case "loadSessions":
-          this.handleLoadSessions().catch((e) => console.error("[Strata New] handleLoadSessions failed:", e))
+          this.handleLoadSessions().catch((e) => Logger.error("StrataProvider", "handleLoadSessions failed:", e))
           break
         case "login": {
           const attempt = ++this.loginAttempt
@@ -867,14 +880,14 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           break
         case "forkSession":
           handleForkSession(this.forkCtx, message.sessionId, message.messageId).catch((e) =>
-            console.error("[Strata New] handleForkSession failed:", e),
+            Logger.error("StrataProvider", "handleForkSession failed:", e),
           )
           break
 
         case "retryConnection":
-          console.log("[Strata New] StrataProvider: 🔄 Retrying connection...")
+          Logger.info("StrataProvider", "🔄 Retrying connection...")
           this.initializeConnection().catch((e) =>
-            console.error("[Strata New] StrataProvider: ❌ Retry connection failed:", e),
+            Logger.error("StrataProvider", "❌ Retry connection failed:", e),
           )
           break
         case "openSubAgentViewer":
@@ -889,7 +902,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           }
           break
         case "requestProviders":
-          this.fetchAndSendProviders().catch((e) => console.error("[Strata New] fetchAndSendProviders failed:", e))
+          this.fetchAndSendProviders().catch((e) => Logger.error("StrataProvider", "fetchAndSendProviders failed:", e))
           break
         case "connectProvider":
         case "authorizeProviderOAuth":
@@ -900,41 +913,41 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           break
         case "fetchCustomProviderModels":
           this.handleFetchCustomProviderModels(message).catch((e) =>
-            console.error("[Strata New] fetchCustomProviderModels failed:", e),
+            Logger.error("StrataProvider", "fetchCustomProviderModels failed:", e),
           )
           break
         case "compact":
           await this.handleCompact(message.sessionID, message.providerID, message.modelID)
           break
         case "requestAgents":
-          this.fetchAndSendAgents().catch((e) => console.error("[Strata New] fetchAndSendAgents failed:", e))
+          this.fetchAndSendAgents().catch((e) => Logger.error("StrataProvider", "fetchAndSendAgents failed:", e))
           break
         case "requestSkills":
-          this.fetchAndSendSkills().catch((e) => console.error("[Strata New] fetchAndSendSkills failed:", e))
+          this.fetchAndSendSkills().catch((e) => Logger.error("StrataProvider", "fetchAndSendSkills failed:", e))
           break
         case "requestCommands":
-          this.fetchAndSendCommands().catch((e) => console.error("[Strata New] fetchAndSendCommands failed:", e))
+          this.fetchAndSendCommands().catch((e) => Logger.error("StrataProvider", "fetchAndSendCommands failed:", e))
           break
         case "removeSkill":
           this.removeSkillViaCli(message.location).catch((e: unknown) =>
-            console.error("[Strata New] removeSkill failed:", e),
+            Logger.error("StrataProvider", "removeSkill failed:", e),
           )
           break
         case "removeMode":
-          this.handleRemoveMode(message.name).catch((e) => console.error("[Strata New] handleRemoveMode failed:", e))
+          this.handleRemoveMode(message.name).catch((e) => Logger.error("StrataProvider", "handleRemoveMode failed:", e))
           break
         case "removeMcp":
-          this.handleRemoveMcp(message.name).catch((e) => console.error("[Strata New] handleRemoveMcp failed:", e))
+          this.handleRemoveMcp(message.name).catch((e) => Logger.error("StrataProvider", "handleRemoveMcp failed:", e))
           break
         case "requestMcpStatus":
-          this.fetchAndSendMcpStatus().catch((e) => console.error("[Strata New] fetchAndSendMcpStatus failed:", e))
+          this.fetchAndSendMcpStatus().catch((e) => Logger.error("StrataProvider", "fetchAndSendMcpStatus failed:", e))
           break
         case "connectMcp":
-          this.handleConnectMcp(message.name).catch((e) => console.error("[Strata New] handleConnectMcp failed:", e))
+          this.handleConnectMcp(message.name).catch((e) => Logger.error("StrataProvider", "handleConnectMcp failed:", e))
           break
         case "disconnectMcp":
           this.handleDisconnectMcp(message.name).catch((e) =>
-            console.error("[Strata New] handleDisconnectMcp failed:", e),
+            Logger.error("StrataProvider", "handleDisconnectMcp failed:", e),
           )
           break
 
@@ -949,16 +962,16 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           await handleQuestionReject(this.questionCtx, message.requestID, message.sessionID)
           break
         case "requestConfig":
-          this.fetchAndSendConfig().catch((e) => console.error("[Strata New] fetchAndSendConfig failed:", e))
+          this.fetchAndSendConfig().catch((e) => Logger.error("StrataProvider", "fetchAndSendConfig failed:", e))
           break
         case "requestGlobalConfig":
           this.fetchAndSendGlobalConfig().catch((e) =>
-            console.error("[Strata New] fetchAndSendGlobalConfig failed:", e),
+            Logger.error("StrataProvider", "fetchAndSendGlobalConfig failed:", e),
           )
           break
         case "requestIndexingStatus":
           this.fetchAndSendIndexingStatus().catch((e) =>
-            console.error("[Strata New] fetchAndSendIndexingStatus failed:", e),
+            Logger.error("StrataProvider", "fetchAndSendIndexingStatus failed:", e),
           )
           break
         case "updateConfig":
@@ -1024,7 +1037,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             .then((s) => {
               if (s) this.sendRemoteStatus()
             })
-            .catch((err) => console.error("[Strata New] remote message failed:", err))
+            .catch((err) => Logger.error("StrataProvider", "remote message failed:", err))
           break
         case "deleteSession":
           await this.handleDeleteSession(message.sessionID)
@@ -1034,6 +1047,12 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           break
         case "updateSetting":
           await this.handleUpdateSetting(message.key, message.value)
+          break
+        case "webviewLog":
+          if (message.level === "debug") Logger.debug(`Webview:${message.component}`, message.message, ...(message.data || []))
+          else if (message.level === "info") Logger.info(`Webview:${message.component}`, message.message, ...(message.data || []))
+          else if (message.level === "warn") Logger.warn(`Webview:${message.component}`, message.message, ...(message.data || []))
+          else if (message.level === "error") Logger.error(`Webview:${message.component}`, message.message, ...(message.data || []))
           break
         case "requestBrowserSettings":
           this.sendBrowserSettings()
@@ -1047,13 +1066,28 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         case "requestSetting":
           this.handleRequestSetting(message.key)
           break
+        case "diffViewer.startThread":
+          Logger.info("StrataProvider", "diffViewer.startThread received", { threadId: message.threadId, file: message.file, line: message.line })
+          if (typeof message.threadId === "string" && typeof message.file === "string" && typeof message.line === "number" && typeof message.text === "string") {
+            void this.handleDiffStartThread(message.threadId, message.file, message.line, typeof message.endLine === "number" ? message.endLine : undefined, message.text, message.side as "left" | "right" | undefined)
+          }
+          break
+        case "diffViewer.explainAll":
+          Logger.info("StrataProvider", "diffViewer.explainAll received")
+          void this.handleDiffExplainAll(message)
+          break
+        case "diffViewer.replyToThread":
+          if (typeof message.threadId === "string" && typeof message.text === "string") {
+            void this.handleDiffReplyToThread(message.threadId, message.text)
+          }
+          break
 
         case "requestTimelineSetting":
           this.sendTimelineSetting()
           break
         case "requestNotifications":
           this.fetchAndSendNotifications().catch((e) =>
-            console.error("[Strata New] fetchAndSendNotifications failed:", e),
+            Logger.error("StrataProvider", "fetchAndSendNotifications failed:", e),
           )
           break
         case "requestCloudSessions":
@@ -1147,7 +1181,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
                 this.postMessage({ type: "repoMapStatsLoaded", stats: res.data.stats })
               }
             }).catch(e => {
-              console.error("[Strata] Failed to fetch repo map stats", e)
+              Logger.error("StrataProvider", "Failed to fetch repo map stats", e)
             })
           }
           break
@@ -1163,7 +1197,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
                 this.postMessage({ type: "repoMapStatsLoaded", stats: res.data.stats })
               }
             }).catch(e => {
-              console.error("[Strata] Failed to invalidate repo map", e)
+              Logger.error("StrataProvider", "Failed to invalidate repo map", e)
             })
           }
           break
@@ -1203,7 +1237,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             })
             .catch((err: unknown) => {
               const msg = getErrorMessage(err) || "Failed to enhance prompt"
-              console.error("[Strata New] StrataProvider: Failed to enhance prompt:", err)
+              Logger.error("StrataProvider", "Failed to enhance prompt:", err)
               vscode.window.showErrorMessage(`Enhance prompt failed: ${msg}`)
               this.postMessage({
                 type: "enhancePromptError",
@@ -1284,7 +1318,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   }
 
   private async doInitializeConnection(): Promise<void> {
-    console.log("[Strata New] StrataProvider: 🔧 Starting initializeConnection...")
+    Logger.info("StrataProvider", "🔧 Starting initializeConnection...")
 
     this.connectionState = "connecting"
     this.postMessage({ type: "connectionState", state: "connecting" })
@@ -1354,7 +1388,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             await this.flushPendingSessionRefresh("sse-connected")
             this.recoverPendingPrompts()
           } catch (error) {
-            console.error("[Strata New] StrataProvider: ❌ Failed during connected state handling:", error)
+            Logger.error("StrataProvider", "❌ Failed during connected state handling:", error)
             this.postMessage({
               type: "error",
               message: getErrorMessage(error) || "Failed to sync after connecting",
@@ -1448,9 +1482,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
       if (this.cachedGitRepo) this.startStatsPolling()
 
-      console.log("[Strata New] StrataProvider: ✅ initializeConnection completed successfully")
+      Logger.info("StrataProvider", "✅ initializeConnection completed successfully")
     } catch (error) {
-      console.error("[Strata New] StrataProvider: ❌ Failed to initialize connection:", error)
+      Logger.error("StrataProvider", "❌ Failed to initialize connection:", error)
       this.connectionState = "error"
       this.postMessage({
         type: "connectionState",
@@ -1491,7 +1525,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         session: this.sessionToWebview(this.currentSession!),
       })
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to create session:", error)
+      Logger.error("StrataProvider", "Failed to create session:", error)
       this.postMessage({
         type: "error",
         message: getErrorMessage(error) || "Failed to create session",
@@ -1510,7 +1544,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           this.contextSessionID = r.data.id
         }
       })
-      .catch((e: unknown) => console.warn("[Strata New] StrataProvider: getSession failed (non-critical):", e))
+      .catch((e: unknown) => Logger.warn("StrataProvider", "getSession failed (non-critical):", e))
     this.postMessage({ type: "workspaceDirectoryChanged", directory: this.getWorkspaceDirectory(sessionID) })
     this.client.session
       .status({ directory: dir })
@@ -1526,7 +1560,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           })
         }
       })
-      .catch((e: unknown) => console.error("[Strata New] StrataProvider: Failed to fetch session statuses:", e))
+      .catch((e: unknown) => Logger.error("StrataProvider", "Failed to fetch session statuses:", e))
   }
 
   private async handleLoadMessages(
@@ -1594,7 +1628,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.recoverPendingPrompts()
     } catch (error) {
       if (abort?.signal.aborted) return
-      console.error("[Strata New] StrataProvider: Failed to load messages:", error)
+      Logger.error("StrataProvider", "Failed to load messages:", error)
       this.postMessage({ type: "error", message: getErrorMessage(error) || "Failed to load messages", sessionID })
     }
   }
@@ -1652,7 +1686,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.recoverPendingPrompts()
     } catch (err) {
       this.syncedChildSessions.delete(sessionID)
-      console.error("[Strata New] StrataProvider: Failed to sync child session:", err)
+      Logger.error("StrataProvider", "Failed to sync child session:", err)
     }
   }
 
@@ -1679,13 +1713,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
    */
   private async flushPendingSessionRefresh(reason: string): Promise<void> {
     if (!this.pendingSessionRefresh) return
-    console.log("[Strata New] StrataProvider: 🔄 Flushing deferred sessions refresh", { reason })
+    Logger.info("StrataProvider", "🔄 Flushing deferred sessions refresh", { reason })
     const ctx = this.sessionRefreshContext
     try {
       const resolved = await flushPendingSessionRefreshUtil(ctx)
       if (resolved) this.projectID = resolved
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to flush session refresh:", error)
+      Logger.error("StrataProvider", "Failed to flush session refresh:", error)
     }
     this.pendingSessionRefresh = ctx.pendingSessionRefresh
   }
@@ -1699,7 +1733,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       const resolved = await loadSessionsUtil(ctx)
       if (resolved) this.projectID = resolved
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to load sessions:", error)
+      Logger.error("StrataProvider", "Failed to load sessions:", error)
       this.postMessage({
         type: "error",
         message: getErrorMessage(error) || "Failed to load sessions",
@@ -1718,7 +1752,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         truncated: output.truncated,
       })
     } catch (error) {
-      console.error("[Strata New] Failed to capture terminal context:", error)
+      Logger.error("StrataProvider", "Failed to capture terminal context:", error)
       this.postMessage({
         type: "terminalContextError",
         requestId,
@@ -1751,7 +1785,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       }
       this.postMessage({ type: "sessionDeleted", sessionID })
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to delete session:", error)
+      Logger.error("StrataProvider", "Failed to delete session:", error)
       this.postMessage({
         type: "error",
         message: getErrorMessage(error) || "Failed to delete session",
@@ -1779,7 +1813,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       }
       this.postMessage({ type: "sessionUpdated", session: this.sessionToWebview(updated) })
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to rename session:", error)
+      Logger.error("StrataProvider", "Failed to rename session:", error)
       this.postMessage({
         type: "error",
         message: getErrorMessage(error) || "Failed to rename session",
@@ -1834,7 +1868,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             generation = this.providersGeneration
             continue
           }
-          console.error("[Strata New] StrataProvider: Failed to fetch providers:", error)
+          Logger.error("StrataProvider", "Failed to fetch providers:", error)
         }
         if (!this.providersQueued) return
         generation = this.providersGeneration
@@ -1934,7 +1968,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.cachedAgentsMessage = message
       this.postMessage(message)
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to fetch agents:", error)
+      Logger.error("StrataProvider", "Failed to fetch agents:", error)
     }
   }
 
@@ -1959,7 +1993,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.cachedSkillsMessage = message
       this.postMessage(message)
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to fetch skills:", error)
+      Logger.error("StrataProvider", "Failed to fetch skills:", error)
     }
   }
 
@@ -1983,7 +2017,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.cachedCommandsMessage = message
       this.postMessage(message)
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to fetch commands:", error)
+      Logger.error("StrataProvider", "Failed to fetch commands:", error)
     }
   }
 
@@ -1994,7 +2028,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       const { data } = await retry(() => this.client!.app.skills({ directory: dir }, { throwOnError: true }))
       return data
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to fetch CLI skills for marketplace:", error)
+      Logger.error("StrataProvider", "Failed to fetch CLI skills for marketplace:", error)
       return undefined
     }
   }
@@ -2010,14 +2044,14 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       const dir = this.getWorkspaceDirectory()
       const result = await this.client.stratacode.removeSkill({ location, directory: dir })
       if (result.error) {
-        console.error("[Strata New] removeSkill returned error:", result.error)
+        Logger.error("StrataProvider", "removeSkill returned error:", result.error)
         this.cachedSkillsMessage = null
         this.clearCommandsCache()
         await Promise.all([this.fetchAndSendSkills(), this.fetchAndSendCommands()])
         return false
       }
     } catch (error) {
-      console.error("[Strata New] Failed to remove skill:", error)
+      Logger.error("StrataProvider", "Failed to remove skill:", error)
       this.cachedSkillsMessage = null
       this.cachedCommandsMessage = null
       await Promise.all([this.fetchAndSendSkills(), this.fetchAndSendCommands()])
@@ -2037,7 +2071,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
    * Agents can exist in multiple places simultaneously:
    * - .md files in config directories (handled by CLI removeAgent)
    * - Legacy .stratacodemodes YAML files (handled by CLI removeAgent)
-   * - strata.json agent config entries (handled by marketplace removal)
+   * - Global strata.jsonc agent config entries (handled via CLI config.update)
+   * - Project .strata/strata.json agent entries (handled by marketplace removal)
    * We attempt ALL paths so nothing is left behind.
    */
   private async handleRemoveMode(name: string): Promise<void> {
@@ -2045,26 +2080,32 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
     let cleaned = false
 
-    // 1. Try CLI removal (handles .md files and legacy .stratacodemodes)
+    // 1. Try CLI removal (handles .md files, legacy .stratacodemodes, and global config)
     try {
       const dir = this.getWorkspaceDirectory()
       const result = await this.client.stratacode.removeAgent({ name, directory: dir })
       if (!result.error) cleaned = true
     } catch (err) {
-      console.debug("[Strata] CLI removeAgent failed, trying strata.json:", err)
+      Logger.debug("StrataProvider", "CLI removeAgent failed, trying config:", err)
     }
 
-    // 2. Try removing from strata.json (handles marketplace-installed modes
-    //    and config overrides like model/permission that persist after .md deletion)
+    // 2. Remove from project-scope .strata/strata.json (plain JSON, no comments)
     const stub = { id: name, type: "mode" as const, name, description: "", content: "" }
-    const removed = await this.removeMarketplaceItemFromAllScopes(stub)
-    if (removed) cleaned = true
+    const mp = this.getMarketplace()
+    const workspace = this.getProjectDirectory(this.currentSession?.id)
+    try {
+      await mp.remove(stub, "project", workspace)
+    } catch (err) {
+      Logger.debug("StrataProvider", "project config agent removal skipped:", err)
+    }
+
+    // Invalidate all caches and re-fetch
+    this.cachedAgentsMessage = null
+    this.cachedConfigMessage = null
+    await Promise.all([this.fetchAndSendAgents(), this.fetchAndSendConfig(), this.fetchAndSendSkills()])
 
     if (!cleaned) {
-      console.error("[Strata New] StrataProvider: Failed to remove mode:", name)
-      // Re-fetch agents so the webview reverts the optimistic removal
-      this.cachedAgentsMessage = null
-      await this.fetchAndSendAgents()
+      Logger.error("StrataProvider", "Failed to remove mode:", name)
     }
   }
 
@@ -2073,11 +2114,36 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     // causes the CLI to re-read config without the legacy entry.
     await this.removeLegacyMcp(name)
 
-    const stub = { id: name, type: "mcp" as const, name, description: "", url: "", content: "" }
-    const removed = await this.removeMarketplaceItemFromAllScopes(stub)
-    if (!removed) {
-      console.error("[Strata New] StrataProvider: Failed to remove MCP server:", name)
+    // Remove from global config via CLI (preserves JSONC comments)
+    try {
+      await this.client!.global.config.update(
+        { config: { mcp: { [name]: null } } as any },
+        { throwOnError: true },
+      )
+    } catch (err) {
+      Logger.debug("StrataProvider", "global config MCP removal skipped:", err)
     }
+
+    // Remove from project-scope .strata/strata.json
+    const stub = { id: name, type: "mcp" as const, name, description: "", url: "", content: "" }
+    const mp = this.getMarketplace()
+    const workspace = this.getProjectDirectory(this.currentSession?.id)
+    try {
+      await mp.remove(stub, "project", workspace)
+    } catch (err) {
+      Logger.debug("StrataProvider", "project config MCP removal skipped:", err)
+    }
+
+    // Invalidate all caches and re-fetch
+    this.cachedAgentsMessage = null
+    this.cachedConfigMessage = null
+    const dir = this.getWorkspaceDirectory()
+    try {
+      await this.client!.instance.dispose({ directory: dir })
+    } catch (err) {
+      Logger.debug("StrataProvider", "instance dispose after MCP removal:", err)
+    }
+    await Promise.all([this.fetchAndSendAgents(), this.fetchAndSendConfig(), this.fetchAndSendSkills()])
   }
 
   /**
@@ -2120,7 +2186,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         await vscode.workspace.fs.writeFile(uri, content)
         removed = true
       } catch (err) {
-        console.warn("[Strata New] StrataProvider: Failed to remove legacy MCP from", uri.fsPath, err)
+        Logger.warn("StrataProvider", `Failed to remove legacy MCP from ${uri.fsPath}`, err)
       }
     }
 
@@ -2144,7 +2210,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         this.postMessage(message)
       }
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to fetch MCP status:", error)
+      Logger.error("StrataProvider", "Failed to fetch MCP status:", error)
     }
   }
 
@@ -2155,7 +2221,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       await this.client.mcp.connect({ name, directory })
       await this.fetchAndSendMcpStatus()
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to connect MCP:", name, error)
+      Logger.error("StrataProvider", `Failed to connect MCP: ${name}`, error)
       await this.fetchAndSendMcpStatus()
     }
   }
@@ -2167,7 +2233,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       await this.client.mcp.disconnect({ name, directory })
       await this.fetchAndSendMcpStatus()
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to disconnect MCP:", name, error)
+      Logger.error("StrataProvider", `Failed to disconnect MCP: ${name}`, error)
       await this.fetchAndSendMcpStatus()
     }
   }
@@ -2227,14 +2293,14 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       // (global.dispose alone is insufficient on older CLI versions that lack
       // the Config.global.reset() call in the dispose handler.)
       await this.client.global.config.update({ config: {} }).catch((e: unknown) => {
-        console.warn("[Strata New] global.config.update after marketplace change failed:", e)
+        Logger.warn("StrataProvider", "global.config.update after marketplace change failed:", e)
       })
     }
     // Always dispose the per-project instance so it rebuilds state from
     // the (possibly updated) global + project config on the next request.
     const dir = this.getWorkspaceDirectory()
     await this.client.instance.dispose({ directory: dir }).catch((e: unknown) => {
-      console.warn("[Strata New] instance.dispose() after marketplace change failed:", e)
+      Logger.warn("StrataProvider", "instance.dispose() after marketplace change failed:", e)
     })
     this.cachedAgentsMessage = null
     this.cachedConfigMessage = null
@@ -2272,7 +2338,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.cachedConfigMessage = message
       this.postMessage(message)
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to fetch config:", error)
+      Logger.error("StrataProvider", "Failed to fetch config:", error)
     }
   }
 
@@ -2283,7 +2349,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       const { data: config } = await this.client.global.config.get({ throwOnError: true })
       this.postMessage({ type: "globalConfigLoaded", config })
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to fetch global config:", error)
+      Logger.error("StrataProvider", "Failed to fetch global config:", error)
     }
   }
 
@@ -2316,7 +2382,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.cachedIndexingStatusMessage = message
       this.postMessage(message)
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to fetch indexing status:", error)
+      Logger.error("StrataProvider", "Failed to fetch indexing status:", error)
     }
   }
 
@@ -2347,7 +2413,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.cachedConfigMessage = { type: "configLoaded", config, features: configFeatures(config) }
       this.postMessage({ type: "configUpdated", config, features: configFeatures(config) })
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to fetch config after update:", error)
+      Logger.error("StrataProvider", "Failed to fetch config after update:", error)
     }
   }
 
@@ -2358,25 +2424,25 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
    */
   private async checkConfigWarnings(from: string): Promise<void> {
     if (this.configWarningsShown) {
-      console.log("[Strata New] StrataProvider: config warnings already shown", { from })
+      Logger.info("StrataProvider", "config warnings already shown", { from })
       return
     }
     if (!this.client) {
-      console.log("[Strata New] StrataProvider: config warnings skipped (no client)", { from })
+      Logger.info("StrataProvider", "config warnings skipped (no client)", { from })
       return
     }
     try {
       const dir = this.getWorkspaceDirectory()
-      console.log("[Strata New] StrataProvider: checking config warnings", { from, dir })
+      Logger.info("StrataProvider", "checking config warnings", { from, dir })
       const result = await this.client.config.warnings({ directory: dir })
       const list = result?.data ?? []
-      console.log("[Strata New] StrataProvider: config warnings fetched", { from, count: list.length })
+      Logger.info("StrataProvider", "config warnings fetched", { from, count: list.length })
       if (list.length === 0) return
       this.configWarningsShown = true
 
       const first = list[0]!
       const summary = list.length === 1 ? first.message : `${first.message} (and ${list.length - 1} more)`
-      console.warn("[Strata New] StrataProvider: showing config warnings", {
+      Logger.warn("StrataProvider", "showing config warnings", {
         from,
         count: list.length,
         path: first.path,
@@ -2394,7 +2460,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         channel.show()
       }
     } catch (err) {
-      console.warn("[Strata New] StrataProvider: checkConfigWarnings failed:", { from, err })
+      Logger.warn("StrataProvider", "checkConfigWarnings failed:", { from, err })
     }
   }
 
@@ -2439,7 +2505,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.cachedNotificationsMessage = message
       this.postMessage(message)
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to fetch notifications:", error)
+      Logger.error("StrataProvider", "Failed to fetch notifications:", error)
     }
   }
 
@@ -2529,7 +2595,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       await this.connectionService.drainPendingPrompts()
       await this.client.global.config.update({ config: partial }, { throwOnError: true })
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to update config:", error)
+      Logger.error("StrataProvider", "Failed to update config:", error)
       this.postMessage({
         type: "configUpdateFailed",
         message: getErrorMessage(error) || "Failed to update config",
@@ -2558,7 +2624,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         await Promise.all([this.fetchAndSendSkills(), this.fetchAndSendCommands()])
       }
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Config write succeeded but post-write refresh failed:", error)
+      Logger.error("StrataProvider", "Config write succeeded but post-write refresh failed:", error)
       const cached = (this.cachedConfigMessage as { config?: unknown } | null)?.config
       const features = (this.cachedConfigMessage as { features?: unknown } | null)?.features
       const optimistic =
@@ -2644,7 +2710,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         }
 
         const delay = backoff(attempt, result.response?.headers)
-        console.log(
+        Logger.info("StrataProvider", 
           `[Strata New] StrataProvider: Retry on ${status}, attempt ${attempt}/${MAX_RETRIES}, delay ${delay}ms`,
         )
 
@@ -2723,7 +2789,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
       const cancelled = await applyPluginHooks(sid, dir, text, parts)
       if (cancelled) {
-        console.warn(`[Strata New] StrataProvider: Message to session ${sid} cancelled by plugin`)
+        Logger.warn("StrataProvider", `[Strata New] StrataProvider: Message to session ${sid} cancelled by plugin`)
         this.postMessage({
           type: "sendMessageFailed",
           error: "Message cancelled by plugin",
@@ -2764,7 +2830,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         ),
       )
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to send message:", error)
+      Logger.error("StrataProvider", "Failed to send message:", error)
       this.postMessage({
         type: "sendMessageFailed",
         error: getErrorMessage(error) || "Failed to send message",
@@ -2839,7 +2905,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         ),
       )
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to send command:", error)
+      Logger.error("StrataProvider", "Failed to send command:", error)
       this.postMessage({
         type: "sendMessageFailed",
         error: getErrorMessage(error) || "Failed to send command",
@@ -2869,7 +2935,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         dir: this.getWorkspaceDirectory(targetSessionID),
       })
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to abort session:", error)
+      Logger.error("StrataProvider", "Failed to abort session:", error)
     }
   }
 
@@ -2878,7 +2944,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     const dir = this.getWorkspaceDirectory(sessionID)
     const { data, error } = await this.client.session.revert({ sessionID, messageID, directory: dir })
     if (error) {
-      console.error("[Strata New] StrataProvider: Failed to revert session:", error)
+      Logger.error("StrataProvider", "Failed to revert session:", error)
       this.postMessage({ type: "error", message: "Failed to revert session", sessionID })
       return
     }
@@ -2890,7 +2956,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     const dir = this.getWorkspaceDirectory(sessionID)
     const { data, error } = await this.client.session.unrevert({ sessionID, directory: dir })
     if (error) {
-      console.error("[Strata New] StrataProvider: Failed to unrevert session:", error)
+      Logger.error("StrataProvider", "Failed to unrevert session:", error)
       this.postMessage({ type: "error", message: "Failed to redo session", sessionID })
       return
     }
@@ -2911,12 +2977,12 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
     const target = sessionID || this.currentSession?.id
     if (!target) {
-      console.error("[Strata New] StrataProvider: No sessionID for compact")
+      Logger.error("StrataProvider", "No sessionID for compact")
       return
     }
 
     if (!providerID || !modelID) {
-      console.error("[Strata New] StrataProvider: No model selected for compact")
+      Logger.error("StrataProvider", "No model selected for compact")
       this.postMessage({
         type: "error",
         message: "No model selected. Connect a provider to compact this session.",
@@ -2931,7 +2997,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         { throwOnError: true },
       )
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to compact session:", error)
+      Logger.error("StrataProvider", "Failed to compact session:", error)
       this.postMessage({
         type: "error",
         message: getErrorMessage(error) || "Failed to compact session",
@@ -3003,7 +3069,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
     await this.client.global
       .dispose()
-      .catch((e: unknown) => console.warn("[Strata New] StrataProvider: global.dispose() after org switch failed:", e))
+      .catch((e: unknown) => Logger.warn("StrataProvider", "global.dispose() after org switch failed:", e))
 
     // Org switch succeeded — refresh profile and providers independently (best-effort)
     try {
@@ -3011,12 +3077,12 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       // Broadcast to all webviews (sidebar, profile tab, agent manager, etc.)
       this.connectionService.notifyProfileChanged(profileResult.data ?? null)
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to refresh profile after org switch:", error)
+      Logger.error("StrataProvider", "Failed to refresh profile after org switch:", error)
     }
     try {
       await this.fetchAndSendProviders()
     } catch (error) {
-      console.error("[Strata New] StrataProvider: Failed to refresh providers after org switch:", error)
+      Logger.error("StrataProvider", "Failed to refresh providers after org switch:", error)
     }
   }
 
@@ -3038,7 +3104,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
               Promise.resolve(vscode.workspace.fs.delete(vscode.Uri.joinPath(root, name), { recursive: true })).then(
                 undefined,
                 (err: unknown) => {
-                  console.warn("[Strata New] StrataProvider: Failed to delete stale preview:", err)
+                  Logger.warn("StrataProvider", "Failed to delete stale preview:", err)
                 },
               ),
             ),
@@ -3055,7 +3121,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       .createDirectory(root)
       .then(() => vscode.workspace.fs.writeFile(uri, img.data))
       .then(() => clean())
-      .then(open, (err) => console.error("[Strata New] StrataProvider: Failed to preview image:", err))
+      .then(open, (err) => Logger.error("StrataProvider", "Failed to preview image:", err))
   }
 
   /**
@@ -3078,7 +3144,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         }
         vscode.window.showTextDocument(doc, options)
       },
-      (err) => console.error("[Strata New] StrataProvider: Failed to open file:", uri.fsPath, err),
+      (err) => Logger.error("StrataProvider", `Failed to open file: ${uri.fsPath}`, err),
     )
   }
 
@@ -3090,11 +3156,260 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     const { section, leaf } = buildSettingPath(key)
     const config = vscode.workspace.getConfiguration(`strata-code.new${section ? `.${section}` : ""}`)
     const value = config.get(leaf)
+    Logger.info("StrataProvider", `handleRequestSetting: ${key} →`, value)
+    Logger.info("StrataProvider", `handleRequestSetting: webview=${!!this.webview}, isReady=${this.isWebviewReady}`)
     this.postMessage({
       type: "settingLoaded",
       key,
       value
     })
+    Logger.info("StrataProvider", `handleRequestSetting: postMessage(settingLoaded) called for ${key}`)
+  }
+
+  private async handleDiffStartThread(threadId: string, file: string, line: number, endLine: number | undefined, text: string, side?: "left" | "right"): Promise<void> {
+    try {
+      const client = this.connectionService.getClient()
+      const root = getWorkspaceRoot()
+      if (!root) {
+        throw new Error("No workspace root found.")
+      }
+
+      if (!this.diffExplainSession) {
+        const { data } = await client.session.create({ directory: root }, { throwOnError: true })
+        this.diffExplainSession = data.id
+        this.hideSession(data.id)
+      }
+
+      const prompt = [
+        `You are an expert code reviewer. The user is asking a question about a specific part of the code in the diff.`,
+        `File: ${file}`,
+        `Line: ${endLine !== undefined ? `${line}-${endLine}` : line}${side ? ` (${side === "left" ? "deletions" : "additions"} side)` : ""}`,
+        `Question:`,
+        `"${text}"`,
+        ``,
+        `Please reply directly to the user's question. Provide your answer in markdown format. Do NOT wrap your answer in JSON.`
+      ].join("\n")
+
+      const res = await client.session.prompt(
+        {
+          sessionID: this.diffExplainSession,
+          directory: root,
+          agent: "explainer",
+          parts: [{ type: "text", text: prompt }],
+        },
+        { throwOnError: true },
+      )
+
+      const part = res.data?.parts?.find((p: any) => p.type === "text")
+      if (part && "text" in part) {
+        this.postMessage({
+          type: "diffViewer.threadReply",
+          threadId,
+          message: {
+            id: Math.random().toString(36).substring(2, 9),
+            author: "ai",
+            text: part.text.trim(),
+            timestamp: Date.now()
+          }
+        })
+      }
+    } catch (err) {
+      Logger.error("StrataProvider", "diffViewer.startThread failed:", err)
+      this.postMessage({
+        type: "diffViewer.threadReply",
+        threadId,
+        message: {
+          id: Math.random().toString(36).substring(2, 9),
+          author: "ai",
+          text: `⚠️ Failed to start thread: ${err instanceof Error ? err.message : String(err)}`,
+          timestamp: Date.now()
+        }
+      })
+    }
+  }
+
+  private async handleDiffReplyToThread(threadId: string, text: string): Promise<void> {
+    try {
+      const client = this.connectionService.getClient()
+      const root = getWorkspaceRoot()
+      if (!root || !this.diffExplainSession) {
+        this.postMessage({
+          type: "diffViewer.threadReply",
+          threadId,
+          message: {
+            id: Math.random().toString(36).substring(2, 9),
+            author: "ai",
+            text: "⚠️ Review session has expired. Please initiate a new explanation.",
+            timestamp: Date.now()
+          }
+        })
+        return
+      }
+
+      const res = await client.session.prompt(
+        {
+          sessionID: this.diffExplainSession,
+          directory: root,
+          agent: "explainer",
+          parts: [{ type: "text", text }],
+        },
+        { throwOnError: true },
+      )
+
+      const part = res.data?.parts?.find((p: any) => p.type === "text")
+      if (part && "text" in part) {
+        this.postMessage({
+          type: "diffViewer.threadReply",
+          threadId,
+          message: {
+            id: Math.random().toString(36).substring(2, 9),
+            author: "ai",
+            text: part.text.trim(),
+            timestamp: Date.now()
+          }
+        })
+      }
+    } catch (err) {
+      Logger.error("StrataProvider", "diffViewer.replyToThread failed:", err)
+      this.postMessage({
+        type: "diffViewer.threadReply",
+        threadId,
+        message: {
+          id: Math.random().toString(36).substring(2, 9),
+          author: "ai",
+          text: `⚠️ Failed to reply: ${err instanceof Error ? err.message : String(err)}`,
+          timestamp: Date.now()
+        }
+      })
+    }
+  }
+
+  private async handleDiffExplainAll(message: any): Promise<void> {
+    const worktreeId = message.worktreeId as string | undefined
+    const root = this.getProjectDirectory(this.currentSession?.id)
+    if (!root) {
+      this.postMessage({ type: "diffViewer.explainResult", error: "No workspace root found." })
+      return
+    }
+    const targetDirectory = worktreeId ? path.join(path.dirname(root), worktreeId) : root
+
+    try {
+      await vscode.workspace.fs.stat(vscode.Uri.file(targetDirectory))
+    } catch {
+      this.postMessage({ type: "diffViewer.explainResult", error: `Target directory not found: ${targetDirectory}` })
+      return
+    }
+
+    try {
+      const { diffFile, ancestor } = await import("./agent-manager/local-diff")
+      const log = (...args: unknown[]) => Logger.debug("StrataProvider", "[explainAll]", ...args)
+      const gitOps = new GitOps({ log })
+
+      try {
+        const anc = await ancestor(gitOps, targetDirectory, "main", log)
+        const diffs = await localDiffSummary(gitOps, targetDirectory, "main", log)
+
+        const effort = vscode.workspace.getConfiguration("strata-code.new.explainer").get<string>("effort", "medium")
+
+        const validDiffs: { file: string, patch: string }[] = []
+        const candidates = diffs.filter((d) => !d.generatedLike)
+        const CONCURRENCY = 5
+
+        for (let i = 0; i < candidates.length; i += CONCURRENCY) {
+          const chunk = candidates.slice(i, i + CONCURRENCY)
+          const resolved = await Promise.all(
+            chunk.map(async (d) => {
+              const entry = await diffFile(
+                gitOps,
+                targetDirectory,
+                "main",
+                d.file,
+                log,
+                anc,
+              )
+              if (!entry || !entry.patch || shouldPreSkip(entry.patch, effort)) return null
+              return { file: d.file, patch: entry.patch }
+            }),
+          )
+          for (const r of resolved) {
+            if (r) validDiffs.push(r)
+          }
+        }
+
+        const { annotatedDiffs, lineMap } = buildIndexedPatches(validDiffs)
+
+        if (!annotatedDiffs.trim()) {
+          this.postMessage({
+            type: "diffViewer.explainResult",
+            threads: [],
+            summary: "No complex changes to explain."
+          })
+          return
+        }
+
+        const client = this.connectionService.getClient()
+
+        if (!this.diffExplainSession) {
+          const { data } = await client.session.create({ directory: targetDirectory }, { throwOnError: true })
+          this.diffExplainSession = data.id
+          this.connectionService.hideSession(data.id)
+        }
+
+        const prompt = buildExplainPrompt(annotatedDiffs)
+
+        let timer: ReturnType<typeof setTimeout> | undefined
+        const timeout = new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error("Explanation timed out after 60s")), 60_000)
+        })
+
+        const res = await Promise.race([
+          client.session.prompt(
+            {
+              sessionID: this.diffExplainSession,
+              directory: targetDirectory,
+              agent: "explainer",
+              parts: [{ type: "text", text: prompt }],
+            },
+            { throwOnError: true },
+          ),
+          timeout,
+        ])
+
+        if (timer) clearTimeout(timer)
+
+        const part = res.data?.parts?.find((p: any) => p.type === "text")
+        if (part && "text" in part) {
+          const raw = part.text.trim()
+          const parsed = parseExplainResponse(raw, lineMap)
+
+          const threads: ReviewThread[] = parsed.comments.map(c => ({
+            id: Math.random().toString(36).substring(2, 9),
+            file: c.file,
+            side: c.side as "left" | "right" | "additions" | "deletions" | undefined,
+            line: c.line,
+            ...(c.endLine !== undefined ? { endLine: c.endLine } : {}),
+            messages: [{
+              id: Math.random().toString(36).substring(2, 9),
+              author: "ai" as const,
+              text: c.text,
+              timestamp: Date.now()
+            }],
+            pending: false
+          }))
+
+          this.postMessage({
+            type: "diffViewer.explainResult",
+            threads,
+            summary: parsed.summary
+          })
+        }
+      } finally {
+        gitOps.dispose()
+      }
+    } catch (err) {
+      Logger.error("StrataProvider", "diffViewer.explainAll failed:", err)
+      this.postMessage({ type: "diffViewer.explainResult", error: String(err) })
+    }
   }
 
   private async handleUpdateSetting(key: string, value: unknown): Promise<void> {
@@ -3300,7 +3615,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       }
       const childId = childID(part)
       if (childId && !this.trackedSessionIds.has(childId)) {
-        console.log("[Strata New] StrataProvider: 🔗 Auto-adopting child session from task tool", { childId })
+        Logger.info("StrataProvider", "🔗 Auto-adopting child session from task tool", { childId })
         void this.handleSyncSession(childId, part.sessionID ?? sessionID)
       }
     }
@@ -3427,12 +3742,12 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         typeof (message as { type?: unknown }).type === "string"
           ? (message as { type: string }).type
           : "<unknown>"
-      console.warn("[Strata New] StrataProvider: ⚠️ postMessage dropped (no webview)", { type })
+      Logger.warn("StrataProvider", "⚠️ postMessage dropped (no webview)", { type })
       return
     }
 
     void this.webview.postMessage(message).then(undefined, (error) => {
-      console.error("[Strata New] StrataProvider: ❌ postMessage failed", error)
+      Logger.error("StrataProvider", "❌ postMessage failed", error)
     })
   }
 
@@ -3472,7 +3787,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       const remote = repo.state?.remotes?.find((r: { name: string }) => r.name === "origin")
       return remote?.fetchUrl ?? remote?.pushUrl
     } catch (error) {
-      console.warn("[Strata New] StrataProvider: Failed to get git remote URL:", error)
+      Logger.warn("StrataProvider", "Failed to get git remote URL:", error)
       return undefined
     }
   }
@@ -3570,7 +3885,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             projectMemory = res.data
           }
         } catch (e) {
-          console.warn("[Strata New] Failed to fetch project memory:", e)
+          Logger.warn("StrataProvider", "Failed to fetch project memory:", e)
         }
 
         // Fetch RepoMap
@@ -3586,7 +3901,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         }
       }
     } catch (e) {
-      console.error("Failed to generate repo map", e)
+      Logger.error("StrataProvider", "Failed to generate repo map", e)
     }
 
     return {

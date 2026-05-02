@@ -23,13 +23,17 @@ import { createPluginAPI } from "./plugin-api"
 import type { StrataPluginAPI, SendOptions } from "@stratacode/vscode-api"
 import { SelectionTipService } from "./stratacode/selection-tip"
 import { registerExplainChangeCommands } from "./commands/explain-change"
+import { Logger } from "./stratacode/logger"
 
 // Activated via "onStartupFinished" (package.json) so that commands, code actions, keybindings,
 // autocomplete, commit-message generation, and URI deep links all work immediately — without
 // requiring the user to open a Strata sidebar or panel first. The CLI backend is NOT spawned here;
 // it starts lazily when a webview connects or when ensureBackendForAutocomplete() triggers it.
 export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
-  console.log("Strata Code extension is now active")
+  Logger.init(context)
+  Logger.info("Extension", "Strata Code extension is now active", {
+    version: vscode.extensions.getExtension("stratacode.strata-code")?.packageJSON?.version ?? "unknown",
+  })
 
   const telemetry = TelemetryProxy.getInstance()
 
@@ -56,10 +60,10 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
       }
       try {
         remoteService.setClient(connectionService.getClient())
-        console.log("[Strata New] CLI connected, calling remoteService.refresh()")
-        remoteService.refresh().catch((err) => console.warn("[Strata New] initial remote refresh failed:", err))
+        Logger.info("Extension", "CLI connected, calling remoteService.refresh()")
+        remoteService.refresh().catch((err) => Logger.warn("Extension", "initial remote refresh failed", err))
       } catch (err) {
-        console.debug("[Strata] Client unavailable during connection:", err)
+        Logger.debug("Extension", "Client unavailable during connection", err)
         remoteService.setClient(null)
       }
       AutocompleteServiceManager.getInstance()?.load()
@@ -161,7 +165,7 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
         tabPanels.set(panel, tabProvider)
         panel.onDidDispose(
           () => {
-            console.log("[Strata New] Tab panel restored from restart disposed")
+            Logger.info("Extension", "Tab panel restored from restart disposed")
             tabPanels.delete(panel)
             tabProvider.dispose()
           },
@@ -278,6 +282,45 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
     vscode.commands.registerCommand("strata-code.new.openIndexingSettings", () => {
       settingsEditorProvider.openPanel("settings", "indexing")
     }),
+    vscode.commands.registerCommand("strata-code.new.openSettings", (tab?: string) => {
+      settingsEditorProvider.openPanel("settings", tab)
+    }),
+    vscode.commands.registerCommand("strata-code.new.settings.appearance", () => {
+      settingsEditorProvider.openPanel("settings", "appearance")
+    }),
+    vscode.commands.registerCommand("strata-code.new.settings.diffViewer", () => {
+      settingsEditorProvider.openPanel("settings", "diffViewer")
+    }),
+    vscode.commands.registerCommand("strata-code.new.settings.notifications", () => {
+      settingsEditorProvider.openPanel("settings", "notifications")
+    }),
+    vscode.commands.registerCommand("strata-code.new.settings.browser", () => {
+      settingsEditorProvider.openPanel("settings", "browser")
+    }),
+    vscode.commands.registerCommand("strata-code.new.settings.providers", () => {
+      settingsEditorProvider.openPanel("settings", "providers")
+    }),
+    vscode.commands.registerCommand("strata-code.new.settings.agentBehaviour", () => {
+      settingsEditorProvider.openPanel("settings", "agentBehaviour")
+    }),
+    vscode.commands.registerCommand("strata-code.new.toggleSelectionTip", () => {
+      const cfg = vscode.workspace.getConfiguration("strata-code.new")
+      const current = cfg.get<boolean>("showSelectionTip") ?? true
+      cfg.update("showSelectionTip", !current, vscode.ConfigurationTarget.Global)
+      vscode.window.showInformationMessage(`Selection tip ${!current ? "enabled" : "disabled"}`)
+    }),
+    vscode.commands.registerCommand("strata-code.new.toggleGateway", async () => {
+      const cfg = vscode.workspace.getConfiguration("strata-code.new")
+      const current = cfg.get<boolean>("enableGateway") ?? true
+      await cfg.update("enableGateway", !current, vscode.ConfigurationTarget.Global)
+      const action = await vscode.window.showInformationMessage(
+        `Strata Gateway ${!current ? "enabled" : "disabled"}. Restart to apply.`,
+        "Restart",
+      )
+      if (action === "Restart") {
+        vscode.commands.executeCommand("workbench.action.reloadWindow")
+      }
+    }),
     // legacy-migration start
     vscode.commands.registerCommand("strata-code.new.openMigrationWizard", () => {
       provider.postMessage({ type: "migrationState", needed: true })
@@ -294,7 +337,7 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
       provider.postMessage({ type: "triggerTask", text: `Generate a terminal command: ${input}` })
     }),
     vscode.commands.registerCommand("strata-code.new.toggleRemote", () => {
-      remoteService.toggle().catch((err) => console.error("[Strata New] toggleRemote command failed:", err))
+      remoteService.toggle().catch((err) => Logger.error("Extension", "toggleRemote command failed", err))
     }),
     vscode.commands.registerCommand("strata-code.new.openInTab", () => {
       return openStrataInNewTab(
@@ -387,7 +430,7 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
         if (!match) return
         const sessionId = match[1]
         if (!sessionId) return
-        console.log("[Strata New] URI handler: opening cloud session:", sessionId)
+        Logger.info("Extension", "URI handler: opening cloud session", { sessionId })
         await vscode.commands.executeCommand(`${StrataProvider.viewType}.focus`)
         provider.openCloudSession(sessionId)
       },
@@ -464,6 +507,7 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
       browserAutomationService.dispose()
       provider.dispose()
       connectionService.dispose()
+      Logger.dispose()
     },
   })
 
@@ -521,7 +565,7 @@ async function openStrataInNewTab(
 
   panel.onDidDispose(
     () => {
-      console.log("[Strata New] Tab panel disposed")
+      Logger.info("Extension", "Tab panel disposed")
       tabPanels.delete(panel)
       tabProvider.dispose()
     },

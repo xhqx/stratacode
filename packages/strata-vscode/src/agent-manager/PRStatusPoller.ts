@@ -4,6 +4,7 @@ import type { PRStatus, PRCheck, PRComment, CheckStatus, AggregateCheckStatus, P
 import { execWithShellEnv } from "./shell-env"
 import { classifyPRError } from "./git-import"
 import type { Semaphore } from "./semaphore"
+import { Logger } from "../stratacode/logger"
 
 interface PRStatusPollerOptions {
   getWorktrees: () => Worktree[]
@@ -159,7 +160,7 @@ export class PRStatusPoller {
       await this.shell("gh", ["--version"], { timeout: 5_000 })
       this.ghAvailable = true
     } catch (err) {
-      console.debug("[Strata] PRStatusPoller: gh probe failed:", err)
+      Logger.debug("PRStatusPoller", "gh probe failed:", err)
       this.ghAvailable = false
     }
     this.ghProbeTime = Date.now()

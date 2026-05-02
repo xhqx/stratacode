@@ -10,6 +10,7 @@ export interface ReviewThread {
   file: string
   side: "additions" | "deletions"
   line: number
+  endLine?: number
   messages: ReviewMessage[]
   pending: boolean
 }

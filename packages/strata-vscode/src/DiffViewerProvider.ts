@@ -12,49 +12,25 @@ import {
   resolveLocalDiffTarget,
 } from "./review-utils"
 import { getErrorMessage } from "./strata-provider-utils"
-import { buildIndexedPatches, parseExplainResponse, shouldPreSkip } from "./explain-skip"
-// Using any to avoid rootDir TS6059 errors since agent-manager types live in webview-ui
-// but are sent via the message protocol.
-type ReviewThread = any
+import { buildIndexedPatches, parseExplainResponse, shouldPreSkip, buildExplainPrompt } from "./explain-skip"
+import { Logger } from "./stratacode/logger"
 
-function buildExplainPrompt(annotatedDiffs: string): string {
-  return [
-    "You are an expert code explainer. Below are all changed files as unified diffs.",
-    "",
-    "IMPORTANT: Each changed line (+ or -) is prefixed with an ID in brackets, e.g., [1], [2].",
-    "These IDs uniquely identify that specific changed line.",
-    "",
-    "Your job is to EXPLAIN what changed and why — help the developer understand the changeset.",
-    "Leave inline comments ONLY at lines where you see actual changes.",
-    "Focus on:",
-    "- Non-obvious logic or algorithmic changes that benefit from explanation",
-    "- Important side effects or behavioral changes",
-    "- Key architectural decisions reflected in the code",
-    "- Complex transformations or refactors that need context",
-    "",
-    "Do NOT:",
-    "- Suggest improvements or propose code changes",
-    "- Comment on trivially obvious changes (renames, imports, formatting, version bumps)",
-    "- Leave review-style recommendations",
-    "",
-    "Each comment should clearly explain WHAT this change does and WHY it matters.",
-    "",
-    "Respond with ONLY this JSON (no markdown fences, no extra text):",
-    "{",
-    "  \"summary\": \"Brief 1-2 sentence summary of the overall changeset\",",
-    "  \"comments\": {",
-    "    \"1\": \"Your explanation for the change at ID [1]...\",",
-    "    \"3\": \"Your explanation for the change at ID [3]...\"",
-    "  }",
-    "}",
-    "",
-    "If a line number ID is skipped in your comments, that means you have no comment for it.",
-    "If there is nothing worth explaining, return: { \"summary\": \"...\", \"comments\": {} }",
-    "",
-    "--- DIFFS ---",
-    annotatedDiffs,
-  ].join("\n")
+// Using explicit interface to avoid rootDir TS6059 errors since agent-manager types live in webview-ui
+export interface ReviewThread {
+  id: string
+  file: string
+  side?: "left" | "right" | "additions" | "deletions"
+  line: number
+  endLine?: number
+  messages: {
+    id: string
+    author: "user" | "ai"
+    text: string
+    timestamp: number
+  }[]
+  pending?: boolean
 }
+
 
 /**
  * DiffViewerProvider opens a full-screen diff viewer in an editor tab.
@@ -134,55 +110,57 @@ export class DiffViewerProvider implements vscode.Disposable {
   }
 
   private onMessage(msg: Record<string, unknown>): void {
-    const type = msg.type as string
+    const handler = this.handlers[msg.type as string]
+    if (handler) handler(msg)
+  }
 
-    switch (type) {
-      case "webviewReady": {
-        const config = vscode.workspace.getConfiguration("strata-code.new")
-        this.post({
-          type: "ready",
-          vscodeLanguage: vscode.env.language,
-          languageOverride: config.get<string>("language"),
-          workspaceDirectory: getWorkspaceRoot(),
-        })
-        this.startDiffPolling()
-        break
+  private handlers: Record<string, (msg: Record<string, unknown>) => void> = {
+    webviewReady: () => {
+      const config = vscode.workspace.getConfiguration("strata-code.new")
+      this.post({
+        type: "ready",
+        vscodeLanguage: vscode.env.language,
+        languageOverride: config.get<string>("language"),
+        workspaceDirectory: getWorkspaceRoot(),
+      })
+      this.startDiffPolling()
+    },
+    "diffViewer.sendComments": (msg) => {
+      if (Array.isArray(msg.comments)) this.onSendComments?.(msg.comments, !!msg.autoSend)
+    },
+    "diffViewer.close": () => this.panel?.dispose(),
+    "diffViewer.setDiffStyle": () => { /* handled by webview internally */ },
+    "diffViewer.revertFile": (msg) => {
+      if (typeof msg.file === "string") void this.revertFile(msg.file)
+    },
+    openFile: (msg) => {
+      if (typeof msg.filePath === "string") {
+        this.openDiffView(msg.filePath, typeof msg.line === "number" ? msg.line : undefined)
       }
-      case "diffViewer.sendComments":
-        if (Array.isArray(msg.comments)) {
-          this.onSendComments?.(msg.comments, !!msg.autoSend)
-        }
-        break
-      case "diffViewer.close":
-        this.panel?.dispose()
-        break
-      case "diffViewer.setDiffStyle":
-        // Handled entirely by webview internally
-        break
-      case "diffViewer.revertFile":
-        if (typeof msg.file === "string") {
-          void this.revertFile(msg.file)
-        }
-        break
-      case "openFile":
-        if (typeof msg.filePath === "string") {
-          this.openDiffView(msg.filePath, typeof msg.line === "number" ? msg.line : undefined)
-        }
-        break
-      case "diffViewer.explainAll":
-        void this.explainAll()
-        break
-      case "diffViewer.replyToThread":
-        if (typeof msg.threadId === "string" && typeof msg.text === "string") {
-          void this.replyToThread(msg.threadId, msg.text)
-        }
-        break
-      case "diffViewer.requestDiff":
-        if (typeof msg.file === "string") {
-          void this.handleRequestDiff(msg.file)
-        }
-        break
-    }
+    },
+    "diffViewer.explainAll": () => void this.explainAll(),
+    "diffViewer.replyToThread": (msg) => {
+      if (typeof msg.threadId === "string" && typeof msg.text === "string") {
+        void this.replyToThread(msg.threadId, msg.text)
+      }
+    },
+    "diffViewer.startThread": (msg) => {
+      if (typeof msg.threadId === "string" && typeof msg.file === "string" && typeof msg.line === "number" && typeof msg.text === "string") {
+        void this.startThread(msg.threadId, msg.file, msg.line, typeof msg.endLine === "number" ? msg.endLine : undefined, msg.text, msg.side as "left" | "right" | undefined)
+      }
+    },
+    "diffViewer.requestDiff": (msg) => {
+      if (typeof msg.file === "string") void this.handleRequestDiff(msg.file)
+    },
+    requestSetting: (msg) => {
+      if (typeof msg.key !== "string") return
+      const parts = msg.key.split(".")
+      const leaf = parts.pop() ?? ""
+      const ns = parts.length > 0 ? `strata-code.new.${parts.join(".")}` : "strata-code.new"
+      const value = vscode.workspace.getConfiguration(ns).get(leaf)
+      Logger.info("DiffViewerProvider", `requestSetting: ${msg.key} →`, value)
+      this.post({ type: "settingLoaded", key: msg.key, value })
+    },
   }
 
   private async handleRequestDiff(file: string): Promise<void> {
@@ -350,6 +328,7 @@ export class DiffViewerProvider implements vscode.Disposable {
             file: c.file,
             side: c.side,
             line: c.line,
+            ...(c.endLine !== undefined ? { endLine: c.endLine } : {}),
             messages: [{
               id: Math.random().toString(36).substring(2, 9),
               author: "ai",
@@ -380,14 +359,25 @@ export class DiffViewerProvider implements vscode.Disposable {
 
   private async replyToThread(threadId: string, text: string): Promise<void> {
     if (!this.explainSession) {
-      this.post({ type: "diffViewer.explainError", error: "Review session has expired." })
+      this.post({
+        type: "diffViewer.threadReply",
+        threadId,
+        message: {
+          id: Math.random().toString(36).substring(2, 9),
+          author: "ai",
+          text: "⚠️ Review session has expired. Please initiate a new explanation.",
+          timestamp: Date.now()
+        }
+      })
       return
     }
 
     try {
       const client = this.connectionService.getClient()
       const root = getWorkspaceRoot()
-      if (!root) return
+      if (!root) {
+        throw new Error("No workspace root found.")
+      }
 
       const prompt = [
         `The user replied to your explanation (thread ${threadId}):`,
@@ -402,6 +392,7 @@ export class DiffViewerProvider implements vscode.Disposable {
         {
           sessionID: this.explainSession,
           directory: root,
+          agent: "explainer",
           parts: [{ type: "text", text: prompt }],
         },
         { throwOnError: true },
@@ -431,6 +422,71 @@ export class DiffViewerProvider implements vscode.Disposable {
           id: Math.random().toString(36).substring(2, 9),
           author: "ai",
           text: `⚠️ Failed to reply: ${msg}`,
+          timestamp: Date.now()
+        }
+      })
+    }
+  }
+
+  private async startThread(threadId: string, file: string, line: number, endLine: number | undefined, text: string, side?: "left" | "right"): Promise<void> {
+    try {
+      const client = this.connectionService.getClient()
+      const root = getWorkspaceRoot()
+      if (!root) {
+        throw new Error("No workspace root found.")
+      }
+
+      if (!this.explainSession) {
+        const { data } = await client.session.create({ directory: root }, { throwOnError: true })
+        this.explainSession = data.id
+        this.connectionService.hideSession(data.id)
+      }
+
+      
+      const prompt = [
+        `You are an expert code reviewer. The user is asking a question about a specific part of the code in the diff.`,
+        `File: ${file}`,
+        `Line: ${endLine !== undefined ? `${line}-${endLine}` : line}${side ? ` (${side === "left" ? "deletions" : "additions"} side)` : ""}`,
+        `Question:`,
+        `"${text}"`,
+        ``,
+        `Please reply directly to the user's question. Provide your answer in markdown format. Do NOT wrap your answer in JSON.`
+      ].join("\n")
+
+      const res = await client.session.prompt(
+        {
+          sessionID: this.explainSession,
+          directory: root,
+          agent: "explainer",
+          parts: [{ type: "text", text: prompt }],
+        },
+        { throwOnError: true },
+      )
+
+      const part = res.data?.parts?.find((p: any) => p.type === "text")
+      if (part && "text" in part) {
+        this.post({
+          type: "diffViewer.threadReply",
+          threadId,
+          message: {
+            id: Math.random().toString(36).substring(2, 9),
+            author: "ai",
+            text: part.text.trim(),
+            timestamp: Date.now()
+          }
+        })
+      }
+    } catch (err) {
+      const msg = getErrorMessage(err)
+      this.log(`Failed to start thread:`, msg)
+      
+      this.post({
+        type: "diffViewer.threadReply",
+        threadId,
+        message: {
+          id: Math.random().toString(36).substring(2, 9),
+          author: "ai",
+          text: `⚠️ Failed to start thread: ${msg}`,
           timestamp: Date.now()
         }
       })

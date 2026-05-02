@@ -280,6 +280,18 @@ export function createLineCommentState<T>(props: LineCommentStateProps<T>) {
   const hoverComment = (range: SelectedLineRange) => {
     const next = toRange(range)
     if (!next) return
+    
+    const current = props.selected()
+    if (
+      current &&
+      current.start === next.start &&
+      current.end === next.end &&
+      current.side === next.side &&
+      current.endSide === next.endSide
+    ) {
+      return
+    }
+
     if (props.hoverSelected) {
       props.hoverSelected(next)
       return

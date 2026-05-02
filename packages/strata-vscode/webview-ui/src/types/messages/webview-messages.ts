@@ -745,7 +745,6 @@ export interface OpenChangesRequest {
   type: "openChanges"
 }
 
-// Diff Viewer: request full diff for a single file (webview → extension)
 export interface DiffViewerRequestDiffMessage {
   type: "diffViewer.requestDiff"
   file: string
@@ -753,12 +752,43 @@ export interface DiffViewerRequestDiffMessage {
 
 export interface DiffViewerExplainAllMessage {
   type: "diffViewer.explainAll"
+  worktreeId?: string
 }
 
 export interface DiffViewerReplyToThreadMessage {
   type: "diffViewer.replyToThread"
   threadId: string
   text: string
+}
+
+export interface DiffViewerStartThreadMessage {
+  type: "diffViewer.startThread"
+  threadId: string
+  file: string
+  line: number
+  endLine?: number
+  text: string
+  side?: "left" | "right"
+}
+
+export interface DiffViewerSendCommentsMessage {
+  type: "diffViewer.sendComments"
+  comments: any[]
+  autoSend: boolean
+}
+
+export interface DiffViewerSetDiffStyleMessage {
+  type: "diffViewer.setDiffStyle"
+  style: "unified" | "split"
+}
+
+export interface DiffViewerRevertFileMessage {
+  type: "diffViewer.revertFile"
+  file: string
+}
+
+export interface DiffViewerCloseMessage {
+  type: "diffViewer.close"
 }
 
 // Open diff virtual (permission diff) in the lightweight diff virtual panel
@@ -962,7 +992,16 @@ export interface RemoveInstalledMarketplaceItemMessage {
   mpInstallOptions: InstallMarketplaceItemOptions
 }
 
+export interface WebviewLogMessage {
+  type: "webviewLog"
+  level: "debug" | "info" | "warn" | "error"
+  component: string
+  message: string
+  data?: any[]
+}
+
 export type WebviewMessage =
+  | WebviewLogMessage
   | SendMessageRequest
   | AbortRequest
   | RevertSessionRequest
@@ -1091,6 +1130,11 @@ export type WebviewMessage =
   | DiffViewerRequestDiffMessage
   | DiffViewerExplainAllMessage
   | DiffViewerReplyToThreadMessage
+  | DiffViewerStartThreadMessage
+  | DiffViewerSendCommentsMessage
+  | DiffViewerSetDiffStyleMessage
+  | DiffViewerRevertFileMessage
+  | DiffViewerCloseMessage
   | OpenDiffVirtualRequest
   | RetryConnectionRequest
   | OpenSubAgentViewerRequest

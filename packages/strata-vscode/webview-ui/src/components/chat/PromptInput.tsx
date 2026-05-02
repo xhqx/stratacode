@@ -169,7 +169,10 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   }
 
   const side = (item: ReviewComment) => (item.side === "deletions" ? "-" : "+")
-  const reviewChipTitle = (item: ReviewComment) => `${fileName(item.file)} ${side(item)}${item.line}`
+  const reviewChipTitle = (item: ReviewComment) => {
+    const lineStr = item.endLine && item.endLine !== item.line ? `${item.line}-${item.endLine}` : `${item.line}`
+    return `${fileName(item.file)} ${side(item)}${lineStr}`
+  }
 
   const showReviewCommentDialog = (item: ReviewComment) => {
     dialog.show(() => (
@@ -192,7 +195,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
             <span class="prompt-review-modal-label">{language.t("agentManager.review.metaFile")}</span>
             <code class="prompt-review-modal-value">{item.file}</code>
             <span class="prompt-review-modal-label">{language.t("agentManager.review.metaLine")}</span>
-            <span class="prompt-review-modal-value">L{item.line}</span>
+            <span class="prompt-review-modal-value">L{item.line}{item.endLine && item.endLine !== item.line ? `-${item.endLine}` : ""}</span>
             <span class="prompt-review-modal-label">{language.t("agentManager.review.metaComment")}</span>
             <span class="prompt-review-modal-value">{item.comment}</span>
           </div>

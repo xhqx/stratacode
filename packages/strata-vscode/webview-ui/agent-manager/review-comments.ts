@@ -49,6 +49,9 @@ export function sanitizeReviewComments(comments: ReviewComment[], diffs: Worktre
     const max = lineCount(content)
     if (comment.line < 1) return false
     if (comment.line > max) return false
+    if (comment.endLine && comment.endLine > max) {
+      comment.endLine = max
+    }
     return true
   })
 }

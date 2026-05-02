@@ -11,6 +11,7 @@ import {
 } from "./shared/custom-provider"
 import { parseModelString } from "./shared/provider-model"
 import { configFeatures } from "./features"
+import { Logger } from "./stratacode/logger"
 
 /**
  * Compute the default model selection from CLI config, VS Code settings, or hardcoded fallback.
@@ -67,7 +68,7 @@ export function buildActionContext(
       // Shared State.dispose() now has a hard per-disposer timeout, so this
       // wait is bounded without needing a client-side timeout here.
       await client.global.dispose().catch((error: unknown) => {
-        console.warn(`[Strata New] StrataProvider: global.dispose() after ${reason} failed:`, error)
+        Logger.warn("ProviderActions", `[Strata New] StrataProvider: global.dispose() after ${reason} failed:`, error)
       })
     },
     fetchAndSendProviders: refresh,
@@ -248,7 +249,7 @@ export async function disconnectProvider(
       await ctx.client.auth.remove({ providerID: id }, { throwOnError: true })
     } catch (err) {
       if (!configured) throw err
-      console.warn(`[Strata New] auth.remove failed for configured provider ${id} (non-fatal):`, err)
+      Logger.warn("ProviderActions", `[Strata New] auth.remove failed for configured provider ${id} (non-fatal):`, err)
     }
 
     if (id === "strata") {

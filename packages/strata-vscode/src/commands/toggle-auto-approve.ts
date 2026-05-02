@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import type { StrataClient, Event } from "@stratacode/sdk/v2/client"
 import type { StrataConnectionService } from "../services/cli-backend/connection-service"
+import { Logger } from "../stratacode/logger"
 
 /**
  * Callback that resolves the correct working directory for a session.
@@ -39,7 +40,7 @@ export function registerToggleAutoApprove(
     if (!client) return
     const dir = resolve(event.properties.sessionID)
     client.permission.reply({ requestID: event.properties.id, directory: dir, reply: "once" }).catch((err) => {
-      console.error("[Strata New] toggleAutoApprove: failed to auto-reply:", err)
+      Logger.error("Commands", "toggleAutoApprove: failed to auto-reply:", err)
     })
   })
 
@@ -63,11 +64,11 @@ export function registerToggleAutoApprove(
               for (const req of pending) {
                 if (generation !== snapshot) break
                 await client.permission.reply({ requestID: req.id, directory: dir, reply: "once" }).catch((err) => {
-                  console.error("[Strata New] toggleAutoApprove: failed to drain pending:", err)
+                  Logger.error("Commands", "toggleAutoApprove: failed to drain pending:", err)
                 })
               }
             } catch (err) {
-              console.error("[Strata New] toggleAutoApprove: failed to list pending permissions:", err)
+              Logger.error("Commands", "toggleAutoApprove: failed to list pending permissions:", err)
             }
           }
         }
@@ -82,7 +83,7 @@ function tryGetClient(connectionService: StrataConnectionService): StrataClient 
   try {
     return connectionService.getClient()
   } catch (err) {
-    console.debug("[Strata] toggleAutoApprove: client unavailable:", err)
+    Logger.debug("Commands", "toggleAutoApprove: client unavailable:", err)
     return undefined
   }
 }

@@ -410,7 +410,9 @@ button.am-section-toggle:hover .am-section-label {
 .am-worktree-delete-hint {
   position: absolute;
   right: 0;
+  border: 0;
   font-size: var(--font-size-small);
+  font-family: inherit;
   color: var(--text-on-brand-base);
   background: var(--surface-critical-strong);
   white-space: nowrap;
@@ -1677,7 +1679,7 @@ body.am-wt-dragging-active * {
   border: 1px solid var(--border-weak-base);
   border-left: 3px solid var(--surface-interactive-strong);
   border-radius: 0 6px 6px 0;
-  margin: 4px 8px;
+  margin: 12px 8px;
   background: var(--surface-base);
   display: flex;
   align-items: center;

@@ -3,6 +3,7 @@ import { StrataProvider } from "./StrataProvider"
 import { resolvePanelProjectDirectory } from "./project-directory"
 import type { StrataConnectionService } from "./services/cli-backend"
 import type { RemoteStatusService } from "./services/RemoteStatusService"
+import { Logger } from "./stratacode/logger"
 
 type PanelView = "settings" | "profile" | "marketplace" | "indexing"
 
@@ -140,7 +141,7 @@ export class SettingsEditorProvider implements vscode.Disposable {
 
     const title = PANEL_TITLES[view]
     panel.onDidDispose(() => {
-      console.log(`[Strata New] ${title} panel disposed`)
+      Logger.info("SettingsEditorProvider", `[Strata New] ${title} panel disposed`)
       closePanelDisposable.dispose()
       readyDisposable.dispose()
       tabDisposable.dispose()

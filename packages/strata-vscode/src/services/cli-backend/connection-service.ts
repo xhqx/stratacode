@@ -4,6 +4,7 @@ import { createStrataClient, type StrataClient, type Event } from "@stratacode/s
 import { SdkSSEAdapter } from "./sdk-sse-adapter"
 import type { ServerConfig } from "./types"
 import { resolveEventSessionId as resolveEventSessionIdPure } from "./connection-utils"
+import { Logger } from "../../stratacode/logger"
 
 export type ConnectionState = "connecting" | "connected" | "disconnected" | "error"
 type SSEEventListener = (event: Event, directory?: string) => void
@@ -477,7 +478,7 @@ export class StrataConnectionService {
       }
       this.client?.session
         .viewed({ focused: [...focus], open: [...open] })
-        .catch((err) => console.warn("[Strata New] ConnectionService: viewed flush failed:", err))
+        .catch((err) => Logger.warn("ConnectionService", "viewed flush failed", err))
     }, 150)
   }
 
@@ -535,7 +536,7 @@ export class StrataConnectionService {
       }
       const healthy = await this.checkHealth(baseUrl, password)
       if (!healthy && this.state === "connected") {
-        console.warn("[Strata New] ConnectionService: ❤️‍🩹 Health check failed — forcing SSE reconnect")
+        Logger.warn("ConnectionService", "Health check failed — forcing SSE reconnect")
         this.sseClient?.reconnect()
       }
     }, HEALTH_POLL_INTERVAL_MS)
@@ -562,7 +563,7 @@ export class StrataConnectionService {
       clearTimeout(timer)
       return res.ok
     } catch (err) {
-      console.debug("[Strata] Health check failed:", err)
+      Logger.debug("ConnectionService", "Health check failed", err)
       return false
     }
   }

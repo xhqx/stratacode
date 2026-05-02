@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import { MemoryExtractor } from "./MemoryExtractor"
 import { StrataProvider } from "../../StrataProvider"
+import { Logger } from "../../stratacode/logger"
 
 interface GitRepository {
   state: {
@@ -33,7 +34,7 @@ export class GitWatcher {
       api.onDidOpenRepository(this.setup, this, this.disposables)
       api.repositories.forEach((repo: GitRepository) => this.setup(repo))
     } catch (e) {
-      console.warn("[Strata New] GitWatcher initialization failed:", e)
+      Logger.warn("GitWatcher", "GitWatcher initialization failed:", e)
     }
   }
 

@@ -5,18 +5,9 @@ import { getWorkspaceRoot, resolveLocalDiffTarget } from "../../review-utils"
 import { getErrorMessage } from "../../strata-provider-utils"
 import { buildIndexedPatches, parseExplainResponse, shouldPreSkip } from "../../explain-skip"
 
-const CACHE_TTL_MS = 90 * 60 * 1000 // 90 minutes
-
-interface CachedExplanation {
-  text: string
-  hash: string
-  timestamp: number
-}
-
 export class ExplainCommentController implements vscode.Disposable {
   private controller: vscode.CommentController
   private threadMap = new Map<string, vscode.CommentThread>()
-  private cache = new Map<string, CachedExplanation>()
   private gitOps: GitOps
   private summaries = new Map<string, string>() // fsPath -> brief summary
   private lensEmitter = new vscode.EventEmitter<void>()
@@ -28,6 +19,7 @@ export class ExplainCommentController implements vscode.Disposable {
     this.controller.options = { prompt: "Ask Strata AI..." }
     this.controller.commentingRangeProvider = {
       provideCommentingRanges: (document: vscode.TextDocument) => {
+        if (document.lineCount === 0) return []
         return [new vscode.Range(0, 0, document.lineCount - 1, 0)]
       },
     }
@@ -74,23 +66,7 @@ export class ExplainCommentController implements vscode.Disposable {
       },
       async (progress) => {
         try {
-          const { diffSummary, diffFile } = await import("../../agent-manager/local-diff")
-          const diffs = await diffSummary(this.gitOps, target.directory, target.baseBranch)
-          
-          const effort = vscode.workspace.getConfiguration("strata-code.new.explainer").get<string>("effort", "medium")
-          
-          const validDiffs: { file: string, patch: string }[] = []
-          for (const d of diffs) {
-            if (d.generatedLike) continue
-            
-            const entry = await diffFile(this.gitOps, target.directory, target.baseBranch, d.file)
-            if (!entry || !entry.patch) continue
-            
-            if (shouldPreSkip(entry.patch, effort)) continue
-
-            validDiffs.push({ file: d.file, patch: entry.patch })
-          }
-
+          const validDiffs = await this.collectDiffs(target)
           const { annotatedDiffs, lineMap } = buildIndexedPatches(validDiffs)
 
           if (!annotatedDiffs.trim()) {
@@ -167,8 +143,8 @@ export class ExplainCommentController implements vscode.Disposable {
               
               if (parsed.summary) {
                 // Attach the summary to the first file's CodeLens for now
-                if (diffs.length > 0) {
-                  const firstFile = vscode.Uri.joinPath(vscode.Uri.file(root), diffs[0].file).fsPath
+                if (validDiffs.length > 0) {
+                  const firstFile = vscode.Uri.joinPath(vscode.Uri.file(root), validDiffs[0].file).fsPath
                   this.summaries.set(firstFile, parsed.summary)
                   this.lensEmitter.fire()
                 }
@@ -177,15 +153,16 @@ export class ExplainCommentController implements vscode.Disposable {
               for (const comment of parsed.comments) {
                 const uri = vscode.Uri.joinPath(vscode.Uri.file(root), comment.file)
                 const line = Math.max(0, comment.line - 1)
+                const endLine = comment.endLine ? Math.max(0, comment.endLine - 1) : line
                 
                 // Construct a deterministic ID for this thread
-                const threadId = `${uri.fsPath}:${line}`
+                const threadId = `${uri.fsPath}:${line}:${endLine}`
                 
                 let thread = this.threadMap.get(threadId)
                 if (!thread) {
                   thread = this.controller.createCommentThread(
                     uri,
-                    new vscode.Range(line, 0, line, 0),
+                    new vscode.Range(line, 0, endLine, 0),
                     [],
                   )
                   thread.canReply = true
@@ -209,7 +186,15 @@ export class ExplainCommentController implements vscode.Disposable {
         } catch (err) {
           const msg = getErrorMessage(err)
           vscode.window.showErrorMessage(`Strata AI: Failed to explain changes: ${msg}`)
-          this.explainSession = undefined
+          if (this.explainSession) {
+            const sid = this.explainSession
+            this.explainSession = undefined
+            this.provider.unhideSession(sid)
+            const client = this.provider.client
+            if (client) {
+              client.session.delete({ sessionID: sid, directory: root }).catch(() => {})
+            }
+          }
         }
       }
     )
@@ -237,9 +222,14 @@ export class ExplainCommentController implements vscode.Disposable {
     if (!root) return
 
     if (!this.explainSession) {
-      const { data } = await client.session.create({ directory: root }, { throwOnError: true })
-      this.explainSession = data.id
-      this.provider.hideSession(data.id)
+      try {
+        const { data } = await client.session.create({ directory: root }, { throwOnError: true })
+        this.explainSession = data.id
+        this.provider.hideSession(data.id)
+      } catch (err) {
+        vscode.window.showErrorMessage(`Strata AI: Failed to start session: ${getErrorMessage(err)}`)
+        return
+      }
     }
 
     const file = vscode.workspace.asRelativePath(thread.uri)
@@ -267,7 +257,7 @@ export class ExplainCommentController implements vscode.Disposable {
             {
               sessionID: this.explainSession!,
               directory: root,
-              agent: "copilot", // Use copilot agent to return plain markdown
+              agent: "explainer", // Use explainer agent for diff threading
               parts: [{ type: "text", text: prompt }],
             },
             { throwOnError: true }
@@ -292,6 +282,21 @@ export class ExplainCommentController implements vscode.Disposable {
     )
   }
 
+  private async collectDiffs(target: { directory: string; baseBranch: string }): Promise<{ file: string; patch: string }[]> {
+    const { diffSummary, diffFile } = await import("../../agent-manager/local-diff")
+    const diffs = await diffSummary(this.gitOps, target.directory, target.baseBranch)
+    const effort = vscode.workspace.getConfiguration("strata-code.new.explainer").get<string>("effort", "medium")
+    const result: { file: string; patch: string }[] = []
+    for (const d of diffs) {
+      if (d.generatedLike) continue
+      const entry = await diffFile(this.gitOps, target.directory, target.baseBranch, d.file)
+      if (!entry || !entry.patch) continue
+      if (shouldPreSkip(entry.patch, effort)) continue
+      result.push({ file: d.file, patch: entry.patch })
+    }
+    return result
+  }
+
   public clearThreads(): void {
     for (const thread of this.threadMap.values()) {
       thread.dispose()
@@ -299,82 +304,6 @@ export class ExplainCommentController implements vscode.Disposable {
     this.threadMap.clear()
     this.summaries.clear()
     this.lensEmitter.fire()
-  }
-
-  /** Invalidate cache entries whose diff content has changed */
-  public invalidateStale(diffs: any[]): void {
-    let changed = false
-    for (const [file, entry] of this.cache) {
-      const diff = diffs.find((d: any) => d.file === file)
-      if (!diff || entry.hash !== this.hashDiff(diff)) {
-        this.cache.delete(file)
-        const thread = this.threadMap.get(file)
-        if (thread) {
-          thread.dispose()
-          this.threadMap.delete(file)
-        }
-        // Remove stale summary
-        const root = getWorkspaceRoot()
-        if (root) {
-          const key = vscode.Uri.file(`${root}/${file}`).fsPath
-          if (this.summaries.delete(key)) changed = true
-        }
-      }
-    }
-    if (changed) this.lensEmitter.fire()
-  }
-
-  /** Update the CodeLens summary for a file */
-  private updateSummary(root: string, file: string, text: string): void {
-    const key = vscode.Uri.file(`${root}/${file}`).fsPath
-    const summary = this.extractSummary(text)
-    if (!summary) return
-    this.summaries.set(key, summary)
-    this.lensEmitter.fire()
-  }
-
-  /** Extract a brief one-line summary from the full explanation */
-  private extractSummary(text: string): string {
-    // Try "What changed" section first
-    const match = text.match(/\*\*What changed\*\*:?\s*(.+?)(?:\n|$)/i)
-    if (match) {
-      const line = match[1].trim()
-      return line.length > 140 ? line.slice(0, 137) + "..." : line
-    }
-    // Fallback: first non-empty line
-    for (const line of text.split("\n")) {
-      const trimmed = line.replace(/^[#*\-\s]+/, "").trim()
-      if (trimmed.length > 10) {
-        return trimmed.length > 140 ? trimmed.slice(0, 137) + "..." : trimmed
-      }
-    }
-    return ""
-  }
-
-  private hashDiff(diff: any): string {
-    return `${diff.file}:${diff.status}:${diff.additions}:${diff.deletions}:${diff.patch ?? ""}`
-  }
-
-  private buildPatch(diff: any): string {
-    if (diff.patch) return diff.patch
-    const before = diff.before.split("\n")
-    const after = diff.after.split("\n")
-    if (before.join("\n") === after.join("\n")) return ""
-    const lines: string[] = []
-    lines.push(`--- a/${diff.file}`)
-    lines.push(`+++ b/${diff.file}`)
-    const max = Math.max(before.length, after.length)
-    for (let i = 0; i < max; i++) {
-      const a = before[i]
-      const b = after[i]
-      if (a === b) {
-        lines.push(` ${a ?? ""}`)
-      } else {
-        if (a !== undefined) lines.push(`-${a}`)
-        if (b !== undefined) lines.push(`+${b}`)
-      }
-    }
-    return lines.join("\n")
   }
 
   public dispose() {

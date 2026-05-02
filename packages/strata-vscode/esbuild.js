@@ -200,6 +200,9 @@ async function main() {
     platform: "node",
     outfile: "dist/extension.js",
     external: ["vscode"],
+    // Prefer ESM entry for packages like jsonc-parser whose UMD entry uses
+    // dynamic require("./impl/...") calls that esbuild cannot inline.
+    mainFields: ["module", "main"],
     logLevel: "silent",
     plugins: [tsExtensionPlugin, esbuildProblemMatcherPlugin],
   })

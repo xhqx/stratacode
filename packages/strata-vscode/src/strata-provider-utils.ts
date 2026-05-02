@@ -2,6 +2,7 @@ import type { Session, Agent, Event, ProviderListResponse } from "@stratacode/sd
 import { prettifyError } from "zod/v4"
 import type { CloudSessionMessage, IndexingStatus } from "./services/cli-backend/types"
 import type { PartBatch, PartUpdate } from "./strata-provider/session-stream-scheduler"
+import { Logger } from "./stratacode/logger"
 
 export { SessionStreamScheduler } from "./strata-provider/session-stream-scheduler"
 
@@ -45,7 +46,7 @@ function safeStringify(value: unknown): string | undefined {
     const json = JSON.stringify(value)
     if (json !== "{}" && json.length < 500) return json
   } catch (err) {
-    console.warn("[Strata New] getErrorMessage: JSON.stringify failed", err)
+    Logger.warn("StrataProviderUtils", "getErrorMessage: JSON.stringify failed", err)
   }
   return undefined
 }
@@ -180,7 +181,7 @@ export async function runWithMessageConfirmation<T>(
     return await run()
   } catch (error) {
     if (await state.wait(id)) {
-      console.warn(`[Strata New] ${label} ended after server accepted it; ignoring transport error`, {
+      Logger.warn("StrataProviderUtils", `[Strata New] ${label} ended after server accepted it; ignoring transport error`, {
         error: getErrorMessage(error),
       })
       return undefined
@@ -257,7 +258,7 @@ export async function loadSessions(ctx: SessionRefreshContext): Promise<string |
   const extra = await Promise.all(
     [...worktreeDirs].map((dir) =>
       list(dir).catch((err: unknown) => {
-        console.error(`[Strata] Failed to list sessions for ${dir}:`, err)
+        Logger.error("StrataProviderUtils", `[Strata] Failed to list sessions for ${dir}:`, err)
         failed.add(dir)
         return [] as Session[]
       }),

@@ -30,8 +30,8 @@ export const lineCommentStyles = `
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  color: var(--text-weaker);
+  background: var(--diffs-button-bg-color, #333333);
+  color: var(--diffs-button-text-color, #ffffff);
   cursor: pointer;
   border: none;
   transition: all 150ms ease;

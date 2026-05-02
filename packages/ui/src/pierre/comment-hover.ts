@@ -21,8 +21,10 @@ export function createHoverCommentUtility(props: {
   button.style.justifyContent = "center"
   button.style.border = "none"
   button.style.borderRadius = "var(--radius-md)"
-  button.style.background = "var(--vscode-editorInfo-foreground, #3794ff)"
-  button.style.color = "var(--white, #ffffff)"
+  // stratacode_change start
+  button.style.background = "var(--gray-dark-3, #232323)"
+  button.style.color = "#ffffff"
+  // stratacode_change end
   button.style.boxShadow = "var(--shadow-xs, 0 1px 2px rgba(0,0,0,0.12))"
   button.style.fontSize = "14px"
   button.style.lineHeight = "1"

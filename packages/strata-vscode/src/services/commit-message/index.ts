@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import type { StrataConnectionService } from "../cli-backend/connection-service"
 import { getErrorMessage } from "../../strata-provider-utils"
+import { Logger } from "../../stratacode/logger"
 
 let lastGeneratedMessage: string | undefined
 let lastWorkspacePath: string | undefined
@@ -58,7 +59,7 @@ export function registerCommitMessageService(
       try {
         client = await connectionService.getClientAsync(path)
       } catch (err) {
-        console.error("[Strata New] Failed to connect to Strata backend:", err)
+        Logger.error("CommitMessageService", "Failed to connect to Strata backend:", err)
         vscode.window.showErrorMessage("Failed to connect to Strata backend. Please try again.")
         return
       }
@@ -93,7 +94,7 @@ export function registerCommitMessageService(
               repository.inputBox.value = message
               lastGeneratedMessage = message
               lastWorkspacePath = path
-              console.log("[Strata New] Commit message generated successfully")
+              Logger.info("CommitMessageService", "Commit message generated successfully")
             } finally {
               clearTimeout(timer)
             }
@@ -101,11 +102,11 @@ export function registerCommitMessageService(
         )
         .then(undefined, (error: unknown) => {
           if (controller.signal.aborted) {
-            console.log("[Strata New] Commit message generation was cancelled or timed out")
+            Logger.info("CommitMessageService", "Commit message generation was cancelled or timed out")
             return
           }
           const msg = getErrorMessage(error)
-          console.error("[Strata New] Failed to generate commit message:", msg)
+          Logger.error("CommitMessageService", "Failed to generate commit message:", msg)
 
           if (msg.toLowerCase().includes("model") || msg.toLowerCase().includes("agent")) {
             vscode.window.showErrorMessage(

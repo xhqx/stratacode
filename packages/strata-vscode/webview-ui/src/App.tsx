@@ -40,6 +40,7 @@ import { lazy } from "solid-js"
 const PlanningView = lazy(() => import("./components/planning/PlanningView").then((m) => ({ default: m.PlanningView })))
 import type { Message as SDKMessage, Part as SDKPart } from "@stratacode/sdk/v2"
 import "./styles/chat.css"
+import { WebviewLogger } from "./utils/webview-logger"
 
 type ViewType =
   | "newTask"
@@ -265,29 +266,29 @@ const AppContent: Component = () => {
     const handler = (event: MessageEvent) => {
       const message = event.data
       if (message?.type === "action" && message.action) {
-        console.log("[Strata New] App: 🎬 action:", message.action)
+        WebviewLogger.info("App", "🎬 action:", message.action)
         handleViewAction(message.action)
       }
       if (message?.type === "navigate" && message.view && VALID_VIEWS.has(message.view)) {
-        console.log("[Strata New] App: 🧭 navigate:", message.view, message.tab ? `tab=${message.tab}` : "")
+        WebviewLogger.info("App", "🧭 navigate:", message.view, message.tab ? `tab=${message.tab}` : "")
         if (message.tab) setSettingsTab(message.tab)
         setCurrentView(message.view as ViewType)
         vscode.postMessage({ type: "settingsTabChanged", tab: message.tab })
       }
       if (message?.type === "openCloudSession" && message.sessionId) {
-        console.log("[Strata New] App: ☁️ openCloudSession:", message.sessionId)
+        WebviewLogger.info("App", "☁️ openCloudSession:", message.sessionId)
         session.selectCloudSession(message.sessionId)
         setCurrentView("newTask")
       }
       handleForked(message)
       if (message?.type === "viewSubAgentSession" && message.sessionID) {
-        console.log("[Strata New] App: 🔍 viewSubAgentSession:", message.sessionID)
+        WebviewLogger.info("App", "🔍 viewSubAgentSession:", message.sessionID)
         session.setCurrentSessionID(message.sessionID)
         setCurrentView("subAgentViewer")
       }
       // legacy-migration: state-driven migration wizard
       if (message?.type === "migrationState") {
-        console.log("[Strata New] App: 🔄 migrationState:", message.needed)
+        WebviewLogger.info("App", "🔄 migrationState:", message.needed)
         setMigrationNeeded(message.needed)
       }
     }

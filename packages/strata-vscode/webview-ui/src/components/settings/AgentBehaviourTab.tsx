@@ -46,16 +46,26 @@ const AgentBehaviourTab: Component = () => {
   const [editingAgent, setEditingAgent] = createSignal<string>("")
 
   const [activeRemote, setActiveRemote] = createSignal(false)
+  const [planningTaskView, setPlanningTaskView] = createSignal(true)
+  const [documentDrivenTasks, setDocumentDrivenTasks] = createSignal(true)
 
   const handler = (msg: ExtensionMessage) => {
     if (msg.type === "remoteStatus") {
       setActiveRemote(msg.enabled)
+    }
+    if (msg.type === "settingLoaded" && msg.key === "planning.taskView") {
+      setPlanningTaskView(msg.value as boolean)
+    }
+    if (msg.type === "settingLoaded" && msg.key === "planning.documentDrivenTasks") {
+      setDocumentDrivenTasks(msg.value as boolean)
     }
   }
 
   onMount(() => {
     const unsub = vscode.onMessage(handler)
     vscode.postMessage({ type: "requestRemoteStatus" })
+    vscode.postMessage({ type: "requestSetting", key: "planning.taskView" })
+    vscode.postMessage({ type: "requestSetting", key: "planning.documentDrivenTasks" })
     onCleanup(unsub)
   })
 
@@ -482,7 +492,6 @@ const AgentBehaviourTab: Component = () => {
               <SettingsRow
                 title={language.t("settings.experimental.formatter.title")}
                 description={language.t("settings.experimental.formatter.description")}
-                last
               >
                 <Switch
                   checked={config().formatter !== false}
@@ -490,6 +499,37 @@ const AgentBehaviourTab: Component = () => {
                   hideLabel
                 >
                   {language.t("settings.experimental.formatter.title")}
+                </Switch>
+              </SettingsRow>
+              <SettingsRow
+                title={language.t("settings.display.planningTaskView.title")}
+                description={language.t("settings.display.planningTaskView.description")}
+              >
+                <Switch
+                  checked={planningTaskView()}
+                  onChange={(checked) => {
+                    setPlanningTaskView(checked)
+                    vscode.postMessage({ type: "updateSetting", key: "planning.taskView", value: checked })
+                  }}
+                  hideLabel
+                >
+                  {language.t("settings.display.planningTaskView.title")}
+                </Switch>
+              </SettingsRow>
+              <SettingsRow
+                title={language.t("settings.display.documentDrivenTasks.title")}
+                description={language.t("settings.display.documentDrivenTasks.description")}
+                last
+              >
+                <Switch
+                  checked={documentDrivenTasks()}
+                  onChange={(checked) => {
+                    setDocumentDrivenTasks(checked)
+                    vscode.postMessage({ type: "updateSetting", key: "planning.documentDrivenTasks", value: checked })
+                  }}
+                  hideLabel
+                >
+                  {language.t("settings.display.documentDrivenTasks.title")}
                 </Switch>
               </SettingsRow>
             </Card>

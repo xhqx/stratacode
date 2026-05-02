@@ -263,7 +263,13 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
                         </div>
                       </Show>
                       <Show when={props.pendingDelete && !props.busy}>
-                        <span class="am-worktree-delete-hint">{t("agentManager.worktree.confirmDelete")}</span>
+                        <button
+                          class="am-worktree-delete-hint"
+                          type="button"
+                          onClick={(e) => props.onDelete(e, true)}
+                        >
+                          {t("agentManager.worktree.confirmDelete")}
+                        </button>
                       </Show>
                       <div class="am-wt-hover-actions">
                         <Show

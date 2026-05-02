@@ -5,6 +5,7 @@ import type { PlanningTask, PlanningStatus } from "./types"
 import { hasCycle, isReady } from "./planning-validation"
 import { MarkdownPlanWatcher } from "./MarkdownPlanWatcher"
 import type { MarkdownTask } from "./markdown-parser"
+import { Logger } from "../stratacode/logger"
 
 export interface PlanningServiceOptions {
   context: vscode.ExtensionContext
@@ -357,7 +358,7 @@ export class PlanningService {
         tasks,
       })
     } catch (err) {
-      console.warn("[Strata New] pushMarkdownPreview failed:", err)
+      Logger.warn("PlanningService", "pushMarkdownPreview failed:", err)
     }
   }
 
@@ -395,7 +396,7 @@ export class PlanningService {
 
       await this.save()
     } catch (err) {
-      console.warn("[Strata New] applyMarkdownTasks failed:", err)
+      Logger.warn("PlanningService", "applyMarkdownTasks failed:", err)
     }
   }
 

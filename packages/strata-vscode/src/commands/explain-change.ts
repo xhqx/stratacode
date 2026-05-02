@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import type { StrataProvider } from "../StrataProvider"
 import type { DiffViewerProvider } from "../DiffViewerProvider"
 import { ExplainCommentController } from "../services/code-actions/ExplainCommentController"
+import { Logger } from "../stratacode/logger"
 
 /**
  * Registers commands for the Per-Change Explanator feature.

@@ -3,6 +3,7 @@ import * as fs from "node:fs"
 import * as path from "node:path"
 import { scanPlanDirectory, updateCheckbox } from "./markdown-parser"
 import type { MarkdownPage } from "./markdown-parser"
+import { Logger } from "../stratacode/logger"
 
 export class MarkdownPlanWatcher {
   private watcher: vscode.FileSystemWatcher | null = null
@@ -45,7 +46,7 @@ export class MarkdownPlanWatcher {
         await fs.promises.writeFile(file, updated, "utf-8")
       }
     } catch (err) {
-      console.warn("[Strata New] MarkdownPlanWatcher.writeBack failed:", err)
+      Logger.warn("MarkdownPlanWatcher", "MarkdownPlanWatcher.writeBack failed:", err)
     } finally {
       setTimeout(() => {
         this.suppressed = false
@@ -73,7 +74,7 @@ export class MarkdownPlanWatcher {
         : undefined
       await vscode.window.showTextDocument(doc, { selection })
     } catch (err) {
-      console.warn("[Strata New] MarkdownPlanWatcher.openFile failed:", err)
+      Logger.warn("MarkdownPlanWatcher", "MarkdownPlanWatcher.openFile failed:", err)
     }
   }
 

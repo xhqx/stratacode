@@ -82,6 +82,7 @@ function stripRemotePrefix(ref: string): { branch: string; remote?: string } {
 }
 
 import { STRATA_DIR, LEGACY_DIR, migrateAgentManagerData } from "./constants"
+import { Logger } from "../stratacode/logger"
 
 const SESSION_ID_FILE = "session-id"
 const METADATA_FILE = "metadata.json"
@@ -806,7 +807,7 @@ export class WorktreeManager {
       return true
     } catch (err) {
       // git-lfs not installed
-      console.debug("[Strata] WorktreeManager: git-lfs not available:", err)
+      Logger.debug("WorktreeManager", "git-lfs not available:", err)
       return false
     }
   }

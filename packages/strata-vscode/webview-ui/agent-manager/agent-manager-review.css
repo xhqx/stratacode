@@ -27,6 +27,8 @@
   /* Inherit pierre diffs CSS vars from am-diff-panel */
   --diffs-light-bg: var(--vscode-editor-background, #1e1e1e);
   --diffs-dark-bg: var(--vscode-editor-background, #1e1e1e);
+  --diffs-button-bg-color: #333333;
+  --diffs-button-text-color: #ffffff;
   --diffs-bg-addition-override: color-mix(
     in lab,
     var(--vscode-editor-background, #1e1e1e) 82%,
@@ -491,7 +493,7 @@
   background: color-mix(in srgb, var(--vscode-editorInfo-foreground, #3794ff) 6%, transparent);
   border-radius: 0 4px 4px 0;
   padding: 8px 12px;
-  margin: 4px 0;
+  margin: 12px 0;
 }
 
 .am-annotation-explanation-label {

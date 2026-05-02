@@ -730,8 +730,9 @@ export interface DiffViewerLoadingMessage {
 
 export interface DiffViewerExplainResultMessage {
   type: "diffViewer.explainResult"
-  threads: ReviewThread[]
-  summary: string
+  threads?: ReviewThread[]
+  summary?: string
+  error?: string
 }
 
 export interface DiffViewerThreadReplyMessage {
@@ -994,6 +995,7 @@ export type ExtensionMessage =
   | DiffViewerExplainResultMessage
   | DiffViewerThreadReplyMessage
   | DiffViewerExplainErrorMessage
+
   | MarketplaceDataMessage
   | MarketplaceInstallResultMessage
   | MarketplaceRemoveResultMessage

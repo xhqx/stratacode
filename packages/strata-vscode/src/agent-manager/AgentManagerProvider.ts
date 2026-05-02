@@ -36,6 +36,7 @@ import { Semaphore } from "./semaphore"
 import { PLATFORM } from "./constants"
 import type { AgentManagerOutMessage, AgentManagerInMessage } from "./types"
 import type { Host, PanelContext, OutputHandle, Disposable } from "./host"
+import { Logger } from "../stratacode/logger"
 
 /**
  * AgentManagerProvider opens the Agent Manager panel.
@@ -1472,7 +1473,7 @@ export class AgentManagerProvider implements Disposable {
       // Directory-boundary check: append path.sep so "/foo/bar" won't match "/foo/bar2/..."
       if (resolved !== root && !resolved.startsWith(root + path.sep)) return
     } catch (err) {
-      console.error("[Strata New] AgentManagerProvider: Cannot resolve file path:", err)
+      Logger.error("AgentManagerProvider", "Cannot resolve file path:", err)
       return
     }
     this.host.openFile(resolved, line, column)

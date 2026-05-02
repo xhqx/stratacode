@@ -96,6 +96,7 @@ import { FullScreenDiffView } from "./FullScreenDiffView"
 import { ApplyDialog } from "./ApplyDialog"
 import { groupApplyConflicts } from "./apply-conflicts"
 import type { ReviewComment } from "./review-comments"
+import type { ReviewThread } from "../src/types/messages"
 import { BranchSelect } from "./BranchSelect"
 import { WorktreeItem } from "./WorktreeItem"
 import SectionHeader from "./SectionHeader"
@@ -114,7 +115,6 @@ import { ConstrainDragXAxis } from "./constrain-drag-x"
 import { mergeWorktreeDiffs } from "./diff-state"
 import "./agent-manager.css"
 import "./agent-manager-review.css"
-
 const REVIEW_TAB_ID = "review"
 
 interface SetupState {
@@ -125,23 +125,19 @@ interface SetupState {
   worktreeId?: string
   errorCode?: string
 }
-
 interface WorktreeBusyState {
   reason: "setting-up" | "deleting"
   message?: string
   branch?: string
 }
-
 interface ApplyState {
   status: AgentManagerApplyWorktreeDiffStatus
   message: string
   conflicts: AgentManagerApplyWorktreeDiffConflict[]
 }
-/** Sidebar selection: LOCAL for local repo, worktree ID for a worktree, or null for an unassigned session. */
 type SidebarSelection = typeof LOCAL | string | null
 type SidePanel = "diff" | "pr" | null
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent)
-// Fallback keybindings before extension sends resolved ones
 const MAX_JUMP_INDEX = 9
 
 const defaultBindings: Record<string, string> = {
@@ -231,18 +227,15 @@ function useTabScroll(activeTabs: Accessor<SessionInfo[]>, activeId: Accessor<st
   })
   return { setRef, showLeft, showRight }
 }
-
 /** Shortcut category definition for the keyboard shortcuts dialog */
 interface ShortcutEntry {
   label: string
   binding: string
 }
-
 interface ShortcutCategory {
   title: string
   shortcuts: ShortcutEntry[]
 }
-
 /** Build the categorized list of keyboard shortcuts from the current bindings */
 function buildShortcutCategories(
   bindings: Record<string, string>,
@@ -303,6 +296,7 @@ function buildShortcutCategories(
 }
 
 import { parseBindingTokens } from "./keybind-tokens"
+import { WebviewLogger } from "../src/utils/webview-logger"
 
 const AgentManagerContent: Component = () => {
   const { t } = useLanguage()
@@ -311,7 +305,6 @@ const AgentManagerContent: Component = () => {
   const dialog = useDialog()
 
   const [kb, setKb] = createSignal<Record<string, string>>(defaultBindings)
-
   const [setup, setSetup] = createSignal<SetupState>({ active: false, message: "" })
   const [worktrees, setWorktrees] = createSignal<WorktreeState[]>([])
   const [managedSessions, setManagedSessions] = createSignal<ManagedSessionState[]>([])
@@ -324,10 +317,8 @@ const AgentManagerContent: Component = () => {
   const [isGitRepo, setIsGitRepo] = createSignal(true)
   const [repoDetectedBranch, setRepoDetectedBranch] = createSignal<string | undefined>()
   const [defaultBaseBranch, setDefaultBaseBranch] = createSignal<string | undefined>()
-
   const repoDefaultBranch = () => defaultBaseBranch() ?? repoDetectedBranch() ?? "main"
   const hasConfiguredBranch = () => !!defaultBaseBranch()
-
   const DEFAULT_SIDEBAR_WIDTH = 260
   const MIN_SIDEBAR_WIDTH = 200
   const MAX_SIDEBAR_WIDTH_RATIO = 0.4
@@ -341,13 +332,11 @@ const AgentManagerContent: Component = () => {
   const [sidebarWidth, setSidebarWidth] = createSignal(persisted?.sidebarWidth ?? DEFAULT_SIDEBAR_WIDTH)
   const [sessionsCollapsed, setSessionsCollapsed] = createSignal(false)
   const [sections, setSections] = createSignal<SectionState[]>([])
-
   // rAF coalescing for resize handlers — at most one signal write per frame
   let sidebarRaf: number | undefined
   let pendingSidebarWidth: number | undefined
   let diffRaf: number | undefined
   let pendingDiffWidth: number | undefined
-
   const [history, setHistory] = createSignal(false)
   const [sidePanel, setSidePanel] = createSignal<SidePanel>(null)
   const diffOpen = () => sidePanel() === "diff"
@@ -361,6 +350,11 @@ const AgentManagerContent: Component = () => {
   const [reviewCommentsByContext, setReviewCommentsByContext] = createSignal<Record<string, ReviewComment[]>>({})
   const [reviewActive, setReviewActive] = createSignal(false)
   const [reviewDiffStyle, setReviewDiffStyle] = createSignal<"unified" | "split">("unified")
+  const [eagerLoad, setEagerLoad] = createSignal(false)
+  const [instantComments, setInstantComments] = createSignal(true)
+  const [reviewSummary, setReviewSummary] = createSignal<string>()
+  const [explainingDiffs, setExplainingDiffs] = createSignal(false)
+  const [reviewThreads, setReviewThreads] = createSignal<ReviewThread[]>([])
   // reviewOpen (memo below) controls tab presence for selected context.
 
   // Per-worktree git stats (diff additions/deletions, commits missing from origin)
@@ -1074,6 +1068,13 @@ const AgentManagerContent: Component = () => {
   }
 
   onMount(() => {
+    // DEBUG: raw message listener to trace ALL messages arriving at the Agent Manager webview
+    window.addEventListener("message", (ev) => {
+      const d = ev.data
+      if (d?.type === "settingLoaded" || d?.type === "requestSetting") {
+        console.log("[AM:RAW] window message:", d.type, d)
+      }
+    })
     const handler = (event: MessageEvent) => {
       const msg = event.data
       if (msg?.type === "navigate" && msg.view === "history") return setHistory(true)
@@ -1237,6 +1238,11 @@ const AgentManagerContent: Component = () => {
             const ms = managedSessions().find((s) => s.id === ev.sessionId)
             if (ms?.worktreeId) setSelection(ms.worktreeId)
             evictLocal(ev.sessionId)
+            // Mark grouped worktrees as loading when ready
+            const wt = ms?.worktreeId ? worktrees().find((w) => w.id === ms.worktreeId) : undefined
+            if (wt?.groupId) {
+              setBusyWorktrees((prev) => new Map([...prev, [wt.id, { reason: "setting-up" as const }]]))
+            }
           }
         } else {
           // Track this worktree as setting up and auto-select it in the sidebar
@@ -1354,19 +1360,6 @@ const AgentManagerContent: Component = () => {
         }
       }
 
-      // When state updates arrive, mark new grouped worktrees as loading
-      // (they were just created and haven't received their prompt yet)
-      if (msg.type === "agentManager.worktreeSetup") {
-        const ev = msg as AgentManagerWorktreeSetupMessage
-        if (ev.status === "ready" && ev.sessionId) {
-          const ms = managedSessions().find((s) => s.id === ev.sessionId)
-          const wt = ms?.worktreeId ? worktrees().find((w) => w.id === ms.worktreeId) : undefined
-          if (wt?.groupId) {
-            setBusyWorktrees((prev) => new Map([...prev, [wt.id, { reason: "setting-up" as const }]]))
-          }
-        }
-      }
-
       // Set per-session model selection without clearing busy state.
       // Used during Phase 1 of multi-version creation so the UI selector
       // reflects the correct model as soon as the worktree appears.
@@ -1428,9 +1421,7 @@ const AgentManagerContent: Component = () => {
           return { ...prev, [ev.sessionId]: next }
         })
         if (staleFiles) refreshStaleDiffs(ev.sessionId, staleFiles)
-      }
-
-      if (msg.type === "agentManager.worktreeDiffFile") {
+      } else if (msg.type === "agentManager.worktreeDiffFile") {
         const ev = msg as AgentManagerWorktreeDiffFileMessage
         if (ev.diff) {
           setDiffDatas((prev) => {
@@ -1442,14 +1433,10 @@ const AgentManagerContent: Component = () => {
           return
         }
         setDiffFilePending(ev.sessionId, ev.file, false)
-      }
-
-      if (msg.type === "agentManager.worktreeDiffLoading") {
+      } else if (msg.type === "agentManager.worktreeDiffLoading") {
         const ev = msg as AgentManagerWorktreeDiffLoadingMessage
         setDiffLoading(ev.loading)
-      }
-
-      if (msg.type === "agentManager.applyWorktreeDiffResult") {
+      } else if (msg.type === "agentManager.applyWorktreeDiffResult") {
         const ev = msg as AgentManagerApplyWorktreeDiffResultMessage
         const files = new Set((ev.conflicts ?? []).map((entry) => entry.file).filter(Boolean)).size
         const count = ev.conflicts?.length ?? 0
@@ -1465,35 +1452,63 @@ const AgentManagerContent: Component = () => {
         if (ev.status === "success") {
           showToast({ variant: "success", title: t("agentManager.apply.success"), description: ev.message })
           if (applyTarget() === ev.worktreeId) closeApplyDialog()
-        }
-        if (ev.status === "conflict") {
+        } else if (ev.status === "conflict") {
           const summary =
             count > 0 ? t("agentManager.apply.conflictToast", { count, files: Math.max(files, 1) }) : ev.message
           showToast({ variant: "error", title: t("agentManager.apply.conflict"), description: summary })
-        }
-        if (ev.status === "error") {
+        } else if (ev.status === "error") {
           showToast({ variant: "error", title: t("agentManager.apply.error"), description: ev.message })
         }
       }
+    })
 
+    // Separate subscription for stats, settings, and thread replies to keep main-handler complexity in check.
+    const unsubMisc = vscode.onMessage((msg) => {
+      // DEBUG: log every message type arriving in this handler
+      if (msg.type?.startsWith("settingLoaded") || msg.type?.startsWith("diffViewer") || msg.type?.startsWith("agentManager.revert") || msg.type?.startsWith("agentManager.worktree") || msg.type?.startsWith("agentManager.local") || msg.type?.startsWith("agentManager.pr")) {
+        console.log("[AM:unsubMisc] received:", msg.type, msg)
+      }
       if (msg.type === "agentManager.revertWorktreeFileResult") revertCtl.onResult(msg as never)
-
-      if (msg.type === "agentManager.worktreeStats") {
+      else if (msg.type === "agentManager.worktreeStats") {
         const ev = msg as AgentManagerWorktreeStatsMessage
         const map: Record<string, WorktreeGitStats> = {}
         for (const s of ev.stats) map[s.worktreeId] = s
         setWorktreeStats(map)
-      }
-
-      if (msg.type === "agentManager.localStats") {
+      } else if (msg.type === "agentManager.localStats") {
         const ev = msg as AgentManagerLocalStatsMessage
         setLocalStats(ev.stats)
         setRepoBranch(ev.stats.branch)
-      }
-
-      if (msg.type === "agentManager.prStatus") {
+      } else if (msg.type === "agentManager.prStatus") {
         const ev = msg as AgentManagerPRStatusMessage
         setPrStatuses((prev) => ({ ...prev, [ev.worktreeId]: ev.pr }))
+      } else if (msg.type === "settingLoaded") {
+        console.log("[AM:unsubMisc] settingLoaded HIT:", msg.key, "=", msg.value)
+        WebviewLogger.info("AgentManagerApp", "[AgentManager] settingLoaded:", msg.key, msg.value)
+        if (msg.key === "diff.eagerLoad") setEagerLoad(msg.value as boolean)
+        if (msg.key === "diffViewer.instantComments") {
+          setInstantComments(msg.value as boolean)
+          console.log("[AM:unsubMisc] instantComments set to:", msg.value, "signal now:", instantComments())
+        }
+      } else if (msg.type === "diffViewer.threadReply" && typeof msg.threadId === "string") {
+        WebviewLogger.info("AgentManagerApp", "[AgentManager] threadReply received:", msg.threadId)
+        setReviewThreads((prev) =>
+          prev.map((t) => (t.id === msg.threadId ? { ...t, messages: [...t.messages, msg.message], pending: false } : t))
+        )
+      } else if (msg.type === "diffViewer.explainResult") {
+        setExplainingDiffs(false)
+        if (msg.error) {
+          WebviewLogger.error("AgentManagerApp", "[AgentManager] diffViewer.explainResult error:", msg.error)
+          return
+        }
+        const threads = msg.threads
+        if (threads) {
+          setReviewThreads((prev) => {
+            const ids = new Set(threads.map((t: ReviewThread) => t.id))
+            const manual = prev.filter((t) => !ids.has(t.id))
+            return [...manual, ...threads]
+          })
+        }
+        if (msg.summary) setReviewSummary(msg.summary)
       }
     })
 
@@ -1507,15 +1522,20 @@ const AgentManagerContent: Component = () => {
       unsubRun()
       unsubTerminals()
       unsub()
+      unsubMisc()
     })
   })
 
   // Always select local on mount to initialize branch info and session state
   onMount(() => {
+    console.log("[AM:onMount] AgentManagerApp mounted, sending requestSetting messages")
     selectLocal()
     // Request worktree/session state from extension — handles race where
     // initializeState() pushState fires before the webview is mounted
     vscode.postMessage({ type: "agentManager.requestState" })
+    vscode.postMessage({ type: "requestSetting", key: "diff.eagerLoad" })
+    vscode.postMessage({ type: "requestSetting", key: "diffViewer.instantComments" })
+    console.log("[AM:onMount] requestSetting messages sent, current instantComments:", instantComments())
     // Open a pending "New Session" tab if there are no persisted local sessions
     if (localSessionIDs().length === 0) {
       addPendingTab()
@@ -2144,6 +2164,22 @@ const AgentManagerContent: Component = () => {
     const sel = selection()
     if (!sel || sel === LOCAL) return
     confirmDeleteWorktree(sel)
+  }
+
+  const openFile = (file: string, line?: number) => {
+    const id = currentDiffSessionId()
+    if (id) vscode.postMessage({ type: "agentManager.openFile", sessionId: id, filePath: file, line })
+    else if (selection() === LOCAL) vscode.postMessage({ type: "openFile", filePath: file, line })
+  }
+  const startThread = (threadId: string, file: string, side: string | undefined, line: number, endLine: number | undefined, text: string) => {
+    const msg = { id: Math.random().toString(36).substring(2, 9), author: "user" as const, text, timestamp: Date.now() }
+    setReviewThreads((prev) => [...prev, { id: threadId, file, side: side as ReviewThread["side"], line, ...(endLine !== undefined ? { endLine } : {}), messages: [msg], pending: true }])
+    vscode.postMessage({ type: "diffViewer.startThread", threadId, file, line, endLine, text })
+  }
+  const replyThread = (threadId: string, text: string) => {
+    const msg = { id: Math.random().toString(36).substring(2, 9), author: "user" as const, text, timestamp: Date.now() }
+    setReviewThreads((prev) => prev.map((t) => t.id === threadId ? { ...t, messages: [...t.messages, msg], pending: true } : t))
+    vscode.postMessage({ type: "diffViewer.replyToThread", threadId, text })
   }
 
   return (
@@ -3088,14 +3124,12 @@ const AgentManagerContent: Component = () => {
                         onClose={() => setSidePanel(null)}
                         onExpand={selection() !== null ? openReviewTab : undefined}
                         onRequestDiff={requestDiffFile}
-                        onOpenFile={(file, line) => {
-                          const id = currentDiffSessionId()
-                          if (id)
-                            vscode.postMessage({ type: "agentManager.openFile", sessionId: id, filePath: file, line })
-                          else if (selection() === LOCAL) vscode.postMessage({ type: "openFile", filePath: file, line })
-                        }}
+                        onOpenFile={openFile}
                         onRevertFile={revertCtl.revert}
                         revertingFiles={revertCtl.reverting()}
+                        eagerLoad={eagerLoad()}
+                        instantComments={instantComments()}
+                        onStartThread={startThread}
                       />
                     </Show>
                   </div>
@@ -3117,14 +3151,21 @@ const AgentManagerContent: Component = () => {
                   diffStyle={reviewDiffStyle()}
                   onDiffStyleChange={setSharedDiffStyle}
                   onRequestDiff={requestDiffFile}
-                  onOpenFile={(file, line) => {
-                    const id = currentDiffSessionId()
-                    if (id) vscode.postMessage({ type: "agentManager.openFile", sessionId: id, filePath: file, line })
-                    else if (selection() === LOCAL) vscode.postMessage({ type: "openFile", filePath: file, line })
-                  }}
+                  onOpenFile={openFile}
                   onRevertFile={revertCtl.revert}
                   revertingFiles={revertCtl.reverting()}
                   onClose={closeReviewTab}
+                  eagerLoad={eagerLoad()}
+                  instantComments={instantComments()}
+                  reviewThreads={reviewThreads()}
+                  reviewSummary={reviewSummary()}
+                  explaining={explainingDiffs()}
+                  onExplainAll={() => {
+                    setExplainingDiffs(true)
+                    vscode.postMessage({ type: "diffViewer.explainAll", worktreeId: (selection() === LOCAL || selection() === null) ? undefined : selection() as string })
+                  }}
+                  onThreadReply={replyThread}
+                  onStartThread={startThread}
                 />
               </div>
             </Show>

@@ -164,6 +164,7 @@ export interface ReviewComment {
   file: string
   side: "additions" | "deletions"
   line: number
+  endLine?: number
   comment: string
   selectedText: string
 }

@@ -1,4 +1,4 @@
-import { createSignal, onCleanup } from "solid-js"
+import { batch, createSignal, onCleanup } from "solid-js"
 import type { Component } from "solid-js"
 import { DialogProvider } from "@stratacode/strata-ui/context/dialog"
 import { CodeComponentProvider } from "@stratacode/strata-ui/context/code"
@@ -31,6 +31,47 @@ const DiffViewerContent: Component = () => {
   const [branch, setBranch] = createSignal<string | undefined>()
   const [reviewThreads, setReviewThreads] = createSignal<ReviewThread[]>([])
   const [reviewSummary, setReviewSummary] = createSignal("")
+  const [scroll, setScroll] = createSignal<HTMLDivElement>()
+  const [eagerLoad, setEagerLoad] = createSignal(false)
+  const [instantComments, setInstantComments] = createSignal(true)
+
+  const preserveScroll = (fn: () => void) => {
+    const el = scroll()
+    if (!el) {
+      fn()
+      return
+    }
+
+    const item = Array.from(el.querySelectorAll<HTMLElement>('[data-slot="accordion-item"][data-file-path]')).find(
+      (node) => node.getBoundingClientRect().bottom > el.getBoundingClientRect().top,
+    )
+    const path = item?.dataset.filePath
+    const top = item ? item.getBoundingClientRect().top - el.getBoundingClientRect().top : undefined
+    const fallback = el.scrollTop
+
+    fn()
+
+    const restore = () => {
+      if (!path || top === undefined) {
+        el.scrollTop = fallback
+        return
+      }
+
+      const next = el.querySelector<HTMLElement>(`[data-slot="accordion-item"][data-file-path="${CSS.escape(path)}"]`)
+      if (!next) {
+        el.scrollTop = fallback
+        return
+      }
+
+      const delta = next.getBoundingClientRect().top - el.getBoundingClientRect().top - top
+      el.scrollTop += delta
+    }
+
+    requestAnimationFrame(() => {
+      restore()
+      requestAnimationFrame(restore)
+    })
+  }
 
   const markReverting = (file: string, active: boolean) => {
     setReverting((prev) => {
@@ -64,15 +105,24 @@ const DiffViewerContent: Component = () => {
 
     // New batch explainer results
     if (msg.type === "diffViewer.explainResult") {
-      setExplaining(false)
-      if (msg.threads) {
-        // Create review threads from results
-        // Use the new ReviewThread format directly
-        setReviewThreads(msg.threads)
-      }
-      if (msg.summary) {
-        setReviewSummary(msg.summary)
-      }
+      preserveScroll(() => {
+        batch(() => {
+          setExplaining(false)
+          setReviewThreads((prev) => {
+            const next = [...prev]
+            for (const thread of msg.threads) {
+              const existing = next.findIndex((t) => t.id === thread.id)
+              if (existing !== -1) {
+                next[existing] = thread
+              } else {
+                next.push(thread)
+              }
+            }
+            return next
+          })
+          setReviewSummary(msg.summary)
+        })
+      })
       return
     }
 
@@ -107,7 +157,21 @@ const DiffViewerContent: Component = () => {
       return
     }
 
+    if (msg.type === "settingLoaded" && msg.key === "diff.eagerLoad") {
+      setEagerLoad(msg.value as boolean)
+      return
+    }
+
+    if (msg.type === "settingLoaded" && msg.key === "diffViewer.instantComments") {
+      setInstantComments(msg.value as boolean)
+      return
+    }
+
   })
+
+  // Request settings on init
+  post({ type: "requestSetting", key: "diff.eagerLoad" })
+  post({ type: "requestSetting", key: "diffViewer.instantComments" })
 
   const handler = (event: MessageEvent) => {
     const msg = event.data
@@ -122,8 +186,12 @@ const DiffViewerContent: Component = () => {
   })
 
   const explainAll = () => {
-    setExplaining(true)
-    setReviewSummary("")
+    preserveScroll(() => {
+      batch(() => {
+        setExplaining(true)
+        setReviewSummary("")
+      })
+    })
     post({ type: "diffViewer.explainAll" })
   }
 
@@ -139,6 +207,29 @@ const DiffViewerContent: Component = () => {
       prev.map((t) => t.id === threadId ? { ...t, messages: [...t.messages, msg], pending: true } : t)
     )
     post({ type: "diffViewer.replyToThread", threadId, text })
+  }
+
+  const handleStartThread = (threadId: string, file: string, side: "additions" | "deletions", line: number, endLine: number | undefined, text: string) => {
+    // Immediately append user message and mark thread as pending
+    const msg = {
+      id: Math.random().toString(36).substring(2, 9),
+      author: "user" as const,
+      text,
+      timestamp: Date.now(),
+    }
+    setReviewThreads((prev) => [
+      ...prev,
+      {
+        id: threadId,
+        file,
+        side,
+        line,
+        ...(endLine !== undefined ? { endLine } : {}),
+        messages: [msg],
+        pending: true
+      }
+    ])
+    post({ type: "diffViewer.startThread", threadId, file, line, endLine, text, side: side === "additions" ? "right" : "left" })
   }
 
   return (
@@ -165,13 +256,17 @@ const DiffViewerContent: Component = () => {
         post({ type: "diffViewer.revertFile", file })
       }}
       revertingFiles={reverting()}
+      eagerLoad={eagerLoad()}
+      instantComments={instantComments()}
       
       // New review thread props
       reviewThreads={reviewThreads()}
       reviewSummary={reviewSummary()}
       onExplainAll={explainAll}
       onThreadReply={handleThreadReply}
+      onStartThread={handleStartThread}
       explaining={explaining() || reviewThreads().some((t) => t.pending)}
+      onScrollContainerChange={setScroll}
       
       onClose={() => {
         post({ type: "diffViewer.close" })
