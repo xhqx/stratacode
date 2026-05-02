@@ -104,7 +104,7 @@ export async function resolveBase(git: GitOps, dir: string, base: string): Promi
   return "HEAD"
 }
 
-async function ancestor(git: GitOps, dir: string, base: string, log?: Log): Promise<string | undefined> {
+export async function ancestor(git: GitOps, dir: string, base: string, log?: Log): Promise<string | undefined> {
   const resolvedBase = await resolveBase(git, dir, base)
   const result = await git.execGit(["merge-base", "HEAD", resolvedBase], dir)
   if (result.code !== 0) {
@@ -158,29 +158,28 @@ function statusFromCode(code: string): Status {
 }
 
 async function list(git: GitOps, dir: string, anc: string, log?: Log): Promise<Meta[]> {
-  const nameStatus = await git.execGit(
-    ["-c", "core.quotepath=false", "diff", "--name-status", "--no-renames", anc],
-    dir,
-  )
+  const [nameStatus, counts] = await Promise.all([
+    git.execGit(["-c", "core.quotepath=false", "diff", "--name-status", "--no-renames", anc], dir),
+    numstat(git, dir, anc),
+  ])
+
   if (nameStatus.code !== 0) {
     log?.("git diff --name-status failed", { code: nameStatus.code, stderr: nameStatus.stderr.trim() })
     return []
   }
 
-  const counts = await numstat(git, dir, anc)
-  const result: Meta[] = []
   const seen = new Set<string>()
+  const trackedLines = nameStatus.stdout.trim().split("\n").filter(Boolean)
 
-  for (const line of nameStatus.stdout.trim().split("\n")) {
-    if (!line) continue
+  const trackedMetaPromises = trackedLines.map(async (line) => {
     const parts = line.split("\t")
-    const code = parts[0]
+    const code = parts[0]!
     const file = parts.slice(1).join("\t")
-    if (!file || !code) continue
+    if (!file) return null
     seen.add(file)
     const status = statusFromCode(code)
     const stat = counts.get(file) ?? { additions: 0, deletions: 0 }
-    result.push({
+    return {
       file,
       additions: stat.additions,
       deletions: stat.deletions,
@@ -188,10 +187,15 @@ async function list(git: GitOps, dir: string, anc: string, log?: Log): Promise<M
       tracked: true,
       generatedLike: generatedLike(file),
       stamp: status === "deleted" ? `deleted:${anc}` : await statStamp(dir, file),
-    })
-  }
+    } as Meta
+  })
 
-  const untracked = await git.execGit(["ls-files", "--others", "--exclude-standard"], dir)
+  const untrackedPromise = git.execGit(["ls-files", "--others", "--exclude-standard"], dir)
+
+  const trackedMeta = (await Promise.all(trackedMetaPromises)).filter(Boolean) as Meta[]
+  const result: Meta[] = [...trackedMeta]
+
+  const untracked = await untrackedPromise
   if (untracked.code !== 0) {
     log?.("git ls-files --others failed", { code: untracked.code, stderr: untracked.stderr.trim() })
     return result
@@ -200,20 +204,33 @@ async function list(git: GitOps, dir: string, anc: string, log?: Log): Promise<M
   const files = untracked.stdout.trim()
   if (!files) return result
 
-  for (const file of files.split("\n")) {
-    if (!file || seen.has(file)) continue
-    const full = path.join(dir, file)
-    const exists = await fs.stat(full).catch(() => undefined)
-    if (!exists) continue
-    result.push({
-      file,
-      additions: await lineCount(full),
-      deletions: 0,
-      status: "added",
-      tracked: false,
-      generatedLike: generatedLike(file),
-      stamp: await statStamp(dir, file),
-    })
+  const untrackedLines = files.split("\n").filter((f) => f && !seen.has(f))
+  const CONCURRENCY = 10
+  
+  for (let i = 0; i < untrackedLines.length; i += CONCURRENCY) {
+    const chunk = untrackedLines.slice(i, i + CONCURRENCY)
+    const resolvedChunk = await Promise.all(
+      chunk.map(async (file) => {
+        const full = path.join(dir, file)
+        const exists = await fs.stat(full).catch(() => undefined)
+        if (!exists) return null
+
+        const [additions, stamp] = await Promise.all([lineCount(full), statStamp(dir, file)])
+
+        return {
+          file,
+          additions,
+          deletions: 0,
+          status: "added",
+          tracked: false,
+          generatedLike: generatedLike(file),
+          stamp,
+        } as Meta
+      }),
+    )
+    for (const m of resolvedChunk) {
+      if (m) result.push(m)
+    }
   }
 
   return result
@@ -340,8 +357,9 @@ export async function diffFile(
   base: string,
   file: string,
   log?: Log,
+  precomputedAnc?: string,
 ): Promise<WorktreeDiffEntry | null> {
-  const anc = await ancestor(git, dir, base, log)
+  const anc = precomputedAnc || (await ancestor(git, dir, base, log))
   if (!anc) return null
   const meta = await detailMeta(git, dir, anc, file)
   if (!meta) return null

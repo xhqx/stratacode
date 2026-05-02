@@ -439,6 +439,7 @@ export function patchAgents(
   // Add enhance agent
   agents.enhance = {
     name: "enhance",
+    displayName: "Prompt Enhancer",
     description: "Rewrite prompts into clearer, more specific, and more effective instructions.",
     prompt: PROMPT_ENHANCE,
     options: {},
@@ -449,7 +450,6 @@ export function patchAgents(
     ),
     mode: "primary",
     native: true,
-    hidden: true,
     temperature: 0.7,
   }
 

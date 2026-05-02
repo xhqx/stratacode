@@ -17,6 +17,7 @@ interface FileTreeProps {
   selectedFiles?: Set<string>
   onFileToggle?: (path: string, checked: boolean) => void
   onRevertFile?: (path: string) => void
+  onOpenFile?: (path: string) => void
   revertingFiles?: Set<string>
   showSummary?: boolean
 }
@@ -30,6 +31,7 @@ const DirectoryNode: Component<{
   selectedFiles?: Set<string>
   onFileToggle?: (path: string, checked: boolean) => void
   onRevertFile?: (path: string) => void
+  onOpenFile?: (path: string) => void
   revertingFiles?: Set<string>
 }> = (props) => {
   const [expanded, setExpanded] = createSignal(true)
@@ -64,6 +66,7 @@ const DirectoryNode: Component<{
                   selectedFiles={props.selectedFiles}
                   onFileToggle={props.onFileToggle}
                   onRevertFile={props.onRevertFile}
+                  onOpenFile={props.onOpenFile}
                   revertingFiles={props.revertingFiles}
                 />
               }
@@ -77,6 +80,7 @@ const DirectoryNode: Component<{
                 selectedFiles={props.selectedFiles}
                 onFileToggle={props.onFileToggle}
                 onRevertFile={props.onRevertFile}
+                onOpenFile={props.onOpenFile}
                 revertingFiles={props.revertingFiles}
               />
             </Show>
@@ -96,6 +100,7 @@ const FileNode: Component<{
   selectedFiles?: Set<string>
   onFileToggle?: (path: string, checked: boolean) => void
   onRevertFile?: (path: string) => void
+  onOpenFile?: (path: string) => void
   revertingFiles?: Set<string>
 }> = (props) => {
   const { t } = useLanguage()
@@ -129,6 +134,10 @@ const FileNode: Component<{
             return
           }
           props.onFileSelect(props.node.path)
+        }}
+        onDblClick={(e) => {
+          e.stopPropagation()
+          props.onOpenFile?.(props.node.path)
         }}
       >
         <Show when={selectable()}>
@@ -221,6 +230,7 @@ export const FileTree: Component<FileTreeProps> = (props) => {
                   selectedFiles={props.selectedFiles}
                   onFileToggle={props.onFileToggle}
                   onRevertFile={props.onRevertFile}
+                  onOpenFile={props.onOpenFile}
                   revertingFiles={props.revertingFiles}
                 />
               }
@@ -234,6 +244,7 @@ export const FileTree: Component<FileTreeProps> = (props) => {
                 selectedFiles={props.selectedFiles}
                 onFileToggle={props.onFileToggle}
                 onRevertFile={props.onRevertFile}
+                onOpenFile={props.onOpenFile}
                 revertingFiles={props.revertingFiles}
               />
             </Show>

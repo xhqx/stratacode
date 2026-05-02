@@ -117,6 +117,20 @@ export class PlanningService {
     })
   }
 
+  private validateDependencies(id: string, dependsOn?: string[]): boolean {
+    if (!dependsOn || dependsOn.length === 0) return true
+    if (hasCycle(this.tasks, id, dependsOn)) {
+      this.postToSidebar({
+        type: "planningDispatchResult",
+        taskId: id,
+        success: false,
+        error: "Circular dependency detected",
+      })
+      return false
+    }
+    return true
+  }
+
   public add(opts: {
     title: string
     description?: string
@@ -133,16 +147,8 @@ export class PlanningService {
     const id = `ptask-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
     // Validate dependencies
-    if (opts.dependsOn && opts.dependsOn.length > 0) {
-      if (hasCycle(this.tasks, id, opts.dependsOn)) {
-        this.postToSidebar({
-          type: "planningDispatchResult",
-          taskId: id,
-          success: false,
-          error: "Circular dependency detected",
-        })
-        return
-      }
+    if (!this.validateDependencies(id, opts.dependsOn)) {
+      return
     }
 
     const newTask: PlanningTask = {
@@ -181,16 +187,8 @@ export class PlanningService {
     if (!task) return
 
     // Cycle check if dependencies are being updated
-    if (updates.dependsOn) {
-      if (hasCycle(this.tasks, id, updates.dependsOn)) {
-        this.postToSidebar({
-          type: "planningDispatchResult",
-          taskId: id,
-          success: false,
-          error: "Circular dependency detected",
-        })
-        return
-      }
+    if (!this.validateDependencies(id, updates.dependsOn)) {
+      return
     }
 
     Object.assign(task, updates)
@@ -352,21 +350,23 @@ export class PlanningService {
       // Upsert each parsed task
       for (const mt of parsed) {
         const existing = this.tasks.find((t) => t.id === mt.id && t.markdownFile)
-        if (existing) {
-          // Update metadata
-          existing.title = mt.title
-          existing.description = mt.description || existing.description
-          existing.markdownLine = mt.line
-          existing.markdownGroup = mt.group
-          existing.priority = mt.meta.priority ?? existing.priority
-          existing.agent = mt.meta.agent ?? existing.agent
-          existing.providerID = mt.meta.provider ?? existing.providerID
-          existing.modelID = mt.meta.model ?? existing.modelID
-          if (mt.meta.depends) existing.dependsOn = mt.meta.depends
-          if (mt.checked && existing.status !== "done") existing.status = "done"
-        } else {
+        
+        if (!existing) {
           this.tasks.push(this.markdownToPlanning(mt))
+          continue
         }
+        
+        // Update metadata
+        existing.title = mt.title
+        existing.description = mt.description || existing.description
+        existing.markdownLine = mt.line
+        existing.markdownGroup = mt.group
+        existing.priority = mt.meta.priority ?? existing.priority
+        existing.agent = mt.meta.agent ?? existing.agent
+        existing.providerID = mt.meta.provider ?? existing.providerID
+        existing.modelID = mt.meta.model ?? existing.modelID
+        if (mt.meta.depends) existing.dependsOn = mt.meta.depends
+        if (mt.checked && existing.status !== "done") existing.status = "done"
       }
 
       await this.save()

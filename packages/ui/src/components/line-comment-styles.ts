@@ -26,28 +26,30 @@ export const lineCommentStyles = `
 [data-component="line-comment"] [data-slot="line-comment-button"] {
   width: 20px;
   height: 20px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--icon-interactive-base);
-  box-shadow: var(--shadow-xs);
-  cursor: default;
+  background: transparent;
+  color: var(--text-weaker);
+  cursor: pointer;
   border: none;
+  transition: all 150ms ease;
 }
 
-[data-component="line-comment"][data-variant="add"] [data-slot="line-comment-button"] {
-  background: var(--syntax-diff-add);
+[data-component="line-comment"] [data-slot="line-comment-button"]:hover {
+  background: var(--surface-inset-base-hover, rgba(128, 128, 128, 0.15));
+  color: var(--text-base);
 }
 
 [data-component="line-comment"] [data-component="icon"] {
-  color: var(--white);
+  color: inherit;
 }
 
 [data-component="line-comment"] [data-slot="line-comment-icon"] {
   width: 12px;
   height: 12px;
-  color: var(--white);
+  color: inherit;
 }
 
 [data-component="line-comment"] [data-slot="line-comment-button"]:focus {

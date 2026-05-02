@@ -347,7 +347,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     }
   }
 
-  // stratacode_change start
   /** Hide a session from the chat/sidebar UI (e.g. explainer sessions). */
   public hideSession(sessionId: string): void {
     this.connectionService.hideSession(sessionId)
@@ -357,7 +356,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   public unhideSession(sessionId: string): void {
     this.connectionService.unhideSession(sessionId)
   }
-  // stratacode_change end
 
   // Strip edit-tool metadata.filediff.before/after (multi-MB for edit-heavy
   // sessions) to keep session switches fast. Logic in strata-provider/slim-metadata.ts.
@@ -2212,7 +2210,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     })
     this.cachedAgentsMessage = null
     this.cachedConfigMessage = null
-    await Promise.all([this.fetchAndSendAgents(), this.fetchAndSendConfig()])
+    await Promise.all([this.fetchAndSendAgents(), this.fetchAndSendConfig(), this.fetchAndSendSkills()])
   }
 
   /**
@@ -2522,7 +2520,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.cachedConfigMessage = { type: "configLoaded", config: merged, features: configFeatures(merged) }
       this.postMessage({ type: "configUpdated", config: merged, features: configFeatures(merged) })
       if (refreshProviders) await this.fetchAndSendProviders()
-      // stratacode_change start — refresh commands/skills caches after relevant config writes
       if (partial.command !== undefined) {
         this.clearCommandsCache()
         await this.fetchAndSendCommands()
@@ -2532,7 +2529,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         this.clearCommandsCache()
         await Promise.all([this.fetchAndSendSkills(), this.fetchAndSendCommands()])
       }
-      // stratacode_change end
     } catch (error) {
       console.error("[Strata New] StrataProvider: Config write succeeded but post-write refresh failed:", error)
       const cached = (this.cachedConfigMessage as { config?: unknown } | null)?.config
@@ -3214,12 +3210,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
     const sessionID = this.connectionService.resolveEventSessionId(event)
 
-    // stratacode_change start
     // Drop all events for hidden sessions (e.g. the diff viewer explainer).
     // This prevents them from appearing in the sidebar session list.
     if (sessionID && this.connectionService.isSessionHidden(sessionID)) return
     if (event.type === "session.created" && this.connectionService.isSessionHidden(event.properties.info.id)) return
-    // stratacode_change end
 
     // Events without sessionID (server.connected, server.heartbeat, indexing.status) → always forward
     // Events with sessionID → only forward if this webview tracks that session

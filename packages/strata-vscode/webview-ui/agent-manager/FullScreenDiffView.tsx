@@ -513,7 +513,6 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
           <IconButton icon="close" size="small" variant="ghost" label={t("common.close")} onClick={props.onClose} />
         </div>
       </div>
-
       {/* Body: file tree + diff viewer */}
       <div class="am-review-body">
         <div class="am-review-tree-resize" style={{ width: `${treeWidth()}px` }}>
@@ -525,6 +524,7 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
               comments={comments()}
               reviewThreads={props.reviewThreads}
               onRevertFile={props.onRevertFile}
+              onOpenFile={props.onOpenFile}
               revertingFiles={props.revertingFiles}
             />
           </div>
@@ -582,7 +582,16 @@ export const FullScreenDiffView: Component<FullScreenDiffViewProps> = (props) =>
                                 }}
                               >
                                 <FileIcon node={{ path: diff.file, type: "file" }} />
-                                <div data-slot="session-review-file-name-container">
+                                <div
+                                  data-slot="session-review-file-name-container"
+                                  style={props.onOpenFile && !isDeleted() ? { cursor: "pointer", "text-decoration": "underline", "text-underline-offset": "2px" } : undefined}
+                                  onClick={(e) => {
+                                    if (props.onOpenFile && !isDeleted()) {
+                                      e.stopPropagation()
+                                      props.onOpenFile(diff.file)
+                                    }
+                                  }}
+                                >
                                   <Show when={diff.file.includes("/")}>
                                     <span data-slot="session-review-directory">{`\u2066${getDirectory(diff.file)}\u2069`}</span>
                                   </Show>

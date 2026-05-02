@@ -438,7 +438,16 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
                             }}
                           >
                             <FileIcon node={{ path: diff.file, type: "file" }} />
-                            <div data-slot="session-review-file-name-container">
+                            <div
+                              data-slot="session-review-file-name-container"
+                              style={props.onOpenFile && !isDeleted() ? { cursor: "pointer", "text-decoration": "underline", "text-underline-offset": "2px" } : undefined}
+                              onClick={(e) => {
+                                if (props.onOpenFile && !isDeleted()) {
+                                  e.stopPropagation()
+                                  props.onOpenFile(diff.file)
+                                }
+                              }}
+                            >
                               <Show when={diff.file.includes("/")}>
                                 <span data-slot="session-review-directory">{`\u2066${getDirectory(diff.file)}\u2069`}</span>
                               </Show>

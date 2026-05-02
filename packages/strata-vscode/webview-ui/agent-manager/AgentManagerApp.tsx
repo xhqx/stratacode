@@ -1836,12 +1836,12 @@ const AgentManagerContent: Component = () => {
     dialog.show(() => <NewWorktreeDialog onClose={() => dialog.close()} defaultBaseBranch={repoDefaultBranch()} />)
   }
 
-  const confirmDeleteWorktree = (worktreeId: string) => {
+  const confirmDeleteWorktree = (worktreeId: string, force?: boolean) => {
     const wt = worktrees().find((w) => w.id === worktreeId)
     if (!wt) return
 
-    // Second press/click: execute the delete
-    if (pendingDelete() === worktreeId) {
+    // Second press/click or force: execute the delete
+    if (force || pendingDelete() === worktreeId) {
       cancelPendingDelete()
       setBusyWorktrees((prev) => new Map([...prev, [wt.id, { reason: "deleting" as const }]]))
       vscode.postMessage({ type: "agentManager.deleteWorktree", worktreeId: wt.id })
@@ -1914,9 +1914,9 @@ const AgentManagerContent: Component = () => {
     ))
   }
 
-  const handleDeleteWorktree = (worktreeId: string, e: MouseEvent) => {
-    e.stopPropagation()
-    confirmDeleteWorktree(worktreeId)
+  const handleDeleteWorktree = (worktreeId: string, e: MouseEvent | undefined, force?: boolean) => {
+    if (e) e.stopPropagation()
+    confirmDeleteWorktree(worktreeId, force)
   }
 
   const handlePromote = (sessionId: string, e: MouseEvent) => {
@@ -2490,7 +2490,7 @@ const AgentManagerContent: Component = () => {
                                     }
                                     selectWorktree(wt.id)
                                   }}
-                                  onDelete={(e) => handleDeleteWorktree(wt.id, e)}
+                                  onDelete={(e, force) => handleDeleteWorktree(wt.id, e, force)}
                                   onStartRename={(current) => startRename(wt.id, current)}
                                   onRenameInput={(v) => setRenameValue(v)}
                                   onCommitRename={() => commitRename(wt.id)}

@@ -76,75 +76,71 @@ export function buildIndexedPatches(diffs: { file: string, patch: string }[]): I
   return { annotatedDiffs: out.join("\n"), lineMap };
 }
 
+function extractJsonStr(raw: string): string {
+  const codeMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+  if (codeMatch && codeMatch[1]) return codeMatch[1].trim()
+  
+  const objMatch = raw.match(/\{[\s\S]*\}/)
+  if (objMatch) return objMatch[0].trim()
+  
+  return raw.trim()
+}
+
+function processComment(key: unknown, text: unknown, map: Map<number, IndexedLine>, out: ReviewCommentPayload[]) {
+  const match = String(key).match(/\d+/)
+  if (!match) return
+  
+  const id = parseInt(match[0], 10)
+  if (isNaN(id) || typeof text !== "string" || !text.trim()) return
+
+  const mapped = map.get(id)
+  if (!mapped) return
+
+  out.push({
+    file: mapped.file,
+    side: mapped.side,
+    line: mapped.line,
+    text: text.trim(),
+  })
+}
+
+function parseCommentsArr(items: unknown[], map: Map<number, IndexedLine>, out: ReviewCommentPayload[]) {
+  for (const item of items) {
+    if (!item || typeof item !== "object") continue
+    
+    const obj = item as Record<string, unknown>
+    const idVal = "id" in obj ? obj.id : Object.keys(obj).find((k) => /\d+/.test(k))
+    if (idVal === undefined) continue
+
+    const textVal = "text" in obj ? obj.text : obj[idVal as string]
+    processComment(idVal, textVal, map, out)
+  }
+}
+
+function parseCommentsObj(obj: Record<string, unknown>, map: Map<number, IndexedLine>, out: ReviewCommentPayload[]) {
+  for (const [key, text] of Object.entries(obj)) {
+    processComment(key, text, map, out)
+  }
+}
+
 export function parseExplainResponse(raw: string, lineMap: Map<number, IndexedLine>): ReviewResponsePayload {
   const fallback: ReviewResponsePayload = { summary: "", comments: [] }
   if (!raw) return fallback
 
-  let jsonStr = raw.trim()
-
-  const match = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
-  if (match && match[1]) {
-    jsonStr = match[1].trim()
-  } else {
-    const jsonMatch = raw.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      jsonStr = jsonMatch[0].trim()
-    }
-  }
+  const str = extractJsonStr(raw)
 
   try {
-    const parsed = JSON.parse(jsonStr)
-    
+    const parsed = JSON.parse(str)
     if (!parsed || typeof parsed !== "object") return fallback
-    
-    const summary = typeof parsed.summary === "string" ? parsed.summary.trim() : ""
+
+    const obj = parsed as Record<string, unknown>
+    const summary = typeof obj.summary === "string" ? obj.summary.trim() : ""
     const comments: ReviewCommentPayload[] = []
 
-    if (parsed.comments) {
-      if (Array.isArray(parsed.comments)) {
-        // Handle case where model returns an array: [{ "1": "comment" }] or [{ "id": 1, "text": "comment" }]
-        for (const item of parsed.comments) {
-          if (item && typeof item === "object") {
-            const idVal = "id" in item ? item.id : Object.keys(item).find(k => /\d+/.test(k))
-            const textVal = "text" in item ? item.text : (idVal !== undefined ? item[idVal as keyof typeof item] : undefined)
-            
-            if (idVal !== undefined && typeof textVal === "string" && textVal.trim()) {
-              const match = String(idVal).match(/\d+/)
-              if (match) {
-                const id = parseInt(match[0], 10)
-                const mapped = lineMap.get(id)
-                if (mapped) {
-                  comments.push({
-                    file: mapped.file,
-                    side: mapped.side,
-                    line: mapped.line,
-                    text: textVal.trim()
-                  })
-                }
-              }
-            }
-          }
-        }
-      } else if (typeof parsed.comments === "object") {
-        // Handle object dictionary case (expected format)
-        for (const [key, text] of Object.entries(parsed.comments)) {
-          const match = String(key).match(/\d+/)
-          if (!match) continue
-          const id = parseInt(match[0], 10)
-          if (isNaN(id)) continue
-          if (typeof text !== "string" || !text.trim()) continue
-          
-          const mapped = lineMap.get(id)
-          if (mapped) {
-            comments.push({
-              file: mapped.file,
-              side: mapped.side,
-              line: mapped.line,
-              text: text.trim()
-            })
-          }
-        }
-      }
+    if (Array.isArray(obj.comments)) {
+      parseCommentsArr(obj.comments, lineMap, comments)
+    } else if (obj.comments && typeof obj.comments === "object") {
+      parseCommentsObj(obj.comments as Record<string, unknown>, lineMap, comments)
     }
 
     return { summary, comments }

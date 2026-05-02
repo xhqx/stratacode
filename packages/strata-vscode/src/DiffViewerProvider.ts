@@ -17,6 +17,44 @@ import { buildIndexedPatches, parseExplainResponse, shouldPreSkip } from "./expl
 // but are sent via the message protocol.
 type ReviewThread = any
 
+function buildExplainPrompt(annotatedDiffs: string): string {
+  return [
+    "You are an expert code explainer. Below are all changed files as unified diffs.",
+    "",
+    "IMPORTANT: Each changed line (+ or -) is prefixed with an ID in brackets, e.g., [1], [2].",
+    "These IDs uniquely identify that specific changed line.",
+    "",
+    "Your job is to EXPLAIN what changed and why — help the developer understand the changeset.",
+    "Leave inline comments ONLY at lines where you see actual changes.",
+    "Focus on:",
+    "- Non-obvious logic or algorithmic changes that benefit from explanation",
+    "- Important side effects or behavioral changes",
+    "- Key architectural decisions reflected in the code",
+    "- Complex transformations or refactors that need context",
+    "",
+    "Do NOT:",
+    "- Suggest improvements or propose code changes",
+    "- Comment on trivially obvious changes (renames, imports, formatting, version bumps)",
+    "- Leave review-style recommendations",
+    "",
+    "Each comment should clearly explain WHAT this change does and WHY it matters.",
+    "",
+    "Respond with ONLY this JSON (no markdown fences, no extra text):",
+    "{",
+    "  \"summary\": \"Brief 1-2 sentence summary of the overall changeset\",",
+    "  \"comments\": {",
+    "    \"1\": \"Your explanation for the change at ID [1]...\",",
+    "    \"3\": \"Your explanation for the change at ID [3]...\"",
+    "  }",
+    "}",
+    "",
+    "If a line number ID is skipped in your comments, that means you have no comment for it.",
+    "If there is nothing worth explaining, return: { \"summary\": \"...\", \"comments\": {} }",
+    "",
+    "--- DIFFS ---",
+    annotatedDiffs,
+  ].join("\n")
+}
 
 /**
  * DiffViewerProvider opens a full-screen diff viewer in an editor tab.
@@ -98,55 +136,52 @@ export class DiffViewerProvider implements vscode.Disposable {
   private onMessage(msg: Record<string, unknown>): void {
     const type = msg.type as string
 
-    if (type === "webviewReady") {
-      const config = vscode.workspace.getConfiguration("strata-code.new")
-      this.post({
-        type: "ready",
-        vscodeLanguage: vscode.env.language,
-        languageOverride: config.get<string>("language"),
-        workspaceDirectory: getWorkspaceRoot(),
-      })
-      this.startDiffPolling()
-      return
-    }
-
-    if (type === "diffViewer.sendComments" && Array.isArray(msg.comments)) {
-      this.onSendComments?.(msg.comments, !!msg.autoSend)
-      return
-    }
-
-    if (type === "diffViewer.close") {
-      this.panel?.dispose()
-      return
-    }
-
-    if (type === "diffViewer.setDiffStyle" && (msg.style === "unified" || msg.style === "split")) {
-      return
-    }
-
-    if (type === "diffViewer.revertFile" && typeof msg.file === "string") {
-      void this.revertFile(msg.file)
-      return
-    }
-
-    if (type === "openFile" && typeof msg.filePath === "string") {
-      this.openDiffView(msg.filePath, typeof msg.line === "number" ? msg.line : undefined)
-      return
-    }
-
-    if (type === "diffViewer.explainAll") {
-      void this.explainAll()
-      return
-    }
-
-    if (type === "diffViewer.replyToThread" && typeof msg.threadId === "string" && typeof msg.text === "string") {
-      void this.replyToThread(msg.threadId, msg.text)
-      return
-    }
-
-    if (type === "diffViewer.requestDiff" && typeof msg.file === "string") {
-      void this.handleRequestDiff(msg.file)
-      return
+    switch (type) {
+      case "webviewReady": {
+        const config = vscode.workspace.getConfiguration("strata-code.new")
+        this.post({
+          type: "ready",
+          vscodeLanguage: vscode.env.language,
+          languageOverride: config.get<string>("language"),
+          workspaceDirectory: getWorkspaceRoot(),
+        })
+        this.startDiffPolling()
+        break
+      }
+      case "diffViewer.sendComments":
+        if (Array.isArray(msg.comments)) {
+          this.onSendComments?.(msg.comments, !!msg.autoSend)
+        }
+        break
+      case "diffViewer.close":
+        this.panel?.dispose()
+        break
+      case "diffViewer.setDiffStyle":
+        // Handled entirely by webview internally
+        break
+      case "diffViewer.revertFile":
+        if (typeof msg.file === "string") {
+          void this.revertFile(msg.file)
+        }
+        break
+      case "openFile":
+        if (typeof msg.filePath === "string") {
+          this.openDiffView(msg.filePath, typeof msg.line === "number" ? msg.line : undefined)
+        }
+        break
+      case "diffViewer.explainAll":
+        void this.explainAll()
+        break
+      case "diffViewer.replyToThread":
+        if (typeof msg.threadId === "string" && typeof msg.text === "string") {
+          void this.replyToThread(msg.threadId, msg.text)
+        }
+        break
+      case "diffViewer.requestDiff":
+        if (typeof msg.file === "string") {
+          void this.handleRequestDiff(msg.file)
+        }
+        break
     }
   }
 
@@ -184,7 +219,10 @@ export class DiffViewerProvider implements vscode.Disposable {
     const result = await this.gitOps.execGit(["ls-files", "--error-unmatch", "--", file], root)
     if (result.code === 0) {
       // Tracked file — open side-by-side diff against HEAD
-      const headUri = vscode.Uri.parse(`git:${file}?${JSON.stringify({ path: `${root}/${file}`, ref: "HEAD" })}`)
+      const headUri = uri.with({
+        scheme: "git",
+        query: JSON.stringify({ path: uri.fsPath, ref: "HEAD" }),
+      })
       vscode.commands.executeCommand("vscode.diff", headUri, uri, `${file} (Working Changes)`, options).then(
         undefined,
         () => {
@@ -217,7 +255,8 @@ export class DiffViewerProvider implements vscode.Disposable {
     try {
       this.log("explainAll: starting, target:", target.directory)
       // Re-fetch patches for all files locally to ensure we have the full content
-      const { diffFile } = await import("./agent-manager/local-diff")
+      const { diffFile, ancestor } = await import("./agent-manager/local-diff")
+      const anc = await ancestor(this.gitOps, target.directory, target.baseBranch, (...args) => this.log(...args))
       const diffs = await diffSummary(this.gitOps, target.directory, target.baseBranch, (...args) => this.log(...args))
       this.log(`explainAll: ${diffs.length} file(s) found`)
       
@@ -225,15 +264,28 @@ export class DiffViewerProvider implements vscode.Disposable {
       
       const validDiffs: { file: string, patch: string }[] = []
       
-      for (const d of diffs) {
-        if (d.generatedLike) continue
-        
-        const entry = await diffFile(this.gitOps, target.directory, target.baseBranch, d.file, (...args) => this.log(...args))
-        if (!entry || !entry.patch) continue
-        
-        if (shouldPreSkip(entry.patch, effort)) continue
-
-        validDiffs.push({ file: d.file, patch: entry.patch })
+      const candidates = diffs.filter((d) => !d.generatedLike)
+      const CONCURRENCY = 5
+      
+      for (let i = 0; i < candidates.length; i += CONCURRENCY) {
+        const chunk = candidates.slice(i, i + CONCURRENCY)
+        const resolved = await Promise.all(
+          chunk.map(async (d) => {
+            const entry = await diffFile(
+              this.gitOps,
+              target.directory,
+              target.baseBranch,
+              d.file,
+              (...args) => this.log(...args),
+              anc,
+            )
+            if (!entry || !entry.patch || shouldPreSkip(entry.patch, effort)) return null
+            return { file: d.file, patch: entry.patch }
+          }),
+        )
+        for (const r of resolved) {
+          if (r) validDiffs.push(r)
+        }
       }
 
       const { annotatedDiffs, lineMap } = buildIndexedPatches(validDiffs)
@@ -265,42 +317,7 @@ export class DiffViewerProvider implements vscode.Disposable {
         this.log("explainAll: session created:", this.explainSession)
       }
 
-      const prompt = [
-        "You are an expert code explainer. Below are all changed files as unified diffs.",
-        "",
-        "IMPORTANT: Each changed line (+ or -) is prefixed with an ID in brackets, e.g., [1], [2].",
-        "These IDs uniquely identify that specific changed line.",
-        "",
-        "Your job is to EXPLAIN what changed and why — help the developer understand the changeset.",
-        "Leave inline comments ONLY at lines where you see actual changes.",
-        "Focus on:",
-        "- Non-obvious logic or algorithmic changes that benefit from explanation",
-        "- Important side effects or behavioral changes",
-        "- Key architectural decisions reflected in the code",
-        "- Complex transformations or refactors that need context",
-        "",
-        "Do NOT:",
-        "- Suggest improvements or propose code changes",
-        "- Comment on trivially obvious changes (renames, imports, formatting, version bumps)",
-        "- Leave review-style recommendations",
-        "",
-        "Each comment should clearly explain WHAT this change does and WHY it matters.",
-        "",
-        "Respond with ONLY this JSON (no markdown fences, no extra text):",
-        "{",
-        "  \"summary\": \"Brief 1-2 sentence summary of the overall changeset\",",
-        "  \"comments\": {",
-        "    \"1\": \"Your explanation for the change at ID [1]...\",",
-        "    \"3\": \"Your explanation for the change at ID [3]...\"",
-        "  }",
-        "}",
-        "",
-        "If a line number ID is skipped in your comments, that means you have no comment for it.",
-        "If there is nothing worth explaining, return: { \"summary\": \"...\", \"comments\": {} }",
-        "",
-        "--- DIFFS ---",
-        annotatedDiffs,
-      ].join("\n")
+      const prompt = buildExplainPrompt(annotatedDiffs)
 
       let timer: ReturnType<typeof setTimeout> | undefined
       const timeout = new Promise<never>((_, reject) => {

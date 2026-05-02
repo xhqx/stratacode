@@ -69,7 +69,7 @@ interface WorktreeItemProps {
   onMoveToNewSection?: () => void
 
   onClick: () => void
-  onDelete: (e: MouseEvent) => void
+  onDelete: (e: MouseEvent | undefined, force?: boolean) => void
   onStartRename: (current: string) => void
   onRenameInput: (value: string) => void
   onCommitRename: () => void
@@ -459,7 +459,7 @@ export const WorktreeItem: Component<WorktreeItemProps> = (props) => {
               <Icon name="edit" size="small" />
               <ContextMenu.ItemLabel>{t("agentManager.worktree.rename")}</ContextMenu.ItemLabel>
             </ContextMenu.Item>
-            <ContextMenu.Item onSelect={() => props.onDelete(new MouseEvent("click"))}>
+            <ContextMenu.Item onSelect={() => props.onDelete(undefined, true)}>
               <Icon name="trash" size="small" />
               <ContextMenu.ItemLabel>{t("agentManager.worktree.delete")}</ContextMenu.ItemLabel>
               <Show when={props.closeKeybind}>
