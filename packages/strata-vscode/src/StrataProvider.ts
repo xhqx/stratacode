@@ -772,6 +772,25 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             limit: message.limit,
           })
           break
+        case "requestPlanningSettings":
+          this.postMessage({
+            type: "planningSettingsLoaded",
+            settings: {
+              taskView: vscode.workspace.getConfiguration("strata-code.new.planning").get("taskView") ?? true,
+              documentDrivenTasks: vscode.workspace.getConfiguration("strata-code.new.planning").get("documentDrivenTasks") ?? true,
+            }
+          })
+          break
+        case "updatePlanningSetting":
+          await vscode.workspace.getConfiguration("strata-code.new.planning").update(message.key, message.value, vscode.ConfigurationTarget.Global)
+          this.postMessage({
+            type: "planningSettingsLoaded",
+            settings: {
+              taskView: vscode.workspace.getConfiguration("strata-code.new.planning").get("taskView") ?? true,
+              documentDrivenTasks: vscode.workspace.getConfiguration("strata-code.new.planning").get("documentDrivenTasks") ?? true,
+            }
+          })
+          break
         case "planning.requestState":
           this.planningService?.pushState()
           this.planningService?.pushKanbanTasks()
@@ -2014,29 +2033,38 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
    * Remove a custom mode via the CLI backend (deletes from disk + refreshes state).
    * The webview optimistically removes the mode from its list before this runs.
    * On failure, re-fetches agents so the webview reverts to the authoritative state.
+   *
+   * Agents can exist in multiple places simultaneously:
+   * - .md files in config directories (handled by CLI removeAgent)
+   * - Legacy .stratacodemodes YAML files (handled by CLI removeAgent)
+   * - strata.json agent config entries (handled by marketplace removal)
+   * We attempt ALL paths so nothing is left behind.
    */
   private async handleRemoveMode(name: string): Promise<void> {
     if (!this.client) return
+
+    let cleaned = false
 
     // 1. Try CLI removal (handles .md files and legacy .stratacodemodes)
     try {
       const dir = this.getWorkspaceDirectory()
       const result = await this.client.stratacode.removeAgent({ name, directory: dir })
-      if (!result.error) {
-        this.cachedAgentsMessage = null
-        await this.fetchAndSendAgents()
-        return
-      }
+      if (!result.error) cleaned = true
     } catch (err) {
-      // CLI removal failed — agent may be in strata.json instead
       console.debug("[Strata] CLI removeAgent failed, trying strata.json:", err)
     }
 
-    // 2. Try removing from strata.json (handles marketplace-installed modes)
+    // 2. Try removing from strata.json (handles marketplace-installed modes
+    //    and config overrides like model/permission that persist after .md deletion)
     const stub = { id: name, type: "mode" as const, name, description: "", content: "" }
     const removed = await this.removeMarketplaceItemFromAllScopes(stub)
-    if (!removed) {
+    if (removed) cleaned = true
+
+    if (!cleaned) {
       console.error("[Strata New] StrataProvider: Failed to remove mode:", name)
+      // Re-fetch agents so the webview reverts the optimistic removal
+      this.cachedAgentsMessage = null
+      await this.fetchAndSendAgents()
     }
   }
 

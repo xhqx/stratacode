@@ -1142,6 +1142,8 @@ export type WebviewMessage =
   | PlanningApplyMarkdownMessage
   | PlanningRequestMarkdownPreviewMessage
   | PlanningOpenPlanFileMessage
+  | RequestPlanningSettingsMessage
+  | UpdatePlanningSettingMessage
   | { type: "cancelAutoApproveTimer"; requestId: string }
   | RequestRepoMapStatsMessage
   | InvalidateRepoMapMessage
@@ -1224,6 +1226,16 @@ export interface PlanningOpenPlanFileMessage {
   type: "planning.openPlanFile"
   file: string
   line?: number
+}
+
+export interface RequestPlanningSettingsMessage {
+  type: "requestPlanningSettings"
+}
+
+export interface UpdatePlanningSettingMessage {
+  type: "updatePlanningSetting"
+  key: "taskView" | "documentDrivenTasks"
+  value: boolean
 }
 
 // ============================================

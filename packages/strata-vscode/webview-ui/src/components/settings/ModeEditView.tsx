@@ -56,7 +56,7 @@ const ModeEditView: Component<Props> = (props) => {
 
   const [activeTab, setActiveTab] = createSignal("general")
 
-  const hasFeaturesTab = createMemo(() => props.name === "autocomplete" || props.name === "commit")
+  const hasFeaturesTab = createMemo(() => props.name === "autocomplete" || props.name === "commit" || props.name === "plan")
 
   createEffect(() => {
     if (activeTab() === "features" && !hasFeaturesTab()) {

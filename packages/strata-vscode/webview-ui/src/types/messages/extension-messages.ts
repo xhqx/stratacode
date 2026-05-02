@@ -911,6 +911,7 @@ export type ExtensionMessage =
   | PluginConfigUpdateFailedMessage
   | NavigateMessage
   | PlanningStateMessage
+  | PlanningSettingsLoadedMessage
   | PlanningDispatchResultMessage
   | PlannedKanbanTasksMessage
   | IndexingStatusLoadedMessage
@@ -1027,6 +1028,14 @@ export interface KanbanTasksLoadedMessage {
 export interface PlanningStateMessage {
   type: "planningState"
   tasks: import("./planning").PlanningTask[]
+}
+
+export interface PlanningSettingsLoadedMessage {
+  type: "planningSettingsLoaded"
+  settings: {
+    taskView: boolean
+    documentDrivenTasks: boolean
+  }
 }
 
 export interface PlanningDispatchResultMessage {

@@ -21,11 +21,18 @@ export const FeaturesTab: Component<
   const [smartInline, setSmartInline] = createSignal(false)
   const [chatAuto, setChatAuto] = createSignal(false)
 
+  const [taskView, setTaskView] = createSignal(true)
+  const [documentDriven, setDocumentDriven] = createSignal(true)
+
   const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
-    if (message.type !== "autocompleteSettingsLoaded") return
-    setAutoTrigger(message.settings.enableAutoTrigger)
-    setSmartInline(message.settings.enableSmartInlineTaskKeybinding)
-    setChatAuto(message.settings.enableChatAutocomplete)
+    if (message.type === "autocompleteSettingsLoaded") {
+      setAutoTrigger(message.settings.enableAutoTrigger)
+      setSmartInline(message.settings.enableSmartInlineTaskKeybinding)
+      setChatAuto(message.settings.enableChatAutocomplete)
+    } else if (message.type === "planningSettingsLoaded") {
+      setTaskView(message.settings.taskView)
+      setDocumentDriven(message.settings.documentDrivenTasks)
+    }
   })
 
   onCleanup(unsubscribe)
@@ -33,6 +40,8 @@ export const FeaturesTab: Component<
   createEffect(() => {
     if (props.name === "autocomplete") {
       vscode.postMessage({ type: "requestAutocompleteSettings" })
+    } else if (props.name === "plan") {
+      vscode.postMessage({ type: "requestPlanningSettings" })
     }
   })
 
@@ -41,6 +50,13 @@ export const FeaturesTab: Component<
     value: boolean,
   ) => {
     vscode.postMessage({ type: "updateAutocompleteSetting", key, value })
+  }
+
+  const updatePlanningSetting = (
+    key: "taskView" | "documentDrivenTasks",
+    value: boolean,
+  ) => {
+    vscode.postMessage({ type: "updatePlanningSetting", key, value })
   }
 
   const [expanded, setExpanded] = createSignal(Boolean(config().commit_message?.prompt))
@@ -115,6 +131,29 @@ export const FeaturesTab: Component<
               />
             </div>
           </Show>
+        </Card>
+      </Show>
+
+      <Show when={props.name === "plan" && !props.cfg().disable}>
+        <Card style={{ "margin-bottom": "12px" }}>
+          <SettingsRow
+            title={props.t("settings.plan.taskView.title") || "Planning Task View"}
+            description={props.t("settings.plan.taskView.description") || "Show the Kanban task board in the sidebar."}
+          >
+            <Switch checked={taskView()} onChange={(val) => updatePlanningSetting("taskView", val)} hideLabel>
+              {props.t("settings.plan.taskView.title") || "Planning Task View"}
+            </Switch>
+          </SettingsRow>
+
+          <SettingsRow
+            title={props.t("settings.plan.documentDriven.title") || "Document Driven Tasks"}
+            description={props.t("settings.plan.documentDriven.description") || "Automatically sync tasks with markdown plan files."}
+            last
+          >
+            <Switch checked={documentDriven()} onChange={(val) => updatePlanningSetting("documentDrivenTasks", val)} hideLabel>
+              {props.t("settings.plan.documentDriven.title") || "Document Driven Tasks"}
+            </Switch>
+          </SettingsRow>
         </Card>
       </Show>
     </>

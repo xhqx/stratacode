@@ -195,26 +195,14 @@ export class MarketplaceInstaller {
   }
 
   async removeMcp(item: McpMarketplaceItem, scope: "project" | "global", workspace?: string): Promise<RemoveResult> {
-    const config = await this.readConfig(scope, workspace)
-    if (!config.mcp?.[item.id]) {
-      return { success: true, slug: item.id }
-    }
-    delete config.mcp[item.id]
-    if (Object.keys(config.mcp).length === 0) delete config.mcp
-    await this.writeConfig(scope, workspace, config)
-    return { success: true, slug: item.id }
+    return this.removeConfigKey(this.paths.configPath(scope, workspace), ["mcp", item.id])
   }
 
+
   async removeMode(item: ModeMarketplaceItem, scope: "project" | "global", workspace?: string): Promise<RemoveResult> {
-    const config = await this.readConfig(scope, workspace)
-    if (!config.agent?.[item.id]) {
-      return { success: true, slug: item.id }
-    }
-    delete config.agent[item.id]
-    if (Object.keys(config.agent).length === 0) delete config.agent
-    await this.writeConfig(scope, workspace, config)
-    return { success: true, slug: item.id }
+    return this.removeConfigKey(this.paths.configPath(scope, workspace), ["agent", item.id])
   }
+
 
   async removeSkill(
     item: SkillMarketplaceItem,
@@ -242,6 +230,38 @@ export class MarketplaceInstaller {
     }
   }
 
+  // ── Removal helper ─────────────────────────────────────────────────
+
+  /**
+   * Remove a key at the given JSON path from the config file.
+   * Handles both .json and .jsonc files, preserving comments in JSONC.
+   * Returns success: true even if the key didn't exist (idempotent).
+   */
+  private async removeConfigKey(filepath: string, keypath: string[]): Promise<RemoveResult> {
+    const slug = keypath[keypath.length - 1]!
+    let content: string
+    try {
+      content = await fs.readFile(filepath, "utf-8")
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") return { success: true, slug }
+      throw err
+    }
+
+    const { modify, applyEdits, findNodeAtLocation, parseTree } = await import("jsonc-parser")
+    const tree = parseTree(content)
+    if (!tree || !findNodeAtLocation(tree, keypath)) {
+      return { success: true, slug }
+    }
+
+    // Use modify with undefined value to delete the key (works for both json/jsonc)
+    const edits = modify(content, keypath, undefined, {
+      formattingOptions: { insertSpaces: true, tabSize: 2 },
+    })
+    const updated = applyEdits(content, edits)
+    await fs.writeFile(filepath, updated, "utf-8")
+    return { success: true, slug }
+  }
+
   // ── Config helpers ──────────────────────────────────────────────────
 
   private async readConfig(
@@ -251,7 +271,9 @@ export class MarketplaceInstaller {
     const filepath = this.paths.configPath(scope, workspace)
     try {
       const content = await fs.readFile(filepath, "utf-8")
-      return JSON.parse(content)
+      // Use jsonc-parser to handle both .json and .jsonc (with comments)
+      const { parse } = await import("jsonc-parser")
+      return parse(content) ?? {}
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code === "ENOENT") return {}
       throw err
@@ -265,7 +287,31 @@ export class MarketplaceInstaller {
   ): Promise<void> {
     const filepath = this.paths.configPath(scope, workspace)
     await fs.mkdir(path.dirname(filepath), { recursive: true })
-    await fs.writeFile(filepath, JSON.stringify(config, null, 2) + "\n", "utf-8")
+
+    // For .jsonc files, use jsonc-parser's modify() to preserve comments.
+    // For .json files, use JSON.stringify as before.
+    if (filepath.endsWith(".jsonc")) {
+      try {
+        const existing = await fs.readFile(filepath, "utf-8")
+        const { modify, applyEdits } = await import("jsonc-parser")
+        let result = existing
+        for (const [key, value] of Object.entries(config)) {
+          const edits = modify(result, [key], value === null ? undefined : value, {
+            formattingOptions: { insertSpaces: true, tabSize: 2 },
+          })
+          result = applyEdits(result, edits)
+        }
+        await fs.writeFile(filepath, result, "utf-8")
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+          await fs.writeFile(filepath, JSON.stringify(config, null, 2) + "\n", "utf-8")
+        } else {
+          throw err
+        }
+      }
+    } else {
+      await fs.writeFile(filepath, JSON.stringify(config, null, 2) + "\n", "utf-8")
+    }
   }
 }
 

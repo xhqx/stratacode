@@ -19,6 +19,7 @@ export class PlanningService {
   private tasks: PlanningTask[] = []
   private unsubscribeStatus: (() => void) | null = null
   private watcher: MarkdownPlanWatcher | null = null
+  private configDisposable: vscode.Disposable | null = null
 
   constructor(options: PlanningServiceOptions) {
     this.context = options.context
@@ -28,15 +29,38 @@ export class PlanningService {
     this.load()
     this.setupListeners()
 
-    const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
-    if (root) {
-      this.watcher = new MarkdownPlanWatcher(root, () => this.pushMarkdownPreview())
+    this.syncWatcherConfig()
+
+    this.configDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("strata-code.new.planning.documentDrivenTasks")) {
+        this.syncWatcherConfig()
+      }
+    })
+  }
+
+  private syncWatcherConfig() {
+    const config = vscode.workspace.getConfiguration("strata-code.new.planning")
+    const documentDriven = config.get<boolean>("documentDrivenTasks") ?? true
+
+    if (documentDriven && !this.watcher) {
+      const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+      if (root) {
+        this.watcher = new MarkdownPlanWatcher(root, () => this.pushMarkdownPreview())
+        // Immediately scan when enabled
+        this.pushMarkdownPreview()
+      }
+    } else if (!documentDriven && this.watcher) {
+      this.watcher.dispose()
+      this.watcher = null
     }
   }
 
   public dispose() {
     if (this.unsubscribeStatus) {
       this.unsubscribeStatus()
+    }
+    if (this.configDisposable) {
+      this.configDisposable.dispose()
     }
     this.watcher?.dispose()
   }
