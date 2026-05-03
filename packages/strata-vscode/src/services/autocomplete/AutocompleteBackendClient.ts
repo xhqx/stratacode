@@ -2,7 +2,7 @@ import { ResponseMetaData } from "./types"
 import type { StrataConnectionService } from "../cli-backend"
 import { DEFAULT_AUTOCOMPLETE_MODEL, getAutocompleteModel } from "../../shared/autocomplete-models"
 
-export class AutocompleteModel {
+export class AutocompleteBackendClient {
   private connectionService: StrataConnectionService | null = null
   private currentModel: string = DEFAULT_AUTOCOMPLETE_MODEL.id
   public profileName: string | null = null
@@ -140,7 +140,7 @@ export class AutocompleteModel {
       const result = await client.strata.profile().catch(() => null)
       return (result?.data?.balance?.balance ?? 0) > 0
     } catch (err) {
-      console.debug("[Strata] AutocompleteModel: hasBalance failed:", err)
+      console.debug("[Strata] AutocompleteBackendClient: hasBalance failed:", err)
       return false
     }
   }

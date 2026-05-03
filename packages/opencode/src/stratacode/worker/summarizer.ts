@@ -18,11 +18,23 @@ const layer = Layer.merge(Ripgrep.defaultLayer, AppFileSystem.defaultLayer)
 const log = Log.create({ service: "worker:summarizer" })
 
 let pollingInterval: NodeJS.Timeout | null = null
+let subscribedToConfig = false
 
 import { Event } from "@/server/event"
 import { Instance } from "@/project/instance"
 
 export async function startSummarizerPolling(cwd: string) {
+  if (!subscribedToConfig) {
+    subscribedToConfig = true
+    // Ensure polling is restarted when config changes
+    Bus.subscribe(Event.ConfigUpdated, async () => {
+      if (Instance.directory) {
+        log.info("config updated, restarting summarizer polling")
+        await startSummarizerPolling(Instance.directory)
+      }
+    })
+  }
+
   if (pollingInterval) clearInterval(pollingInterval)
 
   const cfg = await Config.get()
@@ -37,14 +49,6 @@ export async function startSummarizerPolling(cwd: string) {
     })
   }, intervalSec * 1000)
 }
-
-// Ensure polling is restarted when config changes
-Bus.subscribe(Event.ConfigUpdated, async () => {
-  if (Instance.directory) {
-    log.info("config updated, restarting summarizer polling")
-    await startSummarizerPolling(Instance.directory)
-  }
-})
 
 export async function summarizerWorker(cwd: string, payload: any): Promise<void> {
   const map = await ContextMapService.read(cwd)

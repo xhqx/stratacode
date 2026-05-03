@@ -9,7 +9,7 @@ import type { PermissionRequest } from "./permissions"
 import type { QuestionRequest, SuggestionRequest, TodoItem } from "./questions"
 import type { ModelSelection, Provider, ProviderAuthState } from "./providers"
 import type { AgentInfo, SkillInfo, SlashCommandInfo } from "./agents"
-import type { BrowserSettings, Config, FeatureFlags, IndexingStatus } from "./config"
+import type { BrowserSettings, Config, FeatureFlags, ExtensionFeatureFlags, IndexingStatus } from "./config"
 import type { StratacodeNotification, ProfileData } from "./profile"
 import type {
   AgentManagerApplyWorktreeDiffConflict,
@@ -422,6 +422,11 @@ export interface ConfigUpdatedMessage {
   type: "configUpdated"
   config: Config
   features: FeatureFlags
+}
+
+export interface ExtensionFeaturesLoadedMessage {
+  type: "extensionFeaturesLoaded"
+  features: ExtensionFeatureFlags
 }
 
 export interface ConfigUpdateFailedMessage {
@@ -894,6 +899,7 @@ export type ExtensionMessage =
   | PermissionRequestMessage
   | PermissionResolvedMessage
   | PermissionErrorMessage
+  | ExtensionFeaturesLoadedMessage
   | TodoUpdatedMessage
   | SessionCreatedMessage
   | SessionForkedMessage

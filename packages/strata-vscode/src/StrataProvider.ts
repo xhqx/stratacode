@@ -58,6 +58,7 @@ import { retry } from "./services/cli-backend/retry"
 import { slimPart, slimParts } from "./strata-provider/slim-metadata"
 import { handleSidebarWorktreeMessage } from "./strata-provider/sidebar-worktree"
 import { parseMessageFiles, type MessageFile } from "./strata-provider/message-files"
+import { readAll as readAllFeatures } from "./stratacode/feature-gate"
 import { handleFileSearch } from "./strata-provider/file-search"
 import { getTerminalContents } from "./services/terminal/context"
 import { disposeGitChangesTarget } from "./strata-provider/git-changes-target"
@@ -68,11 +69,7 @@ import { fetchMessagePage, MESSAGE_PAGE_LIMIT } from "./strata-provider/message-
 import { childID } from "./strata-provider/task-session"
 import { handleNetworkEvent, clearNetworkWaits } from "./strata-provider/network"
 import { abortSession } from "./strata-provider/abort"
-import {
-  buildAutocompleteSettingsMessage,
-  routeAutocompleteMessage,
-  watchAutocompleteConfig,
-} from "./services/autocomplete/settings"
+import { AutocompleteSettingsManager } from "./services/autocomplete/AutocompleteSettingsManager"
 import * as ModelState from "./strata-provider/model-state"
 import { handleForkSession } from "./strata-provider/fork-session"
 import { openConfig } from "./strata-provider/open-config"
@@ -157,6 +154,7 @@ import { GitWatcher } from "./services/memory/GitWatcher"
 import { Logger } from "./stratacode/logger"
 import { WorkerStatusBar } from "./services/worker/WorkerStatusBar"
 import { WorkerWatcher } from "./services/worker/WorkerWatcher"
+import { isEnabled } from "./stratacode/feature-gate" // stratacode_change
 
 export class StrataProvider implements vscode.WebviewViewProvider, TelemetryPropertiesProvider {
   public static readonly viewType = "strata-code.SidebarProvider"
@@ -298,11 +296,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     TelemetryProxy.getInstance().setProvider(this)
 
     if (this.extensionContext) {
-      this.planningService = new PlanningService({
-        context: this.extensionContext,
-        connectionService: this.connectionService,
-        postToSidebar: (msg) => this.postMessage(msg),
-      })
+      if (isEnabled("planningMode")) { // stratacode_change
+        this.planningService = new PlanningService({
+          context: this.extensionContext,
+          connectionService: this.connectionService,
+          postToSidebar: (msg) => this.postMessage(msg),
+        })
+      } // stratacode_change
     }
 
     this.gitWatcher = new GitWatcher(this)
@@ -660,10 +660,14 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.webviewMessageDisposable?.dispose()
     this.autocompleteConfigDisposable?.dispose()
     this.settingsConfigDisposable?.dispose()
-    this.autocompleteConfigDisposable = watchAutocompleteConfig((msg) => this.postMessage(msg))
+    this.autocompleteConfigDisposable = AutocompleteSettingsManager.getInstance().watchAutocompleteConfig((msg) => this.postMessage(msg))
     this.settingsConfigDisposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
       if (e.affectsConfiguration("strata-code.new.agents")) {
         this.fetchAndSendAgents()
+      }
+
+      if (e.affectsConfiguration("strata-code.new.features")) {
+        this.postMessage({ type: "extensionFeaturesLoaded", features: readAllFeatures() })
       }
 
       const affectsWorkers =
@@ -717,7 +721,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
       await routeSuggestionWebviewMessage(this.questionCtx, message)
       if (await ModelState.handleMessage(message.type, message, this.client, (msg) => this.postMessage(msg))) return
-      if (await routeAutocompleteMessage(message, (msg) => this.postMessage(msg))) return
+      if (await AutocompleteSettingsManager.getInstance().routeAutocompleteMessage(message, (msg) => this.postMessage(msg))) return
       if (
         await handleSidebarWorktreeMessage(message, {
           post: (msg) => this.postMessage(msg),
@@ -736,6 +740,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         case "webviewReady":
           Logger.info("StrataProvider", "✅ webviewReady received")
           this.isWebviewReady = true
+          this.postMessage({ type: "extensionFeaturesLoaded", features: readAllFeatures() })
           await this.syncWebviewState("webviewReady")
           this.flushPendingReviewComments()
           this.recoverPendingPrompts()
@@ -1106,6 +1111,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           break
         case "requestBrowserSettings":
           this.sendBrowserSettings()
+          break
+        case "requestExtensionFeatures":
+          this.postMessage({ type: "extensionFeaturesLoaded", features: readAllFeatures() })
           break
         case "requestClaudeCompatSetting":
           this.sendClaudeCompatSetting()
@@ -3578,6 +3586,18 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     const { section, leaf } = buildSettingPath(key)
     const config = vscode.workspace.getConfiguration(`strata-code.new${section ? `.${section}` : ""}`)
     await config.update(leaf, value, vscode.ConfigurationTarget.Global)
+    if (key.startsWith("features.")) {
+      this.postMessage({ type: "extensionFeaturesLoaded", features: readAllFeatures() })
+      // Sync runtime keys for features that have separate service toggles
+      if (key === "features.workers") {
+        await vscode.workspace.getConfiguration("strata-code.new")
+          .update("workers.enabled", value, vscode.ConfigurationTarget.Global)
+      }
+      if (key === "features.browserAutomation") {
+        await vscode.workspace.getConfiguration("strata-code.new.browserAutomation")
+          .update("enabled", value, vscode.ConfigurationTarget.Global)
+      }
+    }
   }
 
   /**
@@ -3616,7 +3636,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     await this.extensionContext?.globalState.update("strata.dismissedNotificationIds", undefined)
 
     // Re-send all settings to the webview so the UI reflects the reset
-    this.postMessage(buildAutocompleteSettingsMessage())
+    this.postMessage(AutocompleteSettingsManager.getInstance().buildAutocompleteSettingsMessage())
+    this.postMessage({ type: "extensionFeaturesLoaded", features: readAllFeatures() })
     this.sendBrowserSettings()
     this.sendNotificationSettings()
     this.sendTimelineSetting()

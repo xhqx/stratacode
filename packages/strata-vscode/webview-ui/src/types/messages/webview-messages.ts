@@ -376,6 +376,10 @@ export interface RequestConfigMessage {
   type: "requestConfig"
 }
 
+export interface RequestExtensionFeaturesMessage {
+  type: "requestExtensionFeatures"
+}
+
 export interface RequestGlobalConfigMessage {
   type: "requestGlobalConfig"
 }
@@ -1066,6 +1070,7 @@ export type WebviewMessage =
   | RequestBrowserSettingsMessage
   | RequestClaudeCompatSettingMessage
   | RequestConfigMessage
+  | RequestExtensionFeaturesMessage
   | RequestGlobalConfigMessage
   | RequestIndexingStatusMessage
   | UpdateConfigMessage

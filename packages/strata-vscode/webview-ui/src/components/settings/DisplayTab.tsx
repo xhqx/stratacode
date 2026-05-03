@@ -8,6 +8,11 @@ import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
 import type { ExtensionMessage } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
+import { LOCALES, LOCALE_LABELS, type Locale } from "../../context/language"
+
+const AUTO = "auto"
+const options = [AUTO, ...LOCALES] as const
+type Option = typeof AUTO | Locale
 
 interface LayoutOption {
   value: string
@@ -73,6 +78,31 @@ const DisplayTab: Component = () => {
             size="small"
             triggerVariant="settings"
           />
+        </SettingsRow>
+
+        <SettingsRow
+          title={language.t("settings.language.title")}
+          description={language.t("settings.language.description")}
+        >
+          <div style={{ display: "flex", "flex-direction": "column", "align-items": "flex-end" }}>
+            <Select
+              options={[...options]}
+              current={language.userOverride() || AUTO}
+              label={(opt: Option) => (opt === AUTO ? language.t("settings.language.auto") : LOCALE_LABELS[opt])}
+              value={(opt: Option) => opt}
+              onSelect={(opt) => {
+                if (opt !== undefined) {
+                  language.setLocale(opt === AUTO ? "" : (opt as Locale))
+                }
+              }}
+              variant="secondary"
+              size="small"
+              triggerVariant="settings"
+            />
+            <div style={{ "font-size": "11px", color: "var(--vscode-descriptionForeground)", "margin-top": "4px" }}>
+              {language.t("settings.language.current")} {LOCALE_LABELS[language.locale()]}
+            </div>
+          </div>
         </SettingsRow>
 
         <SettingsRow

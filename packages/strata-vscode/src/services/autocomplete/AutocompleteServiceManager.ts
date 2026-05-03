@@ -2,66 +2,35 @@ import crypto from "crypto"
 import * as vscode from "vscode"
 import { t } from "./shims/i18n"
 import { TelemetryProxy, TelemetryEventName } from "../telemetry"
-import { AutocompleteModel } from "./AutocompleteModel"
-import { AutocompleteStatusBar } from "./AutocompleteStatusBar"
+import { AutocompleteBackendClient } from "./AutocompleteBackendClient"
 import { AutocompleteCodeActionProvider } from "./AutocompleteCodeActionProvider"
 import { AutocompleteInlineCompletionProvider } from "./classic-auto-complete/AutocompleteInlineCompletionProvider"
 import { AutocompleteTelemetry } from "./classic-auto-complete/AutocompleteTelemetry"
 import type { StrataConnectionService } from "../cli-backend"
-import { getAutocompleteModel } from "../../shared/autocomplete-models"
 
-const CONFIG_SECTION = "strata-code.new.autocomplete"
-
-export interface AutocompleteServiceSettings {
-  enableAutoTrigger?: boolean
-  enableSmartInlineTaskKeybinding?: boolean
-  enableChatAutocomplete?: boolean
-  provider?: string
-  model?: string
-  snoozeUntil?: number
-}
-
-function readSettings(): AutocompleteServiceSettings {
-  const config = vscode.workspace.getConfiguration(CONFIG_SECTION)
-  return {
-    enableAutoTrigger: config.get<boolean>("enableAutoTrigger") ?? true,
-    enableSmartInlineTaskKeybinding: config.get<boolean>("enableSmartInlineTaskKeybinding") ?? true,
-    enableChatAutocomplete: config.get<boolean>("enableChatAutocomplete") ?? true,
-    model: getAutocompleteModel(config.get<string>("model") ?? "").id,
-    snoozeUntil: config.get<number>("snoozeUntil"),
-  }
-}
-
-async function writeSettings(patch: Partial<AutocompleteServiceSettings>): Promise<void> {
-  const config = vscode.workspace.getConfiguration(CONFIG_SECTION)
-  for (const [key, value] of Object.entries(patch)) {
-    await config.update(key, value, vscode.ConfigurationTarget.Global)
-  }
-}
+import { AutocompleteSettingsManager } from "./AutocompleteSettingsManager"
+import { AutocompleteSnoozeManager } from "./AutocompleteSnoozeManager"
+import { AutocompleteStatusBarManager } from "./AutocompleteStatusBarManager"
 
 export class AutocompleteServiceManager {
   private static _instance: AutocompleteServiceManager | null = null
 
-  private readonly model: AutocompleteModel
+  private readonly model: AutocompleteBackendClient
   private readonly context: vscode.ExtensionContext
-  private settings: AutocompleteServiceSettings | null = null
+  private readonly settingsManager: AutocompleteSettingsManager
+  public readonly snoozeManager: AutocompleteSnoozeManager
+  private readonly statusBarManager: AutocompleteStatusBarManager
 
   private taskId: string | null = null
-
-  // Status bar integration
-  private statusBar: AutocompleteStatusBar | null = null
-  private sessionCost: number = 0
-  private completionCount: number = 0
-  private sessionStartTime: number = Date.now()
-
-  private snoozeTimer: NodeJS.Timeout | null = null
 
   // VSCode Providers
   public readonly codeActionProvider: AutocompleteCodeActionProvider
   public readonly inlineCompletionProvider: AutocompleteInlineCompletionProvider
   private inlineCompletionProviderDisposable: vscode.Disposable | null = null
+
   private unsubscribeState: (() => void) | null = null
   private unsubscribeEvent: (() => void) | null = null
+  private settingsDisposable: vscode.Disposable | null = null
 
   constructor(context: vscode.ExtensionContext, connectionService: StrataConnectionService) {
     if (AutocompleteServiceManager._instance) {
@@ -73,8 +42,13 @@ export class AutocompleteServiceManager {
     this.context = context
     AutocompleteServiceManager._instance = this
 
+    this.settingsManager = AutocompleteSettingsManager.getInstance()
+    this.snoozeManager = new AutocompleteSnoozeManager(this.settingsManager)
+    
     // Register Internal Components
-    this.model = new AutocompleteModel(connectionService)
+    this.model = new AutocompleteBackendClient(connectionService)
+
+    this.statusBarManager = new AutocompleteStatusBarManager(this.settingsManager, this.model)
 
     const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? ""
 
@@ -84,62 +58,70 @@ export class AutocompleteServiceManager {
       this.context,
       this.model,
       this.updateCostTracking.bind(this),
-      () => this.settings,
+      () => this.settingsManager.getSettings(),
       workspacePath,
       new AutocompleteTelemetry(),
       (status) => this.handleFatalAutocompleteError(status),
     )
 
-    // Reload when CLI backend connection state changes so autocomplete
-    // picks up the connected state even if it wasn't ready at startup.
-    // Also reset error backoff — a reconnect may mean the user re-authenticated
-    // or added credits, so we should give autocomplete a fresh chance.
+    // Reload when CLI backend connection state changes
     this.unsubscribeState = connectionService.onStateChange(() => {
       this.inlineCompletionProvider.resetBackoff()
       void this.load()
     })
 
-    // Reset error backoff when auth state changes (login, logout, org switch).
-    // The CLI emits global.disposed after these actions, which is the most
-    // reliable signal that credentials may have changed.
+    // Reset error backoff when auth state changes
     this.unsubscribeEvent = connectionService.onEventFiltered(
       (event) => event.type === "global.disposed",
       () => this.inlineCompletionProvider.resetBackoff(),
     )
 
+    // Watch for VS Code settings changes and reload
+    this.settingsDisposable = this.settingsManager.onDidChangeConfiguration(() => {
+      void this.load()
+    })
+
+    // Listen for snooze state changes
+    this.snoozeManager.onSnoozeStateChanged(() => {
+      void this.ensureInlineCompletionProviderRegistration()
+      this.statusBarManager.update(this.snoozeManager.isSnoozed())
+    })
+
     void this.load()
   }
 
-  /**
-   * Get the singleton instance of AutocompleteServiceManager
-   */
   public static getInstance(): AutocompleteServiceManager | null {
     return AutocompleteServiceManager._instance
   }
 
   public async load() {
-    this.settings = readSettings()
+    const settings = this.settingsManager.getSettings()
 
-    if (this.settings.model) {
-      this.model.setModel(this.settings.model)
+    // stratacode_change start
+    if (!settings.enabled) {
+      if (this.inlineCompletionProviderDisposable) {
+        this.inlineCompletionProviderDisposable.dispose()
+        this.inlineCompletionProviderDisposable = null
+      }
+      vscode.commands.executeCommand("setContext", "stratacode.autocomplete.enabled", false)
+      return
+    }
+    // stratacode_change end
+
+    if (settings.model) {
+      this.model.setModel(settings.model)
     }
 
     await this.updateGlobalContext()
-    this.updateStatusBar()
+    this.statusBarManager.update(this.snoozeManager.isSnoozed())
     await this.ensureInlineCompletionProviderRegistration()
-    this.setupSnoozeTimerIfNeeded()
   }
 
-  /**
-   * Ensure the inline completion provider registration matches the current settings.
-   * Only disposes/re-registers when the desired state actually changes, avoiding
-   * unnecessary churn that can break VS Code's provider tracking during startup races.
-   */
   private async ensureInlineCompletionProviderRegistration() {
-    const shouldBeRegistered = (this.settings?.enableAutoTrigger ?? false) && !this.isSnoozed()
+    const settings = this.settingsManager.getSettings()
+    const shouldBeRegistered = settings.enableAutoTrigger && !this.snoozeManager.isSnoozed()
     const isRegistered = this.inlineCompletionProviderDisposable !== null
 
-    // Already in the correct state — nothing to do
     if (shouldBeRegistered === isRegistered) {
       return
     }
@@ -150,8 +132,6 @@ export class AutocompleteServiceManager {
       return
     }
 
-    // Register classic provider (tracked via this.inlineCompletionProviderDisposable,
-    // not context.subscriptions, so re-registration on reconnect doesn't leak)
     this.inlineCompletionProviderDisposable = vscode.languages.registerInlineCompletionItemProvider(
       { scheme: "file" },
       this.inlineCompletionProvider,
@@ -159,100 +139,13 @@ export class AutocompleteServiceManager {
   }
 
   public async disable() {
-    await writeSettings({
+    await this.settingsManager.updateSettings({
       enableAutoTrigger: false,
       enableSmartInlineTaskKeybinding: false,
     })
 
     TelemetryProxy.capture(TelemetryEventName.GHOST_SERVICE_DISABLED)
-
     await this.load()
-  }
-
-  /**
-   * Check if autocomplete is currently snoozed
-   */
-  public isSnoozed(): boolean {
-    const snoozeUntil = this.settings?.snoozeUntil
-    if (!snoozeUntil) {
-      return false
-    }
-    return Date.now() < snoozeUntil
-  }
-
-  /**
-   * Get remaining snooze time in seconds
-   */
-  public getSnoozeRemainingSeconds(): number {
-    const snoozeUntil = this.settings?.snoozeUntil
-    if (!snoozeUntil) {
-      return 0
-    }
-    const remaining = Math.max(0, Math.ceil((snoozeUntil - Date.now()) / 1000))
-    return remaining
-  }
-
-  /**
-   * Snooze autocomplete for a specified number of seconds
-   */
-  public async snooze(seconds: number): Promise<void> {
-    if (this.snoozeTimer) {
-      clearTimeout(this.snoozeTimer)
-      this.snoozeTimer = null
-    }
-
-    const snoozeUntil = Date.now() + seconds * 1000
-    await writeSettings({ snoozeUntil })
-
-    this.snoozeTimer = setTimeout(() => {
-      void this.unsnooze()
-    }, seconds * 1000)
-
-    await this.load()
-  }
-
-  /**
-   * Cancel snooze and re-enable autocomplete
-   */
-  public async unsnooze(): Promise<void> {
-    if (this.snoozeTimer) {
-      clearTimeout(this.snoozeTimer)
-      this.snoozeTimer = null
-    }
-
-    await writeSettings({ snoozeUntil: undefined })
-
-    await this.load()
-  }
-
-  /**
-   * Set up a timer to auto-unsnooze if we're currently in a snoozed state.
-   */
-  private setupSnoozeTimerIfNeeded(): void {
-    if (this.snoozeTimer) {
-      clearTimeout(this.snoozeTimer)
-      this.snoozeTimer = null
-    }
-
-    const remainingMs = this.getSnoozeRemainingMs()
-    if (remainingMs <= 0) {
-      return
-    }
-
-    this.snoozeTimer = setTimeout(() => {
-      void this.unsnooze()
-    }, remainingMs)
-  }
-
-  /**
-   * Get remaining snooze time in milliseconds
-   */
-  private getSnoozeRemainingMs(): number {
-    const snoozeUntil = this.settings?.snoozeUntil
-    if (!snoozeUntil) {
-      return 0
-    }
-    return Math.max(0, snoozeUntil - Date.now())
   }
 
   public async codeSuggestion() {
@@ -267,8 +160,6 @@ export class AutocompleteServiceManager {
     })
 
     const document = editor.document
-
-    // Call the inline completion provider directly with manual trigger context
     const position = editor.selection.active
     const context: vscode.InlineCompletionContext = {
       triggerKind: vscode.InlineCompletionTriggerKind.Invoke,
@@ -284,7 +175,6 @@ export class AutocompleteServiceManager {
     )
     tokenSource.dispose()
 
-    // If we got completions, directly insert the first one
     if (completions && (Array.isArray(completions) ? completions.length > 0 : completions.items.length > 0)) {
       const items = Array.isArray(completions) ? completions : completions.items
       const firstCompletion = items[0]
@@ -301,40 +191,14 @@ export class AutocompleteServiceManager {
   }
 
   private async updateGlobalContext() {
+    const settings = this.settingsManager.getSettings()
     await vscode.commands.executeCommand(
       "setContext",
       "stratacode.autocomplete.enableSmartInlineTaskKeybinding",
-      this.settings?.enableSmartInlineTaskKeybinding || false,
+      settings.enableSmartInlineTaskKeybinding,
     )
   }
 
-  private initializeStatusBar() {
-    this.statusBar = new AutocompleteStatusBar({
-      enabled: false,
-      model: "loading...",
-      provider: "loading...",
-      totalSessionCost: 0,
-      completionCount: 0,
-      sessionStartTime: this.sessionStartTime,
-    })
-  }
-
-  private getCurrentModelName(): string {
-    return this.model.getModelName()
-  }
-
-  private getCurrentProviderName(): string {
-    return this.model.getProviderDisplayName()
-  }
-
-  private hasNoUsableProvider(): boolean {
-    return !this.model.hasValidCredentials()
-  }
-
-  /**
-   * Handle a fatal (non-retriable) autocomplete error such as 402 Payment Required.
-   * Shows a one-time notification to the user so they know autocomplete is paused.
-   */
   private handleFatalAutocompleteError(status: number | null): void {
     const msg =
       status === 402
@@ -353,27 +217,7 @@ export class AutocompleteServiceManager {
   }
 
   private updateCostTracking(cost: number, _inputTokens: number, _outputTokens: number): void {
-    this.completionCount++
-    this.sessionCost += cost
-    this.updateStatusBar()
-  }
-
-  private updateStatusBar() {
-    if (!this.statusBar) {
-      this.initializeStatusBar()
-    }
-
-    this.statusBar?.update({
-      enabled: this.settings?.enableAutoTrigger,
-      snoozed: this.isSnoozed(),
-      model: this.getCurrentModelName(),
-      provider: this.getCurrentProviderName(),
-      profileName: this.model.profileName,
-      hasNoUsableProvider: this.hasNoUsableProvider(),
-      totalSessionCost: this.sessionCost,
-      completionCount: this.completionCount,
-      sessionStartTime: this.sessionStartTime,
-    })
+    this.statusBarManager.recordCompletion(cost)
   }
 
   public async showIncompatibilityExtensionPopup() {
@@ -389,33 +233,24 @@ export class AutocompleteServiceManager {
     }
   }
 
-  /**
-   * Dispose of all resources used by the AutocompleteServiceManager
-   */
   public dispose(): void {
-    this.statusBar?.dispose()
+    this.statusBarManager.dispose()
+    this.snoozeManager.dispose()
 
-    if (this.snoozeTimer) {
-      clearTimeout(this.snoozeTimer)
-      this.snoozeTimer = null
-    }
-
-    // Unsubscribe from connection state changes and SSE events
     this.unsubscribeState?.()
     this.unsubscribeState = null
     this.unsubscribeEvent?.()
     this.unsubscribeEvent = null
+    this.settingsDisposable?.dispose()
+    this.settingsDisposable = null
 
-    // Dispose inline completion provider registration
     if (this.inlineCompletionProviderDisposable) {
       this.inlineCompletionProviderDisposable.dispose()
       this.inlineCompletionProviderDisposable = null
     }
 
-    // Dispose inline completion provider resources
     this.inlineCompletionProvider.dispose()
 
-    // Clear singleton instance
     AutocompleteServiceManager._instance = null
   }
 

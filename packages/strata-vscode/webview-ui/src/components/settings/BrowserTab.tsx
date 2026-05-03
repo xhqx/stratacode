@@ -57,13 +57,6 @@ const BrowserTab: Component = () => {
       </div>
 
       <Card>
-        {/* Enable toggle */}
-        <SettingsRow title={t("settings.browser.enable.title")} description={t("settings.browser.enable.description")}>
-          <Switch checked={settings().enabled} onChange={(checked: boolean) => update("enabled", checked)} hideLabel>
-            {t("settings.browser.enable.title")}
-          </Switch>
-        </SettingsRow>
-
         {/* Use System Chrome */}
         <SettingsRow
           title={t("settings.browser.systemChrome.title")}

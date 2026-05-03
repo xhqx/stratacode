@@ -12,7 +12,6 @@ import { buildExport } from "./mode-io"
 import { GeneralTab } from "./ModeEditTabs"
 import { PromptTab } from "./ModePromptTab"
 import { PermissionsTab } from "./ModePermissionsTab"
-import { FeaturesTab } from "./ModeFeaturesTab"
 
 interface Props {
   name: string
@@ -56,12 +55,8 @@ const ModeEditView: Component<Props> = (props) => {
 
   const [activeTab, setActiveTab] = createSignal("general")
 
-  const hasFeaturesTab = createMemo(
-    () => props.name === "autocomplete" || props.name === "commit" || props.name === "plan",
-  )
-
   createEffect(() => {
-    if (activeTab() === "features" && !hasFeaturesTab()) {
+    if (activeTab() === "features") {
       setActiveTab("general")
     }
   })
@@ -128,14 +123,6 @@ const ModeEditView: Component<Props> = (props) => {
               id: "permissions",
               label: language.t("settings.agentBehaviour.editMode.tab.permissions") || "Permissions",
             },
-            ...(hasFeaturesTab()
-              ? [
-                  {
-                    id: "features",
-                    label: language.t("settings.agentBehaviour.editMode.tab.features") || "Agent-Specific",
-                  },
-                ]
-              : []),
           ]}
         >
           {(tab) => (
@@ -175,9 +162,7 @@ const ModeEditView: Component<Props> = (props) => {
         <PermissionsTab {...tabContext} agentData={agent} />
       </Show>
 
-      <Show when={hasFeaturesTab() && activeTab() === "features"}>
-        <FeaturesTab {...tabContext} config={() => config() as any} updateConfig={updateConfig} />
-      </Show>
+
 
       <div style={{ display: "flex", "justify-content": "flex-end" }}>
         <Button variant="ghost" onClick={props.onBack}>

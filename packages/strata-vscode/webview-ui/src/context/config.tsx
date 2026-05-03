@@ -11,7 +11,7 @@
 import { createContext, useContext, createSignal, onCleanup } from "solid-js"
 import type { ParentComponent, Accessor } from "solid-js"
 import { useVSCode } from "./vscode"
-import type { Config, ExtensionMessage, FeatureFlags } from "../types/messages"
+import type { Config, ExtensionMessage, FeatureFlags, ExtensionFeatureFlags } from "../types/messages"
 import { deepMerge, stripNulls, resolveConfig } from "../utils/config-utils"
 
 export interface SaveError {
@@ -22,6 +22,7 @@ export interface SaveError {
 interface ConfigContextValue {
   config: Accessor<Config>
   features: Accessor<FeatureFlags>
+  extensionFeatures: Accessor<ExtensionFeatureFlags>
   loading: Accessor<boolean>
   isDirty: Accessor<boolean>
   saving: Accessor<boolean>
@@ -33,11 +34,36 @@ interface ConfigContextValue {
 
 export const ConfigContext = createContext<ConfigContextValue>()
 
+const EXT_FEATURE_DEFAULTS: ExtensionFeatureFlags = {
+  acpAgents: true,
+  autocomplete: true,
+  autoretries: true,
+  browserAutomation: false,
+  checkpoints: true,
+  codeActions: true,
+  commitMessage: true,
+  diffViewer: true,
+  documentDrivenTasks: false,
+  explainer: true,
+  kanban: false,
+  lsp: true,
+  notifications: true,
+  planningMode: false,
+  projectMemory: true,
+  promptAutocomplete: true,
+  promptEnhancer: true,
+  promptEnhancerSuggestions: true,
+  remoteControl: false,
+  sessionSharing: false,
+  workers: false,
+}
+
 export const ConfigProvider: ParentComponent = (props) => {
   const vscode = useVSCode()
 
   const [config, setConfig] = createSignal<Config>({})
   const [features, setFeatures] = createSignal<FeatureFlags>({ indexing: false })
+  const [extensionFeatures, setExtensionFeatures] = createSignal<ExtensionFeatureFlags>(EXT_FEATURE_DEFAULTS)
   const [loading, setLoading] = createSignal(true)
   const [draft, setDraft] = createSignal<Partial<Config>>({})
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -92,6 +118,10 @@ export const ConfigProvider: ParentComponent = (props) => {
       setSaveError({ message: message.message, details: message.details })
       return
     }
+    if (message.type === "extensionFeaturesLoaded") {
+      setExtensionFeatures(message.features)
+      return
+    }
   })
 
   onCleanup(unsubscribe)
@@ -99,6 +129,7 @@ export const ConfigProvider: ParentComponent = (props) => {
   // Request config immediately; if the extension's httpClient is not yet ready,
   // extensionDataReady will fire once initialization completes and we retry once.
   vscode.postMessage({ type: "requestConfig" })
+  vscode.postMessage({ type: "requestExtensionFeatures" })
 
   const fallback = setTimeout(() => {
     if (loading()) {
@@ -155,6 +186,7 @@ export const ConfigProvider: ParentComponent = (props) => {
   const value: ConfigContextValue = {
     config,
     features,
+    extensionFeatures,
     loading,
     isDirty,
     saving,

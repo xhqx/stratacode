@@ -624,7 +624,9 @@ export const dict = {
   "settings.section.desktop": "Desktop",
   "settings.section.server": "Server",
   "settings.tab.general": "General",
+  "settings.tab.features": "Features",
   "settings.tab.shortcuts": "Shortcuts",
+  "settings.tab.tools": "Tools",
 
   "settings.general.section.appearance": "Appearance",
   "settings.general.section.notifications": "System notifications",

@@ -4,7 +4,7 @@ import type { Position, Range, RangeInFile } from "./continuedev/core"
 import type { FileIgnoreController } from "./shims/FileIgnoreController"
 import type { ContextRetrievalService } from "./continuedev/core/autocomplete/context/ContextRetrievalService"
 import type { VsCodeIde } from "./continuedev/core/vscode-test-harness/src/VSCodeIde"
-import type { AutocompleteModel } from "./AutocompleteModel"
+import type { AutocompleteBackendClient } from "./AutocompleteBackendClient"
 
 export interface ResponseMetaData {
   cost: number
@@ -212,6 +212,6 @@ export function contextToAutocompleteInput(context: AutocompleteSuggestionContex
 export interface AutocompleteContextProvider {
   contextService: ContextRetrievalService
   ide: VsCodeIde
-  model: AutocompleteModel
+  model: AutocompleteBackendClient
   ignoreController?: Promise<FileIgnoreController>
 }

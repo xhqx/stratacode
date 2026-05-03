@@ -159,3 +159,27 @@ export interface Config {
 export interface FeatureFlags {
   indexing: boolean
 }
+
+export interface ExtensionFeatureFlags {
+  acpAgents: boolean
+  autocomplete: boolean
+  autoretries: boolean
+  browserAutomation: boolean
+  checkpoints: boolean
+  codeActions: boolean
+  commitMessage: boolean
+  diffViewer: boolean
+  documentDrivenTasks: boolean
+  explainer: boolean
+  kanban: boolean
+  lsp: boolean
+  notifications: boolean
+  planningMode: boolean
+  projectMemory: boolean
+  promptAutocomplete: boolean
+  promptEnhancer: boolean
+  promptEnhancerSuggestions: boolean
+  remoteControl: boolean
+  sessionSharing: boolean
+  workers: boolean
+}

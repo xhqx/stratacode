@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { AutocompleteModel } from "../AutocompleteModel"
+import { AutocompleteBackendClient } from "../AutocompleteBackendClient"
 import type { StrataConnectionService } from "../../cli-backend"
 
 const mockClient = {
@@ -20,14 +20,14 @@ function createMockConnectionService(state: "connecting" | "connected" | "discon
   } as unknown as StrataConnectionService
 }
 
-describe("AutocompleteModel", () => {
+describe("AutocompleteBackendClient", () => {
   beforeEach(() => {
     mockClient.strata.fim.mockReset()
   })
 
   describe("constructor", () => {
     it("defaults profileName and profileType to null", () => {
-      const model = new AutocompleteModel()
+      const model = new AutocompleteBackendClient()
       expect(model.profileName).toBeNull()
       expect(model.profileType).toBeNull()
     })
@@ -35,7 +35,7 @@ describe("AutocompleteModel", () => {
 
   describe("setConnectionService", () => {
     it("sets the connection service after construction", () => {
-      const model = new AutocompleteModel()
+      const model = new AutocompleteBackendClient()
       expect(model.hasValidCredentials()).toBe(false)
 
       const connection = createMockConnectionService("connected")
@@ -47,49 +47,49 @@ describe("AutocompleteModel", () => {
   describe("hasValidCredentials", () => {
     it("returns true when connected", () => {
       const connection = createMockConnectionService("connected")
-      const model = new AutocompleteModel(connection)
+      const model = new AutocompleteBackendClient(connection)
       expect(model.hasValidCredentials()).toBe(true)
     })
 
     it("returns false when disconnected", () => {
       const connection = createMockConnectionService("disconnected")
-      const model = new AutocompleteModel(connection)
+      const model = new AutocompleteBackendClient(connection)
       expect(model.hasValidCredentials()).toBe(false)
     })
 
     it("returns false when connecting", () => {
       const connection = createMockConnectionService("connecting")
-      const model = new AutocompleteModel(connection)
+      const model = new AutocompleteBackendClient(connection)
       expect(model.hasValidCredentials()).toBe(false)
     })
 
     it("returns false when in error state", () => {
       const connection = createMockConnectionService("error")
-      const model = new AutocompleteModel(connection)
+      const model = new AutocompleteBackendClient(connection)
       expect(model.hasValidCredentials()).toBe(false)
     })
 
     it("returns false without connection service", () => {
-      const model = new AutocompleteModel()
+      const model = new AutocompleteBackendClient()
       expect(model.hasValidCredentials()).toBe(false)
     })
   })
 
   describe("getModelName", () => {
     it("returns the default model", () => {
-      const model = new AutocompleteModel()
+      const model = new AutocompleteBackendClient()
       expect(model.getModelName()).toBe("mistralai/codestral-2508")
     })
   })
 
   describe("getProviderDisplayName", () => {
     it("returns the default provider", () => {
-      const model = new AutocompleteModel()
+      const model = new AutocompleteBackendClient()
       expect(model.getProviderDisplayName()).toBe("Mistral AI")
     })
 
     it("returns the selected provider", () => {
-      const model = new AutocompleteModel()
+      const model = new AutocompleteBackendClient()
       model.setModel("inception/mercury-edit")
 
       expect(model.getProviderDisplayName()).toBe("Inception")
@@ -98,7 +98,7 @@ describe("AutocompleteModel", () => {
 
   describe("generateFimResponse", () => {
     it("throws when connection service is not available", async () => {
-      const model = new AutocompleteModel()
+      const model = new AutocompleteBackendClient()
       await expect(model.generateFimResponse("prefix", "suffix", vi.fn())).rejects.toThrow(
         "Connection service is not available",
       )
@@ -106,7 +106,7 @@ describe("AutocompleteModel", () => {
 
     it("throws when not connected", async () => {
       const connection = createMockConnectionService("disconnected")
-      const model = new AutocompleteModel(connection)
+      const model = new AutocompleteBackendClient(connection)
       await expect(model.generateFimResponse("prefix", "suffix", vi.fn())).rejects.toThrow(
         "CLI backend is not connected",
       )
@@ -129,7 +129,7 @@ describe("AutocompleteModel", () => {
         })(),
       })
 
-      const model = new AutocompleteModel(connection)
+      const model = new AutocompleteBackendClient(connection)
       const received: string[] = []
       const result = await model.generateFimResponse("prefix", "suffix", (text) => received.push(text))
 
@@ -153,7 +153,7 @@ describe("AutocompleteModel", () => {
         })(),
       })
 
-      const model = new AutocompleteModel(connection)
+      const model = new AutocompleteBackendClient(connection)
       const received: string[] = []
       await model.generateFimResponse("prefix", "suffix", (text) => received.push(text))
 
@@ -166,7 +166,7 @@ describe("AutocompleteModel", () => {
         stream: (async function* () {})(),
       })
 
-      const model = new AutocompleteModel(connection)
+      const model = new AutocompleteBackendClient(connection)
       const signal = new AbortController().signal
       await model.generateFimResponse("pre", "suf", vi.fn(), signal)
 
@@ -188,7 +188,7 @@ describe("AutocompleteModel", () => {
         stream: (async function* () {})(),
       })
 
-      const model = new AutocompleteModel(connection)
+      const model = new AutocompleteBackendClient(connection)
       model.setModel("inception/mercury-edit")
       await model.generateFimResponse("pre", "suf", vi.fn())
 

@@ -17,16 +17,16 @@ import DiffViewerTab from "./DiffViewerTab"
 import NotificationsTab from "./NotificationsTab"
 import ContextTab from "./ContextTab"
 
-import McpServersTab from "./McpServersTab"
+import ToolsTab from "./ToolsTab"
 import AcpAgentsTab from "./AcpAgentsTab"
-import RulesTab from "./RulesTab"
-import WorkflowsTab from "./agent-behaviour/WorkflowsTab"
-import SkillsTab from "./SkillsTab"
 
-import LanguageTab from "./LanguageTab"
-import AboutStrataCodeTab from "./AboutStrataCodeTab"
+import FeaturesTab from "./FeaturesTab"
 import IndexingTab from "./IndexingTab"
 import ProjectMemoryTab from "./ProjectMemoryTab"
+import AutocompleteTab from "./AutocompleteTab"
+import CodeActionsTab from "./CodeActionsTab"
+import CommitMessageTab from "./CommitMessageTab"
+import PlanningTab from "./PlanningTab"
 import PluginSettingsTab from "./PluginSettingsTab"
 import { useServer } from "../../context/server"
 import { usePluginConfig } from "../../context/plugin-config"
@@ -41,18 +41,21 @@ const Settings: Component<SettingsProps> = (props) => {
   const server = useServer()
   const language = useLanguage()
   const vscode = useVSCode()
-  const { saving, saveError, features } = useConfig()
+  const { saving, saveError, features, extensionFeatures } = useConfig()
   const pluginConfig = usePluginConfig()
 
   // Stale tab handling: if the active tab is a plugin tab but the section no longer exists,
   // fall back to "models". If it is a removed tab, fallback to "agentBehaviour".
-  const activeTab = () => {
-    const tab = props.tab ?? "agentBehaviour"
-    if (tab === "autocomplete" || tab === "commitMessage" || tab === "models") {
+  const resolveTab = (tab?: string) => {
+    tab = tab ?? props.tab ?? "agentBehaviour"
+    if (tab === "models") {
       return "agentBehaviour"
     }
     if (tab === "display") {
       return "appearance"
+    }
+    if (["mcpServers", "rules", "workflows", "skills"].includes(tab)) {
+      return "tools"
     }
     if (tab.startsWith("plugin:")) {
       const sectionId = tab.replace("plugin:", "")
@@ -63,7 +66,7 @@ const Settings: Component<SettingsProps> = (props) => {
     return tab
   }
 
-  const [active, setActive] = createSignal(activeTab())
+  const [active, setActive] = createSignal(resolveTab())
   const [errorExpanded, setErrorExpanded] = createSignal(false)
   // Brief "Saved" indicator that appears after a successful auto-save
   const [saved, setSaved] = createSignal(false)
@@ -153,14 +156,34 @@ const Settings: Component<SettingsProps> = (props) => {
     on(
       () => props.tab,
       (tab) => {
-        if (tab) setActive(tab)
+        if (tab) setActive(resolveTab(tab))
       },
     ),
   )
 
+  // Redirect to providers if the user is on a tab whose feature was just disabled
   createEffect(() => {
-    if (features().indexing || activeTab() !== "indexing") return
-    onTabChange("providers")
+    const ext = extensionFeatures()
+    const tab = resolveTab()
+    const gated: Record<string, boolean> = {
+      acpAgents: ext.acpAgents,
+      autocomplete: ext.autocomplete,
+      browser: ext.browserAutomation,
+      checkpoints: ext.checkpoints,
+      codeActions: ext.codeActions,
+      commitMessage: ext.commitMessage,
+      diffViewer: ext.diffViewer,
+      explainer: ext.explainer,
+      kanban: ext.kanban,
+      notifications: ext.notifications,
+      planningMode: ext.planningMode,
+      projectMemory: ext.projectMemory,
+      workers: ext.workers,
+      indexing: features().indexing,
+    }
+    if (tab in gated && !gated[tab]) {
+      onTabChange("providers")
+    }
   })
 
   const onTabChange = (tab: string) => {
@@ -210,62 +233,100 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="brain" />
             <span class="label">{language.t("settings.agentBehaviour.title")}</span>
           </Tabs.Trigger>
-          <Tabs.Trigger value="mcpServers">
-            <Icon name="server" />
-            <span class="label">{language.t("settings.agentBehaviour.subtab.mcpServers")}</span>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="acpAgents">
-            <Icon name="circuit-board" />
-            <span class="label">{language.t("settings.agentBehaviour.subtab.acpAgents")}</span>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="rules">
-            <Icon name="bullet-list" />
-            <span class="label">{language.t("settings.agentBehaviour.subtab.rules")}</span>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="workflows">
-            <Icon name="branch" />
-            <span class="label">{language.t("settings.agentBehaviour.subtab.workflows")}</span>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="skills">
+          <Tabs.Trigger value="tools">
             <Icon name="settings-gear" />
-            <span class="label">{language.t("settings.agentBehaviour.subtab.skills")}</span>
+            <span class="label">{language.t("settings.tab.tools")}</span>
           </Tabs.Trigger>
+          <Show when={extensionFeatures().acpAgents}>
+            <Tabs.Trigger value="acpAgents">
+              <Icon name="circuit-board" />
+              <span class="label">{language.t("settings.agentBehaviour.subtab.acpAgents")}</span>
+            </Tabs.Trigger>
+          </Show>
+          <Show when={extensionFeatures().autocomplete}>
+            <Tabs.Trigger value="autocomplete">
+              <Icon name="code-lines" />
+              <span class="label">Autocomplete</span>
+            </Tabs.Trigger>
+          </Show>
+          <Show when={extensionFeatures().codeActions}>
+            <Tabs.Trigger value="codeActions">
+              <Icon name="code-lines" />
+              <span class="label">Code Actions</span>
+            </Tabs.Trigger>
+          </Show>
+          <Show when={extensionFeatures().commitMessage}>
+            <Tabs.Trigger value="commitMessage">
+              <Icon name="branch" />
+              <span class="label">Commit Message</span>
+            </Tabs.Trigger>
+          </Show>
+          <Show when={extensionFeatures().explainer}>
+            <Tabs.Trigger value="explainer">
+              <Icon name="brain" />
+              <span class="label">Explainer</span>
+            </Tabs.Trigger>
+          </Show>
+          <Show when={extensionFeatures().kanban}>
+            <Tabs.Trigger value="kanban">
+              <Icon name="checklist" />
+              <span class="label">Kanban</span>
+            </Tabs.Trigger>
+          </Show>
+          <Show when={extensionFeatures().planningMode}>
+            <Tabs.Trigger value="planningMode">
+              <Icon name="checklist" />
+              <span class="label">Planning Mode</span>
+            </Tabs.Trigger>
+          </Show>
           <Tabs.Trigger value="autoApprove">
             <Icon name="checklist" />
             <span class="label">{language.t("settings.autoApprove.title")}</span>
           </Tabs.Trigger>
-          <Tabs.Trigger value="browser">
-            <Icon name="window-cursor" />
-            <span class="label">{language.t("settings.browser.title")}</span>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="checkpoints">
-            <Icon name="branch" />
-            <span class="label">{language.t("settings.checkpoints.title")}</span>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="diffViewer">
-            <Icon name="code-lines" />
-            <span class="label">{language.t("settings.diffViewer.title")}</span>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="workers">
-            <Icon name="reset" />
-            <span class="label">{language.t("settings.workers.title")}</span>
-          </Tabs.Trigger>
+          <Show when={extensionFeatures().browserAutomation}>
+            <Tabs.Trigger value="browser">
+              <Icon name="window-cursor" />
+              <span class="label">{language.t("settings.browser.title")}</span>
+            </Tabs.Trigger>
+          </Show>
+          <Show when={extensionFeatures().checkpoints}>
+            <Tabs.Trigger value="checkpoints">
+              <Icon name="branch" />
+              <span class="label">{language.t("settings.checkpoints.title")}</span>
+            </Tabs.Trigger>
+          </Show>
+          <Show when={extensionFeatures().diffViewer}>
+            <Tabs.Trigger value="diffViewer">
+              <Icon name="code-lines" />
+              <span class="label">{language.t("settings.diffViewer.title")}</span>
+            </Tabs.Trigger>
+          </Show>
+          <Show when={extensionFeatures().workers}>
+            <Tabs.Trigger value="workers">
+              <Icon name="reset" />
+              <span class="label">{language.t("settings.workers.title")}</span>
+            </Tabs.Trigger>
+          </Show>
           <Tabs.Trigger value="appearance">
             <Icon name="eye" />
             <span class="label">{language.t("settings.appearance.title")}</span>
           </Tabs.Trigger>
-          <Tabs.Trigger value="notifications">
-            <Icon name="circle-check" />
-            <span class="label">{language.t("settings.notifications.title")}</span>
-          </Tabs.Trigger>
+          <Show when={extensionFeatures().notifications}>
+            <Tabs.Trigger value="notifications">
+              <Icon name="circle-check" />
+              <span class="label">{language.t("settings.notifications.title")}</span>
+            </Tabs.Trigger>
+          </Show>
           <Tabs.Trigger value="context">
             <Icon name="layers" />
             <span class="label">{language.t("settings.context.title")}</span>
           </Tabs.Trigger>
-          <Tabs.Trigger value="projectMemory">
-            <Icon name="archive" />
-            <span class="label">Project Memory</span>
-          </Tabs.Trigger>
+          <Show when={extensionFeatures().projectMemory}>
+            <Tabs.Trigger value="projectMemory">
+              <Icon name="archive" />
+              <span class="label">Project Memory</span>
+            </Tabs.Trigger>
+          </Show>
           <Show when={features().indexing}>
             <Tabs.Trigger value="indexing">
               <Icon name="magnifying-glass" />
@@ -273,13 +334,9 @@ const Settings: Component<SettingsProps> = (props) => {
             </Tabs.Trigger>
           </Show>
 
-          <Tabs.Trigger value="language">
-            <Icon name="speech-bubble" />
-            <span class="label">{language.t("settings.language.title")}</span>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="aboutStrataCode">
-            <Icon name="help" />
-            <span class="label">{language.t("settings.aboutStrataCode.title")}</span>
+          <Tabs.Trigger value="features">
+            <Icon name="checklist" />
+            <span class="label">{language.t("settings.tab.features")}</span>
           </Tabs.Trigger>
 
           <Show when={pluginConfig.sections().length > 0}>
@@ -307,6 +364,10 @@ const Settings: Component<SettingsProps> = (props) => {
               )}
             </For>
           </Show>
+
+          <div style={{ "margin-top": "auto", padding: "16px 12px", "text-align": "center", color: "var(--vscode-descriptionForeground)", "font-size": "11px", opacity: 0.7 }}>
+            {language.t("settings.aboutStrataCode.version.label")} 0.0.1
+          </div>
         </Tabs.List>
 
         <Tabs.Content value="providers">
@@ -317,25 +378,29 @@ const Settings: Component<SettingsProps> = (props) => {
           <h3>{language.t("settings.agentBehaviour.title")}</h3>
           <AgentBehaviourTab />
         </Tabs.Content>
-        <Tabs.Content value="mcpServers">
-          <h3>{language.t("settings.agentBehaviour.subtab.mcpServers")}</h3>
-          <McpServersTab />
+        <Tabs.Content value="tools" style={{ display: "flex", "flex-direction": "column", height: "100%" }}>
+          <h3 style={{ "margin-bottom": "16px" }}>{language.t("settings.tab.tools")}</h3>
+          <ToolsTab initialTab={props.tab} />
         </Tabs.Content>
         <Tabs.Content value="acpAgents">
           <h3>{language.t("settings.agentBehaviour.subtab.acpAgents")}</h3>
           <AcpAgentsTab />
         </Tabs.Content>
-        <Tabs.Content value="rules">
-          <h3>{language.t("settings.agentBehaviour.subtab.rules")}</h3>
-          <RulesTab />
+        <Tabs.Content value="autocomplete">
+          <h3>Autocomplete</h3>
+          <AutocompleteTab />
         </Tabs.Content>
-        <Tabs.Content value="workflows">
-          <h3>{language.t("settings.agentBehaviour.subtab.workflows")}</h3>
-          <WorkflowsTab />
+        <Tabs.Content value="codeActions">
+          <h3>Code Actions</h3>
+          <CodeActionsTab />
         </Tabs.Content>
-        <Tabs.Content value="skills">
-          <h3>{language.t("settings.agentBehaviour.subtab.skills")}</h3>
-          <SkillsTab />
+        <Tabs.Content value="commitMessage">
+          <h3>Commit Message</h3>
+          <CommitMessageTab />
+        </Tabs.Content>
+        <Tabs.Content value="planningMode">
+          <h3>Planning Mode</h3>
+          <PlanningTab />
         </Tabs.Content>
         <Tabs.Content value="autoApprove">
           <h3>{language.t("settings.autoApprove.title")}</h3>
@@ -380,13 +445,9 @@ const Settings: Component<SettingsProps> = (props) => {
             <IndexingTab />
           </Tabs.Content>
         </Show>
-        <Tabs.Content value="language">
-          <h3>{language.t("settings.language.title")}</h3>
-          <LanguageTab />
-        </Tabs.Content>
-        <Tabs.Content value="aboutStrataCode">
-          <h3>{language.t("settings.aboutStrataCode.title")}</h3>
-          <AboutStrataCodeTab />
+        <Tabs.Content value="features">
+          <h3>{language.t("settings.tab.features")}</h3>
+          <FeaturesTab />
         </Tabs.Content>
 
         <For each={pluginConfig.sections()}>

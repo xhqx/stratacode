@@ -10,19 +10,16 @@ const BackgroundWorkersTab: Component = () => {
   const vscode = useVSCode()
   const language = useLanguage()
 
-  const [enabled, setEnabled] = createSignal(false)
   const [autoExplain, setAutoExplain] = createSignal(false)
   const [pollingInterval, setPollingInterval] = createSignal(5)
 
   const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
     if (message.type !== "settingLoaded") return
-    if (message.key === "workers.enabled") setEnabled(message.value as boolean)
     if (message.key === "workers.autoExplain") setAutoExplain(message.value as boolean)
     if (message.key === "workers.pollingIntervalSec") setPollingInterval(message.value as number)
   })
   onCleanup(unsubscribe)
 
-  vscode.postMessage({ type: "requestSetting", key: "workers.enabled" })
   vscode.postMessage({ type: "requestSetting", key: "workers.autoExplain" })
   vscode.postMessage({ type: "requestSetting", key: "workers.pollingIntervalSec" })
 
@@ -54,24 +51,6 @@ const BackgroundWorkersTab: Component = () => {
       </div>
 
       <Card>
-        <SettingsRow
-          title={language.t("settings.workers.enable.title")}
-          description={language.t("settings.workers.enable.description")}
-          last={!enabled()}
-        >
-          <Switch
-            checked={enabled()}
-            onChange={(checked: boolean) => {
-              setEnabled(checked)
-              save("workers.enabled", checked)
-            }}
-            hideLabel
-          >
-            {language.t("settings.workers.enable.title")}
-          </Switch>
-        </SettingsRow>
-
-        <Show when={enabled()}>
           <SettingsRow
             title={language.t("settings.workers.autoExplain.title")}
             description={language.t("settings.workers.autoExplain.description")}
@@ -112,8 +91,7 @@ const BackgroundWorkersTab: Component = () => {
                 }
               }}
             />
-          </SettingsRow>
-        </Show>
+        </SettingsRow>
       </Card>
     </div>
   )

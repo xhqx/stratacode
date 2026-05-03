@@ -61,8 +61,8 @@ vi.mock("vscode", () => {
   }
 })
 
-vi.mock("../AutocompleteModel", () => {
-  class AutocompleteModel {
+vi.mock("../AutocompleteBackendClient", () => {
+  class AutocompleteBackendClient {
     public profileName = "test-profile"
 
     public getModelName(): string {
@@ -78,7 +78,7 @@ vi.mock("../AutocompleteModel", () => {
     }
   }
 
-  return { AutocompleteModel }
+  return { AutocompleteBackendClient }
 })
 
 vi.mock("../AutocompleteStatusBar", () => {

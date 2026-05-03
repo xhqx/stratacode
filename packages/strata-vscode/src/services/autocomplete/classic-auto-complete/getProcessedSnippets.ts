@@ -8,7 +8,7 @@ import { getAllSnippetsWithoutRace } from "../continuedev/core/autocomplete/snip
 import { getDefinitionsFromLsp } from "../continuedev/core/vscode-test-harness/src/autocomplete/lsp"
 import { DEFAULT_AUTOCOMPLETE_OPTS } from "../continuedev/core/util/parameters"
 import { getSnippets } from "../continuedev/core/autocomplete/templating/filtering"
-import { AutocompleteModel } from "../AutocompleteModel"
+import { AutocompleteBackendClient } from "../AutocompleteBackendClient"
 import { FileIgnoreController } from "../shims/FileIgnoreController"
 import { AutocompleteSnippet, AutocompleteSnippetType } from "../continuedev/core/autocomplete/types"
 
@@ -69,7 +69,7 @@ export async function getProcessedSnippets(
   autocompleteInput: AutocompleteInput,
   filepath: string,
   contextService: ContextRetrievalService,
-  model: AutocompleteModel,
+  model: AutocompleteBackendClient,
   ide: VsCodeIde,
   ignoreController?: Promise<FileIgnoreController>,
 ): Promise<{

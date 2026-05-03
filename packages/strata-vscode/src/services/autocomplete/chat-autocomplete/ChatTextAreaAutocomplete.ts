@@ -1,5 +1,5 @@
 import * as vscode from "vscode"
-import { AutocompleteModel } from "../AutocompleteModel"
+import { AutocompleteBackendClient } from "../AutocompleteBackendClient"
 import type { AutocompleteContext, VisibleCodeContext } from "../types"
 import { removePrefixOverlap } from "../continuedev/core/autocomplete/postprocessing/removePrefixOverlap.js"
 import { AutocompleteTelemetry } from "../classic-auto-complete/AutocompleteTelemetry"
@@ -29,14 +29,14 @@ interface ChatCompletionResponseSender {
  * acceptance events correlate.
  */
 export class ChatTextAreaAutocomplete {
-  private model: AutocompleteModel
+  private model: AutocompleteBackendClient
   readonly telemetry: AutocompleteTelemetry
   private ignore: FileIgnoreController | null = null
   private dir = ""
   private watcher: vscode.FileSystemWatcher | undefined
 
   constructor(connectionService: StrataConnectionService, telemetry?: AutocompleteTelemetry) {
-    this.model = new AutocompleteModel(connectionService)
+    this.model = new AutocompleteBackendClient(connectionService)
     this.telemetry = telemetry ?? new AutocompleteTelemetry("chat-textarea")
     this.watcher = vscode.workspace.createFileSystemWatcher("**/{.stratacodeignore,.gitignore}")
     const invalidate = () => {

@@ -2,7 +2,6 @@ import * as vscode from "vscode"
 import { StrataProvider } from "./StrataProvider"
 import { AgentManagerProvider } from "./agent-manager/AgentManagerProvider"
 import { VscodeHost } from "./agent-manager/vscode-host"
-import { StrataClawProvider } from "./strataclaw/StrataClawProvider"
 import { DiffViewerProvider } from "./DiffViewerProvider"
 import { DiffVirtualProvider } from "./DiffVirtualProvider"
 import { SettingsEditorProvider } from "./SettingsEditorProvider"
@@ -24,6 +23,7 @@ import type { StrataPluginAPI, SendOptions } from "@stratacode/vscode-api"
 import { SelectionTipService } from "./stratacode/selection-tip"
 import { registerExplainChangeCommands } from "./commands/explain-change"
 import { Logger } from "./stratacode/logger"
+import { syncAll, watchAll, isEnabled } from "./stratacode/feature-gate" // stratacode_change
 
 // Activated via "onStartupFinished" (package.json) so that commands, code actions, keybindings,
 // autocomplete, commit-message generation, and URI deep links all work immediately — without
@@ -34,6 +34,11 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
   Logger.info("Extension", "Strata Code extension is now active", {
     version: vscode.extensions.getExtension("stratacode.strata-code")?.packageJSON?.version ?? "unknown",
   })
+
+  // stratacode_change start
+  syncAll()
+  context.subscriptions.push(watchAll())
+  // stratacode_change end
 
   const telemetry = TelemetryProxy.getInstance()
 
@@ -108,9 +113,9 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
   if (process.platform === "darwin") skip.push("strata-code.new.agentManager.runScript")
   ensureCommandsSkipShell(skip)
 
-  // Create StrataClaw chat provider for editor panel
-  const strataClawProvider = new StrataClawProvider(context.extensionUri, connectionService)
-  context.subscriptions.push(strataClawProvider)
+
+  // stratacode_change start — StrataClaw is intentionally excluded from the UI and codeflow
+  // stratacode_change end
 
   // Create Agent Manager provider for editor panel
   const agentManagerHost = new VscodeHost(context.extensionUri, connectionService, context)
@@ -133,16 +138,6 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
           onBeforeMessage: (msg) => agentManagerProvider.handleMessage(msg),
         })
         agentManagerProvider.deserializePanel(ctx)
-        return Promise.resolve()
-      },
-    }),
-  )
-
-  // Register serializer so StrataClaw panel restores when VS Code restarts
-  context.subscriptions.push(
-    vscode.window.registerWebviewPanelSerializer(StrataClawProvider.viewType, {
-      deserializeWebviewPanel(panel: vscode.WebviewPanel) {
-        strataClawProvider.restorePanel(panel)
         return Promise.resolve()
       },
     }),
@@ -251,8 +246,9 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
       settingsEditorProvider.openPanel("marketplace", undefined, directory)
     }),
     vscode.commands.registerCommand("strata-code.new.strataClawOpen", () => {
-      strataClawProvider.openPanel()
+      // stratacode_change — StrataClaw excluded from UI and codeflow
     }),
+
     vscode.commands.registerCommand("strata-code.new.historyButtonClicked", () => {
       const tab = activeTabProvider()
       if (tab) tab.postMessage({ type: "action", action: "historyButtonClicked" })
@@ -367,7 +363,9 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
   )
 
   // Register explain-change commands (Per-Change Explanator)
-  registerExplainChangeCommands(context, provider, diffViewerProvider)
+  if (isEnabled("diffViewer")) { // stratacode_change
+    registerExplainChangeCommands(context, provider, diffViewerProvider)
+  } // stratacode_change
 
   context.subscriptions.push(
     vscode.commands.registerCommand("strata-code.new.agentManager.previousSession", () => {
@@ -441,10 +439,14 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
   )
 
   // Register autocomplete provider
-  registerAutocompleteProvider(context, connectionService)
+  if (isEnabled("autocomplete")) { // stratacode_change
+    registerAutocompleteProvider(context, connectionService)
+  } // stratacode_change
 
   // Register commit message generation
-  registerCommitMessageService(context, connectionService)
+  if (isEnabled("commitMessage")) { // stratacode_change
+    registerCommitMessageService(context, connectionService)
+  } // stratacode_change
 
   // Register toggle auto-approve shortcut (Ctrl+Alt+A / Cmd+Alt+A)
   const defaultDir = () => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd()
@@ -470,21 +472,23 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
   registerHeapSnapshot(context, connectionService)
 
   // Register selection tip (inline "Add to Chat" hint on selection)
-  const tip = new SelectionTipService(context)
-  context.subscriptions.push(tip)
+  if (isEnabled("codeActions")) { // stratacode_change
+    const tip = new SelectionTipService(context)
+    context.subscriptions.push(tip)
 
-  // Register code actions (editor context menus, terminal context menus, keyboard shortcuts)
-  registerCodeActions(context, provider, agentManagerProvider, () => tip.recordUsage())
-  registerTerminalActions(context, provider, agentManagerProvider)
+    // Register code actions (editor context menus, terminal context menus, keyboard shortcuts)
+    registerCodeActions(context, provider, agentManagerProvider, () => tip.recordUsage())
+    registerTerminalActions(context, provider, agentManagerProvider)
 
-  // Register CodeActionProvider (lightbulb quick fixes)
-  context.subscriptions.push(
-    vscode.languages.registerCodeActionsProvider(
-      { scheme: "file" },
-      new StrataCodeActionProvider(),
-      StrataCodeActionProvider.metadata,
-    ),
-  )
+    // Register CodeActionProvider (lightbulb quick fixes)
+    context.subscriptions.push(
+      vscode.languages.registerCodeActionsProvider(
+        { scheme: "file" },
+        new StrataCodeActionProvider(),
+        StrataCodeActionProvider.metadata,
+      ),
+    )
+  } // stratacode_change
 
   // Create plugin API and register commands
   const api = createPluginAPI({

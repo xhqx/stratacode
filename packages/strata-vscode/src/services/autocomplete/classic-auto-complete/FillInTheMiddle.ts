@@ -7,7 +7,7 @@ import {
 } from "../types"
 import { getProcessedSnippets } from "./getProcessedSnippets"
 import { getTemplateForModel } from "../continuedev/core/autocomplete/templating/AutocompleteTemplate"
-import { AutocompleteModel } from "../AutocompleteModel"
+import { AutocompleteBackendClient } from "../AutocompleteBackendClient"
 
 export type { FimAutocompletePrompt, FimCompletionResult }
 
@@ -57,7 +57,7 @@ export class FimPromptBuilder {
    * Execute FIM-based completion using the model
    */
   async getFromFIM(
-    model: AutocompleteModel,
+    model: AutocompleteBackendClient,
     prompt: FimAutocompletePrompt,
     processSuggestion: (text: string) => FillInAtCursorSuggestion,
     signal?: AbortSignal,
