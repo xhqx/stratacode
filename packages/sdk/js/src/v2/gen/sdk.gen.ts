@@ -13,6 +13,8 @@ import type {
   AuthRemoveResponses,
   AuthSetErrors,
   AuthSetResponses,
+  ChatAutocompleteCompleteErrors,
+  ChatAutocompleteCompleteResponses,
   CommandListResponses,
   CommitMessageGenerateErrors,
   CommitMessageGenerateResponses,
@@ -52,6 +54,7 @@ import type {
   FindSymbolsResponses,
   FindTextResponses,
   FormatterStatusResponses,
+  GetWorkerContextResponses,
   GlobalConfigGetResponses,
   GlobalConfigUpdateErrors,
   GlobalConfigUpdateResponses,
@@ -225,6 +228,8 @@ import type {
   SuggestionDismissErrors,
   SuggestionDismissResponses,
   SuggestionListResponses,
+  SuggestTasksGenerateErrors,
+  SuggestTasksGenerateResponses,
   SyncHistoryListErrors,
   SyncHistoryListResponses,
   SyncReplayErrors,
@@ -5238,6 +5243,110 @@ export class EnhancePrompt extends HeyApiClient {
   }
 }
 
+export class SuggestTasks extends HeyApiClient {
+  /**
+   * Generate task suggestions
+   *
+   * Generate 2-3 contextual next-task proposals using background summarizer context.
+   */
+  public generate<ThrowOnError extends boolean = false>(
+    parameters?: {
+      query_directory?: string
+      workspace?: string
+      body_directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            {
+              in: "query",
+              key: "query_directory",
+              map: "directory",
+            },
+            { in: "query", key: "workspace" },
+            {
+              in: "body",
+              key: "body_directory",
+              map: "directory",
+            },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<
+      SuggestTasksGenerateResponses,
+      SuggestTasksGenerateErrors,
+      ThrowOnError
+    >({
+      url: "/suggest-tasks",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+}
+
+export class ChatAutocomplete extends HeyApiClient {
+  /**
+   * Complete a chat prompt
+   *
+   * Generate a ghost-text completion for the user's partial chat prompt using project context.
+   */
+  public complete<ThrowOnError extends boolean = false>(
+    parameters?: {
+      query_directory?: string
+      workspace?: string
+      text?: string
+      body_directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            {
+              in: "query",
+              key: "query_directory",
+              map: "directory",
+            },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "text" },
+            {
+              in: "body",
+              key: "body_directory",
+              map: "directory",
+            },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<
+      ChatAutocompleteCompleteResponses,
+      ChatAutocompleteCompleteErrors,
+      ThrowOnError
+    >({
+      url: "/chat-autocomplete",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+}
+
 export class SessionImport extends HeyApiClient {
   /**
    * Insert project for session import
@@ -6250,6 +6359,36 @@ export class StrataClient extends HeyApiClient {
   }
 
   /**
+   * Get summarizer context
+   *
+   * Retrieve the latest background summarizer context summary
+   */
+  public getWorkerContext<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<GetWorkerContextResponses, unknown, ThrowOnError>({
+      url: "/worker/context",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
    * Trigger background context workers
    *
    * Dispatch workers for changed files, applying debounce and filtering
@@ -6458,6 +6597,16 @@ export class StrataClient extends HeyApiClient {
   private _enhancePrompt?: EnhancePrompt
   get enhancePrompt(): EnhancePrompt {
     return (this._enhancePrompt ??= new EnhancePrompt({ client: this.client }))
+  }
+
+  private _suggestTasks?: SuggestTasks
+  get suggestTasks(): SuggestTasks {
+    return (this._suggestTasks ??= new SuggestTasks({ client: this.client }))
+  }
+
+  private _chatAutocomplete?: ChatAutocomplete
+  get chatAutocomplete(): ChatAutocomplete {
+    return (this._chatAutocomplete ??= new ChatAutocomplete({ client: this.client }))
   }
 
   private _stratacode?: Stratacode

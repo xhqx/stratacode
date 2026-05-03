@@ -994,6 +994,34 @@
             "default": false,
             "order": 4,
             "description": "Enable smart inline task keybinding."
+          },
+          "strata-code.new.autocomplete.chatMode": {
+            "type": "string",
+            "enum": [
+              "fim",
+              "agent"
+            ],
+            "enumDescriptions": [
+              "FIM-based completion (fast, uses the inline autocomplete model)",
+              "Agent-based completion (context-aware, uses the project summarizer)"
+            ],
+            "default": "fim",
+            "order": 5,
+            "description": "Strategy for chat textarea autocomplete. 'fim' uses the inline fill-in-the-middle model; 'agent' uses an AI agent with project context from the background summarizer."
+          },
+          "strata-code.new.autocomplete.chatDebounceMs": {
+            "type": "number",
+            "minimum": 200,
+            "maximum": 10000,
+            "default": 2000,
+            "order": 6,
+            "description": "Delay in milliseconds before triggering a chat autocomplete request after the user stops typing. Increase for slower connections or to reduce API calls."
+          },
+          "strata-code.new.autocomplete.taskSuggestionsEnabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 7,
+            "description": "Show AI-generated next-task suggestion chips below the chat input when the prompt is empty."
           }
         }
       },
@@ -1060,6 +1088,12 @@
             "default": false,
             "order": 2,
             "markdownDescription": "Automatically run the explainer in the background to pre-populate the Changes tab with AI explanations."
+          },
+          "strata-code.new.workers.pollingIntervalSec": {
+            "type": "number",
+            "default": 5,
+            "order": 3,
+            "markdownDescription": "Seconds to wait between background polling loops for uncommitted and branch changes."
           }
         }
       },

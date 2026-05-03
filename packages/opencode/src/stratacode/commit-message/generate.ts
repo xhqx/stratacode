@@ -5,6 +5,7 @@ import { Log } from "@/util"
 import type { CommitMessageRequest, CommitMessageResponse, GitContext } from "./types"
 import { getGitContext } from "./git-context"
 import { fetchSessionContext } from "../session-context" // stratacode_change
+import { injectProjectContext } from "../project-context"
 
 const log = Log.create({ service: "commit-message" })
 
@@ -199,8 +200,13 @@ export async function generateCommitMessage(request: CommitMessageRequest): Prom
     }
 
     if (cfg.workers?.enabled) {
-      const { ContextMapService } = await import("../worker/context-map")
-      userMessage = await ContextMapService.inject(userMessage, request.path)
+      userMessage = await injectProjectContext(userMessage, {
+        cwd: request.path,
+        mentioned: ctx.files.map((f) => f.path),
+        summary: true,
+        repomap: true,
+        repomapBudget: 4000,
+      })
     }
   } catch (err) {
     log.warn("session context fetch failed, continuing without", { err })

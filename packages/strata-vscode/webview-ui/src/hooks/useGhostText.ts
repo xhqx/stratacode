@@ -2,7 +2,7 @@ import { createEffect, createSignal, onCleanup, onMount } from "solid-js"
 import type { Accessor } from "solid-js"
 import type { ExtensionMessage, WebviewMessage } from "../types/messages"
 
-const DEBOUNCE_MS = 500
+const DEFAULT_DEBOUNCE_MS = 2000
 const MIN_LENGTH = 3
 
 interface VSCodeContext {
@@ -33,10 +33,14 @@ export interface GhostText {
  * listener) instead of scattering show/hide logic.
  *
  * Follows the legacy "syncAutocompleteTextVisibility" pattern.
+ * Supports both FIM-based ("chatCompletionResult") and agent-based
+ * ("agentChatCompletionResult") backends, selected by the chatMode setting.
  */
 export function useGhostText(vscode: VSCodeContext, getText: () => string, connected: () => boolean): GhostText {
   const [ghost, setGhost] = createSignal("")
   const [enabled, setEnabled] = createSignal(false)
+  const [chatMode, setChatMode] = createSignal<"fim" | "agent">("fim")
+  const [debounceMs, setDebounceMs] = createSignal(DEFAULT_DEBOUNCE_MS)
 
   let counter = 0
   let prefix = ""
@@ -49,8 +53,9 @@ export function useGhostText(vscode: VSCodeContext, getText: () => string, conne
   let focused = false
 
   const unsubscribe = vscode.onMessage((message) => {
-    if (message.type === "chatCompletionResult") {
-      const result = message as { type: "chatCompletionResult"; text: string; requestId: string }
+    const isResult = message.type === "chatCompletionResult" || message.type === "agentChatCompletionResult"
+    if (isResult) {
+      const result = message as { type: string; text: string; requestId: string }
       if (result.requestId !== `chat-ac-${counter}`) return
       if (result.text) {
         saved = result.text
@@ -62,6 +67,8 @@ export function useGhostText(vscode: VSCodeContext, getText: () => string, conne
 
     if (message.type === "autocompleteSettingsLoaded") {
       setEnabled(message.settings.enableChatAutocomplete)
+      setChatMode(message.settings.chatMode ?? "fim")
+      setDebounceMs(message.settings.chatDebounceMs ?? DEFAULT_DEBOUNCE_MS)
     }
   })
 
@@ -176,8 +183,13 @@ export function useGhostText(vscode: VSCodeContext, getText: () => string, conne
       counter++
       prefix = val
       savedPrefix = val
-      vscode.postMessage({ type: "requestChatCompletion", text: val, requestId: `chat-ac-${counter}` })
-    }, DEBOUNCE_MS)
+      const requestId = `chat-ac-${counter}`
+      if (chatMode() === "agent") {
+        vscode.postMessage({ type: "requestAgentChatCompletion", text: val, requestId })
+      } else {
+        vscode.postMessage({ type: "requestChatCompletion", text: val, requestId })
+      }
+    }, debounceMs())
   }
 
   function accept(): { text: string } | null {

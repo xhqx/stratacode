@@ -5,6 +5,7 @@ import { ProviderTransform } from "@/provider"
 import { Log } from "@/util"
 import { Agent } from "@/agent/agent"
 import { fetchSessionContext } from "./session-context" // stratacode_change
+import { injectProjectContext } from "./project-context"
 
 const log = Log.create({ service: "enhance-prompt" })
 
@@ -62,8 +63,12 @@ export async function enhancePrompt(text: string, directory?: string): Promise<s
       }
 
       if (cfg.workers?.enabled) {
-        const { ContextMapService } = await import("./worker/context-map")
-        enriched = await ContextMapService.inject(enriched, directory)
+        enriched = await injectProjectContext(enriched, {
+          cwd: directory,
+          summary: true,
+          repomap: true,
+          repomapBudget: 3000,
+        })
       }
     } catch (err) {
       log.warn("session context fetch failed, continuing without", { err })

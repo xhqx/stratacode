@@ -9062,6 +9062,61 @@
         ]
       }
     },
+    "/worker/context": {
+      "get": {
+        "operationId": "getWorkerContext",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Get summarizer context",
+        "description": "Retrieve the latest background summarizer context summary",
+        "tags": ["Worker"],
+        "responses": {
+          "200": {
+            "description": "Summarizer context summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["summary"]
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.getWorkerContext({\n  ...\n})"
+          }
+        ]
+      }
+    },
     "/worker/trigger": {
       "post": {
         "operationId": "postWorkerTrigger",
@@ -9117,6 +9172,158 @@
           {
             "lang": "js",
             "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.postWorkerTrigger({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/suggest-tasks": {
+      "post": {
+        "operationId": "suggestTasks.generate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Generate task suggestions",
+        "description": "Generate 2-3 contextual next-task proposals using background summarizer context.",
+        "responses": {
+          "200": {
+            "description": "Task suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "suggestions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": ["suggestions"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "directory": {
+                    "description": "Workspace/project directory",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.suggestTasks.generate({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/chat-autocomplete": {
+      "post": {
+        "operationId": "chatAutocomplete.complete",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Complete a chat prompt",
+        "description": "Generate a ghost-text completion for the user's partial chat prompt using project context.",
+        "responses": {
+          "200": {
+            "description": "Completion text",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["text"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "description": "Partial chat prompt to complete",
+                    "type": "string"
+                  },
+                  "directory": {
+                    "description": "Workspace/project directory",
+                    "type": "string"
+                  }
+                },
+                "required": ["text"]
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.chatAutocomplete.complete({\n  ...\n})"
           }
         ]
       }
@@ -12823,6 +13030,82 @@
         },
         "required": ["type", "properties"]
       },
+      "Event.worker.started": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker.started"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "worker": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              }
+            },
+            "required": ["id", "worker"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "Event.worker.completed": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker.completed"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "worker": {
+                "type": "string"
+              },
+              "duration": {
+                "type": "number"
+              },
+              "result": {}
+            },
+            "required": ["id", "worker", "duration"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "Event.worker.failed": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker.failed"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "worker": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": ["id", "worker", "error"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
       "Event.worktree.ready": {
         "type": "object",
         "properties": {
@@ -14480,82 +14763,6 @@
         },
         "required": ["type", "properties"]
       },
-      "Event.worker.started": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "worker.started"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "worker": {
-                "type": "string"
-              },
-              "file": {
-                "type": "string"
-              }
-            },
-            "required": ["id", "worker"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
-      "Event.worker.completed": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "worker.completed"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "worker": {
-                "type": "string"
-              },
-              "duration": {
-                "type": "number"
-              },
-              "result": {}
-            },
-            "required": ["id", "worker", "duration"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
-      "Event.worker.failed": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "worker.failed"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "worker": {
-                "type": "string"
-              },
-              "error": {
-                "type": "string"
-              }
-            },
-            "required": ["id", "worker", "error"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
       "SyncEvent.message.updated": {
         "type": "object",
         "properties": {
@@ -15190,6 +15397,15 @@
                 "$ref": "#/components/schemas/Event.strata-sessions.remote-status-changed"
               },
               {
+                "$ref": "#/components/schemas/Event.worker.started"
+              },
+              {
+                "$ref": "#/components/schemas/Event.worker.completed"
+              },
+              {
+                "$ref": "#/components/schemas/Event.worker.failed"
+              },
+              {
                 "$ref": "#/components/schemas/Event.worktree.ready"
               },
               {
@@ -15239,15 +15455,6 @@
               },
               {
                 "$ref": "#/components/schemas/Event.session.deleted"
-              },
-              {
-                "$ref": "#/components/schemas/Event.worker.started"
-              },
-              {
-                "$ref": "#/components/schemas/Event.worker.completed"
-              },
-              {
-                "$ref": "#/components/schemas/Event.worker.failed"
               },
               {
                 "$ref": "#/components/schemas/SyncEvent.message.updated"
@@ -16351,6 +16558,11 @@
               },
               "debounce_ms": {
                 "description": "Milliseconds to wait after file change before triggering workers (default: 5000)",
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "polling_interval_sec": {
+                "description": "Seconds to wait between background polling loops for uncommitted and branch changes (default: 5)",
                 "type": "number",
                 "exclusiveMinimum": 0
               },
@@ -18087,6 +18299,15 @@
             "$ref": "#/components/schemas/Event.strata-sessions.remote-status-changed"
           },
           {
+            "$ref": "#/components/schemas/Event.worker.started"
+          },
+          {
+            "$ref": "#/components/schemas/Event.worker.completed"
+          },
+          {
+            "$ref": "#/components/schemas/Event.worker.failed"
+          },
+          {
             "$ref": "#/components/schemas/Event.worktree.ready"
           },
           {
@@ -18136,15 +18357,6 @@
           },
           {
             "$ref": "#/components/schemas/Event.session.deleted"
-          },
-          {
-            "$ref": "#/components/schemas/Event.worker.started"
-          },
-          {
-            "$ref": "#/components/schemas/Event.worker.completed"
-          },
-          {
-            "$ref": "#/components/schemas/Event.worker.failed"
           }
         ]
       },

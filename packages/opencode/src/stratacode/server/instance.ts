@@ -17,6 +17,8 @@ import { IndexingRoutes } from "./routes/indexing"
 import { RepoMapRoutes } from "./routes/repomap" // stratacode_change
 import { SessionContextRoutes } from "./routes/session-context"
 import { WorkerRoutes } from "./routes/worker" // stratacode_change
+import { SuggestTasksRoutes } from "./routes/suggest-tasks" // stratacode_change
+import { ChatAutocompleteRoutes } from "./routes/chat-autocomplete" // stratacode_change
 import { createStrataRoutes } from "@stratacode/strata-gateway"
 import { Auth } from "../../auth"
 import { errors } from "../../server/error"
@@ -41,6 +43,8 @@ export function register(app: Hono): Hono {
     .route("/session-context", SessionContextRoutes())
     .route("/enhance-prompt", EnhancePromptRoutes())
     .route("/worker", WorkerRoutes()) // stratacode_change
+    .route("/suggest-tasks", SuggestTasksRoutes()) // stratacode_change
+    .route("/chat-autocomplete", ChatAutocompleteRoutes()) // stratacode_change
     .route("/stratacode", StratacodeRoutes())
     .route(
       "/strata",

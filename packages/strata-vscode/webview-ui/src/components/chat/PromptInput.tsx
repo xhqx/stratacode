@@ -23,6 +23,7 @@ import { useProvider } from "../../context/provider"
 import { ModelSelector } from "../shared/ModelSelector"
 import { ModeSwitcher } from "../shared/ModeSwitcher"
 import { ThinkingSelector } from "../shared/ThinkingSelector"
+import { PromptLibrarySelector } from "../shared/PromptLibrarySelector"
 import { useFileMention } from "../../hooks/useFileMention"
 import { useTerminalContext } from "../../hooks/useTerminalContext"
 import { useGitChangesContext } from "../../hooks/useGitChangesContext"
@@ -30,6 +31,8 @@ import { hasTerminalMention } from "../../hooks/terminal-context-utils"
 import { hasGitChangesMention } from "../../hooks/git-changes-context-utils"
 import { useSlashCommand } from "../../hooks/useSlashCommand"
 import { useGhostText } from "../../hooks/useGhostText"
+import { useTaskSuggestions } from "../../hooks/useTaskSuggestions"
+import TaskSuggestionChips from "./TaskSuggestionChips"
 import { useImageAttachments, type ImageAttachment } from "../../hooks/useImageAttachments"
 import { convertToMentionPath } from "../../utils/path-mentions"
 import { usePromptHistory } from "../../hooks/usePromptHistory"
@@ -141,6 +144,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   let pendingSend = false
 
   const ghost = useGhostText(vscode, text, () => server.isConnected())
+  const taskSuggestions = useTaskSuggestions(vscode, () => !!session.currentSessionID())
 
   const replaceReviewComments = (next: ReviewComment[]) => {
     setReviewComments(next)
@@ -937,6 +941,23 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
             </For>
           </div>
         </Show>
+        {/* stratacode_change start — task suggestion chips */}
+        <Show when={!text() && taskSuggestions.suggestions().length > 0}>
+          <TaskSuggestionChips
+            suggestions={taskSuggestions.suggestions}
+            loading={taskSuggestions.loading}
+            enabled={taskSuggestions.enabled}
+            onSelect={(suggestion) => {
+              setText(suggestion)
+              if (textareaRef) {
+                textareaRef.value = suggestion
+                adjustHeight()
+                textareaRef.focus()
+              }
+            }}
+          />
+        </Show>
+        {/* stratacode_change end */}
         <div class="prompt-input-wrapper">
           <div class="prompt-input-ghost-wrapper">
             <div class="prompt-input-highlight-overlay" ref={highlightRef} aria-hidden="true">
@@ -973,6 +994,25 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         </div>
         <div class="prompt-input-hint">
           <div class="prompt-input-hint-selectors">
+            <PromptLibrarySelector
+              workflows={slash.commands().filter((c) => !c.action)}
+              onSelect={(workflow) => {
+                const current = text()
+                // Workflows are slash commands, so we prepend them if not already present
+                let val = current
+                if (!val.startsWith(`/${workflow.name} `)) {
+                  val = `/${workflow.name} ${val}`.trim()
+                }
+                setText(val)
+                if (textareaRef) {
+                  textareaRef.value = val
+                  adjustHeight()
+                  textareaRef.focus()
+                  textareaRef.scrollTop = textareaRef.scrollHeight
+                  syncHighlightScroll()
+                }
+              }}
+            />
             <ModeSwitcher />
             <ModelSelector />
             <ThinkingSelector />

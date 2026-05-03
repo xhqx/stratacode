@@ -266,13 +266,13 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="archive" />
             <span class="label">Project Memory</span>
           </Tabs.Trigger>
-
           <Show when={features().indexing}>
             <Tabs.Trigger value="indexing">
               <Icon name="magnifying-glass" />
               <span class="label">{language.t("settings.indexing.title")}</span>
             </Tabs.Trigger>
           </Show>
+
           <Tabs.Trigger value="language">
             <Icon name="speech-bubble" />
             <span class="label">{language.t("settings.language.title")}</span>

@@ -1,4 +1,5 @@
 import { Log } from "@/util"
+import { injectProjectContext } from "./project-context"
 import { Instance } from "@/project/instance"
 import { Review } from "./review/review"
 import type { DiffFile } from "./review/types"
@@ -119,18 +120,26 @@ export namespace ExplainChange {
         break
     }
 
+    return result
+  }
+
+  async function injectExplainContext(prompt: string, mentioned: string[]): Promise<string> {
     try {
       const { Config } = await import("@/config")
       const cfg = await Config.get()
       if (cfg.workers?.enabled) {
-        const { ContextMapService } = await import("./worker/context-map")
-        result = await ContextMapService.inject(result, Instance.directory)
+        return await injectProjectContext(prompt, {
+          cwd: Instance.directory,
+          mentioned,
+          summary: true,
+          repomap: true,
+          repomapBudget: 6000,
+        })
       }
     } catch (err) {
       log.warn("session context fetch failed for explain-change", { err })
     }
-
-    return result
+    return prompt
   }
 
   /**
@@ -154,9 +163,11 @@ export namespace ExplainChange {
     }
 
     log.info("building explain prompt for uncommitted changes", { files: diff.files.length })
-    return EXPLAIN_PROMPT.replace("${SCOPE_DESCRIPTION}", desc)
+    const prompt = EXPLAIN_PROMPT.replace("${SCOPE_DESCRIPTION}", desc)
       .replace("${FILE_LIST}", diff.files.map(summary).join("\n"))
       .replace("${DIFF_CONTENT}", raw(diff.files))
+    
+    return injectExplainContext(prompt, diff.files.map(f => f.path))
   }
 
   async function promptBranch(base?: string): Promise<string> {
@@ -171,9 +182,11 @@ export namespace ExplainChange {
     }
 
     log.info("building explain prompt for branch", { files: diff.files.length, base: resolved })
-    return EXPLAIN_PROMPT.replace("${SCOPE_DESCRIPTION}", desc)
+    const prompt = EXPLAIN_PROMPT.replace("${SCOPE_DESCRIPTION}", desc)
       .replace("${FILE_LIST}", diff.files.map(summary).join("\n"))
       .replace("${DIFF_CONTENT}", raw(diff.files))
+
+    return injectExplainContext(prompt, diff.files.map(f => f.path))
   }
 
   async function promptRange(from: string, to: string): Promise<string> {
@@ -193,9 +206,11 @@ export namespace ExplainChange {
     }
 
     log.info("building explain prompt for range", { files: parsed.files.length, from, to })
-    return EXPLAIN_PROMPT.replace("${SCOPE_DESCRIPTION}", desc)
+    const prompt = EXPLAIN_PROMPT.replace("${SCOPE_DESCRIPTION}", desc)
       .replace("${FILE_LIST}", parsed.files.map(summary).join("\n"))
       .replace("${DIFF_CONTENT}", raw(parsed.files))
+
+    return injectExplainContext(prompt, parsed.files.map(f => f.path))
   }
 
   async function promptFile(path: string, base?: string): Promise<string> {
@@ -210,7 +225,9 @@ export namespace ExplainChange {
     }
 
     log.info("building explain prompt for file", { path, base: resolved })
-    return FILE_PROMPT.replace("${FILE_PATH}", path).replace("${DIFF_CONTENT}", raw([target]))
+    const prompt = FILE_PROMPT.replace("${FILE_PATH}", path).replace("${DIFF_CONTENT}", raw([target]))
+
+    return injectExplainContext(prompt, [path])
   }
 
   async function promptHunk(path: string, idx: number, base?: string): Promise<string> {
@@ -231,6 +248,8 @@ export namespace ExplainChange {
     }
 
     log.info("building explain prompt for hunk", { path, idx, base: resolved })
-    return FILE_PROMPT.replace("${FILE_PATH}", `${path} (hunk ${idx + 1})`).replace("${DIFF_CONTENT}", hunk.content)
+    const prompt = FILE_PROMPT.replace("${FILE_PATH}", `${path} (hunk ${idx + 1})`).replace("${DIFF_CONTENT}", hunk.content)
+
+    return injectExplainContext(prompt, [path])
   }
 }

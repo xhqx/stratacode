@@ -1,7 +1,15 @@
 import * as vscode from "vscode"
 import { AUTOCOMPLETE_MODELS, getAutocompleteModel } from "../../shared/autocomplete-models"
 
-const keys = new Set(["enableAutoTrigger", "enableSmartInlineTaskKeybinding", "enableChatAutocomplete", "model"])
+const keys = new Set([
+  "enableAutoTrigger",
+  "enableSmartInlineTaskKeybinding",
+  "enableChatAutocomplete",
+  "chatMode",
+  "chatDebounceMs",
+  "taskSuggestionsEnabled",
+  "model",
+])
 
 type Message = {
   type: string
@@ -36,6 +44,9 @@ export function buildAutocompleteSettingsMessage() {
       enableSmartInlineTaskKeybinding: config.get<boolean>("enableSmartInlineTaskKeybinding", false),
       enableChatAutocomplete: config.get<boolean>("enableChatAutocomplete", false),
       model: getAutocompleteModel(config.get<string>("model") ?? "").id,
+      chatMode: config.get<string>("chatMode", "fim") as "fim" | "agent",
+      chatDebounceMs: config.get<number>("chatDebounceMs", 2000),
+      taskSuggestionsEnabled: config.get<boolean>("taskSuggestionsEnabled", true),
     },
   }
 }
@@ -66,6 +77,7 @@ function valid(key: string, value: unknown) {
     if (typeof value !== "string") return false
     return AUTOCOMPLETE_MODELS.some((m) => m.id === value)
   }
-
+  if (key === "chatMode") return value === "fim" || value === "agent"
+  if (key === "chatDebounceMs") return typeof value === "number" && value >= 200 && value <= 10000
   return typeof value === "boolean"
 }

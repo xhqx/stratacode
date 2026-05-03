@@ -12,16 +12,19 @@ const BackgroundWorkersTab: Component = () => {
 
   const [enabled, setEnabled] = createSignal(false)
   const [autoExplain, setAutoExplain] = createSignal(false)
+  const [pollingInterval, setPollingInterval] = createSignal(5)
 
   const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
     if (message.type !== "settingLoaded") return
     if (message.key === "workers.enabled") setEnabled(message.value as boolean)
     if (message.key === "workers.autoExplain") setAutoExplain(message.value as boolean)
+    if (message.key === "workers.pollingIntervalSec") setPollingInterval(message.value as number)
   })
   onCleanup(unsubscribe)
 
   vscode.postMessage({ type: "requestSetting", key: "workers.enabled" })
   vscode.postMessage({ type: "requestSetting", key: "workers.autoExplain" })
+  vscode.postMessage({ type: "requestSetting", key: "workers.pollingIntervalSec" })
 
   const save = (key: string, value: unknown) => {
     vscode.postMessage({ type: "updateSetting", key, value })
@@ -72,7 +75,6 @@ const BackgroundWorkersTab: Component = () => {
           <SettingsRow
             title={language.t("settings.workers.autoExplain.title")}
             description={language.t("settings.workers.autoExplain.description")}
-            last
           >
             <Switch
               checked={autoExplain()}
@@ -84,6 +86,32 @@ const BackgroundWorkersTab: Component = () => {
             >
               {language.t("settings.workers.autoExplain.title")}
             </Switch>
+          </SettingsRow>
+          <SettingsRow
+            title={language.t("settings.workers.pollingIntervalSec.title")}
+            description={language.t("settings.workers.pollingIntervalSec.description")}
+            last
+          >
+            <input
+              type="number"
+              min="1"
+              style={{
+                width: "60px",
+                padding: "4px 8px",
+                background: "var(--vscode-input-background)",
+                color: "var(--vscode-input-foreground)",
+                border: "1px solid var(--vscode-input-border)",
+                "border-radius": "2px",
+              }}
+              value={pollingInterval()}
+              onInput={(e) => {
+                const val = parseInt(e.currentTarget.value)
+                if (!isNaN(val) && val > 0) {
+                  setPollingInterval(val)
+                  save("workers.pollingIntervalSec", val)
+                }
+              }}
+            />
           </SettingsRow>
         </Show>
       </Card>

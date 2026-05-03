@@ -308,8 +308,15 @@ export interface RequestAutocompleteSettingsMessage {
 
 export interface UpdateAutocompleteSettingMessage {
   type: "updateAutocompleteSetting"
-  key: "enableAutoTrigger" | "enableSmartInlineTaskKeybinding" | "enableChatAutocomplete" | "model"
-  value: boolean | string
+  key:
+    | "enableAutoTrigger"
+    | "enableSmartInlineTaskKeybinding"
+    | "enableChatAutocomplete"
+    | "model"
+    | "chatMode"
+    | "chatDebounceMs"
+    | "taskSuggestionsEnabled"
+  value: boolean | string | number
 }
 
 export interface RequestChatCompletionMessage {
@@ -1191,6 +1198,8 @@ export type WebviewMessage =
   | { type: "cancelAutoApproveTimer"; requestId: string }
   | RequestRepoMapStatsMessage
   | InvalidateRepoMapMessage
+  | RequestTaskSuggestionsMessage
+  | RequestAgentChatCompletionMessage
 
 export interface RequestRepoMapStatsMessage {
   type: "requestRepoMapStats"
@@ -1199,6 +1208,19 @@ export interface RequestRepoMapStatsMessage {
 export interface InvalidateRepoMapMessage {
   type: "invalidateRepoMap"
 }
+
+// stratacode_change start
+export interface RequestTaskSuggestionsMessage {
+  type: "requestTaskSuggestions"
+  requestId: string
+}
+
+export interface RequestAgentChatCompletionMessage {
+  type: "requestAgentChatCompletion"
+  text: string
+  requestId: string
+}
+// stratacode_change end
 
 export interface SaveKanbanTasksRequest {
   type: "saveKanbanTasks"

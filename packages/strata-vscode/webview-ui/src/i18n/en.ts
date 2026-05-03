@@ -1021,6 +1021,9 @@ export const dict = {
   "settings.workers.autoExplain.title": "Auto Explain Changes",
   "settings.workers.autoExplain.description":
     "Automatically run the explainer worker in the background to pre-populate the Changes tab with AI explanations.",
+  "settings.workers.pollingIntervalSec.title": "Polling Interval (seconds)",
+  "settings.workers.pollingIntervalSec.description":
+    "Seconds to wait between background polling loops for uncommitted and branch changes.",
   "settings.appearance.selectionTip.title": "Selection Tip",
   "settings.appearance.selectionTip.description":
     "Show an inline hint when selecting code, reminding you of the shortcut to add the selection to Strata chat.",

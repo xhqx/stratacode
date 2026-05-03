@@ -113,12 +113,27 @@ export async function getProcessedSnippets(
   // Apply access filtering to remove snippets from blocked files
   const accessibleSnippets = await filterSnippetsByAccess(filteredSnippets, ignoreController)
 
+  // Fetch the summarizer context in parallel with snippet access filtering.
+  // This is a best-effort enrichment — errors are caught inside getSummarizerContext().
+  const summary = await model.getSummarizerContext()
+
   // Convert all snippet filepaths to URIs
   const snippetsWithUris: AutocompleteSnippet[] = accessibleSnippets.map((snippet) => {
     if (!hasFilepath(snippet) || !snippet.filepath) return snippet
     const uri = snippet.filepath.startsWith("file://") ? snippet.filepath : vscode.Uri.file(snippet.filepath).toString()
     return { ...snippet, filepath: uri }
   })
+
+  // Prepend summarizer context as a static snippet so the FIM template
+  // renders it as a commented code block ahead of the cursor context.
+  if (summary) {
+    const contextSnippet: AutocompleteSnippet = {
+      type: AutocompleteSnippetType.Static,
+      filepath: "file:///background_context.txt",
+      content: summary,
+    }
+    snippetsWithUris.unshift(contextSnippet)
+  }
 
   const workspaceDirs = await ide.getWorkspaceDirs()
 

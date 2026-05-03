@@ -113,6 +113,22 @@ export class AutocompleteModel {
   }
 
   /**
+   * Fetch the latest summarizer worker context summary.
+   * Returns undefined if the context is unavailable or an error occurs.
+   * This is a best-effort enrichment — failures are swallowed silently.
+   */
+  public async getSummarizerContext(): Promise<string | undefined> {
+    if (!this.connectionService) return undefined
+    try {
+      const client = await this.connectionService.getClientAsync()
+      const result = await client.getWorkerContext()
+      return result.data?.summary ?? undefined
+    } catch {
+      return undefined
+    }
+  }
+
+  /**
    * Check the user's credit balance via the profile endpoint.
    * Returns true if the user has a positive balance, false otherwise.
    * Returns false on any error (not connected, fetch failed, etc.).

@@ -668,7 +668,11 @@ const AgentBehaviourTab: Component = () => {
                         <div style={{ flex: 1, "min-width": 0 }}>
                           <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
                             <div style={{ "font-weight": "500", "font-size": "13px" }}>
-                              {agent()?.displayName ?? name.split(/[-_]/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                              {agent()?.displayName ??
+                                name
+                                  .split(/[-_]/)
+                                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                  .join(" ")}
                             </div>
                             <Show when={isCustom()}>
                               <span

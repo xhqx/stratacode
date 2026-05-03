@@ -321,6 +321,9 @@ export interface AutocompleteSettingsLoadedMessage {
     enableSmartInlineTaskKeybinding: boolean
     enableChatAutocomplete: boolean
     model: string
+    chatMode: "fim" | "agent"
+    chatDebounceMs: number
+    taskSuggestionsEnabled: boolean
   }
 }
 
@@ -1022,11 +1025,28 @@ export type ExtensionMessage =
   | RemoteStatusMessage
   | MarkdownPlanPreviewMessage
   | { type: "repoMapStatsLoaded"; stats: { files: number; symbols: number; chars: number; budget: number } }
+  | TaskSuggestionsResultMessage
+  | AgentChatCompletionResultMessage
 
 export interface KanbanTasksLoadedMessage {
   type: "kanbanTasksLoaded"
   tasks: KanbanTask[]
 }
+
+// stratacode_change start
+export interface TaskSuggestionsResultMessage {
+  type: "taskSuggestionsResult"
+  suggestions: string[]
+  requestId: string
+  contextMapUpdated: number
+}
+
+export interface AgentChatCompletionResultMessage {
+  type: "agentChatCompletionResult"
+  text: string
+  requestId: string
+}
+// stratacode_change end
 
 export interface PlanningStateMessage {
   type: "planningState"

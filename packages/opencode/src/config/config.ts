@@ -219,6 +219,9 @@ export const Info = Schema.Struct({
       debounce_ms: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))).annotate({
         description: "Milliseconds to wait after file change before triggering workers (default: 5000)",
       }),
+      polling_interval_sec: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))).annotate({
+        description: "Seconds to wait between background polling loops for uncommitted and branch changes (default: 5)",
+      }),
       review: Schema.optional(Schema.Boolean).annotate({
         description: "Enable the review worker (default: true when workers enabled)",
       }),

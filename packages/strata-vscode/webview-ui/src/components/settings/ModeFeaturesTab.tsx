@@ -20,6 +20,9 @@ export const FeaturesTab: Component<
   const [autoTrigger, setAutoTrigger] = createSignal(true)
   const [smartInline, setSmartInline] = createSignal(false)
   const [chatAuto, setChatAuto] = createSignal(false)
+  const [chatMode, setChatMode] = createSignal<"fim" | "agent">("fim")
+  const [chatDebounceMs, setChatDebounceMs] = createSignal(2000)
+  const [taskSuggestions, setTaskSuggestions] = createSignal(true)
 
   const [taskView, setTaskView] = createSignal(true)
   const [documentDriven, setDocumentDriven] = createSignal(true)
@@ -29,6 +32,9 @@ export const FeaturesTab: Component<
       setAutoTrigger(message.settings.enableAutoTrigger)
       setSmartInline(message.settings.enableSmartInlineTaskKeybinding)
       setChatAuto(message.settings.enableChatAutocomplete)
+      setChatMode(message.settings.chatMode ?? "fim")
+      setChatDebounceMs(message.settings.chatDebounceMs ?? 2000)
+      setTaskSuggestions(message.settings.taskSuggestionsEnabled ?? true)
     } else if (message.type === "planningSettingsLoaded") {
       setTaskView(message.settings.taskView)
       setDocumentDriven(message.settings.documentDrivenTasks)
@@ -46,8 +52,14 @@ export const FeaturesTab: Component<
   })
 
   const updateAutocompleteSetting = (
-    key: "enableAutoTrigger" | "enableSmartInlineTaskKeybinding" | "enableChatAutocomplete",
-    value: boolean,
+    key:
+      | "enableAutoTrigger"
+      | "enableSmartInlineTaskKeybinding"
+      | "enableChatAutocomplete"
+      | "chatMode"
+      | "chatDebounceMs"
+      | "taskSuggestionsEnabled",
+    value: boolean | string | number,
   ) => {
     vscode.postMessage({ type: "updateAutocompleteSetting", key, value })
   }
@@ -98,7 +110,6 @@ export const FeaturesTab: Component<
           <SettingsRow
             title={props.t("settings.autocomplete.chatAutocomplete.title")}
             description={props.t("settings.autocomplete.chatAutocomplete.description")}
-            last
           >
             <Switch
               checked={chatAuto()}
@@ -108,6 +119,96 @@ export const FeaturesTab: Component<
               {props.t("settings.autocomplete.chatAutocomplete.title")}
             </Switch>
           </SettingsRow>
+
+          <Show when={chatAuto()}>
+            <SettingsRow
+              title="Chat Autocomplete Mode"
+              description="'FIM' is fast and uses the inline model. 'Agent' is context-aware and uses the project summarizer."
+            >
+              <select
+                value={chatMode()}
+                onChange={(e) => {
+                  const val = e.currentTarget.value as "fim" | "agent"
+                  setChatMode(val)
+                  updateAutocompleteSetting("chatMode", val)
+                }}
+                style={{
+                  padding: "3px 8px",
+                  "border-radius": "4px",
+                  "background-color": "var(--vscode-input-background)",
+                  color: "var(--vscode-input-foreground)",
+                  border: "1px solid var(--vscode-input-border)",
+                  "font-size": "12px",
+                }}
+              >
+                <option value="fim">FIM (fast)</option>
+                <option value="agent">Agent (context-aware)</option>
+              </select>
+            </SettingsRow>
+
+            <SettingsRow
+              title="Autocomplete Debounce (ms)"
+              description="Delay after typing stops before requesting a completion. Default: 2000ms."
+            >
+              <input
+                type="number"
+                min="200"
+                max="10000"
+                step="100"
+                value={chatDebounceMs()}
+                onChange={(e) => {
+                  const val = parseInt(e.currentTarget.value, 10)
+                  if (!isNaN(val) && val >= 200 && val <= 10000) {
+                    setChatDebounceMs(val)
+                    updateAutocompleteSetting("chatDebounceMs", val)
+                  }
+                }}
+                style={{
+                  width: "80px",
+                  padding: "4px 8px",
+                  "background-color": "var(--vscode-input-background)",
+                  color: "var(--vscode-input-foreground)",
+                  border: "1px solid var(--vscode-input-border)",
+                  "font-size": "12px",
+                }}
+              />
+            </SettingsRow>
+
+            <SettingsRow
+              title="Task Suggestion Chips"
+              description="Show AI-generated next-task chips below the chat input when the prompt is empty."
+              last
+            >
+              <Switch
+                checked={taskSuggestions()}
+                onChange={(val) => {
+                  setTaskSuggestions(val)
+                  updateAutocompleteSetting("taskSuggestionsEnabled", val)
+                }}
+                hideLabel
+              >
+                Task Suggestion Chips
+              </Switch>
+            </SettingsRow>
+          </Show>
+          <Show when={!chatAuto()}>
+            <SettingsRow
+              title="Task Suggestion Chips"
+              description="Show AI-generated next-task chips below the chat input when the prompt is empty."
+              last
+            >
+              <Switch
+                checked={taskSuggestions()}
+                onChange={(val) => {
+                  setTaskSuggestions(val)
+                  updateAutocompleteSetting("taskSuggestionsEnabled", val)
+                }}
+                hideLabel
+              >
+                Task Suggestion Chips
+              </Switch>
+            </SettingsRow>
+          </Show>
         </Card>
       </Show>
 

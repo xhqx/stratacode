@@ -665,19 +665,32 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       if (e.affectsConfiguration("strata-code.new.agents")) {
         this.fetchAndSendAgents()
       }
-      if (e.affectsConfiguration("strata-code.new.workers.enabled")) {
-        this.workerStatusBar.onConfigChanged()
-        
-        const enabled = vscode.workspace.getConfiguration("strata-code.new").get<boolean>("workers.enabled", false)
+
+      const affectsWorkers =
+        e.affectsConfiguration("strata-code.new.workers.enabled") ||
+        e.affectsConfiguration("strata-code.new.workers.autoExplain") ||
+        e.affectsConfiguration("strata-code.new.workers.pollingIntervalSec")
+
+      if (affectsWorkers) {
+        if (e.affectsConfiguration("strata-code.new.workers.enabled")) {
+          this.workerStatusBar?.onConfigChanged()
+          this.fetchAndSendAgents()
+        }
+
+        const config = vscode.workspace.getConfiguration("strata-code.new")
+        const enabled = config.get<boolean>("workers.enabled", false)
+        const auto_explain = config.get<boolean>("workers.autoExplain", false)
+        const polling_interval_sec = config.get<number>("workers.pollingIntervalSec", 5)
+
         if (this.client) {
           try {
-            await this.client.global.config.update({ config: { workers: { enabled } } })
+            await this.client.global.config.update({
+              config: { workers: { enabled, auto_explain, polling_interval_sec } },
+            })
           } catch (err) {
-            Logger.error("StrataProvider", "Failed to sync workers.enabled to backend", err)
+            Logger.error("StrataProvider", "Failed to sync workers config to backend", err)
           }
         }
-        
-        this.fetchAndSendAgents()
       }
     })
     // eslint-disable-next-line complexity
@@ -1307,6 +1320,42 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             })
           break
         }
+        // stratacode_change start
+        case "requestTaskSuggestions": {
+          const sdkClient = this.client
+          if (!sdkClient) break
+          const dir = this.getProjectDirectory(this.currentSession?.id)
+          void sdkClient.suggestTasks
+            .generate({ body_directory: dir }, { throwOnError: true })
+            .then(({ data }) => {
+              this.postMessage({
+                type: "taskSuggestionsResult",
+                suggestions: data.suggestions,
+                requestId: message.requestId,
+                contextMapUpdated: Date.now(),
+              })
+            })
+            .catch((err: unknown) => {
+              Logger.error("StrataProvider", "suggestTasks failed:", err)
+            })
+          break
+        }
+        case "requestAgentChatCompletion": {
+          const sdkClient = this.client
+          if (!sdkClient) break
+          const dir = this.getProjectDirectory(this.currentSession?.id)
+          void sdkClient.chatAutocomplete
+            .complete({ text: message.text, body_directory: dir }, { throwOnError: true })
+            .then(({ data }) => {
+              this.postMessage({ type: "agentChatCompletionResult", text: data.text, requestId: message.requestId })
+            })
+            .catch((err: unknown) => {
+              Logger.error("StrataProvider", "chatAutocomplete failed:", err)
+            })
+          break
+        }
+        // stratacode_change end
+
         case "fetchMarketplaceData": {
           const workspace = this.getProjectDirectory(this.currentSession?.id)
           const mp = this.getMarketplace()
@@ -1526,7 +1575,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       // Sync specific VS Code settings to the CLI backend config before fetching agents
       const enabled = vscode.workspace.getConfiguration("strata-code.new").get<boolean>("workers.enabled", false)
       try {
-        await this.client.global.config.update({ config: { workers: { enabled } } })
+        await this.client?.global.config.update({ config: { workers: { enabled } } })
       } catch (err) {
         Logger.error("StrataProvider", "Failed to sync workers.enabled to backend during init", err)
       }

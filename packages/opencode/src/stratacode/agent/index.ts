@@ -19,6 +19,8 @@ import PROMPT_COMMIT from "./prompt/commit.txt"
 import PROMPT_AUTOCOMPLETE from "./prompt/autocomplete.txt"
 import PROMPT_ENHANCE from "./prompt/enhance.txt"
 import PROMPT_EXPLAINER from "./prompt/explainer.txt"
+import PROMPT_SUGGEST_TASKS from "./prompt/suggest_tasks.txt"
+import PROMPT_CHAT_AUTOCOMPLETE from "./prompt/chat_autocomplete.txt"
 
 // Safe bash commands that don't need user approval.
 // Only commands that cannot execute arbitrary code or subprocesses.
@@ -434,9 +436,35 @@ export function patchAgents(
     ),
     mode: "primary",
     native: true,
+    hidden: true as const,
   }
 
-  // Add enhance agent
+  // Add suggest_tasks agent — generates next-task proposals from ContextMap (stratacode_change start)
+  agents.suggest_tasks = {
+    name: "suggest_tasks",
+    description: "Generates concise next-task proposals from project context.",
+    prompt: PROMPT_SUGGEST_TASKS,
+    options: {},
+    permission: Permission.merge(defaults, Permission.fromConfig({ "*": "deny" }), user),
+    mode: "primary",
+    native: true,
+    hidden: true as const,
+    temperature: 0.6,
+  }
+
+  // Add chat_autocomplete agent — completes the user's partial chat prompt
+  agents.chat_autocomplete = {
+    name: "chat_autocomplete",
+    description: "Predicts and completes the user's current chat prompt.",
+    prompt: PROMPT_CHAT_AUTOCOMPLETE,
+    options: {},
+    permission: Permission.merge(defaults, Permission.fromConfig({ "*": "deny" }), user),
+    mode: "primary",
+    native: true,
+    hidden: true as const,
+    temperature: 0.3,
+  }
+  // stratacode_change end
   agents.enhance = {
     name: "enhance",
     displayName: "Prompt Enhancer",

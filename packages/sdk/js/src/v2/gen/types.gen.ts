@@ -623,6 +623,34 @@ export type EventStrataSessionsRemoteStatusChanged = {
   }
 }
 
+export type EventWorkerStarted = {
+  type: "worker.started"
+  properties: {
+    id: string
+    worker: string
+    file?: string
+  }
+}
+
+export type EventWorkerCompleted = {
+  type: "worker.completed"
+  properties: {
+    id: string
+    worker: string
+    duration: number
+    result?: unknown
+  }
+}
+
+export type EventWorkerFailed = {
+  type: "worker.failed"
+  properties: {
+    id: string
+    worker: string
+    error: string
+  }
+}
+
 export type EventWorktreeReady = {
   type: "worktree.ready"
   properties: {
@@ -1171,34 +1199,6 @@ export type EventSessionDeleted = {
   }
 }
 
-export type EventWorkerStarted = {
-  type: "worker.started"
-  properties: {
-    id: string
-    worker: string
-    file?: string
-  }
-}
-
-export type EventWorkerCompleted = {
-  type: "worker.completed"
-  properties: {
-    id: string
-    worker: string
-    duration: number
-    result?: unknown
-  }
-}
-
-export type EventWorkerFailed = {
-  type: "worker.failed"
-  properties: {
-    id: string
-    worker: string
-    error: string
-  }
-}
-
 export type SyncEventMessageUpdated = {
   type: "sync"
   name: "message.updated.1"
@@ -1363,6 +1363,9 @@ export type GlobalEvent = {
     | EventIndexingStatus
     | EventSessionCompacted
     | EventStrataSessionsRemoteStatusChanged
+    | EventWorkerStarted
+    | EventWorkerCompleted
+    | EventWorkerFailed
     | EventWorktreeReady
     | EventWorktreeFailed
     | EventPtyCreated
@@ -1380,9 +1383,6 @@ export type GlobalEvent = {
     | EventSessionCreated
     | EventSessionUpdated
     | EventSessionDeleted
-    | EventWorkerStarted
-    | EventWorkerCompleted
-    | EventWorkerFailed
     | SyncEventMessageUpdated
     | SyncEventMessageRemoved
     | SyncEventMessagePartUpdated
@@ -2015,6 +2015,10 @@ export type Config = {
      * Milliseconds to wait after file change before triggering workers (default: 5000)
      */
     debounce_ms?: number
+    /**
+     * Seconds to wait between background polling loops for uncommitted and branch changes (default: 5)
+     */
+    polling_interval_sec?: number
     /**
      * Enable the review worker (default: true when workers enabled)
      */
@@ -2691,6 +2695,9 @@ export type Event =
   | EventIndexingStatus
   | EventSessionCompacted
   | EventStrataSessionsRemoteStatusChanged
+  | EventWorkerStarted
+  | EventWorkerCompleted
+  | EventWorkerFailed
   | EventWorktreeReady
   | EventWorktreeFailed
   | EventPtyCreated
@@ -2708,9 +2715,6 @@ export type Event =
   | EventSessionCreated
   | EventSessionUpdated
   | EventSessionDeleted
-  | EventWorkerStarted
-  | EventWorkerCompleted
-  | EventWorkerFailed
 
 export type McpStatusConnected = {
   status: "connected"
@@ -6861,6 +6865,27 @@ export type EnhancePromptEnhanceResponses = {
 
 export type EnhancePromptEnhanceResponse = EnhancePromptEnhanceResponses[keyof EnhancePromptEnhanceResponses]
 
+export type GetWorkerContextData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/worker/context"
+}
+
+export type GetWorkerContextResponses = {
+  /**
+   * Summarizer context summary
+   */
+  200: {
+    summary: string | null
+  }
+}
+
+export type GetWorkerContextResponse = GetWorkerContextResponses[keyof GetWorkerContextResponses]
+
 export type PostWorkerTriggerData = {
   body?: {
     cwd: string
@@ -6881,6 +6906,81 @@ export type PostWorkerTriggerResponses = {
    */
   200: unknown
 }
+
+export type SuggestTasksGenerateData = {
+  body?: {
+    /**
+     * Workspace/project directory
+     */
+    directory?: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/suggest-tasks"
+}
+
+export type SuggestTasksGenerateErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type SuggestTasksGenerateError = SuggestTasksGenerateErrors[keyof SuggestTasksGenerateErrors]
+
+export type SuggestTasksGenerateResponses = {
+  /**
+   * Task suggestions
+   */
+  200: {
+    suggestions: Array<string>
+  }
+}
+
+export type SuggestTasksGenerateResponse = SuggestTasksGenerateResponses[keyof SuggestTasksGenerateResponses]
+
+export type ChatAutocompleteCompleteData = {
+  body?: {
+    /**
+     * Partial chat prompt to complete
+     */
+    text: string
+    /**
+     * Workspace/project directory
+     */
+    directory?: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/chat-autocomplete"
+}
+
+export type ChatAutocompleteCompleteErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type ChatAutocompleteCompleteError = ChatAutocompleteCompleteErrors[keyof ChatAutocompleteCompleteErrors]
+
+export type ChatAutocompleteCompleteResponses = {
+  /**
+   * Completion text
+   */
+  200: {
+    text: string
+  }
+}
+
+export type ChatAutocompleteCompleteResponse =
+  ChatAutocompleteCompleteResponses[keyof ChatAutocompleteCompleteResponses]
 
 export type StratacodeSessionImportProjectData = {
   body?: {
