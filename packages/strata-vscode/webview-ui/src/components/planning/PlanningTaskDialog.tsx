@@ -69,18 +69,21 @@ export function PlanningTaskDialog(props: Props) {
       alert(language.t("planning.cycleDetected"))
       return
     }
-    const save = (p: string) => props.onSave(buildPayload(title(), p, description(), startAt(), duration(), priority(), dependsOn()))
+    const save = (p: string) =>
+      props.onSave(buildPayload(title(), p, description(), startAt(), duration(), priority(), dependsOn()))
     if (config()?.experimental?.auto_improve_prompts && !ep.enhancing()) {
-      ep.enhance(prompt(), (text) => { setPrompt(text); save(text) })
+      ep.enhance(prompt(), (text) => {
+        setPrompt(text)
+        save(text)
+      })
       return
     }
     save(prompt())
   }
 
-
   const handleToggle = (id: string) => setDependsOn((prev) => toggle(prev, id))
   const canSave = () => !!title().trim() && !!prompt().trim() && !ep.enhancing()
-  const saveLabel = () => ep.enhancing() ? language.t("planning.enhancing") : language.t("common.save")
+  const saveLabel = () => (ep.enhancing() ? language.t("planning.enhancing") : language.t("common.save"))
 
   return (
     <Dialog title={isEdit ? language.t("planning.editTask") : language.t("planning.addTask")} fit>
@@ -187,11 +190,7 @@ export function PlanningTaskDialog(props: Props) {
           <Button variant="secondary" onClick={props.onClose}>
             {language.t("kanban.cancel")}
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            disabled={!canSave()}
-          >
+          <Button variant="primary" onClick={handleSave} disabled={!canSave()}>
             {saveLabel()}
           </Button>
         </div>

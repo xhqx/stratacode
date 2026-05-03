@@ -159,7 +159,9 @@ const IndexingTab: Component = () => {
         >
           <Switch
             checked={config().experimental?.semantic_indexing ?? false}
-            onChange={(checked) => updateConfig({ experimental: { ...(config().experimental ?? {}), semantic_indexing: checked } })}
+            onChange={(checked) =>
+              updateConfig({ experimental: { ...(config().experimental ?? {}), semantic_indexing: checked } })
+            }
             hideLabel
           >
             {language.t("settings.experimental.semanticIndexing.title")}
@@ -172,7 +174,9 @@ const IndexingTab: Component = () => {
         >
           <Switch
             checked={config().experimental?.codebase_search ?? false}
-            onChange={(checked) => updateConfig({ experimental: { ...(config().experimental ?? {}), codebase_search: checked } })}
+            onChange={(checked) =>
+              updateConfig({ experimental: { ...(config().experimental ?? {}), codebase_search: checked } })
+            }
             hideLabel
           >
             {language.t("settings.experimental.codebaseSearch.title")}

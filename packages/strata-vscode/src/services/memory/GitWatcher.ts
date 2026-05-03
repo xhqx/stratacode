@@ -56,7 +56,7 @@ export class GitWatcher {
         this.debounce = setTimeout(() => {
           void this.extractor.analyze(hash)
         }, DEBOUNCE_MS)
-      })
+      }),
     )
   }
 

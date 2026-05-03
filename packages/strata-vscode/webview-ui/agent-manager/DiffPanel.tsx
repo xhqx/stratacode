@@ -41,7 +41,14 @@ interface DiffPanelProps {
   onClose: () => void
   onExpand?: () => void
   /** Callback to start a new inline AI thread */
-  onStartThread?: (threadId: string, file: string, side: AnnotationSide, line: number, endLine: number | undefined, text: string) => void
+  onStartThread?: (
+    threadId: string,
+    file: string,
+    side: AnnotationSide,
+    line: number,
+    endLine: number | undefined,
+    text: string,
+  ) => void
   onRequestDiff?: (file: string) => void
   instantComments?: boolean
   onOpenFile?: (relativePath: string, line?: number) => void
@@ -57,8 +64,14 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
   const sendAllKeybind = () =>
     isMac ? t("agentManager.review.sendAllShortcut.mac") : t("agentManager.review.sendAllShortcut.other")
   const labels = (): AnnotationLabels => ({
-    commentOnLine: (line, endLine) => endLine && endLine !== line ? t("agentManager.review.commentOnLines", { start: line, end: endLine }) : t("agentManager.review.commentOnLine", { line }),
-    editCommentOnLine: (line, endLine) => endLine && endLine !== line ? t("agentManager.review.editCommentOnLines", { start: line, end: endLine }) : t("agentManager.review.editCommentOnLine", { line }),
+    commentOnLine: (line, endLine) =>
+      endLine && endLine !== line
+        ? t("agentManager.review.commentOnLines", { start: line, end: endLine })
+        : t("agentManager.review.commentOnLine", { line }),
+    editCommentOnLine: (line, endLine) =>
+      endLine && endLine !== line
+        ? t("agentManager.review.editCommentOnLines", { start: line, end: endLine })
+        : t("agentManager.review.editCommentOnLine", { line }),
     placeholder: t("agentManager.review.commentPlaceholder"),
     cancel: t("common.cancel"),
     comment: t("agentManager.review.commentAction"),
@@ -68,7 +81,9 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
     delete: t("common.delete"),
   })
   const [open, setOpen] = createSignal<string[]>([])
-  const [draft, setDraft] = createSignal<{ file: string; side: AnnotationSide; line: number; endLine?: number } | null>(null)
+  const [draft, setDraft] = createSignal<{ file: string; side: AnnotationSide; line: number; endLine?: number } | null>(
+    null,
+  )
   const [editing, setEditing] = createSignal<string | null>(null)
   let nextId = 0
   // Tracks the session key for which auto-open has already run. When the
@@ -202,7 +217,14 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
 
   // --- CRUD ---
 
-  const addComment = (file: string, side: AnnotationSide, line: number, endLine: number | undefined, text: string, selectedText: string) => {
+  const addComment = (
+    file: string,
+    side: AnnotationSide,
+    line: number,
+    endLine: number | undefined,
+    text: string,
+    selectedText: string,
+  ) => {
     preserveScroll(() => {
       const id = `c-${++nextId}-${Date.now()}`
       if (props.instantComments && props.onStartThread) {
@@ -213,7 +235,10 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
           new MessageEvent("message", { data: { type: "appendReviewComments", comments: [c], autoSend: true } }),
         )
       } else {
-        updateComments((prev) => [...prev, { id, file, side, line, ...(endLine !== undefined ? { endLine } : {}), comment: text, selectedText }])
+        updateComments((prev) => [
+          ...prev,
+          { id, file, side, line, ...(endLine !== undefined ? { endLine } : {}), comment: text, selectedText },
+        ])
       }
       setDraft(null)
       draftMeta = null
@@ -476,7 +501,15 @@ export const DiffPanel: Component<DiffPanelProps> = (props) => {
                             <FileIcon node={{ path: diff.file, type: "file" }} />
                             <div
                               data-slot="session-review-file-name-container"
-                              style={props.onOpenFile && !isDeleted() ? { cursor: "pointer", "text-decoration": "underline", "text-underline-offset": "2px" } : undefined}
+                              style={
+                                props.onOpenFile && !isDeleted()
+                                  ? {
+                                      cursor: "pointer",
+                                      "text-decoration": "underline",
+                                      "text-underline-offset": "2px",
+                                    }
+                                  : undefined
+                              }
                               onClick={(e) => {
                                 if (props.onOpenFile && !isDeleted()) {
                                   e.stopPropagation()

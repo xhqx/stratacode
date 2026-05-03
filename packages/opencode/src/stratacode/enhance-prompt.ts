@@ -4,6 +4,7 @@ import { Provider } from "@/provider"
 import { ProviderTransform } from "@/provider"
 import { Log } from "@/util"
 import { Agent } from "@/agent/agent"
+import { fetchSessionContext } from "./session-context" // stratacode_change
 
 const log = Log.create({ service: "enhance-prompt" })
 
@@ -44,8 +45,26 @@ export function clean(text: string) {
  * prompt/model/temperature, then calls generateText directly — no session
  * identity, no tool loop, no plugin hooks.
  */
-export async function enhancePrompt(text: string): Promise<string> {
-  log.info("enhancing", { length: text.length })
+// stratacode_change start - accept directory for session context enrichment
+export async function enhancePrompt(text: string, directory?: string): Promise<string> {
+  log.info("enhancing", { length: text.length, directory })
+
+  // Prepend session context when a directory is provided
+  let enriched = text
+  if (directory) {
+    try {
+      const { Config } = await import("@/config")
+      const cfg = await Config.get()
+      const limit = cfg.session_context?.limit ?? 5
+      if (limit > 0) {
+        const context = await fetchSessionContext(directory, limit)
+        if (context) enriched = `${context}\n\n${text}`
+      }
+    } catch (err) {
+      log.warn("session context fetch failed, continuing without", { err })
+    }
+  }
+  // stratacode_change end
 
   const agent = await Agent.get("enhance").catch(() => undefined)
   const system = agent?.prompt ?? FALLBACK
@@ -68,7 +87,7 @@ export async function enhancePrompt(text: string): Promise<string> {
     ),
     maxRetries: 3,
     system,
-    messages: [{ role: "user" as const, content: text }],
+    messages: [{ role: "user" as const, content: enriched }], // stratacode_change - use enriched text
   })
 
   log.info("enhanced", { length: result.text.length })

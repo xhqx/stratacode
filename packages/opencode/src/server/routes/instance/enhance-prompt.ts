@@ -29,11 +29,15 @@ export const EnhancePromptRoutes = lazy(() =>
       "json",
       z.object({
         text: z.string().min(1).meta({ description: "The user's draft prompt to enhance" }),
+        directory: z // stratacode_change
+          .string()
+          .optional()
+          .meta({ description: "Workspace directory for session context enrichment" }),
       }),
     ),
     async (c) => {
       const body = c.req.valid("json")
-      const result = await enhancePrompt(body.text)
+      const result = await enhancePrompt(body.text, body.directory) // stratacode_change
       return c.json({ text: result })
     },
   ),

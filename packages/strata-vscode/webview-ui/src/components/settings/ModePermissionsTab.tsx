@@ -74,7 +74,9 @@ const AgentPermissionEditor: Component<{
 
   return (
     <Card style={{ "margin-bottom": "12px" }}>
-      <div style={{ display: "flex", "align-items": "center", "justify-content": "space-between", "margin-bottom": "8px" }}>
+      <div
+        style={{ display: "flex", "align-items": "center", "justify-content": "space-between", "margin-bottom": "8px" }}
+      >
         <div>
           <div data-slot="settings-row-label-title">
             {props.t("settings.agentBehaviour.permissions.agentOverridesTitle") || "Agent Permission Overrides"}
@@ -89,7 +91,16 @@ const AgentPermissionEditor: Component<{
       <div style={{ display: "flex", "flex-direction": "column" }}>
         <For each={overrides()}>
           {(tool) => (
-            <div style={{ display: "flex", gap: "12px", "align-items": "center", "justify-content": "space-between", padding: "6px 0", "border-bottom": "1px solid var(--border-weak-base)" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                "align-items": "center",
+                "justify-content": "space-between",
+                padding: "6px 0",
+                "border-bottom": "1px solid var(--border-weak-base)",
+              }}
+            >
               <div style={{ flex: 1, "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))" }}>
                 {tool.label}
               </div>
@@ -170,23 +181,52 @@ const PermissionRuleset: Component<{
 
   return (
     <Card style={{ "margin-bottom": "12px" }}>
-      <div style={{ display: "flex", "align-items": "center", cursor: "pointer", "user-select": "none" }} onClick={props.onToggle}>
-        <IconButton size="small" variant="ghost" icon={props.expanded ? "chevron-down" : "chevron-right"} onClick={(e: MouseEvent) => { e.stopPropagation(); props.onToggle() }} />
+      <div
+        style={{ display: "flex", "align-items": "center", cursor: "pointer", "user-select": "none" }}
+        onClick={props.onToggle}
+      >
+        <IconButton
+          size="small"
+          variant="ghost"
+          icon={props.expanded ? "chevron-down" : "chevron-right"}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation()
+            props.onToggle()
+          }}
+        />
         <span data-slot="settings-row-label-title" style={{ "margin-left": "4px" }}>
           {props.t("settings.agentBehaviour.permissions.title")}
         </span>
-        <span style={{ "margin-left": "8px", "font-size": "11px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))" }}>
+        <span
+          style={{
+            "margin-left": "8px",
+            "font-size": "11px",
+            color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+          }}
+        >
           {props.t("settings.agentBehaviour.permissions.count", { count: String(props.rules.length) })}
         </span>
         <div style={{ "margin-left": "auto" }}>
-          <IconButton size="small" variant="ghost" icon={copied() ? "check" : "copy"} title={props.t("settings.agentBehaviour.permissions.copy")} onClick={copy} />
+          <IconButton
+            size="small"
+            variant="ghost"
+            icon={copied() ? "check" : "copy"}
+            title={props.t("settings.agentBehaviour.permissions.copy")}
+            onClick={copy}
+          />
         </div>
       </div>
 
       <Show when={props.expanded}>
         <Show when={summary().length > 0}>
           <div style={{ "margin-top": "8px", "margin-bottom": "8px" }}>
-            <div style={{ "font-size": "11px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))", "margin-bottom": "4px" }}>
+            <div
+              style={{
+                "font-size": "11px",
+                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                "margin-bottom": "4px",
+              }}
+            >
               {props.t("settings.agentBehaviour.permissions.effective")}
             </div>
             <div style={{ display: "flex", "flex-wrap": "wrap", gap: "4px" }}>
@@ -194,7 +234,16 @@ const PermissionRuleset: Component<{
                 {([tool, action]) => {
                   const colors = ACTION_COLORS[action] ?? ACTION_COLORS.unknown
                   return (
-                    <span style={{ "font-size": "11px", padding: "2px 6px", "border-radius": "3px", background: colors.bg, color: colors.fg, "font-family": "var(--vscode-editor-font-family, monospace)" }}>
+                    <span
+                      style={{
+                        "font-size": "11px",
+                        padding: "2px 6px",
+                        "border-radius": "3px",
+                        background: colors.bg,
+                        color: colors.fg,
+                        "font-family": "var(--vscode-editor-font-family, monospace)",
+                      }}
+                    >
                       {tool}: {action}
                     </span>
                   )
@@ -204,13 +253,35 @@ const PermissionRuleset: Component<{
           </div>
         </Show>
 
-        <div style={{ "margin-top": "8px", "font-size": "11px", "font-family": "var(--vscode-editor-font-family, monospace)", "max-height": "300px", "overflow-y": "auto", border: "1px solid var(--border-weak-base, var(--vscode-panel-border))", "border-radius": "4px" }}>
+        <div
+          style={{
+            "margin-top": "8px",
+            "font-size": "11px",
+            "font-family": "var(--vscode-editor-font-family, monospace)",
+            "max-height": "300px",
+            "overflow-y": "auto",
+            border: "1px solid var(--border-weak-base, var(--vscode-panel-border))",
+            "border-radius": "4px",
+          }}
+        >
           <table style={{ width: "100%", "border-collapse": "collapse" }}>
             <thead>
-              <tr style={{ background: "var(--bg-subtle-base, var(--vscode-editorWidget-background))", position: "sticky", top: "0" }}>
-                <th style={{ padding: "4px 8px", "text-align": "left", "font-weight": "600" }}>{props.t("settings.agentBehaviour.permissions.col.tool")}</th>
-                <th style={{ padding: "4px 8px", "text-align": "left", "font-weight": "600" }}>{props.t("settings.agentBehaviour.permissions.col.pattern")}</th>
-                <th style={{ padding: "4px 8px", "text-align": "left", "font-weight": "600" }}>{props.t("settings.agentBehaviour.permissions.col.action")}</th>
+              <tr
+                style={{
+                  background: "var(--bg-subtle-base, var(--vscode-editorWidget-background))",
+                  position: "sticky",
+                  top: "0",
+                }}
+              >
+                <th style={{ padding: "4px 8px", "text-align": "left", "font-weight": "600" }}>
+                  {props.t("settings.agentBehaviour.permissions.col.tool")}
+                </th>
+                <th style={{ padding: "4px 8px", "text-align": "left", "font-weight": "600" }}>
+                  {props.t("settings.agentBehaviour.permissions.col.pattern")}
+                </th>
+                <th style={{ padding: "4px 8px", "text-align": "left", "font-weight": "600" }}>
+                  {props.t("settings.agentBehaviour.permissions.col.action")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -218,10 +289,26 @@ const PermissionRuleset: Component<{
                 {(rule, idx) => {
                   const colors = ACTION_COLORS[rule.action] ?? ACTION_COLORS.unknown
                   return (
-                    <tr style={{ "border-top": idx() > 0 ? "1px solid var(--border-weak-base, var(--vscode-panel-border))" : "none" }}>
+                    <tr
+                      style={{
+                        "border-top":
+                          idx() > 0 ? "1px solid var(--border-weak-base, var(--vscode-panel-border))" : "none",
+                      }}
+                    >
                       <td style={{ padding: "3px 8px" }}>{rule.permission}</td>
                       <td style={{ padding: "3px 8px", color: "var(--text-weak-base)" }}>{rule.pattern}</td>
-                      <td style={{ padding: "3px 8px" }}><span style={{ padding: "1px 4px", "border-radius": "2px", background: colors.bg, color: colors.fg }}>{rule.action}</span></td>
+                      <td style={{ padding: "3px 8px" }}>
+                        <span
+                          style={{
+                            padding: "1px 4px",
+                            "border-radius": "2px",
+                            background: colors.bg,
+                            color: colors.fg,
+                          }}
+                        >
+                          {rule.action}
+                        </span>
+                      </td>
                     </tr>
                   )
                 }}
@@ -230,7 +317,13 @@ const PermissionRuleset: Component<{
           </table>
         </div>
 
-        <div style={{ "margin-top": "6px", "font-size": "10px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))" }}>
+        <div
+          style={{
+            "margin-top": "6px",
+            "font-size": "10px",
+            color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+          }}
+        >
           {props.t("settings.agentBehaviour.permissions.hint")}
         </div>
       </Show>

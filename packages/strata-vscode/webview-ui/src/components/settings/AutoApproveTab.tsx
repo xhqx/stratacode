@@ -279,7 +279,9 @@ const AutoApproveTab: Component = () => {
           </label>
           <Switch
             checked={config().experimental?.continue_loop_on_deny ?? false}
-            onChange={(checked) => updateConfig({ experimental: { ...(config().experimental ?? {}), continue_loop_on_deny: checked } })}
+            onChange={(checked) =>
+              updateConfig({ experimental: { ...(config().experimental ?? {}), continue_loop_on_deny: checked } })
+            }
             hideLabel
           >
             {language.t("settings.experimental.continueOnDeny.title")}

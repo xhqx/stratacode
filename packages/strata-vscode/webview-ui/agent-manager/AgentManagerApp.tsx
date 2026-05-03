@@ -1465,7 +1465,14 @@ const AgentManagerContent: Component = () => {
     // Separate subscription for stats, settings, and thread replies to keep main-handler complexity in check.
     const unsubMisc = vscode.onMessage((msg) => {
       // DEBUG: log every message type arriving in this handler
-      if (msg.type?.startsWith("settingLoaded") || msg.type?.startsWith("diffViewer") || msg.type?.startsWith("agentManager.revert") || msg.type?.startsWith("agentManager.worktree") || msg.type?.startsWith("agentManager.local") || msg.type?.startsWith("agentManager.pr")) {
+      if (
+        msg.type?.startsWith("settingLoaded") ||
+        msg.type?.startsWith("diffViewer") ||
+        msg.type?.startsWith("agentManager.revert") ||
+        msg.type?.startsWith("agentManager.worktree") ||
+        msg.type?.startsWith("agentManager.local") ||
+        msg.type?.startsWith("agentManager.pr")
+      ) {
         console.log("[AM:unsubMisc] received:", msg.type, msg)
       }
       if (msg.type === "agentManager.revertWorktreeFileResult") revertCtl.onResult(msg as never)
@@ -1492,10 +1499,12 @@ const AgentManagerContent: Component = () => {
       } else if (msg.type === "diffViewer.threadReply" && typeof msg.threadId === "string") {
         WebviewLogger.info("AgentManagerApp", "[AgentManager] threadReply received:", msg.threadId)
         setReviewThreads((prev) =>
-          prev.map((t) => (t.id === msg.threadId ? { ...t, messages: [...t.messages, msg.message], pending: false } : t))
+          prev.map((t) =>
+            t.id === msg.threadId ? { ...t, messages: [...t.messages, msg.message], pending: false } : t,
+          ),
         )
       } else if (msg.type === "diffViewer.explainResult") {
-        setExplainingDiffs(false)
+        if (msg.done) setExplainingDiffs(false)
         if (msg.error) {
           WebviewLogger.error("AgentManagerApp", "[AgentManager] diffViewer.explainResult error:", msg.error)
           return
@@ -2171,14 +2180,34 @@ const AgentManagerContent: Component = () => {
     if (id) vscode.postMessage({ type: "agentManager.openFile", sessionId: id, filePath: file, line })
     else if (selection() === LOCAL) vscode.postMessage({ type: "openFile", filePath: file, line })
   }
-  const startThread = (threadId: string, file: string, side: string | undefined, line: number, endLine: number | undefined, text: string) => {
+  const startThread = (
+    threadId: string,
+    file: string,
+    side: string | undefined,
+    line: number,
+    endLine: number | undefined,
+    text: string,
+  ) => {
     const msg = { id: Math.random().toString(36).substring(2, 9), author: "user" as const, text, timestamp: Date.now() }
-    setReviewThreads((prev) => [...prev, { id: threadId, file, side: side as ReviewThread["side"], line, ...(endLine !== undefined ? { endLine } : {}), messages: [msg], pending: true }])
+    setReviewThreads((prev) => [
+      ...prev,
+      {
+        id: threadId,
+        file,
+        side: side as ReviewThread["side"],
+        line,
+        ...(endLine !== undefined ? { endLine } : {}),
+        messages: [msg],
+        pending: true,
+      },
+    ])
     vscode.postMessage({ type: "diffViewer.startThread", threadId, file, line, endLine, text })
   }
   const replyThread = (threadId: string, text: string) => {
     const msg = { id: Math.random().toString(36).substring(2, 9), author: "user" as const, text, timestamp: Date.now() }
-    setReviewThreads((prev) => prev.map((t) => t.id === threadId ? { ...t, messages: [...t.messages, msg], pending: true } : t))
+    setReviewThreads((prev) =>
+      prev.map((t) => (t.id === threadId ? { ...t, messages: [...t.messages, msg], pending: true } : t)),
+    )
     vscode.postMessage({ type: "diffViewer.replyToThread", threadId, text })
   }
 
@@ -3162,7 +3191,10 @@ const AgentManagerContent: Component = () => {
                   explaining={explainingDiffs()}
                   onExplainAll={() => {
                     setExplainingDiffs(true)
-                    vscode.postMessage({ type: "diffViewer.explainAll", worktreeId: (selection() === LOCAL || selection() === null) ? undefined : selection() as string })
+                    vscode.postMessage({
+                      type: "diffViewer.explainAll",
+                      worktreeId: selection() === LOCAL || selection() === null ? undefined : (selection() as string),
+                    })
                   }}
                   onThreadReply={replyThread}
                   onStartThread={startThread}

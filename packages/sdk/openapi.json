@@ -8905,6 +8905,85 @@
         ]
       }
     },
+    "/session-context": {
+      "post": {
+        "operationId": "sessionContext.create",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Get session context",
+        "description": "Fetch a summarized digest of recent conversation sessions for the given directory.",
+        "responses": {
+          "200": {
+            "description": "Session context summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "context": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["context"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "directory": {
+                    "description": "Workspace/project directory to scope session context",
+                    "type": "string"
+                  },
+                  "limit": {
+                    "description": "Override the configured session limit",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": ["directory"]
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.sessionContext.create({\n  ...\n})"
+          }
+        ]
+      }
+    },
     "/enhance-prompt": {
       "post": {
         "operationId": "enhancePrompt.enhance",
@@ -8964,6 +9043,10 @@
                     "description": "The user's draft prompt to enhance",
                     "type": "string",
                     "minLength": 1
+                  },
+                  "directory": {
+                    "description": "Workspace directory for session context enrichment",
+                    "type": "string"
                   }
                 },
                 "required": ["text"]
@@ -16396,6 +16479,20 @@
               }
             }
           },
+          "session_context": {
+            "description": "Session context for AI features (explain, commit, enhance)",
+            "type": "object",
+            "properties": {
+              "limit": {
+                "description": "Most recent sessions to include as context (0 to disable). Default: 5",
+                "type": "number"
+              },
+              "cache_days": {
+                "description": "Days to cache session context summaries. Default: 30",
+                "type": "number"
+              }
+            }
+          },
           "compaction": {
             "type": "object",
             "properties": {
@@ -16472,6 +16569,10 @@
                 "type": "integer",
                 "exclusiveMinimum": 0,
                 "maximum": 9007199254740991
+              },
+              "auto_improve_prompts": {
+                "description": "Auto-enhance prompts before sending when enabled",
+                "type": "boolean"
               }
             }
           },

@@ -102,7 +102,9 @@ const ContextTab: Component = () => {
         >
           <Switch
             checked={config().experimental?.disable_paste_summary ?? false}
-            onChange={(checked) => updateConfig({ experimental: { ...(config().experimental ?? {}), disable_paste_summary: checked } })}
+            onChange={(checked) =>
+              updateConfig({ experimental: { ...(config().experimental ?? {}), disable_paste_summary: checked } })
+            }
             hideLabel
           >
             {language.t("settings.experimental.pasteSummary.title")}

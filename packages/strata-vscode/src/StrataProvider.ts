@@ -48,7 +48,7 @@ import { GitOps } from "./agent-manager/GitOps"
 import { GitStatsPoller, type LocalStats } from "./agent-manager/GitStatsPoller"
 import { buildIndexedPatches, parseExplainResponse, shouldPreSkip, buildExplainPrompt } from "./explain-skip"
 import type { ReviewThread } from "./DiffViewerProvider"
-import { diffSummary as localDiffSummary } from "./agent-manager/local-diff"
+import { diffSummary as localDiffSummary, batchPatches, ancestor as localAncestor } from "./agent-manager/local-diff"
 import { getWorkspaceRoot } from "./review-utils"
 import { MarketplaceService, type MarketplaceItem, type RemoveResult } from "./services/marketplace"
 import type { RemoteStatusService } from "./services/RemoteStatusService"
@@ -299,7 +299,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         postToSidebar: (msg) => this.postMessage(msg),
       })
     }
-    
+
     this.gitWatcher = new GitWatcher(this)
   }
 
@@ -669,7 +669,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       })
       if (intercepted === null) {
         if (message.type === "requestSetting") {
-          Logger.warn("StrataProvider", `[DEBUG] requestSetting CONSUMED by interceptMessage (returned null): key=${message.key}`)
+          Logger.warn(
+            "StrataProvider",
+            `[DEBUG] requestSetting CONSUMED by interceptMessage (returned null): key=${message.key}`,
+          )
         }
         return
       }
@@ -790,18 +793,22 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             type: "planningSettingsLoaded",
             settings: {
               taskView: vscode.workspace.getConfiguration("strata-code.new.planning").get("taskView") ?? true,
-              documentDrivenTasks: vscode.workspace.getConfiguration("strata-code.new.planning").get("documentDrivenTasks") ?? true,
-            }
+              documentDrivenTasks:
+                vscode.workspace.getConfiguration("strata-code.new.planning").get("documentDrivenTasks") ?? true,
+            },
           })
           break
         case "updatePlanningSetting":
-          await vscode.workspace.getConfiguration("strata-code.new.planning").update(message.key, message.value, vscode.ConfigurationTarget.Global)
+          await vscode.workspace
+            .getConfiguration("strata-code.new.planning")
+            .update(message.key, message.value, vscode.ConfigurationTarget.Global)
           this.postMessage({
             type: "planningSettingsLoaded",
             settings: {
               taskView: vscode.workspace.getConfiguration("strata-code.new.planning").get("taskView") ?? true,
-              documentDrivenTasks: vscode.workspace.getConfiguration("strata-code.new.planning").get("documentDrivenTasks") ?? true,
-            }
+              documentDrivenTasks:
+                vscode.workspace.getConfiguration("strata-code.new.planning").get("documentDrivenTasks") ?? true,
+            },
           })
           break
         case "planning.requestState":
@@ -886,9 +893,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
         case "retryConnection":
           Logger.info("StrataProvider", "🔄 Retrying connection...")
-          this.initializeConnection().catch((e) =>
-            Logger.error("StrataProvider", "❌ Retry connection failed:", e),
-          )
+          this.initializeConnection().catch((e) => Logger.error("StrataProvider", "❌ Retry connection failed:", e))
           break
         case "openSubAgentViewer":
           vscode.commands.executeCommand("strata-code.new.openSubAgentViewer", message.sessionID, message.title)
@@ -934,7 +939,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           )
           break
         case "removeMode":
-          this.handleRemoveMode(message.name).catch((e) => Logger.error("StrataProvider", "handleRemoveMode failed:", e))
+          this.handleRemoveMode(message.name).catch((e) =>
+            Logger.error("StrataProvider", "handleRemoveMode failed:", e),
+          )
           break
         case "removeMcp":
           this.handleRemoveMcp(message.name).catch((e) => Logger.error("StrataProvider", "handleRemoveMcp failed:", e))
@@ -943,7 +950,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           this.fetchAndSendMcpStatus().catch((e) => Logger.error("StrataProvider", "fetchAndSendMcpStatus failed:", e))
           break
         case "connectMcp":
-          this.handleConnectMcp(message.name).catch((e) => Logger.error("StrataProvider", "handleConnectMcp failed:", e))
+          this.handleConnectMcp(message.name).catch((e) =>
+            Logger.error("StrataProvider", "handleConnectMcp failed:", e),
+          )
           break
         case "disconnectMcp":
           this.handleDisconnectMcp(message.name).catch((e) =>
@@ -1049,10 +1058,14 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           await this.handleUpdateSetting(message.key, message.value)
           break
         case "webviewLog":
-          if (message.level === "debug") Logger.debug(`Webview:${message.component}`, message.message, ...(message.data || []))
-          else if (message.level === "info") Logger.info(`Webview:${message.component}`, message.message, ...(message.data || []))
-          else if (message.level === "warn") Logger.warn(`Webview:${message.component}`, message.message, ...(message.data || []))
-          else if (message.level === "error") Logger.error(`Webview:${message.component}`, message.message, ...(message.data || []))
+          if (message.level === "debug")
+            Logger.debug(`Webview:${message.component}`, message.message, ...(message.data || []))
+          else if (message.level === "info")
+            Logger.info(`Webview:${message.component}`, message.message, ...(message.data || []))
+          else if (message.level === "warn")
+            Logger.warn(`Webview:${message.component}`, message.message, ...(message.data || []))
+          else if (message.level === "error")
+            Logger.error(`Webview:${message.component}`, message.message, ...(message.data || []))
           break
         case "requestBrowserSettings":
           this.sendBrowserSettings()
@@ -1067,9 +1080,25 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           this.handleRequestSetting(message.key)
           break
         case "diffViewer.startThread":
-          Logger.info("StrataProvider", "diffViewer.startThread received", { threadId: message.threadId, file: message.file, line: message.line })
-          if (typeof message.threadId === "string" && typeof message.file === "string" && typeof message.line === "number" && typeof message.text === "string") {
-            void this.handleDiffStartThread(message.threadId, message.file, message.line, typeof message.endLine === "number" ? message.endLine : undefined, message.text, message.side as "left" | "right" | undefined)
+          Logger.info("StrataProvider", "diffViewer.startThread received", {
+            threadId: message.threadId,
+            file: message.file,
+            line: message.line,
+          })
+          if (
+            typeof message.threadId === "string" &&
+            typeof message.file === "string" &&
+            typeof message.line === "number" &&
+            typeof message.text === "string"
+          ) {
+            void this.handleDiffStartThread(
+              message.threadId,
+              message.file,
+              message.line,
+              typeof message.endLine === "number" ? message.endLine : undefined,
+              message.text,
+              message.side as "left" | "right" | undefined,
+            )
           }
           break
         case "diffViewer.explainAll":
@@ -1176,29 +1205,36 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         case "requestRepoMapStats": {
           const sdkClient = this.connectionService.getClient()
           if (sdkClient) {
-            sdkClient.repoMap.generate({ budget: 4096 }).then((res) => {
-              if (res.data) {
-                this.postMessage({ type: "repoMapStatsLoaded", stats: res.data.stats })
-              }
-            }).catch(e => {
-              Logger.error("StrataProvider", "Failed to fetch repo map stats", e)
-            })
+            sdkClient.repoMap
+              .generate({ budget: 4096 })
+              .then((res) => {
+                if (res.data) {
+                  this.postMessage({ type: "repoMapStatsLoaded", stats: res.data.stats })
+                }
+              })
+              .catch((e) => {
+                Logger.error("StrataProvider", "Failed to fetch repo map stats", e)
+              })
           }
           break
         }
         case "invalidateRepoMap": {
           const sdkClient = this.connectionService.getClient()
           if (sdkClient) {
-            sdkClient.repoMap.invalidate({}).then(() => {
-              // Re-fetch stats after invalidation
-              return sdkClient.repoMap.generate({ budget: 4096 })
-            }).then((res) => {
-              if (res && res.data) {
-                this.postMessage({ type: "repoMapStatsLoaded", stats: res.data.stats })
-              }
-            }).catch(e => {
-              Logger.error("StrataProvider", "Failed to invalidate repo map", e)
-            })
+            sdkClient.repoMap
+              .invalidate({})
+              .then(() => {
+                // Re-fetch stats after invalidation
+                return sdkClient.repoMap.generate({ budget: 4096 })
+              })
+              .then((res) => {
+                if (res && res.data) {
+                  this.postMessage({ type: "repoMapStatsLoaded", stats: res.data.stats })
+                }
+              })
+              .catch((e) => {
+                Logger.error("StrataProvider", "Failed to invalidate repo map", e)
+              })
           }
           break
         }
@@ -2116,10 +2152,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
     // Remove from global config via CLI (preserves JSONC comments)
     try {
-      await this.client!.global.config.update(
-        { config: { mcp: { [name]: null } } as any },
-        { throwOnError: true },
-      )
+      await this.client!.global.config.update({ config: { mcp: { [name]: null } } as any }, { throwOnError: true })
     } catch (err) {
       Logger.debug("StrataProvider", "global config MCP removal skipped:", err)
     }
@@ -2710,7 +2743,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         }
 
         const delay = backoff(attempt, result.response?.headers)
-        Logger.info("StrataProvider", 
+        Logger.info(
+          "StrataProvider",
           `[Strata New] StrataProvider: Retry on ${status}, attempt ${attempt}/${MAX_RETRIES}, delay ${delay}ms`,
         )
 
@@ -3161,12 +3195,19 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.postMessage({
       type: "settingLoaded",
       key,
-      value
+      value,
     })
     Logger.info("StrataProvider", `handleRequestSetting: postMessage(settingLoaded) called for ${key}`)
   }
 
-  private async handleDiffStartThread(threadId: string, file: string, line: number, endLine: number | undefined, text: string, side?: "left" | "right"): Promise<void> {
+  private async handleDiffStartThread(
+    threadId: string,
+    file: string,
+    line: number,
+    endLine: number | undefined,
+    text: string,
+    side?: "left" | "right",
+  ): Promise<void> {
     try {
       const client = this.connectionService.getClient()
       const root = getWorkspaceRoot()
@@ -3181,13 +3222,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       }
 
       const prompt = [
-        `You are an expert code reviewer. The user is asking a question about a specific part of the code in the diff.`,
+        `You are an expert code explainer. The user is asking a question about a specific part of the code in the diff.`,
         `File: ${file}`,
         `Line: ${endLine !== undefined ? `${line}-${endLine}` : line}${side ? ` (${side === "left" ? "deletions" : "additions"} side)` : ""}`,
         `Question:`,
         `"${text}"`,
         ``,
-        `Please reply directly to the user's question. Provide your answer in markdown format. Do NOT wrap your answer in JSON.`
+        `Please reply directly to the user's question. Provide your answer in markdown format. Do NOT wrap your answer in JSON.`,
       ].join("\n")
 
       const res = await client.session.prompt(
@@ -3209,8 +3250,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             id: Math.random().toString(36).substring(2, 9),
             author: "ai",
             text: part.text.trim(),
-            timestamp: Date.now()
-          }
+            timestamp: Date.now(),
+          },
         })
       }
     } catch (err) {
@@ -3222,8 +3263,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           id: Math.random().toString(36).substring(2, 9),
           author: "ai",
           text: `⚠️ Failed to start thread: ${err instanceof Error ? err.message : String(err)}`,
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       })
     }
   }
@@ -3240,8 +3281,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             id: Math.random().toString(36).substring(2, 9),
             author: "ai",
             text: "⚠️ Review session has expired. Please initiate a new explanation.",
-            timestamp: Date.now()
-          }
+            timestamp: Date.now(),
+          },
         })
         return
       }
@@ -3265,8 +3306,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
             id: Math.random().toString(36).substring(2, 9),
             author: "ai",
             text: part.text.trim(),
-            timestamp: Date.now()
-          }
+            timestamp: Date.now(),
+          },
         })
       }
     } catch (err) {
@@ -3278,8 +3319,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           id: Math.random().toString(36).substring(2, 9),
           author: "ai",
           text: `⚠️ Failed to reply: ${err instanceof Error ? err.message : String(err)}`,
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       })
     }
   }
@@ -3288,7 +3329,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     const worktreeId = message.worktreeId as string | undefined
     const root = this.getProjectDirectory(this.currentSession?.id)
     if (!root) {
-      this.postMessage({ type: "diffViewer.explainResult", error: "No workspace root found." })
+      this.postMessage({ type: "diffViewer.explainResult", error: "No workspace root found.", done: true })
       return
     }
     const targetDirectory = worktreeId ? path.join(path.dirname(root), worktreeId) : root
@@ -3296,53 +3337,45 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     try {
       await vscode.workspace.fs.stat(vscode.Uri.file(targetDirectory))
     } catch {
-      this.postMessage({ type: "diffViewer.explainResult", error: `Target directory not found: ${targetDirectory}` })
+      this.postMessage({ type: "diffViewer.explainResult", error: `Target directory not found: ${targetDirectory}`, done: true })
       return
     }
 
     try {
-      const { diffFile, ancestor } = await import("./agent-manager/local-diff")
       const log = (...args: unknown[]) => Logger.debug("StrataProvider", "[explainAll]", ...args)
       const gitOps = new GitOps({ log })
 
       try {
-        const anc = await ancestor(gitOps, targetDirectory, "main", log)
+        const anc = await localAncestor(gitOps, targetDirectory, "main", log)
         const diffs = await localDiffSummary(gitOps, targetDirectory, "main", log)
 
         const effort = vscode.workspace.getConfiguration("strata-code.new.explainer").get<string>("effort", "medium")
 
-        const validDiffs: { file: string, patch: string }[] = []
+        const validDiffs: { file: string; patch: string }[] = []
         const candidates = diffs.filter((d) => !d.generatedLike)
-        const CONCURRENCY = 5
 
-        for (let i = 0; i < candidates.length; i += CONCURRENCY) {
-          const chunk = candidates.slice(i, i + CONCURRENCY)
-          const resolved = await Promise.all(
-            chunk.map(async (d) => {
-              const entry = await diffFile(
-                gitOps,
-                targetDirectory,
-                "main",
-                d.file,
-                log,
-                anc,
-              )
-              if (!entry || !entry.patch || shouldPreSkip(entry.patch, effort)) return null
-              return { file: d.file, patch: entry.patch }
-            }),
-          )
-          for (const r of resolved) {
-            if (r) validDiffs.push(r)
-          }
+        const patchMap = await batchPatches(
+          gitOps,
+          targetDirectory,
+          anc ?? "",
+          candidates.map((d) => ({ file: d.file, tracked: d.tracked })),
+          log,
+        )
+
+        for (const d of candidates) {
+          const patch = patchMap.get(d.file)
+          if (!patch || shouldPreSkip(patch, effort)) continue
+          validDiffs.push({ file: d.file, patch })
         }
 
-        const { annotatedDiffs, lineMap } = buildIndexedPatches(validDiffs)
+        const { annotatedDiffs: firstCheck } = buildIndexedPatches(validDiffs)
 
-        if (!annotatedDiffs.trim()) {
+        if (!firstCheck.trim()) {
           this.postMessage({
             type: "diffViewer.explainResult",
             threads: [],
-            summary: "No complex changes to explain."
+            summary: "No complex changes to explain.",
+            done: true,
           })
           return
         }
@@ -3355,60 +3388,104 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           this.connectionService.hideSession(data.id)
         }
 
-        const prompt = buildExplainPrompt(annotatedDiffs)
-
-        let timer: ReturnType<typeof setTimeout> | undefined
-        const timeout = new Promise<never>((_, reject) => {
-          timer = setTimeout(() => reject(new Error("Explanation timed out after 60s")), 60_000)
-        })
-
-        const res = await Promise.race([
-          client.session.prompt(
-            {
-              sessionID: this.diffExplainSession,
-              directory: targetDirectory,
-              agent: "explainer",
-              parts: [{ type: "text", text: prompt }],
-            },
-            { throwOnError: true },
-          ),
-          timeout,
-        ])
-
-        if (timer) clearTimeout(timer)
-
-        const part = res.data?.parts?.find((p: any) => p.type === "text")
-        if (part && "text" in part) {
-          const raw = part.text.trim()
-          const parsed = parseExplainResponse(raw, lineMap)
-
-          const threads: ReviewThread[] = parsed.comments.map(c => ({
-            id: Math.random().toString(36).substring(2, 9),
-            file: c.file,
-            side: c.side as "left" | "right" | "additions" | "deletions" | undefined,
-            line: c.line,
-            ...(c.endLine !== undefined ? { endLine: c.endLine } : {}),
-            messages: [{
-              id: Math.random().toString(36).substring(2, 9),
-              author: "ai" as const,
-              text: c.text,
-              timestamp: Date.now()
-            }],
-            pending: false
-          }))
-
-          this.postMessage({
-            type: "diffViewer.explainResult",
-            threads,
-            summary: parsed.summary
+        // Fetch session context once for all batches
+        let sessionContext: string | undefined
+        try {
+          const res = await client.sessionContext.create({
+            body_directory: targetDirectory,
           })
+          if (res.data?.context) sessionContext = res.data.context
+        } catch (err) {
+          Logger.info("StrataProvider", "handleDiffExplainAll: session context fetch failed, continuing without", err)
+        }
+
+        // Process in batches of BATCH_SIZE files
+        const BATCH_SIZE = 5
+        let summary = ""
+
+        for (let i = 0; i < validDiffs.length; i += BATCH_SIZE) {
+          const chunk = validDiffs.slice(i, i + BATCH_SIZE)
+          const last = i + BATCH_SIZE >= validDiffs.length
+          const { annotatedDiffs, lineMap } = buildIndexedPatches(chunk)
+
+          if (!annotatedDiffs.trim()) {
+            if (last) {
+              this.postMessage({
+                type: "diffViewer.explainResult",
+                threads: [],
+                summary: summary || "Explanation completed.",
+                done: true,
+              })
+            }
+            continue
+          }
+
+          const prompt = buildExplainPrompt(annotatedDiffs, sessionContext)
+
+          let timer: ReturnType<typeof setTimeout> | undefined
+          const timeout = new Promise<never>((_, reject) => {
+            timer = setTimeout(() => reject(new Error("Explanation timed out after 60s")), 60_000)
+          })
+
+          const res = await Promise.race([
+            client.session.prompt(
+              {
+                sessionID: this.diffExplainSession,
+                directory: targetDirectory,
+                agent: "explainer",
+                parts: [{ type: "text", text: prompt }],
+              },
+              { throwOnError: true },
+            ),
+            timeout,
+          ])
+
+          if (timer) clearTimeout(timer)
+
+          const part = res.data?.parts?.find((p: any) => p.type === "text")
+          if (part && "text" in part) {
+            const raw = part.text.trim()
+            const parsed = parseExplainResponse(raw, lineMap)
+            if (parsed.summary) summary = parsed.summary
+
+            const threads: ReviewThread[] = parsed.comments.map((c) => ({
+              id: Math.random().toString(36).substring(2, 9),
+              file: c.file,
+              side: c.side as "left" | "right" | "additions" | "deletions" | undefined,
+              line: c.line,
+              ...(c.endLine !== undefined ? { endLine: c.endLine } : {}),
+              messages: [
+                {
+                  id: Math.random().toString(36).substring(2, 9),
+                  author: "ai" as const,
+                  text: c.text,
+                  timestamp: Date.now(),
+                },
+              ],
+              pending: false,
+            }))
+
+            this.postMessage({
+              type: "diffViewer.explainResult",
+              threads,
+              summary: last ? summary || "Explanation completed." : undefined,
+              done: last,
+            })
+          } else if (last) {
+            this.postMessage({
+              type: "diffViewer.explainResult",
+              threads: [],
+              summary: summary || "Explanation completed.",
+              done: true,
+            })
+          }
         }
       } finally {
         gitOps.dispose()
       }
     } catch (err) {
       Logger.error("StrataProvider", "diffViewer.explainAll failed:", err)
-      this.postMessage({ type: "diffViewer.explainResult", error: String(err) })
+      this.postMessage({ type: "diffViewer.explainResult", error: String(err), done: true })
     }
   }
 
@@ -3874,11 +3951,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     try {
       const client = this.connectionService.getClient()
       const config = (this.cachedConfigMessage as any)?.config
-      
+
       if (client) {
         // Fetch Memory
         try {
-          type SDKWithMemory = { memory: { list: () => Promise<{ data?: { id: string; title: string; content: string }[] }> } }
+          type SDKWithMemory = {
+            memory: { list: () => Promise<{ data?: { id: string; title: string; content: string }[] }> }
+          }
           const stratacode = client.stratacode as unknown as SDKWithMemory
           const res = await stratacode.memory.list()
           if (res.data) {

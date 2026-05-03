@@ -203,6 +203,12 @@ async function main() {
     // Prefer ESM entry for packages like jsonc-parser whose UMD entry uses
     // dynamic require("./impl/...") calls that esbuild cannot inline.
     mainFields: ["module", "main"],
+    alias: {
+      // Force jsonc-parser to resolve to its ESM entry; the UMD entry uses
+      // relative require("./impl/format") calls that break in a single-file
+      // bundle because esbuild inlines the factory but not its sub-requires.
+      "jsonc-parser": require.resolve("jsonc-parser/lib/esm/main.js"),
+    },
     logLevel: "silent",
     plugins: [tsExtensionPlugin, esbuildProblemMatcherPlugin],
   })

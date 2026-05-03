@@ -103,7 +103,10 @@ export function parsePage(content: string, file: string): MarkdownPage {
   return page
 }
 
-function parseTaskBody(lines: string[], start: number): { meta: TaskMeta & { id?: string }; description: string; consumed: number } {
+function parseTaskBody(
+  lines: string[],
+  start: number,
+): { meta: TaskMeta & { id?: string }; description: string; consumed: number } {
   const meta: TaskMeta & { id?: string } = {}
   const desc: string[] = []
   let consumed = 0
@@ -154,7 +157,10 @@ function parseStrataComment(raw: string, meta: TaskMeta & { id?: string }) {
         meta.priority = parseInt(val, 10) || undefined
         break
       case "depends":
-        meta.depends = val.split(",").map((d) => d.trim()).filter(Boolean)
+        meta.depends = val
+          .split(",")
+          .map((d) => d.trim())
+          .filter(Boolean)
         break
       case "provider":
         meta.provider = val
@@ -209,7 +215,10 @@ export function generateId(title: string, file: string): string {
 
 export async function scanPlanDirectory(root: string): Promise<MarkdownPage[]> {
   const dir = path.join(root, ".strata", "plans")
-  const exists = await fs.promises.access(dir).then(() => true).catch(() => false)
+  const exists = await fs.promises
+    .access(dir)
+    .then(() => true)
+    .catch(() => false)
   if (!exists) return []
 
   const pages: MarkdownPage[] = []

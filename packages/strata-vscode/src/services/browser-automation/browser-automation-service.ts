@@ -113,9 +113,7 @@ export class BrowserAutomationService implements vscode.Disposable {
       if (serverStatus?.status === "connected") {
         this.setState("connected")
       } else if (serverStatus?.status === "failed") {
-        Logger.error("BrowserAutomationService", "MCP server failed:",
-          (serverStatus as { error?: string }).error,
-        )
+        Logger.error("BrowserAutomationService", "MCP server failed:", (serverStatus as { error?: string }).error)
         this.setState("failed")
       } else {
         this.setState("disconnected")

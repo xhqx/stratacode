@@ -282,6 +282,7 @@ export const Info = Schema.Struct({
     }),
   ),
   commit_message: StratacodeConfig.CommitMessageSchema, // stratacode_change
+  session_context: StratacodeConfig.SessionContextSchema, // stratacode_change
   compaction: Schema.optional(
     Schema.Struct({
       auto: Schema.optional(Schema.Boolean).annotate({

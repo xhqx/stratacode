@@ -13,7 +13,7 @@ export function createHoverCommentUtility(props: {
   const button = document.createElement("button")
   button.type = "button"
   button.ariaLabel = props.label
-  button.textContent = "+"
+  button.innerHTML = `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7 2v5H2v2h5v5h2V9h5V7H9V2z"/></svg>`
   button.style.width = "20px"
   button.style.height = "20px"
   button.style.display = "flex"
@@ -22,8 +22,8 @@ export function createHoverCommentUtility(props: {
   button.style.border = "none"
   button.style.borderRadius = "var(--radius-md)"
   // stratacode_change start
-  button.style.background = "var(--gray-dark-3, #232323)"
-  button.style.color = "#ffffff"
+  button.style.background = "#EE9284"
+  button.style.color = "#A4ADB6"
   // stratacode_change end
   button.style.boxShadow = "var(--shadow-xs, 0 1px 2px rgba(0,0,0,0.12))"
   button.style.fontSize = "14px"

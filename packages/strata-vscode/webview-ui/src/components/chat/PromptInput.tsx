@@ -195,7 +195,10 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
             <span class="prompt-review-modal-label">{language.t("agentManager.review.metaFile")}</span>
             <code class="prompt-review-modal-value">{item.file}</code>
             <span class="prompt-review-modal-label">{language.t("agentManager.review.metaLine")}</span>
-            <span class="prompt-review-modal-value">L{item.line}{item.endLine && item.endLine !== item.line ? `-${item.endLine}` : ""}</span>
+            <span class="prompt-review-modal-value">
+              L{item.line}
+              {item.endLine && item.endLine !== item.line ? `-${item.endLine}` : ""}
+            </span>
             <span class="prompt-review-modal-label">{language.t("agentManager.review.metaComment")}</span>
             <span class="prompt-review-modal-value">{item.comment}</span>
           </div>
@@ -628,7 +631,9 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
   const shouldAutoEnhance = () => {
     const draft = text().trim()
-    return config()?.experimental?.auto_improve_prompts && !pendingSend && !enhancing() && draft && !draft.startsWith("/")
+    return (
+      config()?.experimental?.auto_improve_prompts && !pendingSend && !enhancing() && draft && !draft.startsWith("/")
+    )
   }
 
   const handleSend = async () => {
@@ -742,7 +747,9 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
           aria-label={noModels() ? language.t("prompt.noModels") : language.t("prompt.toast.modelAgentRequired.title")}
         >
           <span aria-hidden="true">+</span>
-          <span>{noModels() ? language.t("prompt.noModels") : language.t("prompt.toast.modelAgentRequired.title")}</span>
+          <span>
+            {noModels() ? language.t("prompt.noModels") : language.t("prompt.toast.modelAgentRequired.title")}
+          </span>
         </button>
       </Show>
       <Show when={!noModels() && !!session.selected()}>

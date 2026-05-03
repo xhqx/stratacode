@@ -31,8 +31,9 @@ export class MemoryExtractor {
         agent: "memory_extractor",
       })
     } finally {
-      await client.session.delete({ sessionID: sid, directory: dir })
-        .catch(err => Logger.warn("MemoryExtractor", "session cleanup failed:", err))
+      await client.session
+        .delete({ sessionID: sid, directory: dir })
+        .catch((err) => Logger.warn("MemoryExtractor", "session cleanup failed:", err))
     }
   }
 

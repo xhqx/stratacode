@@ -109,14 +109,16 @@ export function registerCommitMessageService(
           Logger.error("CommitMessageService", "Failed to generate commit message:", msg)
 
           if (msg.toLowerCase().includes("model") || msg.toLowerCase().includes("agent")) {
-            vscode.window.showErrorMessage(
-              `Commit message generation is restricted: ${msg}. Please select an agent/model in settings.`,
-              "Open Settings"
-            ).then((action) => {
-              if (action === "Open Settings") {
-                vscode.commands.executeCommand("strata-code.new.openSettings")
-              }
-            })
+            vscode.window
+              .showErrorMessage(
+                `Commit message generation is restricted: ${msg}. Please select an agent/model in settings.`,
+                "Open Settings",
+              )
+              .then((action) => {
+                if (action === "Open Settings") {
+                  vscode.commands.executeCommand("strata-code.new.openSettings")
+                }
+              })
             return
           }
 

@@ -15,6 +15,7 @@ import { NetworkRoutes } from "../../server/routes/instance/network"
 import { SuggestionRoutes } from "../suggestion/routes"
 import { IndexingRoutes } from "./routes/indexing"
 import { RepoMapRoutes } from "./routes/repomap" // stratacode_change
+import { SessionContextRoutes } from "./routes/session-context"
 import { createStrataRoutes } from "@stratacode/strata-gateway"
 import { Auth } from "../../auth"
 import { errors } from "../../server/error"
@@ -36,6 +37,7 @@ export function register(app: Hono): Hono {
     .route("/telemetry", TelemetryRoutes())
     .route("/remote", RemoteRoutes())
     .route("/commit-message", CommitMessageRoutes())
+    .route("/session-context", SessionContextRoutes())
     .route("/enhance-prompt", EnhancePromptRoutes())
     .route("/stratacode", StratacodeRoutes())
     .route(

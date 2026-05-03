@@ -169,7 +169,12 @@ const RulesTab: Component = () => {
                         icon="pencil-line"
                         onClick={() => vscode.postMessage({ type: "openFile", filePath: path })}
                       />
-                      <IconButton size="small" variant="ghost" icon="close" onClick={() => removeInstruction(index())} />
+                      <IconButton
+                        size="small"
+                        variant="ghost"
+                        icon="close"
+                        onClick={() => removeInstruction(index())}
+                      />
                     </div>
                   </>
                 }
@@ -193,9 +198,7 @@ const RulesTab: Component = () => {
                     <IconButton size="small" variant="ghost" icon="close" onClick={() => setEditingIndex(null)} />
                   </div>
                   <Show when={editError()}>
-                    <div style={{ "font-size": "11px", color: "var(--vscode-errorForeground)" }}>
-                      {editError()}
-                    </div>
+                    <div style={{ "font-size": "11px", color: "var(--vscode-errorForeground)" }}>{editError()}</div>
                   </Show>
                 </div>
               </Show>

@@ -137,7 +137,7 @@ class Engine {
           })
           continue
         }
-        
+
         if (name.startsWith("name.reference.")) {
           // imports, requires, etc. (for ranking)
           // Strip quotes from import strings

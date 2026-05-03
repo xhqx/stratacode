@@ -150,10 +150,7 @@ const AcpEditView: Component<Props> = (props) => {
       {/* Name (create mode only) */}
       <Show when={creating()}>
         <Card data-variant="wide-input" style={{ "margin-bottom": "12px" }}>
-          <SettingsRow
-            title={language.t("settings.agentBehaviour.acpCreate.name")}
-            last
-          >
+          <SettingsRow title={language.t("settings.agentBehaviour.acpCreate.name")} last>
             <TextField
               value={draftName()}
               placeholder={language.t("settings.agentBehaviour.acpCreate.name.placeholder")}
@@ -266,7 +263,7 @@ const AcpEditView: Component<Props> = (props) => {
             {language.t("settings.agentBehaviour.addAcp.url")}
           </div>
           <TextField
-            value={creating() ? draftUrl() : cfg().url ?? ""}
+            value={creating() ? draftUrl() : (cfg().url ?? "")}
             placeholder={language.t("settings.agentBehaviour.addAcp.url.placeholder")}
             onChange={(val) => {
               if (creating()) {

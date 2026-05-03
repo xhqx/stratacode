@@ -77,7 +77,12 @@ export function TaskBoardView(props: Props) {
         </Tooltip>
         <Show when={pending() > 0}>
           <Tooltip value={language.t("planning.applyMarkdown.tooltip")}>
-            <Button size="small" variant="ghost" icon={"file-symlink-file" as any} onClick={() => planning.applyMarkdown()}>
+            <Button
+              size="small"
+              variant="ghost"
+              icon={"file-symlink-file" as any}
+              onClick={() => planning.applyMarkdown()}
+            >
               {language.t("planning.applyMarkdown")} ({pending()})
             </Button>
           </Tooltip>

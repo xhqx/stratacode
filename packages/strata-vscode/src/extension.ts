@@ -178,7 +178,7 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
   )
 
   // Create standalone diff viewer provider for the sidebar "Show Changes" action
-  const diffViewerProvider = new DiffViewerProvider(context.extensionUri, connectionService)
+  const diffViewerProvider = new DiffViewerProvider(context.extensionUri, connectionService, context)
   diffViewerProvider.setCommentHandler((comments, autoSend) => {
     void provider.appendReviewComments(comments, autoSend)
   })

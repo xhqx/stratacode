@@ -26,7 +26,9 @@ export namespace RenderService {
       if (tags.length === 0 || acc.chars >= maxChars) return acc
 
       const sortedTags = [...tags].sort((a, b) => a.line - b.line)
-      const blockLines = sortedTags.map((tag) => `│ ${tag.signature ? tag.signature.trim() : `${tag.type} ${tag.name}`}\n`)
+      const blockLines = sortedTags.map(
+        (tag) => `│ ${tag.signature ? tag.signature.trim() : `${tag.type} ${tag.name}`}\n`,
+      )
       const block = `${file}:\n${blockLines.join("")}\n`
 
       if (acc.chars + block.length > maxChars) {

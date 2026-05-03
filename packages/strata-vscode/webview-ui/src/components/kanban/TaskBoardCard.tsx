@@ -97,7 +97,10 @@ export function TaskBoardCard(props: Props) {
       onClick={handleClick}
     >
       <div data-slot="task-board-card-header">
-        <Icon name={(isMarkdown() ? "file-text" : isPlanned() ? "clock" : isManual() ? "pencil-line" : "brain") as any} size="small" />
+        <Icon
+          name={(isMarkdown() ? "file-text" : isPlanned() ? "clock" : isManual() ? "pencil-line" : "brain") as any}
+          size="small"
+        />
         <span data-slot="task-board-card-title" title={props.task.title}>
           {props.task.title}
         </span>

@@ -17,7 +17,6 @@ export interface PlanningTask {
   markdownFile?: string
   markdownLine?: number
 
-
   // Scheduling
   startAt?: string // ISO UTC timestamp, minute precision
   deadline?: string // ISO UTC timestamp

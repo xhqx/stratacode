@@ -38,7 +38,9 @@ export const defaultLayer = Layer.effect(
           yield* ensureDir()
           const dir = getMemoryDir()
 
-          const files = yield* Effect.tryPromise(() => fs.readdir(dir)).pipe(Effect.catch(() => Effect.succeed([] as string[])))
+          const files = yield* Effect.tryPromise(() => fs.readdir(dir)).pipe(
+            Effect.catch(() => Effect.succeed([] as string[])),
+          )
 
           const mdFiles = files.filter((f) => f.endsWith(".md"))
           const entries: MemoryEntry[] = []

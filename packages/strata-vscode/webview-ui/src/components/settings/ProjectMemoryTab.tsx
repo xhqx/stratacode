@@ -144,7 +144,9 @@ const ProjectMemoryTab: Component = () => {
         </Button>
       </div>
 
-      <div style={{ "border-top": "1px solid var(--border-weak-base, var(--vscode-widget-border))", margin: "8px 0" }} />
+      <div
+        style={{ "border-top": "1px solid var(--border-weak-base, var(--vscode-widget-border))", margin: "8px 0" }}
+      />
 
       <div>
         <div
@@ -157,8 +159,15 @@ const ProjectMemoryTab: Component = () => {
         >
           Semantic Project Memory
         </div>
-        <div style={{ "font-size": "12px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))", "margin-bottom": "16px" }}>
-          Automatically extract architectural decisions, rules, and context into memory files (`.stratacode/memory/*.md`) when you pull new commits or change branches.
+        <div
+          style={{
+            "font-size": "12px",
+            color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+            "margin-bottom": "16px",
+          }}
+        >
+          Automatically extract architectural decisions, rules, and context into memory files
+          (`.stratacode/memory/*.md`) when you pull new commits or change branches.
         </div>
 
         <div style={{ display: "flex", "align-items": "center", gap: "12px", "margin-bottom": "16px" }}>
@@ -175,7 +184,10 @@ const ProjectMemoryTab: Component = () => {
               })
             }
           />
-          <label for="semantic-memory-enabled" style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", cursor: "pointer" }}>
+          <label
+            for="semantic-memory-enabled"
+            style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", cursor: "pointer" }}
+          >
             Enable Auto-Extraction on Git Pull
           </label>
         </div>
@@ -208,7 +220,11 @@ const ProjectMemoryTab: Component = () => {
             value={config().project_memory?.max_commits ?? 10}
             min="1"
             step="1"
-            onChange={(e) => updateConfig({ project_memory: { ...config().project_memory, max_commits: Number(e.currentTarget.value) } })}
+            onChange={(e) =>
+              updateConfig({
+                project_memory: { ...config().project_memory, max_commits: Number(e.currentTarget.value) },
+              })
+            }
           />
         </div>
       </div>

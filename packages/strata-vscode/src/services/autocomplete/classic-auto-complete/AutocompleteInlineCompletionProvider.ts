@@ -318,14 +318,16 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
     if (!this.model || !this.model.hasValidCredentials()) {
       if (!this.modelNotified) {
         this.modelNotified = true
-        vscode.window.showWarningMessage(
-          "Strata Autocomplete is restricted: No agent/model is selected or configured.",
-          "Open Settings"
-        ).then((action) => {
-          if (action === "Open Settings") {
-            vscode.commands.executeCommand("strata-code.new.openSettings")
-          }
-        })
+        vscode.window
+          .showWarningMessage(
+            "Strata Autocomplete is restricted: No agent/model is selected or configured.",
+            "Open Settings",
+          )
+          .then((action) => {
+            if (action === "Open Settings") {
+              vscode.commands.executeCommand("strata-code.new.openSettings")
+            }
+          })
       }
       return false
     }

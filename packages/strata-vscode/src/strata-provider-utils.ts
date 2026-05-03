@@ -181,9 +181,13 @@ export async function runWithMessageConfirmation<T>(
     return await run()
   } catch (error) {
     if (await state.wait(id)) {
-      Logger.warn("StrataProviderUtils", `[Strata New] ${label} ended after server accepted it; ignoring transport error`, {
-        error: getErrorMessage(error),
-      })
+      Logger.warn(
+        "StrataProviderUtils",
+        `[Strata New] ${label} ended after server accepted it; ignoring transport error`,
+        {
+          error: getErrorMessage(error),
+        },
+      )
       return undefined
     }
     throw error

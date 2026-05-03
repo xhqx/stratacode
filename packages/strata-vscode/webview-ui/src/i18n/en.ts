@@ -649,7 +649,6 @@ export const dict = {
   "settings.general.row.explainerEffort.medium": "Medium",
   "settings.general.row.explainerEffort.high": "High",
 
-
   "settings.general.row.releaseNotes.title": "Release notes",
   "settings.general.row.releaseNotes.description": "Show What's New popups after updates",
 
@@ -1014,7 +1013,8 @@ export const dict = {
   "settings.appearance.title": "Appearance",
   "settings.diffViewer.title": "Diff Viewer",
   "settings.appearance.selectionTip.title": "Selection Tip",
-  "settings.appearance.selectionTip.description": "Show an inline hint when selecting code, reminding you of the shortcut to add the selection to Strata chat.",
+  "settings.appearance.selectionTip.description":
+    "Show an inline hint when selecting code, reminding you of the shortcut to add the selection to Strata chat.",
   "settings.autocomplete.title": "Autocomplete",
   "settings.notifications.title": "Notifications",
   "settings.context.title": "Context",
@@ -1556,17 +1556,27 @@ export const dict = {
   "settings.display.layout.auto": "Auto",
   "settings.display.layout.stretch": "Stretch",
   "settings.display.autoExplain.title": "Auto Explain Changes",
-  "settings.display.autoExplain.description": "Automatically generate AI explanations when you expand a changed file in the diff viewer. Explanations are cached for 90 minutes.",
+  "settings.display.autoExplain.description":
+    "Automatically generate AI explanations when you expand a changed file in the diff viewer. Explanations are cached for 90 minutes.",
   "settings.display.taskTimeline.title": "Task Timeline",
   "settings.display.taskTimeline.description": "Show the task timeline view in the sidebar",
   "settings.display.diffEagerLoad.title": "Load diff content immediately",
-  "settings.display.diffEagerLoad.description": "When enabled, full diff content for all changed files is fetched immediately when the diff viewer opens. When disabled, file content loads only when you expand a file accordion.",
+  "settings.display.diffEagerLoad.description":
+    "When enabled, full diff content for all changed files is fetched immediately when the diff viewer opens. When disabled, file content loads only when you expand a file accordion.",
   "settings.display.diffInstantComments.title": "Instant AI explanations",
-  "settings.display.diffInstantComments.description": "When enabled, submitting a comment in the diff viewer immediately creates an AI thread instead of adding it to the batch drafts.",
+  "settings.display.diffInstantComments.description":
+    "When enabled, submitting a comment in the diff viewer immediately creates an AI thread instead of adding it to the batch drafts.",
+  "settings.display.sessionContextLimit.title": "Session context limit",
+  "settings.display.sessionContextLimit.description":
+    "Number of recent sessions to summarize as context for AI features (explain, commit, enhance). Set to 0 to disable.",
+  "settings.display.sessionContextCacheDays.title": "Session context cache (days)",
+  "settings.display.sessionContextCacheDays.description":
+    "How many days to cache session context summaries before regenerating.",
   "settings.display.planningTaskView.title": "Planning Task View (Kanban)",
   "settings.display.planningTaskView.description": "Show the planning task view (Kanban board) in the sidebar",
   "settings.display.documentDrivenTasks.title": "Document-Driven Tasks",
-  "settings.display.documentDrivenTasks.description": "Enable document-driven tasks. Automatically syncs tasks with markdown plan files.",
+  "settings.display.documentDrivenTasks.description":
+    "Enable document-driven tasks. Automatically syncs tasks with markdown plan files.",
 
   "settings.providers.defaultModel.title": "Default Model",
   "settings.providers.defaultModel.description": "Primary model for conversations",

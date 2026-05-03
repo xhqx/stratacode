@@ -268,7 +268,10 @@ const SkillsTab: Component = () => {
                     <div style={{ flex: 1 }}>
                       <TextField
                         value={editValue()}
-                        onChange={(val) => { setEditValue(val); setEditError("") }}
+                        onChange={(val) => {
+                          setEditValue(val)
+                          setEditError("")
+                        }}
                         onKeyDown={(e: KeyboardEvent) => {
                           if (e.key === "Enter") savePathEdit()
                           if (e.key === "Escape") setEditingPathIndex(null)
@@ -352,7 +355,10 @@ const SkillsTab: Component = () => {
                     <div style={{ flex: 1 }}>
                       <TextField
                         value={editValue()}
-                        onChange={(val) => { setEditValue(val); setEditError("") }}
+                        onChange={(val) => {
+                          setEditValue(val)
+                          setEditError("")
+                        }}
                         onKeyDown={(e: KeyboardEvent) => {
                           if (e.key === "Enter") saveUrlEdit()
                           if (e.key === "Escape") setEditingUrlIndex(null)
@@ -384,7 +390,9 @@ const SkillsTab: Component = () => {
         >
           <Switch
             checked={config().experimental?.batch_tool ?? false}
-            onChange={(checked) => updateConfig({ experimental: { ...(config().experimental ?? {}), batch_tool: checked } })}
+            onChange={(checked) =>
+              updateConfig({ experimental: { ...(config().experimental ?? {}), batch_tool: checked } })
+            }
             hideLabel
           >
             {language.t("settings.experimental.batch.title")}

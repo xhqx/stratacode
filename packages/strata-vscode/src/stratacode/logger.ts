@@ -1,8 +1,8 @@
-import * as vscode from 'vscode'
-import * as fs from 'fs'
-import * as path from 'path'
-import * as os from 'os'
-import { LogConfig, LogLevel } from './log-config'
+import * as vscode from "vscode"
+import * as fs from "fs"
+import * as path from "path"
+import * as os from "os"
+import { LogConfig, LogLevel } from "./log-config"
 
 export interface LogEntry {
   timestamp: string
@@ -14,49 +14,49 @@ export interface LogEntry {
 
 export class Logger {
   private static outputChannel: vscode.OutputChannel | null = null
-  private static logDir: string = path.join(os.homedir(), '.strata', 'logs', 'vscode')
+  private static logDir: string = path.join(os.homedir(), ".strata", "logs", "vscode")
   private static batchedEntries: string[] = []
   private static batchTimer: NodeJS.Timeout | null = null
   private static initialized = false
 
   static init(context: vscode.ExtensionContext) {
     if (this.initialized) return
-    
-    this.outputChannel = vscode.window.createOutputChannel('Strata Logs')
+
+    this.outputChannel = vscode.window.createOutputChannel("Strata Logs")
     LogConfig.init(context)
-    
+
     // Ensure dir exists synchronously during init so immediate logs don't fail
     if (!fs.existsSync(this.logDir)) {
       fs.mkdirSync(this.logDir, { recursive: true })
     }
 
     this.initialized = true
-    this.info('Logger', 'Logger initialized', {
+    this.info("Logger", "Logger initialized", {
       level: LogConfig.getLevel(),
       logDir: this.logDir,
-      retentionDays: LogConfig.getRetentionDays()
+      retentionDays: LogConfig.getRetentionDays(),
     })
-    
+
     // Rotate old logs asynchronously
-    this.rotateLogs().catch(err => {
-      this.error('Logger', 'Failed to rotate logs', err)
+    this.rotateLogs().catch((err) => {
+      this.error("Logger", "Failed to rotate logs", err)
     })
   }
 
   static debug(component: string, message: string, data?: any) {
-    this.log('debug', component, message, data)
+    this.log("debug", component, message, data)
   }
 
   static info(component: string, message: string, data?: any) {
-    this.log('info', component, message, data)
+    this.log("info", component, message, data)
   }
 
   static warn(component: string, message: string, data?: any) {
-    this.log('warn', component, message, data)
+    this.log("warn", component, message, data)
   }
 
   static error(component: string, message: string, data?: any) {
-    this.log('error', component, message, data)
+    this.log("error", component, message, data)
   }
 
   private static log(level: LogLevel, component: string, message: string, data?: any) {
@@ -69,7 +69,7 @@ export class Logger {
       component,
       message,
     }
-    
+
     // Only include data if present and not empty
     if (data !== undefined && data !== null) {
       if (data instanceof Error) {
@@ -83,12 +83,12 @@ export class Logger {
 
     // 1. Write to OutputChannel
     if (this.outputChannel) {
-      let dataStr = ''
+      let dataStr = ""
       if (entry.data) {
         try {
           dataStr = ` ${JSON.stringify(entry.data)}`
         } catch {
-          dataStr = ' [Data serialization failed]'
+          dataStr = " [Data serialization failed]"
         }
       }
       this.outputChannel.appendLine(`[${timestamp}] [${level.toUpperCase()}] [${component}] ${message}${dataStr}`)
@@ -100,7 +100,7 @@ export class Logger {
       this.batchedEntries.push(jsonl)
     } catch {
       // Fallback if data is not stringifiable
-      entry.data = '[Serialization failed]'
+      entry.data = "[Serialization failed]"
       this.batchedEntries.push(JSON.stringify(entry))
     }
 
@@ -110,7 +110,7 @@ export class Logger {
   }
 
   private static getLogFilePath(): string {
-    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+    const today = new Date().toISOString().split("T")[0] // YYYY-MM-DD
     return path.join(this.logDir, `strata-${today}.jsonl`)
   }
 
@@ -123,8 +123,8 @@ export class Logger {
 
     try {
       const file = this.getLogFilePath()
-      const content = entriesToWrite.join('\n') + '\n'
-      await fs.promises.appendFile(file, content, 'utf8')
+      const content = entriesToWrite.join("\n") + "\n"
+      await fs.promises.appendFile(file, content, "utf8")
     } catch (err) {
       if (this.outputChannel) {
         this.outputChannel.appendLine(`[ERROR] [Logger] Failed to write logs to disk: ${err}`)
@@ -140,9 +140,9 @@ export class Logger {
       cutoffDate.setDate(cutoffDate.getDate() - retentionDays)
 
       for (const file of files) {
-        if (!file.startsWith('strata-') || !file.endsWith('.jsonl')) continue
+        if (!file.startsWith("strata-") || !file.endsWith(".jsonl")) continue
 
-        const dateStr = file.replace('strata-', '').replace('.jsonl', '')
+        const dateStr = file.replace("strata-", "").replace(".jsonl", "")
         const fileDate = new Date(dateStr)
 
         if (!isNaN(fileDate.getTime()) && fileDate < cutoffDate) {

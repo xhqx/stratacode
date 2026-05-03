@@ -132,27 +132,16 @@ describe("parsePage", () => {
   })
 
   it("handles file with no tasks", () => {
-    const content = [
-      "# Notes",
-      "",
-      "Just some notes here, no tasks.",
-      "",
-      "## More notes",
-      "",
-      "Still no tasks.",
-    ].join("\n")
+    const content = ["# Notes", "", "Just some notes here, no tasks.", "", "## More notes", "", "Still no tasks."].join(
+      "\n",
+    )
 
     const page = parsePage(content, FIXTURE_FILE)
     expect(page.tasks).toHaveLength(0)
   })
 
   it("handles malformed strata comment gracefully", () => {
-    const content = [
-      "# Auth",
-      "",
-      "- [ ] Task with bad comment",
-      "  <!-- strata: broken -->",
-    ].join("\n")
+    const content = ["# Auth", "", "- [ ] Task with bad comment", "  <!-- strata: broken -->"].join("\n")
 
     const page = parsePage(content, FIXTURE_FILE)
 
@@ -177,12 +166,7 @@ describe("parsePage", () => {
   })
 
   it("uses asterisk and plus list markers", () => {
-    const content = [
-      "# Mix",
-      "",
-      "* [ ] Asterisk task",
-      "+ [x] Plus task",
-    ].join("\n")
+    const content = ["# Mix", "", "* [ ] Asterisk task", "+ [x] Plus task"].join("\n")
 
     const page = parsePage(content, FIXTURE_FILE)
 
@@ -211,13 +195,7 @@ describe("parsePage", () => {
 })
 
 describe("updateCheckbox", () => {
-  const content = [
-    "# Plan",
-    "",
-    "- [ ] Unchecked task",
-    "- [x] Checked task",
-    "- [/] In progress task",
-  ].join("\n")
+  const content = ["# Plan", "", "- [ ] Unchecked task", "- [x] Checked task", "- [/] In progress task"].join("\n")
 
   it("flips [ ] to [x]", () => {
     const result = updateCheckbox(content, 3, "x")

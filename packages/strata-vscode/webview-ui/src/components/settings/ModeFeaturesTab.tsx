@@ -52,10 +52,7 @@ export const FeaturesTab: Component<
     vscode.postMessage({ type: "updateAutocompleteSetting", key, value })
   }
 
-  const updatePlanningSetting = (
-    key: "taskView" | "documentDrivenTasks",
-    value: boolean,
-  ) => {
+  const updatePlanningSetting = (key: "taskView" | "documentDrivenTasks", value: boolean) => {
     vscode.postMessage({ type: "updatePlanningSetting", key, value })
   }
 
@@ -76,7 +73,11 @@ export const FeaturesTab: Component<
             title={props.t("settings.autocomplete.autoTrigger.title")}
             description={props.t("settings.autocomplete.autoTrigger.description")}
           >
-            <Switch checked={autoTrigger()} onChange={(val) => updateAutocompleteSetting("enableAutoTrigger", val)} hideLabel>
+            <Switch
+              checked={autoTrigger()}
+              onChange={(val) => updateAutocompleteSetting("enableAutoTrigger", val)}
+              hideLabel
+            >
               {props.t("settings.autocomplete.autoTrigger.title")}
             </Switch>
           </SettingsRow>
@@ -85,7 +86,11 @@ export const FeaturesTab: Component<
             title={props.t("settings.autocomplete.smartKeybinding.title")}
             description={props.t("settings.autocomplete.smartKeybinding.description")}
           >
-            <Switch checked={smartInline()} onChange={(val) => updateAutocompleteSetting("enableSmartInlineTaskKeybinding", val)} hideLabel>
+            <Switch
+              checked={smartInline()}
+              onChange={(val) => updateAutocompleteSetting("enableSmartInlineTaskKeybinding", val)}
+              hideLabel
+            >
               {props.t("settings.autocomplete.smartKeybinding.title")}
             </Switch>
           </SettingsRow>
@@ -95,7 +100,11 @@ export const FeaturesTab: Component<
             description={props.t("settings.autocomplete.chatAutocomplete.description")}
             last
           >
-            <Switch checked={chatAuto()} onChange={(val) => updateAutocompleteSetting("enableChatAutocomplete", val)} hideLabel>
+            <Switch
+              checked={chatAuto()}
+              onChange={(val) => updateAutocompleteSetting("enableChatAutocomplete", val)}
+              hideLabel
+            >
               {props.t("settings.autocomplete.chatAutocomplete.title")}
             </Switch>
           </SettingsRow>
@@ -147,10 +156,17 @@ export const FeaturesTab: Component<
 
           <SettingsRow
             title={props.t("settings.plan.documentDriven.title") || "Document Driven Tasks"}
-            description={props.t("settings.plan.documentDriven.description") || "Automatically sync tasks with markdown plan files."}
+            description={
+              props.t("settings.plan.documentDriven.description") ||
+              "Automatically sync tasks with markdown plan files."
+            }
             last
           >
-            <Switch checked={documentDriven()} onChange={(val) => updatePlanningSetting("documentDrivenTasks", val)} hideLabel>
+            <Switch
+              checked={documentDriven()}
+              onChange={(val) => updatePlanningSetting("documentDrivenTasks", val)}
+              hideLabel
+            >
               {props.t("settings.plan.documentDriven.title") || "Document Driven Tasks"}
             </Switch>
           </SettingsRow>

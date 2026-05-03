@@ -58,11 +58,11 @@ Hope this helps!
     const parsed = parseExplainResponse(raw)
     expect(parsed.summary).toBe("")
     expect(parsed.comments.length).toBe(2)
-    
+
     // bad side defaults to additions
     expect(parsed.comments[0].side).toBe("additions")
     expect(parsed.comments[0].text).toBe("bad side")
-    
+
     // line 0 clamped to 1
     expect(parsed.comments[1].line).toBe(1)
     expect(parsed.comments[1].text).toBe("line 0")
@@ -97,7 +97,7 @@ describe("shouldPreSkip", () => {
 +const a = 2
 -const b = 1
 +const b = 2`
-    
+
     // 4 substantive lines changed
     expect(shouldPreSkip(patch, "low")).toBe(true) // low threshold is 5
     expect(shouldPreSkip(patch, "medium")).toBe(false) // medium threshold is 2

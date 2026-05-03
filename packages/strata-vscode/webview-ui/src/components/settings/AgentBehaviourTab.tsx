@@ -336,16 +336,35 @@ const AgentBehaviourTab: Component = () => {
               >
                 <div style={{ display: "flex", "flex-direction": "column", gap: "8px", width: "100%" }}>
                   <div style={{ display: "flex", "align-items": "center", "justify-content": "space-between" }}>
-                    <span style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))" }}>{language.t("settings.experimental.remote.current")}</span>
-                    <span style={{ "font-size": "13px", color: activeRemote() ? "var(--vscode-testing-iconPassed, #4caf50)" : "var(--text-weak-base, var(--vscode-descriptionForeground))" }}>
+                    <span style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))" }}>
+                      {language.t("settings.experimental.remote.current")}
+                    </span>
+                    <span
+                      style={{
+                        "font-size": "13px",
+                        color: activeRemote()
+                          ? "var(--vscode-testing-iconPassed, #4caf50)"
+                          : "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                      }}
+                    >
                       {activeRemote()
                         ? language.t("settings.experimental.remote.active")
                         : language.t("settings.experimental.remote.inactive")}
                     </span>
                   </div>
-                  <div style={{ "font-size": "12px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))", "margin-bottom": "8px" }}>{language.t("settings.experimental.remote.hint")}</div>
+                  <div
+                    style={{
+                      "font-size": "12px",
+                      color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                      "margin-bottom": "8px",
+                    }}
+                  >
+                    {language.t("settings.experimental.remote.hint")}
+                  </div>
                   <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-                    <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                    <label
+                      style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}
+                    >
                       {language.t("settings.experimental.remote.startup")}
                     </label>
                     <Switch
@@ -365,7 +384,9 @@ const AgentBehaviourTab: Component = () => {
               >
                 <div style={{ display: "flex", "flex-direction": "column", gap: "8px", width: "100%" }}>
                   <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-                    <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                    <label
+                      style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}
+                    >
                       Enabled
                     </label>
                     <Switch
@@ -381,7 +402,9 @@ const AgentBehaviourTab: Component = () => {
                     </Switch>
                   </div>
                   <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-                    <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                    <label
+                      style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}
+                    >
                       Limit (attempts)
                     </label>
                     <input
@@ -408,7 +431,9 @@ const AgentBehaviourTab: Component = () => {
                     />
                   </div>
                   <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-                    <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                    <label
+                      style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}
+                    >
                       Base Delay (seconds)
                     </label>
                     <input
@@ -434,7 +459,9 @@ const AgentBehaviourTab: Component = () => {
                     />
                   </div>
                   <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-                    <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
+                    <label
+                      style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}
+                    >
                       Max Delay Cap (seconds)
                     </label>
                     <input
@@ -537,7 +564,6 @@ const AgentBehaviourTab: Component = () => {
 
           {/* Agents Section */}
           <Show when={activeMainTab() === "agents"}>
-
             {/* Action buttons */}
             <div
               style={{
@@ -560,14 +586,20 @@ const AgentBehaviourTab: Component = () => {
                   <DropdownMenu.Portal>
                     <DropdownMenu.Content>
                       <DropdownMenu.Item onSelect={triggerImportSettings}>
-                        <DropdownMenu.ItemLabel>{language.t("settings.agentBehaviour.importOpenCodeSettings")}</DropdownMenu.ItemLabel>
+                        <DropdownMenu.ItemLabel>
+                          {language.t("settings.agentBehaviour.importOpenCodeSettings")}
+                        </DropdownMenu.ItemLabel>
                       </DropdownMenu.Item>
                       <DropdownMenu.Item onSelect={triggerImport}>
-                        <DropdownMenu.ItemLabel>{language.t("settings.agentBehaviour.importMode")}</DropdownMenu.ItemLabel>
+                        <DropdownMenu.ItemLabel>
+                          {language.t("settings.agentBehaviour.importMode")}
+                        </DropdownMenu.ItemLabel>
                       </DropdownMenu.Item>
                       <DropdownMenu.Separator />
                       <DropdownMenu.Item onSelect={browse}>
-                        <DropdownMenu.ItemLabel>{language.t("settings.agentBehaviour.mcpBrowseMarketplace")}</DropdownMenu.ItemLabel>
+                        <DropdownMenu.ItemLabel>
+                          {language.t("settings.agentBehaviour.mcpBrowseMarketplace")}
+                        </DropdownMenu.ItemLabel>
                       </DropdownMenu.Item>
                     </DropdownMenu.Content>
                   </DropdownMenu.Portal>

@@ -181,7 +181,7 @@ function checkErrors(input: ValidateArgs, providerID: string, name: string, base
   }
 
   const ok = !idErr && !existsErr && !nameError && !urlError && !proxyUrlError && modelsValid && headersValid
-  
+
   return { errors, ok }
 }
 

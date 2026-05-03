@@ -79,7 +79,7 @@ export class ExplainCommentController implements vscode.Disposable {
             vscode.window.showErrorMessage("Strata connection is not available.")
             return
           }
-          
+
           if (!this.explainSession) {
             const { data } = await client.session.create({ directory: root }, { throwOnError: true })
             this.explainSession = data.id
@@ -104,14 +104,14 @@ export class ExplainCommentController implements vscode.Disposable {
             "",
             "Respond with ONLY this JSON (no markdown fences, no extra text):",
             "{",
-            "  \"summary\": \"Brief 1-2 sentence summary of the overall changeset\",",
-            "  \"comments\": {",
-            "    \"1\": \"Your comment for the change at ID [1]...\"",
+            '  "summary": "Brief 1-2 sentence summary of the overall changeset",',
+            '  "comments": {',
+            '    "1": "Your comment for the change at ID [1]..."',
             "  }",
             "}",
             "",
             "If a line number ID is skipped in your comments, that means you have no comment for it.",
-            "If there is nothing worth commenting on, return: { \"summary\": \"...\", \"comments\": {} }",
+            'If there is nothing worth commenting on, return: { "summary": "...", "comments": {} }',
             "",
             "--- DIFFS ---",
             annotatedDiffs,
@@ -140,7 +140,7 @@ export class ExplainCommentController implements vscode.Disposable {
             if (part && "text" in part) {
               const raw = part.text.trim()
               const parsed = parseExplainResponse(raw, lineMap)
-              
+
               if (parsed.summary) {
                 // Attach the summary to the first file's CodeLens for now
                 if (validDiffs.length > 0) {
@@ -154,29 +154,26 @@ export class ExplainCommentController implements vscode.Disposable {
                 const uri = vscode.Uri.joinPath(vscode.Uri.file(root), comment.file)
                 const line = Math.max(0, comment.line - 1)
                 const endLine = comment.endLine ? Math.max(0, comment.endLine - 1) : line
-                
+
                 // Construct a deterministic ID for this thread
                 const threadId = `${uri.fsPath}:${line}:${endLine}`
-                
+
                 let thread = this.threadMap.get(threadId)
                 if (!thread) {
-                  thread = this.controller.createCommentThread(
-                    uri,
-                    new vscode.Range(line, 0, endLine, 0),
-                    [],
-                  )
+                  thread = this.controller.createCommentThread(uri, new vscode.Range(line, 0, endLine, 0), [])
                   thread.canReply = true
                   this.threadMap.set(threadId, thread)
                 }
 
-                thread.comments = [...thread.comments, {
-                  author: { name: "Strata AI" },
-                  body: new vscode.MarkdownString(comment.text),
-                  mode: vscode.CommentMode.Preview,
-                }]
+                thread.comments = [
+                  ...thread.comments,
+                  {
+                    author: { name: "Strata AI" },
+                    body: new vscode.MarkdownString(comment.text),
+                    mode: vscode.CommentMode.Preview,
+                  },
+                ]
               }
-
-
             } else {
               vscode.window.showErrorMessage("Strata AI: Received invalid response.")
             }
@@ -196,14 +193,14 @@ export class ExplainCommentController implements vscode.Disposable {
             }
           }
         }
-      }
+      },
     )
   }
 
   public async replyToThread(reply: vscode.CommentReply): Promise<void> {
     const thread = reply.thread
     const text = reply.text
-    
+
     // Add user's comment to the thread
     const userComment: vscode.Comment = {
       author: { name: "You" },
@@ -234,7 +231,7 @@ export class ExplainCommentController implements vscode.Disposable {
 
     const file = vscode.workspace.asRelativePath(thread.uri)
     const line = thread.range ? thread.range.start.line + 1 : 0
-    
+
     // Build context from previous messages
     const conversation = thread.comments.map((c: any) => `${c.author.name}: ${c.body.value}`).join("\n\n")
 
@@ -245,7 +242,7 @@ export class ExplainCommentController implements vscode.Disposable {
       `Thread so far:`,
       conversation,
       ``,
-      `Please reply directly to the user's latest question. Provide your answer in markdown format. Do NOT wrap your answer in JSON.`
+      `Please reply directly to the user's latest question. Provide your answer in markdown format. Do NOT wrap your answer in JSON.`,
     ].join("\n")
 
     // Show a loading indicator by creating a temporary comment or using VS Code progress
@@ -260,7 +257,7 @@ export class ExplainCommentController implements vscode.Disposable {
               agent: "explainer", // Use explainer agent for diff threading
               parts: [{ type: "text", text: prompt }],
             },
-            { throwOnError: true }
+            { throwOnError: true },
           )
 
           const part = res.data?.parts?.find((p: any) => p.type === "text")
@@ -278,21 +275,32 @@ export class ExplainCommentController implements vscode.Disposable {
           const msg = getErrorMessage(err)
           vscode.window.showErrorMessage(`Strata AI: Failed to reply: ${msg}`)
         }
-      }
+      },
     )
   }
 
-  private async collectDiffs(target: { directory: string; baseBranch: string }): Promise<{ file: string; patch: string }[]> {
-    const { diffSummary, diffFile } = await import("../../agent-manager/local-diff")
+  private async collectDiffs(target: {
+    directory: string
+    baseBranch: string
+  }): Promise<{ file: string; patch: string }[]> {
+    const { diffSummary, batchPatches, ancestor } = await import("../../agent-manager/local-diff")
+    const anc = await ancestor(this.gitOps, target.directory, target.baseBranch)
     const diffs = await diffSummary(this.gitOps, target.directory, target.baseBranch)
     const effort = vscode.workspace.getConfiguration("strata-code.new.explainer").get<string>("effort", "medium")
+    const candidates = diffs.filter((d) => !d.generatedLike)
+
+    const patchMap = await batchPatches(
+      this.gitOps,
+      target.directory,
+      anc ?? "",
+      candidates.map((d) => ({ file: d.file, tracked: d.tracked })),
+    )
+
     const result: { file: string; patch: string }[] = []
-    for (const d of diffs) {
-      if (d.generatedLike) continue
-      const entry = await diffFile(this.gitOps, target.directory, target.baseBranch, d.file)
-      if (!entry || !entry.patch) continue
-      if (shouldPreSkip(entry.patch, effort)) continue
-      result.push({ file: d.file, patch: entry.patch })
+    for (const d of candidates) {
+      const patch = patchMap.get(d.file)
+      if (!patch || shouldPreSkip(patch, effort)) continue
+      result.push({ file: d.file, patch })
     }
     return result
   }

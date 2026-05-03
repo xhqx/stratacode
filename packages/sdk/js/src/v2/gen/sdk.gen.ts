@@ -145,6 +145,8 @@ import type {
   SessionChildrenResponses,
   SessionCommandErrors,
   SessionCommandResponses,
+  SessionContextCreateErrors,
+  SessionContextCreateResponses,
   SessionCreateErrors,
   SessionCreateResponses,
   SessionDeleteErrors,
@@ -5129,17 +5131,18 @@ export class CommitMessage extends HeyApiClient {
   }
 }
 
-export class EnhancePrompt extends HeyApiClient {
+export class SessionContext extends HeyApiClient {
   /**
-   * Enhance prompt
+   * Get session context
    *
-   * Rewrite a user's draft prompt into a clearer, more specific, and more effective prompt.
+   * Fetch a summarized digest of recent conversation sessions for the given directory.
    */
-  public enhance<ThrowOnError extends boolean = false>(
+  public create<ThrowOnError extends boolean = false>(
     parameters?: {
-      directory?: string
+      query_directory?: string
       workspace?: string
-      text?: string
+      body_directory?: string
+      limit?: number
     },
     options?: Options<never, ThrowOnError>,
   ) {
@@ -5148,9 +5151,71 @@ export class EnhancePrompt extends HeyApiClient {
       [
         {
           args: [
-            { in: "query", key: "directory" },
+            {
+              in: "query",
+              key: "query_directory",
+              map: "directory",
+            },
+            { in: "query", key: "workspace" },
+            {
+              in: "body",
+              key: "body_directory",
+              map: "directory",
+            },
+            { in: "body", key: "limit" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<
+      SessionContextCreateResponses,
+      SessionContextCreateErrors,
+      ThrowOnError
+    >({
+      url: "/session-context",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+}
+
+export class EnhancePrompt extends HeyApiClient {
+  /**
+   * Enhance prompt
+   *
+   * Rewrite a user's draft prompt into a clearer, more specific, and more effective prompt.
+   */
+  public enhance<ThrowOnError extends boolean = false>(
+    parameters?: {
+      query_directory?: string
+      workspace?: string
+      text?: string
+      body_directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            {
+              in: "query",
+              key: "query_directory",
+              map: "directory",
+            },
             { in: "query", key: "workspace" },
             { in: "body", key: "text" },
+            {
+              in: "body",
+              key: "body_directory",
+              map: "directory",
+            },
           ],
         },
       ],
@@ -6341,6 +6406,11 @@ export class StrataClient extends HeyApiClient {
   private _commitMessage?: CommitMessage
   get commitMessage(): CommitMessage {
     return (this._commitMessage ??= new CommitMessage({ client: this.client }))
+  }
+
+  private _sessionContext?: SessionContext
+  get sessionContext(): SessionContext {
+    return (this._sessionContext ??= new SessionContext({ client: this.client }))
   }
 
   private _enhancePrompt?: EnhancePrompt

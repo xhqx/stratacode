@@ -101,141 +101,141 @@ const WorkflowsTab: Component = () => {
             </Button>
           </div>
 
-      <Show
-        when={cmds().length > 0}
-        fallback={
-          <Card>
-            <div
-              style={{
-                "font-size": "12px",
-                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-              }}
-            >
-              {language.t("settings.agentBehaviour.workflows.empty")}
-            </div>
-          </Card>
-        }
-      >
-        <Card>
-          <For each={cmds()}>
-            {([name, cmd], index) => {
-              const open = () => expanded()[name] ?? false
-              return (
+          <Show
+            when={cmds().length > 0}
+            fallback={
+              <Card>
                 <div
                   style={{
-                    "border-bottom": index() < cmds().length - 1 ? "1px solid var(--border-weak-base)" : "none",
+                    "font-size": "12px",
+                    color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
                   }}
                 >
-                  {/* Header row */}
-                  <div
-                    style={{
-                      display: "flex",
-                      "align-items": "center",
-                      "justify-content": "space-between",
-                      padding: "8px 0",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => toggle(name)}
-                  >
-                    <div style={{ display: "flex", "align-items": "center", gap: "6px", flex: 1, "min-width": 0 }}>
-                      <IconButton
-                        size="small"
-                        variant="ghost"
-                        icon={open() ? "chevron-down" : "chevron-right"}
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation()
-                          toggle(name)
-                        }}
-                      />
-                      <span
-                        style={{
-                          "font-weight": "500",
-                          "font-family": "var(--vscode-editor-font-family, monospace)",
-                        }}
-                      >
-                        /{name}
-                      </span>
-                      <Show when={cmd.description}>
-                        <span
-                          style={{
-                            "font-size": "12px",
-                            color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-                            overflow: "hidden",
-                            "text-overflow": "ellipsis",
-                            "white-space": "nowrap",
-                          }}
-                        >
-                          {cmd.description}
-                        </span>
-                      </Show>
-                    </div>
-                    <div style={{ display: "flex", gap: "4px", "align-items": "center" }}>
-                      <IconButton
-                        size="small"
-                        variant="ghost"
-                        icon="pencil-line"
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation()
-                          setEditingCmd(name)
-                        }}
-                      />
-                      <IconButton
-                        size="small"
-                        variant="ghost"
-                        icon="close"
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation()
-                          confirmRemove(name)
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Expandable detail */}
-                  <Show when={open()}>
+                  {language.t("settings.agentBehaviour.workflows.empty")}
+                </div>
+              </Card>
+            }
+          >
+            <Card>
+              <For each={cmds()}>
+                {([name, cmd], index) => {
+                  const open = () => expanded()[name] ?? false
+                  return (
                     <div
                       style={{
-                        "padding-left": "28px",
-                        "padding-bottom": "8px",
-                        "font-size": "12px",
-                        color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                        "border-bottom": index() < cmds().length - 1 ? "1px solid var(--border-weak-base)" : "none",
                       }}
                     >
-                      <Show when={cmd.description}>
-                        <div style={{ "margin-bottom": "4px" }}>
-                          <span style={{ "font-weight": "500" }}>
-                            {language.t("settings.agentBehaviour.workflows.detail.description")}:{" "}
-                          </span>
-                          {cmd.description}
-                        </div>
-                      </Show>
-                      <Show when={cmd.template}>
-                        <div>
-                          <span style={{ "font-weight": "500" }}>
-                            {language.t("settings.agentBehaviour.workflows.detail.template")}:{" "}
-                          </span>
-                          <div
+                      {/* Header row */}
+                      <div
+                        style={{
+                          display: "flex",
+                          "align-items": "center",
+                          "justify-content": "space-between",
+                          padding: "8px 0",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => toggle(name)}
+                      >
+                        <div style={{ display: "flex", "align-items": "center", gap: "6px", flex: 1, "min-width": 0 }}>
+                          <IconButton
+                            size="small"
+                            variant="ghost"
+                            icon={open() ? "chevron-down" : "chevron-right"}
+                            onClick={(e: MouseEvent) => {
+                              e.stopPropagation()
+                              toggle(name)
+                            }}
+                          />
+                          <span
                             style={{
-                              "margin-top": "4px",
+                              "font-weight": "500",
                               "font-family": "var(--vscode-editor-font-family, monospace)",
-                              "font-size": "11px",
-                              "white-space": "pre-wrap",
-                              "word-break": "break-word",
                             }}
                           >
-                            {cmd.template}
-                          </div>
+                            /{name}
+                          </span>
+                          <Show when={cmd.description}>
+                            <span
+                              style={{
+                                "font-size": "12px",
+                                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                                overflow: "hidden",
+                                "text-overflow": "ellipsis",
+                                "white-space": "nowrap",
+                              }}
+                            >
+                              {cmd.description}
+                            </span>
+                          </Show>
+                        </div>
+                        <div style={{ display: "flex", gap: "4px", "align-items": "center" }}>
+                          <IconButton
+                            size="small"
+                            variant="ghost"
+                            icon="pencil-line"
+                            onClick={(e: MouseEvent) => {
+                              e.stopPropagation()
+                              setEditingCmd(name)
+                            }}
+                          />
+                          <IconButton
+                            size="small"
+                            variant="ghost"
+                            icon="close"
+                            onClick={(e: MouseEvent) => {
+                              e.stopPropagation()
+                              confirmRemove(name)
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Expandable detail */}
+                      <Show when={open()}>
+                        <div
+                          style={{
+                            "padding-left": "28px",
+                            "padding-bottom": "8px",
+                            "font-size": "12px",
+                            color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                          }}
+                        >
+                          <Show when={cmd.description}>
+                            <div style={{ "margin-bottom": "4px" }}>
+                              <span style={{ "font-weight": "500" }}>
+                                {language.t("settings.agentBehaviour.workflows.detail.description")}:{" "}
+                              </span>
+                              {cmd.description}
+                            </div>
+                          </Show>
+                          <Show when={cmd.template}>
+                            <div>
+                              <span style={{ "font-weight": "500" }}>
+                                {language.t("settings.agentBehaviour.workflows.detail.template")}:{" "}
+                              </span>
+                              <div
+                                style={{
+                                  "margin-top": "4px",
+                                  "font-family": "var(--vscode-editor-font-family, monospace)",
+                                  "font-size": "11px",
+                                  "white-space": "pre-wrap",
+                                  "word-break": "break-word",
+                                }}
+                              >
+                                {cmd.template}
+                              </div>
+                            </div>
+                          </Show>
                         </div>
                       </Show>
                     </div>
-                  </Show>
-                </div>
-              )
-            }}
-          </For>
-        </Card>
-      </Show>
-      </>
+                  )
+                }}
+              </For>
+            </Card>
+          </Show>
+        </>
       </Show>
     </div>
   )

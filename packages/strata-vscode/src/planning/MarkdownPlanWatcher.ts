@@ -57,7 +57,10 @@ export class MarkdownPlanWatcher {
   public async openFile(file: string, line?: number): Promise<void> {
     try {
       // Create file if it doesn't exist
-      const exists = await fs.promises.access(file).then(() => true).catch(() => false)
+      const exists = await fs.promises
+        .access(file)
+        .then(() => true)
+        .catch(() => false)
       if (!exists) {
         const dir = path.dirname(file)
         await fs.promises.mkdir(dir, { recursive: true })

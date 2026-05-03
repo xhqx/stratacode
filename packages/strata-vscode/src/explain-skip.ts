@@ -16,20 +16,23 @@ export interface ReviewResponsePayload {
 }
 
 export interface IndexedLine {
-  file: string;
-  side: "additions" | "deletions";
-  line: number;
+  file: string
+  side: "additions" | "deletions"
+  line: number
 }
 
 export interface IndexedPatchResult {
-  annotatedDiffs: string;
-  lineMap: Map<number, IndexedLine>;
+  annotatedDiffs: string
+  lineMap: Map<number, IndexedLine>
 }
 
 const HUNK_RE = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/
 
-export function buildExplainPrompt(annotatedDiffs: string): string {
-  return `You are a strict, senior code reviewer analyzing an annotated multi-file diff.
+export function buildExplainPrompt(annotatedDiffs: string, sessionContext?: string): string {
+  const context = sessionContext
+    ? `\n${sessionContext}\n\nUse this context to understand the developer's intent when explaining changes.\n\n`
+    : ""
+  return `${context}You are an expert code explainer analyzing an annotated multi-file diff.
 
 === DIFF FORMAT ===
 Each file starts with "=== FILE: path ===".
@@ -41,96 +44,96 @@ Context lines have no ID prefix.
 Hunk headers (@@ ...) indicate line numbers.
 
 === TASK ===
-1. Review the changes for substantive issues (bugs, logic errors, architectural flaws, security risks).
-2. Skip trivial changes (formatting, renamed variables, basic docstring updates) unless they introduce bugs.
-3. Keep comments extremely concise and factual.
+1. Explain what each change does, why it was made, and how it fits into the broader codebase.
+2. Skip trivial changes (formatting, whitespace, basic renames) — only comment on meaningful logic.
+3. Keep comments concise but informative. Focus on intent, behavior, and rationale — not style or bugs.
 
 === OUTPUT FORMAT ===
 Provide a JSON object containing:
-- \`summary\`: A brief 1-2 sentence overview of the substantive changes.
-- \`comments\`: An array of objects for specific substantive issues, each with:
+- \`summary\`: A brief 1-3 sentence overview explaining what this set of changes accomplishes.
+- \`comments\`: An array of objects for notable changes worth explaining, each with:
   - \`id\`: The exact integer ID of the line to attach the comment to (or "ID1-ID2" for a range, e.g. "123-125").
-  - \`text\`: The concise comment text.
+  - \`text\`: The concise explanation of what this code does and why.
 
 Example:
 \`\`\`json
 {
-  "summary": "Updated API to use batching and fixed race condition in auth.",
+  "summary": "Migrates the API layer from individual calls to batched requests, reducing network overhead.",
   "comments": [
-    { "id": "124", "text": "This batch call is missing an error boundary." },
-    { "id": "130-135", "text": "This lock is acquired but never released if an exception occurs." }
+    { "id": "124", "text": "Switches to batched fetch to combine multiple API calls into a single request." },
+    { "id": "130-135", "text": "Introduces a mutex to prevent concurrent auth token refreshes from racing." }
   ]
 }
 \`\`\`
 
-Here are the annotated diffs to review:
+Here are the annotated diffs to explain:
 
 ${annotatedDiffs}`
 }
 
-export function buildIndexedPatches(diffs: { file: string, patch: string }[]): IndexedPatchResult {
-  const lineMap = new Map<number, IndexedLine>();
-  let nextId = 1;
-  const out: string[] = [];
+export function buildIndexedPatches(diffs: { file: string; patch: string }[]): IndexedPatchResult {
+  const lineMap = new Map<number, IndexedLine>()
+  let nextId = 1
+  const out: string[] = []
 
   for (const { file, patch } of diffs) {
-    out.push(`=== FILE: ${file} ===`);
-    
-    let oldLine = 0;
-    let newLine = 0;
+    out.push(`=== FILE: ${file} ===`)
+
+    let oldLine = 0
+    let newLine = 0
 
     for (const raw of patch.split("\n")) {
-      const hunk = raw.match(HUNK_RE);
+      const hunk = raw.match(HUNK_RE)
       if (hunk) {
-        oldLine = parseInt(hunk[1]!, 10);
-        newLine = parseInt(hunk[2]!, 10);
-        out.push(raw);
-        continue;
+        oldLine = parseInt(hunk[1]!, 10)
+        newLine = parseInt(hunk[2]!, 10)
+        out.push(raw)
+        continue
       }
-      
+
       if (raw.startsWith("---") || raw.startsWith("+++") || raw.startsWith("diff ") || raw.startsWith("index ")) {
-        out.push(raw);
-        continue;
+        out.push(raw)
+        continue
       }
 
       if (raw.startsWith("-")) {
-        const id = nextId++;
-        lineMap.set(id, { file, side: "deletions", line: oldLine });
-        out.push(`-[${id}] ${raw.slice(1)}`);
-        oldLine++;
+        const id = nextId++
+        lineMap.set(id, { file, side: "deletions", line: oldLine })
+        out.push(`-[${id}] ${raw.slice(1)}`)
+        oldLine++
       } else if (raw.startsWith("+")) {
-        const id = nextId++;
-        lineMap.set(id, { file, side: "additions", line: newLine });
-        out.push(`+[${id}] ${raw.slice(1)}`);
-        newLine++;
+        const id = nextId++
+        lineMap.set(id, { file, side: "additions", line: newLine })
+        out.push(`+[${id}] ${raw.slice(1)}`)
+        newLine++
       } else if (raw.startsWith(" ")) {
-        out.push(raw);
-        oldLine++;
-        newLine++;
+        out.push(raw)
+        oldLine++
+        newLine++
       } else {
-        out.push(raw);
+        out.push(raw)
       }
     }
-    out.push("");
+    out.push("")
   }
 
-  return { annotatedDiffs: out.join("\n"), lineMap };
+  return { annotatedDiffs: out.join("\n"), lineMap }
 }
 
 function extractJsonStr(raw: string): string {
   const codeMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
   if (codeMatch && codeMatch[1]) return codeMatch[1].trim()
-  
+
   const objMatch = raw.match(/\{[\s\S]*\}/)
   if (objMatch) return objMatch[0].trim()
-  
+
   return raw.trim()
 }
 
 function processComment(key: unknown, text: unknown, map: Map<number, IndexedLine>, out: ReviewCommentPayload[]) {
   const match = String(key).match(/\d+(?:-\d+)?/)
   if (!match) return
-  
+
   const parts = match[0].split("-")
   const idStart = parseInt(parts[0], 10)
   const idEnd = parts[1] ? parseInt(parts[1], 10) : idStart
@@ -159,7 +162,7 @@ function processComment(key: unknown, text: unknown, map: Map<number, IndexedLin
 function parseCommentsArr(items: unknown[], map: Map<number, IndexedLine>, out: ReviewCommentPayload[]) {
   for (const item of items) {
     if (!item || typeof item !== "object") continue
-    
+
     const obj = item as Record<string, unknown>
     const idVal = "id" in obj ? obj.id : Object.keys(obj).find((k) => /\d+/.test(k))
     if (idVal === undefined) continue
@@ -217,7 +220,8 @@ export function shouldPreSkip(patch: string, effort: string): boolean {
   if (threshold === undefined) return false
 
   const lines = patch.split("\n")
-  const changed = lines.filter((l) => l.startsWith("+") || l.startsWith("-"))
+  const changed = lines
+    .filter((l) => l.startsWith("+") || l.startsWith("-"))
     // Exclude diff headers
     .filter((l) => !l.startsWith("---") && !l.startsWith("+++"))
 

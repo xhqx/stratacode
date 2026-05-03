@@ -105,176 +105,177 @@ const AcpAgentsTab: Component = () => {
               {language.t("settings.agentBehaviour.acpBrowseMarketplace")}
             </Button>
           </div>
-      <Show
-        when={acpEntries().length > 0}
-        fallback={
-          <Card>
-            <div
-              style={{
-                "font-size": "12px",
-                color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-              }}
-            >
-              {language.t("settings.agentBehaviour.acpEmpty")}
-            </div>
-          </Card>
-        }
-      >
-        <Card>
-          <For each={acpEntries()}>
-            {([name, acp], index) => {
-              const open = () => expanded()[name] ?? false
-              const env = () => Object.entries(acp.env ?? {})
-              const error = () => undefined
-              return (
+          <Show
+            when={acpEntries().length > 0}
+            fallback={
+              <Card>
                 <div
                   style={{
-                    "border-bottom": index() < acpEntries().length - 1 ? "1px solid var(--border-weak-base)" : "none",
+                    "font-size": "12px",
+                    color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
                   }}
                 >
-                  {/* Header row */}
-                  <div
-                    style={{
-                      display: "flex",
-                      "align-items": "center",
-                      "justify-content": "space-between",
-                      padding: "8px 0",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => toggle(name)}
-                  >
-                    <div style={{ display: "flex", "align-items": "center", gap: "6px", flex: 1, "min-width": 0 }}>
-                      <IconButton
-                        size="small"
-                        variant="ghost"
-                        icon={open() ? "chevron-down" : "chevron-right"}
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation()
-                          toggle(name)
-                        }}
-                      />
-                      {/* Status dot */}
+                  {language.t("settings.agentBehaviour.acpEmpty")}
+                </div>
+              </Card>
+            }
+          >
+            <Card>
+              <For each={acpEntries()}>
+                {([name, acp], index) => {
+                  const open = () => expanded()[name] ?? false
+                  const env = () => Object.entries(acp.env ?? {})
+                  const error = () => undefined
+                  return (
+                    <div
+                      style={{
+                        "border-bottom":
+                          index() < acpEntries().length - 1 ? "1px solid var(--border-weak-base)" : "none",
+                      }}
+                    >
+                      {/* Header row */}
                       <div
                         style={{
-                          width: "6px",
-                          height: "6px",
-                          "border-radius": "50%",
-                          "background-color": statusColor(name),
-                          "flex-shrink": "0",
+                          display: "flex",
+                          "align-items": "center",
+                          "justify-content": "space-between",
+                          padding: "8px 0",
+                          cursor: "pointer",
                         }}
-                      />
-                      <div style={{ "font-weight": "500" }}>{name}</div>
-                      <span
-                        style={{
-                          "font-size": "10px",
-                          color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-                        }}
+                        onClick={() => toggle(name)}
                       >
-                        {statusLabel(name) || (acp.url ? "remote" : "stdio")}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", gap: "4px", "align-items": "center" }}>
-                      <IconButton
-                        size="small"
-                        variant="ghost"
-                        icon="close"
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation()
-                          confirmRemoveAcp(name)
-                        }}
-                      />
-                      <IconButton
-                        size="small"
-                        variant="ghost"
-                        icon="chevron-right"
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation()
-                          setEditingAcp(name)
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Error message */}
-                  <Show when={error()}>
-                    <div
-                      style={{
-                        "padding-left": "28px",
-                        "padding-bottom": "4px",
-                        "font-size": "11px",
-                        color: "var(--vscode-errorForeground)",
-                      }}
-                    >
-                      {error()}
-                    </div>
-                  </Show>
-
-                  {/* Expandable detail */}
-                  <Show when={open()}>
-                    <div
-                      style={{
-                        "padding-left": "28px",
-                        "padding-bottom": "8px",
-                        "font-size": "12px",
-                        color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-                      }}
-                    >
-                      <Show when={acp.command}>
-                        <div style={{ "margin-bottom": "4px" }}>
-                          <span style={{ "font-weight": "500" }}>
-                            {language.t("settings.agentBehaviour.acpDetail.command")}:{" "}
-                          </span>
-                          <span style={{ "font-family": "var(--vscode-editor-font-family, monospace)" }}>
-                            {Array.isArray(acp.command) ? acp.command[0] : acp.command}
+                        <div style={{ display: "flex", "align-items": "center", gap: "6px", flex: 1, "min-width": 0 }}>
+                          <IconButton
+                            size="small"
+                            variant="ghost"
+                            icon={open() ? "chevron-down" : "chevron-right"}
+                            onClick={(e: MouseEvent) => {
+                              e.stopPropagation()
+                              toggle(name)
+                            }}
+                          />
+                          {/* Status dot */}
+                          <div
+                            style={{
+                              width: "6px",
+                              height: "6px",
+                              "border-radius": "50%",
+                              "background-color": statusColor(name),
+                              "flex-shrink": "0",
+                            }}
+                          />
+                          <div style={{ "font-weight": "500" }}>{name}</div>
+                          <span
+                            style={{
+                              "font-size": "10px",
+                              color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                            }}
+                          >
+                            {statusLabel(name) || (acp.url ? "remote" : "stdio")}
                           </span>
                         </div>
-                        <Show when={Array.isArray(acp.command) && acp.command.length > 1}>
-                          <div style={{ "margin-bottom": "4px" }}>
-                            <span style={{ "font-weight": "500" }}>
-                              {language.t("settings.agentBehaviour.acpDetail.args")}:{" "}
-                            </span>
-                            <span style={{ "font-family": "var(--vscode-editor-font-family, monospace)" }}>
-                              {Array.isArray(acp.command) ? (acp.command as string[]).slice(1).join(" ") : ""}
-                            </span>
-                          </div>
-                        </Show>
-                      </Show>
-                      <Show when={acp.url}>
-                        <div style={{ "margin-bottom": "4px" }}>
-                          <span style={{ "font-weight": "500" }}>URL: </span>
-                          <span style={{ "font-family": "var(--vscode-editor-font-family, monospace)" }}>
-                            {acp.url}
-                          </span>
+                        <div style={{ display: "flex", gap: "4px", "align-items": "center" }}>
+                          <IconButton
+                            size="small"
+                            variant="ghost"
+                            icon="close"
+                            onClick={(e: MouseEvent) => {
+                              e.stopPropagation()
+                              confirmRemoveAcp(name)
+                            }}
+                          />
+                          <IconButton
+                            size="small"
+                            variant="ghost"
+                            icon="chevron-right"
+                            onClick={(e: MouseEvent) => {
+                              e.stopPropagation()
+                              setEditingAcp(name)
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Error message */}
+                      <Show when={error()}>
+                        <div
+                          style={{
+                            "padding-left": "28px",
+                            "padding-bottom": "4px",
+                            "font-size": "11px",
+                            color: "var(--vscode-errorForeground)",
+                          }}
+                        >
+                          {error()}
                         </div>
                       </Show>
-                      <Show when={env().length > 0}>
-                        <div style={{ "margin-bottom": "4px" }}>
-                          <span style={{ "font-weight": "500" }}>
-                            {language.t("settings.agentBehaviour.acpDetail.env")}:
-                          </span>
-                        </div>
-                        <For each={env()}>
-                          {([key, val]) => (
-                            <div
-                              style={{
-                                "padding-left": "8px",
-                                "font-family": "var(--vscode-editor-font-family, monospace)",
-                              }}
-                            >
-                              {key}={val}
+
+                      {/* Expandable detail */}
+                      <Show when={open()}>
+                        <div
+                          style={{
+                            "padding-left": "28px",
+                            "padding-bottom": "8px",
+                            "font-size": "12px",
+                            color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                          }}
+                        >
+                          <Show when={acp.command}>
+                            <div style={{ "margin-bottom": "4px" }}>
+                              <span style={{ "font-weight": "500" }}>
+                                {language.t("settings.agentBehaviour.acpDetail.command")}:{" "}
+                              </span>
+                              <span style={{ "font-family": "var(--vscode-editor-font-family, monospace)" }}>
+                                {Array.isArray(acp.command) ? acp.command[0] : acp.command}
+                              </span>
                             </div>
-                          )}
-                        </For>
+                            <Show when={Array.isArray(acp.command) && acp.command.length > 1}>
+                              <div style={{ "margin-bottom": "4px" }}>
+                                <span style={{ "font-weight": "500" }}>
+                                  {language.t("settings.agentBehaviour.acpDetail.args")}:{" "}
+                                </span>
+                                <span style={{ "font-family": "var(--vscode-editor-font-family, monospace)" }}>
+                                  {Array.isArray(acp.command) ? (acp.command as string[]).slice(1).join(" ") : ""}
+                                </span>
+                              </div>
+                            </Show>
+                          </Show>
+                          <Show when={acp.url}>
+                            <div style={{ "margin-bottom": "4px" }}>
+                              <span style={{ "font-weight": "500" }}>URL: </span>
+                              <span style={{ "font-family": "var(--vscode-editor-font-family, monospace)" }}>
+                                {acp.url}
+                              </span>
+                            </div>
+                          </Show>
+                          <Show when={env().length > 0}>
+                            <div style={{ "margin-bottom": "4px" }}>
+                              <span style={{ "font-weight": "500" }}>
+                                {language.t("settings.agentBehaviour.acpDetail.env")}:
+                              </span>
+                            </div>
+                            <For each={env()}>
+                              {([key, val]) => (
+                                <div
+                                  style={{
+                                    "padding-left": "8px",
+                                    "font-family": "var(--vscode-editor-font-family, monospace)",
+                                  }}
+                                >
+                                  {key}={val}
+                                </div>
+                              )}
+                            </For>
+                          </Show>
+                        </div>
                       </Show>
                     </div>
-                  </Show>
-                </div>
-              )
-            }}
-          </For>
-        </Card>
-      </Show>
-      </>
+                  )
+                }}
+              </For>
+            </Card>
+          </Show>
+        </>
       </Show>
     </div>
   )

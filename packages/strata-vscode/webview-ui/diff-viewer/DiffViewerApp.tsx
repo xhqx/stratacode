@@ -103,11 +103,11 @@ const DiffViewerContent: Component = () => {
       return
     }
 
-    // New batch explainer results
+    // New batch explainer results (may arrive incrementally)
     if (msg.type === "diffViewer.explainResult") {
       preserveScroll(() => {
         batch(() => {
-          setExplaining(false)
+          if (msg.done) setExplaining(false)
           setReviewThreads((prev) => {
             const next = [...prev]
             for (const thread of msg.threads) {
@@ -120,7 +120,7 @@ const DiffViewerContent: Component = () => {
             }
             return next
           })
-          setReviewSummary(msg.summary)
+          if (msg.summary) setReviewSummary(msg.summary)
         })
       })
       return
@@ -132,28 +132,36 @@ const DiffViewerContent: Component = () => {
       return
     }
 
+    if (msg.type === "diffViewer.clearExplanations") {
+      preserveScroll(() => {
+        batch(() => {
+          setReviewThreads([])
+          setReviewSummary("")
+        })
+      })
+      return
+    }
+
     if (msg.type === "diffViewer.threadReply") {
       // Update specific thread with AI reply and clear pending
-      setReviewThreads((prev) => 
+      setReviewThreads((prev) =>
         prev.map((t) => {
           if (t.id === msg.threadId) {
             return {
               ...t,
               messages: [...t.messages, msg.message],
-              pending: false
+              pending: false,
             }
           }
           return t
-        })
+        }),
       )
       return
     }
 
     if (msg.type === "diffViewer.diffFile" && typeof msg.file === "string") {
       if (!msg.diff) return
-      setDiffs((prev) =>
-        prev.map((d) => (d.file === msg.file ? { ...d, ...msg.diff, summarized: false } : d))
-      )
+      setDiffs((prev) => prev.map((d) => (d.file === msg.file ? { ...d, ...msg.diff, summarized: false } : d)))
       return
     }
 
@@ -166,7 +174,6 @@ const DiffViewerContent: Component = () => {
       setInstantComments(msg.value as boolean)
       return
     }
-
   })
 
   // Request settings on init
@@ -190,6 +197,7 @@ const DiffViewerContent: Component = () => {
       batch(() => {
         setExplaining(true)
         setReviewSummary("")
+        setReviewThreads([])
       })
     })
     post({ type: "diffViewer.explainAll" })
@@ -203,13 +211,20 @@ const DiffViewerContent: Component = () => {
       text,
       timestamp: Date.now(),
     }
-    setReviewThreads((prev) => 
-      prev.map((t) => t.id === threadId ? { ...t, messages: [...t.messages, msg], pending: true } : t)
+    setReviewThreads((prev) =>
+      prev.map((t) => (t.id === threadId ? { ...t, messages: [...t.messages, msg], pending: true } : t)),
     )
     post({ type: "diffViewer.replyToThread", threadId, text })
   }
 
-  const handleStartThread = (threadId: string, file: string, side: "additions" | "deletions", line: number, endLine: number | undefined, text: string) => {
+  const handleStartThread = (
+    threadId: string,
+    file: string,
+    side: "additions" | "deletions",
+    line: number,
+    endLine: number | undefined,
+    text: string,
+  ) => {
     // Immediately append user message and mark thread as pending
     const msg = {
       id: Math.random().toString(36).substring(2, 9),
@@ -226,10 +241,18 @@ const DiffViewerContent: Component = () => {
         line,
         ...(endLine !== undefined ? { endLine } : {}),
         messages: [msg],
-        pending: true
-      }
+        pending: true,
+      },
     ])
-    post({ type: "diffViewer.startThread", threadId, file, line, endLine, text, side: side === "additions" ? "right" : "left" })
+    post({
+      type: "diffViewer.startThread",
+      threadId,
+      file,
+      line,
+      endLine,
+      text,
+      side: side === "additions" ? "right" : "left",
+    })
   }
 
   return (
@@ -258,7 +281,6 @@ const DiffViewerContent: Component = () => {
       revertingFiles={reverting()}
       eagerLoad={eagerLoad()}
       instantComments={instantComments()}
-      
       // New review thread props
       reviewThreads={reviewThreads()}
       reviewSummary={reviewSummary()}
@@ -267,7 +289,6 @@ const DiffViewerContent: Component = () => {
       onStartThread={handleStartThread}
       explaining={explaining() || reviewThreads().some((t) => t.pending)}
       onScrollContainerChange={setScroll}
-      
       onClose={() => {
         post({ type: "diffViewer.close" })
       }}

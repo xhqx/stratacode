@@ -443,11 +443,7 @@ export function patchAgents(
     description: "Rewrite prompts into clearer, more specific, and more effective instructions.",
     prompt: PROMPT_ENHANCE,
     options: {},
-    permission: Permission.merge(
-      defaults,
-      Permission.fromConfig({ "*": "deny" }),
-      user,
-    ),
+    permission: Permission.merge(defaults, Permission.fromConfig({ "*": "deny" }), user),
     mode: "primary",
     native: true,
     temperature: 0.7,

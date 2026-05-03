@@ -4,6 +4,7 @@ import { Agent } from "@/agent/agent"
 import { Log } from "@/util"
 import type { CommitMessageRequest, CommitMessageResponse, GitContext } from "./types"
 import { getGitContext } from "./git-context"
+import { fetchSessionContext } from "../session-context" // stratacode_change
 
 const log = Log.create({ service: "commit-message" })
 
@@ -186,6 +187,20 @@ export async function generateCommitMessage(request: CommitMessageRequest): Prom
   if (request.previousMessage) {
     userMessage = `IMPORTANT: Generate a COMPLETELY DIFFERENT commit message from the previous one. The previous message was: "${request.previousMessage}". Use a different type, scope, or description approach.\n\n${userMessage}`
   }
+
+  // stratacode_change start - inject session context for developer intent
+  try {
+    const { Config } = await import("../../config")
+    const cfg = await Config.get()
+    const limit = cfg.session_context?.limit ?? 5
+    if (limit > 0) {
+      const context = await fetchSessionContext(request.path, limit)
+      if (context) userMessage = `${context}\n\n${userMessage}`
+    }
+  } catch (err) {
+    log.warn("session context fetch failed, continuing without", { err })
+  }
+  // stratacode_change end
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)

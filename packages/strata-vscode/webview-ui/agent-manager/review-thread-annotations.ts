@@ -35,7 +35,10 @@ export function buildThreadElement(meta: ThreadMeta, onReply: (threadId: string,
 
     // Author label with role-specific class
     const author = document.createElement("div")
-    const cls = msg.author === "ai" ? "am-annotation-comment-author am-annotation-comment-author-ai" : "am-annotation-comment-author"
+    const cls =
+      msg.author === "ai"
+        ? "am-annotation-comment-author am-annotation-comment-author-ai"
+        : "am-annotation-comment-author"
     author.className = cls
     author.textContent = msg.author === "ai" ? "Explainer" : "You"
     block.appendChild(author)

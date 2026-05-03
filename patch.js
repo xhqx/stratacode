@@ -1,6 +1,6 @@
-const fs = require('fs');
-const file = 'packages/strata-vscode/src/StrataProvider.ts';
-let content = fs.readFileSync(file, 'utf8');
+const fs = require("fs")
+const file = "packages/strata-vscode/src/StrataProvider.ts"
+let content = fs.readFileSync(file, "utf8")
 
 const target = `    } else {
       const workspace = this.getWorkspaceDirectory()
@@ -9,7 +9,7 @@ const target = `    } else {
       } catch (e) {
         console.warn("[Strata New] Failed to dispose workspace instance:", e)
       }
-    }`;
+    }`
 
 const replacement = `    }
     
@@ -19,12 +19,12 @@ const replacement = `    }
       await this.client.instance.dispose({ directory: workspace })
     } catch (e) {
       console.warn("[Strata New] Failed to dispose workspace instance:", e)
-    }`;
+    }`
 
 if (content.includes(target)) {
-    content = content.replace(target, replacement);
-    fs.writeFileSync(file, content);
-    console.log("Patched successfully");
+  content = content.replace(target, replacement)
+  fs.writeFileSync(file, content)
+  console.log("Patched successfully")
 } else {
-    console.log("Target not found");
+  console.log("Target not found")
 }

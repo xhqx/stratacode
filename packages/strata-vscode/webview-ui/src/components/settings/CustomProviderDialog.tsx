@@ -52,8 +52,6 @@ export interface CustomProviderDialogProps {
   }
 }
 
-
-
 const ModelSelectionPicker = (props: {
   fetchedModels: any[] | undefined
   debouncedSearch: string
@@ -161,7 +159,13 @@ const ModelSelectionPicker = (props: {
 
           {/* Actions */}
           <div style={{ display: "flex", gap: "8px", "margin-top": "4px" }}>
-            <Button type="button" size="small" variant="primary" onClick={props.addSelected} disabled={props.count === 0}>
+            <Button
+              type="button"
+              size="small"
+              variant="primary"
+              onClick={props.addSelected}
+              disabled={props.count === 0}
+            >
               {props.language.t("provider.custom.models.fetch.add", { count: String(props.count) })}
             </Button>
             <Button type="button" size="small" variant="ghost" onClick={props.cancelFetch}>
@@ -782,7 +786,14 @@ const CustomProviderDialog = (props: CustomProviderDialogProps) => {
           </div>
 
           {/* Headers */}
-          <HeadersSection headers={form.headers} errors={errors.headers} language={language} setForm={setForm} removeHeader={removeHeader} addHeader={addHeader} />
+          <HeadersSection
+            headers={form.headers}
+            errors={errors.headers}
+            language={language}
+            setForm={setForm}
+            removeHeader={removeHeader}
+            addHeader={addHeader}
+          />
 
           <Button type="submit" size="large" variant="primary" disabled={form.saving}>
             {form.saving ? language.t("common.saving") : language.t("common.submit")}

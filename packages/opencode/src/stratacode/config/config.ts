@@ -44,6 +44,18 @@ export namespace StratacodeConfig {
     }),
   ).annotate({ description: "Configuration for AI-generated commit messages" })
 
+  /** Schema for session context configuration. */
+  export const SessionContextSchema = Schema.optional(
+    Schema.Struct({
+      limit: Schema.optional(Schema.Number).annotate({
+        description: "Most recent sessions to include as context (0 to disable). Default: 5",
+      }),
+      cache_days: Schema.optional(Schema.Number).annotate({
+        description: "Days to cache session context summaries. Default: 30",
+      }),
+    }),
+  ).annotate({ description: "Session context for AI features (explain, commit, enhance)" })
+
   // ── Config file constants ────────────────────────────────────────────
 
   /** Strata-specific config file names (highest-to-lowest precedence within strata). */

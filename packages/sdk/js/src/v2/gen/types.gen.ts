@@ -2088,6 +2088,19 @@ export type Config = {
      */
     prompt?: string
   }
+  /**
+   * Session context for AI features (explain, commit, enhance)
+   */
+  session_context?: {
+    /**
+     * Most recent sessions to include as context (0 to disable). Default: 5
+     */
+    limit?: number
+    /**
+     * Days to cache session context summaries. Default: 30
+     */
+    cache_days?: number
+  }
   compaction?: {
     /**
      * Enable automatic compaction when context is full (default: true)
@@ -6703,12 +6716,55 @@ export type CommitMessageGenerateResponses = {
 
 export type CommitMessageGenerateResponse = CommitMessageGenerateResponses[keyof CommitMessageGenerateResponses]
 
+export type SessionContextCreateData = {
+  body?: {
+    /**
+     * Workspace/project directory to scope session context
+     */
+    directory: string
+    /**
+     * Override the configured session limit
+     */
+    limit?: number
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/session-context"
+}
+
+export type SessionContextCreateErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type SessionContextCreateError = SessionContextCreateErrors[keyof SessionContextCreateErrors]
+
+export type SessionContextCreateResponses = {
+  /**
+   * Session context summary
+   */
+  200: {
+    context: string
+  }
+}
+
+export type SessionContextCreateResponse = SessionContextCreateResponses[keyof SessionContextCreateResponses]
+
 export type EnhancePromptEnhanceData = {
   body?: {
     /**
      * The user's draft prompt to enhance
      */
     text: string
+    /**
+     * Workspace directory for session context enrichment
+     */
+    directory?: string
   }
   path?: never
   query?: {

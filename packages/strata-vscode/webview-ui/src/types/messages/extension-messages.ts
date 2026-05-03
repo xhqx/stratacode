@@ -733,6 +733,8 @@ export interface DiffViewerExplainResultMessage {
   threads?: ReviewThread[]
   summary?: string
   error?: string
+  /** When true, this is the final batch — stop the explaining spinner */
+  done?: boolean
 }
 
 export interface DiffViewerThreadReplyMessage {
@@ -995,7 +997,6 @@ export type ExtensionMessage =
   | DiffViewerExplainResultMessage
   | DiffViewerThreadReplyMessage
   | DiffViewerExplainErrorMessage
-
   | MarketplaceDataMessage
   | MarketplaceInstallResultMessage
   | MarketplaceRemoveResultMessage

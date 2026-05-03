@@ -206,7 +206,7 @@ async function list(git: GitOps, dir: string, anc: string, log?: Log): Promise<M
 
   const untrackedLines = files.split("\n").filter((f) => f && !seen.has(f))
   const CONCURRENCY = 10
-  
+
   for (let i = 0; i < untrackedLines.length; i += CONCURRENCY) {
     const chunk = untrackedLines.slice(i, i + CONCURRENCY)
     const resolvedChunk = await Promise.all(
@@ -263,6 +263,73 @@ export async function diffSummary(git: GitOps, dir: string, base: string, log?: 
   if (!anc) return []
   const items = await list(git, dir, anc, log)
   return items.map(summarize)
+}
+
+/**
+ * Batch-fetch patches for many files in one go. Returns a Map<file, patch>.
+ *
+ * Tracked files: ONE `git diff` command for all files, output split by
+ * `diff --git` header. Untracked files: parallel `fs.readFile` + synthetic
+ * patch generation.
+ *
+ * This replaces the old per-file `diffFile()` loop in `explainAll`, cutting
+ * git process spawns from O(N × 5) to O(1).
+ */
+export async function batchPatches(
+  git: GitOps,
+  dir: string,
+  anc: string,
+  files: { file: string; tracked?: boolean }[],
+  log?: Log,
+): Promise<Map<string, string>> {
+  const patches = new Map<string, string>()
+
+  const tracked = files.filter((f) => f.tracked === true)
+  const untracked = files.filter((f) => !f.tracked)
+
+  // --- Tracked: single git diff for all files ---
+  if (tracked.length > 0) {
+    const args = ["-c", "core.quotepath=false", "diff", "--no-ext-diff", "--no-renames", anc, "--"]
+    for (const f of tracked) args.push(f.file)
+    const result = await git.execGit(args, dir)
+    if (result.code === 0 && result.stdout) {
+      // Split combined diff output by file header
+      const chunks = result.stdout.split(/(?=^diff --git )/m)
+      for (const chunk of chunks) {
+        if (!chunk.trim()) continue
+        // Extract filename from "diff --git a/path b/path"
+        const header = chunk.match(/^diff --git a\/(.*?) b\/(.*)$/m)
+        if (!header) continue
+        const name = header[2]!
+        patches.set(name, chunk)
+      }
+    } else if (result.code !== 0) {
+      log?.("batchPatches: git diff failed", { code: result.code, stderr: result.stderr.trim() })
+    }
+  }
+
+  // --- Untracked: parallel file reads + synthetic patches ---
+  if (untracked.length > 0) {
+    const CONCURRENCY = 10
+    for (let i = 0; i < untracked.length; i += CONCURRENCY) {
+      const chunk = untracked.slice(i, i + CONCURRENCY)
+      const resolved = await Promise.all(
+        chunk.map(async (f) => {
+          const full = path.join(dir, f.file)
+          const stat = await fs.stat(full).catch(() => undefined)
+          if (!stat || stat.size > MAX_UNTRACKED_BYTES) return null
+          const content = await fs.readFile(full, "utf-8").catch(() => "")
+          if (!content) return null
+          return { file: f.file, patch: buildUntrackedPatch(f.file, content) }
+        }),
+      )
+      for (const r of resolved) {
+        if (r) patches.set(r.file, r.patch)
+      }
+    }
+  }
+
+  return patches
 }
 
 async function detailMeta(git: GitOps, dir: string, anc: string, file: string): Promise<Meta | undefined> {

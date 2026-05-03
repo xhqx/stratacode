@@ -28,7 +28,14 @@ interface AnnotationHandlers {
   diffs: WorktreeFileDiff[]
   editing: string | null
   setEditing: (id: string | null) => void
-  addComment: (file: string, side: AnnotationSide, line: number, endLine: number | undefined, text: string, selectedText: string) => void
+  addComment: (
+    file: string,
+    side: AnnotationSide,
+    line: number,
+    endLine: number | undefined,
+    text: string,
+    selectedText: string,
+  ) => void
   updateComment: (id: string, text: string) => void
   deleteComment: (id: string) => void
   cancelDraft: () => void
@@ -95,8 +102,21 @@ export function buildFileAnnotations(
   }))
 
   if (draft && draft.file === file) {
-    if (!draftMeta || draftMeta.file !== draft.file || draftMeta.side !== draft.side || draftMeta.line !== draft.line || draftMeta.endLine !== draft.endLine) {
-      draftMeta = { type: "draft", comment: null, file: draft.file, side: draft.side, line: draft.line, ...(draft.endLine !== undefined ? { endLine: draft.endLine } : {}) }
+    if (
+      !draftMeta ||
+      draftMeta.file !== draft.file ||
+      draftMeta.side !== draft.side ||
+      draftMeta.line !== draft.line ||
+      draftMeta.endLine !== draft.endLine
+    ) {
+      draftMeta = {
+        type: "draft",
+        comment: null,
+        file: draft.file,
+        side: draft.side,
+        line: draft.line,
+        ...(draft.endLine !== undefined ? { endLine: draft.endLine } : {}),
+      }
     }
     result.push({ side: draft.side, lineNumber: draft.line, metadata: draftMeta })
   }

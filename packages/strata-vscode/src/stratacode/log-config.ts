@@ -1,6 +1,6 @@
-import * as vscode from 'vscode'
+import * as vscode from "vscode"
 
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'off'
+export type LogLevel = "debug" | "info" | "warn" | "error" | "off"
 
 const LOG_LEVEL_MAP: Record<LogLevel, number> = {
   debug: 0,
@@ -18,21 +18,21 @@ export class LogConfig {
   }
 
   static getLevel(): LogLevel {
-    const config = vscode.workspace.getConfiguration('strata-code.new')
-    const configuredLevel = config.get<string>('logLevel')
-    
+    const config = vscode.workspace.getConfiguration("strata-code.new")
+    const configuredLevel = config.get<string>("logLevel")
+
     // User explicitly configured to something other than default 'info'
-    const inspected = config.inspect<string>('logLevel')
+    const inspected = config.inspect<string>("logLevel")
     if (inspected && (inspected.globalValue !== undefined || inspected.workspaceValue !== undefined)) {
-      return (configuredLevel as LogLevel) || 'info'
+      return (configuredLevel as LogLevel) || "info"
     }
 
     // Default: debug in dev, info in production
-    return this._isDev ? 'debug' : 'info'
+    return this._isDev ? "debug" : "info"
   }
 
   static getRetentionDays(): number {
-    return vscode.workspace.getConfiguration('strata-code.new').get<number>('logRetentionDays') ?? 7
+    return vscode.workspace.getConfiguration("strata-code.new").get<number>("logRetentionDays") ?? 7
   }
 
   static shouldLog(entryLevel: LogLevel): boolean {

@@ -27,8 +27,8 @@
   /* Inherit pierre diffs CSS vars from am-diff-panel */
   --diffs-light-bg: var(--vscode-editor-background, #1e1e1e);
   --diffs-dark-bg: var(--vscode-editor-background, #1e1e1e);
-  --diffs-button-bg-color: #333333;
-  --diffs-button-text-color: #ffffff;
+  --diffs-button-bg-color: #ee9284;
+  --diffs-button-text-color: #a4adb6;
   --diffs-bg-addition-override: color-mix(
     in lab,
     var(--vscode-editor-background, #1e1e1e) 82%,

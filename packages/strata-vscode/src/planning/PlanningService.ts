@@ -375,12 +375,12 @@ export class PlanningService {
       // Upsert each parsed task
       for (const mt of parsed) {
         const existing = this.tasks.find((t) => t.id === mt.id && t.markdownFile)
-        
+
         if (!existing) {
           this.tasks.push(this.markdownToPlanning(mt))
           continue
         }
-        
+
         // Update metadata
         existing.title = mt.title
         existing.description = mt.description || existing.description

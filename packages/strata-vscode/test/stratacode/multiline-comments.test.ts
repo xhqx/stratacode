@@ -36,7 +36,7 @@ describe("Multiline Comments Parsing", () => {
     const out: ReviewCommentPayload[] = []
     const match = String(key).match(/\d+(?:-\d+)?/)
     if (!match) return out
-    
+
     const parts = match[0].split("-")
     const idStart = parseInt(parts[0]!, 10)
     const idEnd = parts[1] ? parseInt(parts[1]!, 10) : idStart
@@ -134,10 +134,18 @@ describe("Review Comments Core Utils", () => {
       { id: "2", file: "test.ts", side: "additions" as const, line: 2, endLine: 3, comment: "", selectedText: "" },
     ]
     const diffs = [
-      { file: "test.ts", status: "modified" as const, before: "", after: "A\nB\nC", tracked: true, added: 3, deleted: 0 },
+      {
+        file: "test.ts",
+        status: "modified" as const,
+        before: "",
+        after: "A\nB\nC",
+        tracked: true,
+        added: 3,
+        deleted: 0,
+      },
     ]
     const sanitized = sanitizeReviewComments(comments, diffs)
-    
+
     expect(sanitized.length).toBe(2)
     // max is 3 because content is "A\nB\nC" which has 3 lines
     expect(sanitized[0]!.endLine).toBe(3)
@@ -146,14 +154,30 @@ describe("Review Comments Core Utils", () => {
   })
 
   test("formatReviewCommentMarkdown with multiline", () => {
-    const comment = { id: "1", file: "test.ts", side: "additions" as const, line: 1, endLine: 3, comment: "Hello", selectedText: "A\nB\nC" }
+    const comment = {
+      id: "1",
+      file: "test.ts",
+      side: "additions" as const,
+      line: 1,
+      endLine: 3,
+      comment: "Hello",
+      selectedText: "A\nB\nC",
+    }
     const md = formatReviewCommentMarkdown(comment)
     expect(md).toContain("**test.ts** (lines 1-3):")
     expect(md).toContain("```\nA\nB\nC\n```")
   })
 
   test("formatReviewCommentMarkdown single line regression", () => {
-    const comment = { id: "1", file: "test.ts", side: "additions" as const, line: 2, endLine: 2, comment: "Hello", selectedText: "B" }
+    const comment = {
+      id: "1",
+      file: "test.ts",
+      side: "additions" as const,
+      line: 2,
+      endLine: 2,
+      comment: "Hello",
+      selectedText: "B",
+    }
     const md = formatReviewCommentMarkdown(comment)
     expect(md).toContain("**test.ts** (line 2):")
   })
