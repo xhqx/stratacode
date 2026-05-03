@@ -361,6 +361,9 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
     vscode.commands.registerCommand("strata-code.new.openSubAgentViewer", (sessionID: string, title?: string) => {
       subAgentViewerProvider.openPanel(sessionID, title)
     }),
+    vscode.commands.registerCommand("strata-code.new.workers.showStatus", () => {
+      provider.workerStatusBar?.showQuickPick()
+    }),
   )
 
   // Register explain-change commands (Per-Change Explanator)

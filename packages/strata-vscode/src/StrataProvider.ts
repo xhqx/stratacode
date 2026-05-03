@@ -155,11 +155,16 @@ import { AutoApproveTimer } from "./strata-provider/auto-approve-timer"
 import { PlanningService } from "./planning"
 import { GitWatcher } from "./services/memory/GitWatcher"
 import { Logger } from "./stratacode/logger"
+import { WorkerStatusBar } from "./services/worker/WorkerStatusBar"
+import { WorkerWatcher } from "./services/worker/WorkerWatcher"
 
 export class StrataProvider implements vscode.WebviewViewProvider, TelemetryPropertiesProvider {
   public static readonly viewType = "strata-code.SidebarProvider"
+  private static workerBarCreated = false
   private readonly instanceId = crypto.randomUUID()
   private gitWatcher?: GitWatcher
+  public workerStatusBar?: WorkerStatusBar
+  private workerWatcher?: WorkerWatcher
 
   private webview: vscode.Webview | null = null
   private currentSession: Session | null = null
@@ -301,6 +306,11 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     }
 
     this.gitWatcher = new GitWatcher(this)
+    if (!StrataProvider.workerBarCreated) {
+      StrataProvider.workerBarCreated = true
+      this.workerStatusBar = new WorkerStatusBar(this)
+    }
+    this.workerWatcher = new WorkerWatcher(this)
   }
 
   setRemoteService(service: RemoteStatusService): void {
@@ -651,8 +661,22 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.autocompleteConfigDisposable?.dispose()
     this.settingsConfigDisposable?.dispose()
     this.autocompleteConfigDisposable = watchAutocompleteConfig((msg) => this.postMessage(msg))
-    this.settingsConfigDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
+    this.settingsConfigDisposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
       if (e.affectsConfiguration("strata-code.new.agents")) {
+        this.fetchAndSendAgents()
+      }
+      if (e.affectsConfiguration("strata-code.new.workers.enabled")) {
+        this.workerStatusBar.onConfigChanged()
+        
+        const enabled = vscode.workspace.getConfiguration("strata-code.new").get<boolean>("workers.enabled", false)
+        if (this.client) {
+          try {
+            await this.client.global.config.update({ config: { workers: { enabled } } })
+          } catch (err) {
+            Logger.error("StrataProvider", "Failed to sync workers.enabled to backend", err)
+          }
+        }
+        
         this.fetchAndSendAgents()
       }
     })
@@ -1498,6 +1522,14 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       await this.syncWebviewState("initializeConnection")
       await this.flushPendingSessionRefresh("initializeConnection")
       this.recoverPendingPrompts()
+
+      // Sync specific VS Code settings to the CLI backend config before fetching agents
+      const enabled = vscode.workspace.getConfiguration("strata-code.new").get<boolean>("workers.enabled", false)
+      try {
+        await this.client.global.config.update({ config: { workers: { enabled } } })
+      } catch (err) {
+        Logger.error("StrataProvider", "Failed to sync workers.enabled to backend during init", err)
+      }
 
       // Fetch providers, agents, skills, config, notifications, and session statuses in parallel
       await Promise.all([
@@ -3337,7 +3369,11 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     try {
       await vscode.workspace.fs.stat(vscode.Uri.file(targetDirectory))
     } catch {
-      this.postMessage({ type: "diffViewer.explainResult", error: `Target directory not found: ${targetDirectory}`, done: true })
+      this.postMessage({
+        type: "diffViewer.explainResult",
+        error: `Target directory not found: ${targetDirectory}`,
+        done: true,
+      })
       return
     }
 
@@ -3593,6 +3629,21 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private handleEvent(event: Event, directory?: string): void {
     if (event.type === "strata-sessions.remote-status-changed") {
       this.remoteService?.updateFromEvent({ enabled: event.properties.enabled, connected: event.properties.connected })
+      return
+    }
+
+    // Handle background worker events safely bypassing strict Event types for now
+    const workerEvent = event as any
+    if (
+      workerEvent.type === "worker.started" ||
+      workerEvent.type === "worker.completed" ||
+      workerEvent.type === "worker.failed"
+    ) {
+      this.workerStatusBar?.update(workerEvent)
+      // For auto_explain: forward explainer results to diff viewer webview
+      if (workerEvent.type === "worker.completed" && workerEvent.properties?.worker === "explainer_worker") {
+        this.postMessage({ type: "diffViewer.explainResult", ...workerEvent.properties.result })
+      }
       return
     }
 
@@ -4201,6 +4252,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.chatAutocomplete?.dispose()
     this.gitWatcher?.dispose()
     this.planningService?.dispose()
+    this.workerStatusBar?.dispose()
+    this.workerWatcher?.dispose()
     ;(this.marketplace?.dispose(), disposeGitChangesTarget())
   }
 }

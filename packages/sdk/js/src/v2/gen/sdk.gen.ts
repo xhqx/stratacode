@@ -104,6 +104,7 @@ import type {
   PermissionRuleset,
   PermissionSaveAlwaysRulesErrors,
   PermissionSaveAlwaysRulesResponses,
+  PostWorkerTriggerResponses,
   ProjectCurrentResponses,
   ProjectInitGitResponses,
   ProjectListResponses,
@@ -6246,6 +6247,47 @@ export class StrataClient extends HeyApiClient {
   constructor(args?: { client?: Client; key?: string }) {
     super(args)
     StrataClient.__registry.set(this, args?.key)
+  }
+
+  /**
+   * Trigger background context workers
+   *
+   * Dispatch workers for changed files, applying debounce and filtering
+   */
+  public postWorkerTrigger<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      cwd?: string
+      files?: Array<string>
+      autoExplain?: boolean
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "cwd" },
+            { in: "body", key: "files" },
+            { in: "body", key: "autoExplain" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<PostWorkerTriggerResponses, unknown, ThrowOnError>({
+      url: "/worker/trigger",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
   }
 
   private _global?: Global

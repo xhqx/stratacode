@@ -1,0 +1,137 @@
+• turbo 2.8.13
+• Packages in scope: @opencode-ai/app, @opencode-ai/desktop, @opencode-ai/desktop-electron, @opencode-ai/script, @opencode-ai/shared, @opencode-ai/storybook, @opencode-ai/ui, @stratacode/cli, @stratacode/plugin, @stratacode/sdk, @stratacode/strata-docs, @stratacode/strata-gateway, @stratacode/strata-i18n, @stratacode/strata-indexing, @stratacode/strata-jetbrains, @stratacode/strata-telemetry, @stratacode/strata-ui, @stratacode/vscode-api, strata-code, strata-review
+• Running typecheck in 20 packages
+• Remote caching disabled
+@stratacode/strata-i18n:typecheck: cache hit, replaying logs a73a700aba3b54f9
+@opencode-ai/shared:typecheck: cache hit, replaying logs 8e0e37dabc82e009
+@stratacode/sdk:typecheck: cache hit, replaying logs 98cd9991b771cf3a
+@stratacode/sdk:typecheck: 
+@stratacode/sdk:typecheck: [0m[2m[35m$[0m [2m[1mtsgo --noEmit[0m
+@opencode-ai/shared:typecheck: 
+@opencode-ai/shared:typecheck: [0m[2m[35m$[0m [2m[1mtsgo --noEmit[0m
+@stratacode/strata-i18n:typecheck: 
+@stratacode/strata-i18n:typecheck: [0m[2m[35m$[0m [2m[1mtsgo --noEmit[0m
+@opencode-ai/ui:typecheck: cache hit, replaying logs 5a6f6062d0485a50
+@opencode-ai/ui:typecheck: 
+@opencode-ai/ui:typecheck: [0m[2m[35m$[0m [2m[1mtsgo --noEmit[0m
+@stratacode/plugin:typecheck: cache hit, replaying logs 24043983b20c72ff
+@stratacode/plugin:typecheck: 
+@stratacode/plugin:typecheck: [0m[2m[35m$[0m [2m[1mtsgo --noEmit[0m
+@stratacode/strata-gateway:typecheck: cache hit, replaying logs 79261f6e9dda925c
+@stratacode/strata-gateway:typecheck: 
+@stratacode/strata-gateway:typecheck: [0m[2m[35m$[0m [2m[1mtsgo --noEmit[0m
+@opencode-ai/app:typecheck: cache hit, replaying logs cd22327e7d201631
+@opencode-ai/app:typecheck: 
+@opencode-ai/app:typecheck: [0m[2m[35m$[0m [2m[1mtsgo -b[0m
+@stratacode/strata-telemetry:typecheck: cache hit, replaying logs ccee1897ea4bb59f
+@stratacode/strata-telemetry:typecheck: 
+@stratacode/strata-telemetry:typecheck: [0m[2m[35m$[0m [2m[1mtsgo --noEmit[0m
+@stratacode/strata-indexing:typecheck: cache hit, replaying logs 4ae19cce38ecceb2
+@stratacode/strata-indexing:typecheck: 
+@stratacode/strata-indexing:typecheck: [0m[2m[35m$[0m [2m[1mtsgo --noEmit[0m
+@opencode-ai/desktop:typecheck: cache hit, replaying logs 2702e82ed0591161
+@opencode-ai/desktop:typecheck: 
+@opencode-ai/desktop:typecheck: [0m[2m[35m$[0m [2m[1mtsgo -b[0m
+@opencode-ai/desktop-electron:typecheck: cache hit, replaying logs a910257cbeb537d3
+@opencode-ai/desktop-electron:typecheck: 
+@opencode-ai/desktop-electron:typecheck: [0m[2m[35m$[0m [2m[1mtsgo -b[0m
+@stratacode/cli:typecheck: cache miss, executing 322787779a0d1cd6
+strata-code:typecheck: cache miss, executing 87f0b6db7d5fee0e
+@stratacode/cli:typecheck: $ tsgo --noEmit
+strata-code:typecheck: $ bun run check-types:extension && bun run check-types:webview
+strata-code:typecheck: $ bun script/typecheck.ts
+strata-code:typecheck: $ bun script/typecheck.ts --project webview-ui/tsconfig.json
+@stratacode/cli:typecheck: src/stratacode/worker/context-map.ts(35,5): error TS2322: Type 'Effect<{ updated: number; reviews: never[]; summarized_files: {}; summary?: undefined; recent_commits?: undefined; session_titles?: undefined; } | { updated: number; reviews: ReviewEntry[]; summarized_files: Record<...>; summary: string | undefined; recent_commits: string[] | undefined; session_titles: string[] | un...' is not assignable to type 'Effect<ContextMap, never, never>'.
+@stratacode/cli:typecheck:   Type 'Service' is not assignable to type 'never'.
+@stratacode/cli:typecheck: src/stratacode/worker/context-map.ts(47,50): error TS2554: Expected 0 arguments, but got 1.
+@stratacode/cli:typecheck: src/stratacode/worker/context-map.ts(63,12): error TS2551: Property 'async' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Effect")'. Did you mean 'sync'?
+@stratacode/cli:typecheck: src/stratacode/worker/context-map.ts(63,32): error TS7006: Parameter 'resume' implicitly has an 'any' type.
+@stratacode/cli:typecheck: src/stratacode/worker/context-map.ts(67,13): error TS2345: Argument of type 'Effect<void, PlatformError, unknown>' is not assignable to parameter of type 'Effect<void, PlatformError, never>'.
+@stratacode/cli:typecheck:   Type 'unknown' is not assignable to type 'never'.
+@stratacode/cli:typecheck: src/stratacode/worker/context-map.ts(82,46): error TS2339: Property 'mkdir' does not exist on type 'Interface'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(38,24): error TS2345: Argument of type '<E, R>(self: Effect<unknown, E, R>) => Effect<unknown, unknown, unknown>' is not assignable to parameter of type '(_: typeof Service) => Effect<unknown, unknown, unknown>'.
+@stratacode/cli:typecheck:   Types of parameters 'self' and '_' are incompatible.
+@stratacode/cli:typecheck:     Property '[TypeId]' is missing in type 'typeof Service' but required in type 'Effect<unknown, unknown, unknown>'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(38,46): error TS18046: 's' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(38,74): error TS2339: Property 'pipe' does not exist on type 'never'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(39,14): error TS2339: Property 'catchAll' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Effect")'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(42,48): error TS2739: Type 'Promise<{ providerID: string & Brand<"ProviderID">; modelID: string & Brand<"ModelID">; }>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(43,24): error TS2339: Property 'model' does not exist on type '{}'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(44,31): error TS2739: Type 'Promise<{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(44,55): error TS2339: Property 'model' does not exist on type '{}'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(44,79): error TS2339: Property 'model' does not exist on type '{}'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(46,32): error TS18046: 'defaultModel' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(46,57): error TS2339: Property 'pipe' does not exist on type 'Promise<{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; } | undefined>'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(46,69): error TS2339: Property 'catchAll' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Effect")'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(47,38): error TS2739: Type 'Promise<{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(47,56): error TS18046: 'defaultModel' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(47,81): error TS18046: 'defaultModel' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(49,44): error TS2739: Type 'Promise<LanguageModelV3>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(49,65): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(55,5): error TS2322: Type 'unknown' is not assignable to type 'LanguageModel'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(57,56): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }'.
+@stratacode/cli:typecheck: src/stratacode/worker/explainer.ts(57,63): error TS18046: 'model' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(44,24): error TS2345: Argument of type '<E, R>(self: Effect<unknown, E, R>) => Effect<unknown, unknown, unknown>' is not assignable to parameter of type '(_: typeof Service) => Effect<unknown, unknown, unknown>'.
+@stratacode/cli:typecheck:   Types of parameters 'self' and '_' are incompatible.
+@stratacode/cli:typecheck:     Property '[TypeId]' is missing in type 'typeof Service' but required in type 'Effect<unknown, unknown, unknown>'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(44,46): error TS18046: 's' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(44,71): error TS2339: Property 'pipe' does not exist on type 'never'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(45,14): error TS2339: Property 'catchAll' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Effect")'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(48,48): error TS2739: Type 'Promise<{ providerID: string & Brand<"ProviderID">; modelID: string & Brand<"ModelID">; }>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(49,24): error TS2339: Property 'model' does not exist on type '{}'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(50,31): error TS2739: Type 'Promise<{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(50,55): error TS2339: Property 'model' does not exist on type '{}'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(50,79): error TS2339: Property 'model' does not exist on type '{}'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(52,32): error TS18046: 'defaultModel' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(52,57): error TS2339: Property 'pipe' does not exist on type 'Promise<{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; } | undefined>'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(52,69): error TS2339: Property 'catchAll' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Effect")'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(53,38): error TS2739: Type 'Promise<{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(53,56): error TS18046: 'defaultModel' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(53,81): error TS18046: 'defaultModel' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(55,44): error TS2739: Type 'Promise<LanguageModelV3>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(55,65): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(61,5): error TS2322: Type 'unknown' is not assignable to type 'LanguageModel'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(63,56): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }'.
+@stratacode/cli:typecheck: src/stratacode/worker/review.ts(63,63): error TS18046: 'model' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(38,24): error TS2345: Argument of type '<E, R>(self: Effect<unknown, E, R>) => Effect<unknown, unknown, unknown>' is not assignable to parameter of type '(_: typeof Service) => Effect<unknown, unknown, unknown>'.
+@stratacode/cli:typecheck:   Types of parameters 'self' and '_' are incompatible.
+@stratacode/cli:typecheck:     Property '[TypeId]' is missing in type 'typeof Service' but required in type 'Effect<unknown, unknown, unknown>'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(38,46): error TS18046: 's' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(38,75): error TS2339: Property 'pipe' does not exist on type 'never'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(39,14): error TS2339: Property 'catchAll' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Effect")'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(42,48): error TS2739: Type 'Promise<{ providerID: string & Brand<"ProviderID">; modelID: string & Brand<"ModelID">; }>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(43,24): error TS2339: Property 'model' does not exist on type '{}'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(44,31): error TS2739: Type 'Promise<{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(44,55): error TS2339: Property 'model' does not exist on type '{}'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(44,79): error TS2339: Property 'model' does not exist on type '{}'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(46,32): error TS18046: 'defaultModel' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(46,57): error TS2339: Property 'pipe' does not exist on type 'Promise<{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; } | undefined>'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(46,69): error TS2339: Property 'catchAll' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Effect")'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(47,38): error TS2739: Type 'Promise<{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(47,56): error TS18046: 'defaultModel' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(47,81): error TS18046: 'defaultModel' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(49,44): error TS2739: Type 'Promise<LanguageModelV3>' is missing the following properties from type 'Effect<unknown, unknown, never>': [TypeId], pipe, asEffect, [Symbol.iterator]
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(49,65): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(55,5): error TS2322: Type 'unknown' is not assignable to type 'LanguageModel'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(57,56): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ ai_sdk_provider?: "alibaba" | "anthropic" | "openai" | "openai-compatible" | "openrouter" | undefined; api: { id: string; npm: string; url: string; }; capabilities: { attachment: boolean; ... 5 more ...; toolcall: boolean; }; ... 13 more ...; variants?: { ...; } | undefined; }'.
+@stratacode/cli:typecheck: src/stratacode/worker/summarizer.ts(57,63): error TS18046: 'model' is of type 'unknown'.
+@stratacode/cli:typecheck: src/stratacode/worker/worker.ts(42,26): error TS2488: Type 'Promise<Info>' must have a '[Symbol.iterator]()' method that returns an iterator.
+@stratacode/cli:typecheck: src/stratacode/worker/worker.ts(59,20): error TS2339: Property 'catchAll' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Effect")'.
+@stratacode/cli:typecheck: src/stratacode/worker/worker.ts(71,26): error TS2488: Type 'Promise<Info>' must have a '[Symbol.iterator]()' method that returns an iterator.
+@stratacode/cli:typecheck: src/stratacode/worker/worker.ts(84,20): error TS2339: Property 'catchAll' does not exist on type 'typeof import("/Users/aleksejgriskovec/AntigravityProjects/stratacode/node_modules/.bun/effect@4.0.0-beta.48/node_modules/effect/dist/Effect")'.
+@stratacode/cli:typecheck: src/stratacode/worker/worker.ts(96,18): error TS2349: This expression is not callable.
+@stratacode/cli:typecheck:   Type '{ type: "worker.started"; properties: ZodObject<{ id: ZodString; worker: ZodString; file: ZodOptional<ZodString>; }, $strip>; }' has no call signatures.
+@stratacode/cli:typecheck: src/stratacode/worker/worker.ts(101,20): error TS2349: This expression is not callable.
+@stratacode/cli:typecheck:   Type '{ type: "worker.completed"; properties: ZodObject<{ id: ZodString; worker: ZodString; duration: ZodNumber; result: ZodOptional<ZodAny>; }, $strip>; }' has no call signatures.
+@stratacode/cli:typecheck: src/stratacode/worker/worker.ts(112,22): error TS2349: This expression is not callable.
+@stratacode/cli:typecheck:   Type '{ type: "worker.failed"; properties: ZodObject<{ id: ZodString; worker: ZodString; error: ZodString; }, $strip>; }' has no call signatures.
+@stratacode/cli:typecheck: ERROR: command finished with error: command (/Users/aleksejgriskovec/AntigravityProjects/stratacode/packages/opencode) /Users/aleksejgriskovec/.nvm/versions/node/v24.13.0/bin/bun run typecheck exited (2)
+@stratacode/cli#typecheck: command (/Users/aleksejgriskovec/AntigravityProjects/stratacode/packages/opencode) /Users/aleksejgriskovec/.nvm/versions/node/v24.13.0/bin/bun run typecheck exited (2)
+
+ Tasks:    11 successful, 13 total
+Cached:    11 cached, 13 total
+  Time:    5.074s 
+Failed:    @stratacode/cli#typecheck
+
+ ERROR  run failed: command  exited (2)
+error: "turbo" exited with code 2

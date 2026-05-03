@@ -208,6 +208,31 @@ export const Info = Schema.Struct({
       }),
     }),
   ), // stratacode_change
+  workers: Schema.optional(
+    Schema.Struct({
+      enabled: Schema.optional(Schema.Boolean).annotate({
+        description: "Enable background context workers (default: false)",
+      }),
+      max_concurrency: Schema.optional(Schema.Number.check(Schema.isInt()).check(Schema.isGreaterThan(0))).annotate({
+        description: "Maximum concurrent worker executions (default: 1)",
+      }),
+      debounce_ms: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))).annotate({
+        description: "Milliseconds to wait after file change before triggering workers (default: 5000)",
+      }),
+      review: Schema.optional(Schema.Boolean).annotate({
+        description: "Enable the review worker (default: true when workers enabled)",
+      }),
+      summarizer: Schema.optional(Schema.Boolean).annotate({
+        description: "Enable the summarizer worker (default: true when workers enabled)",
+      }),
+      auto_explain: Schema.optional(Schema.Boolean).annotate({
+        description: "Enable background diff explanations for the Changes tab (default: false)",
+      }),
+      max_diff_chars: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))).annotate({
+        description: "Maximum diff characters to send to workers (default: 8000). Larger diffs are skipped.",
+      }),
+    }),
+  ).annotate({ description: "Background context workers configuration" }), // stratacode_change
   // stratacode_change end
   // stratacode_change start - nullable for delete sentinel
   model: Schema.optional(Schema.NullOr(ConfigModelID)).annotate({

@@ -1012,6 +1012,15 @@ export const dict = {
   "settings.display.title": "Display",
   "settings.appearance.title": "Appearance",
   "settings.diffViewer.title": "Diff Viewer",
+  "settings.workers.title": "Background Workers",
+  "settings.workers.description":
+    "Background workers silently analyse file changes as you save. They power context-aware commit messages, prompt enhancement, and change explanations. Fine-tune worker behaviour in your project's strata.jsonc under the 'workers' key.",
+  "settings.workers.enable.title": "Enable Background Workers",
+  "settings.workers.enable.description":
+    "Start background review and summarization workers that run automatically when you save files.",
+  "settings.workers.autoExplain.title": "Auto Explain Changes",
+  "settings.workers.autoExplain.description":
+    "Automatically run the explainer worker in the background to pre-populate the Changes tab with AI explanations.",
   "settings.appearance.selectionTip.title": "Selection Tip",
   "settings.appearance.selectionTip.description":
     "Show an inline hint when selecting code, reminding you of the shortcut to add the selection to Strata chat.",

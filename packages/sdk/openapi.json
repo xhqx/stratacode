@@ -9062,6 +9062,65 @@
         ]
       }
     },
+    "/worker/trigger": {
+      "post": {
+        "operationId": "postWorkerTrigger",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Trigger background context workers",
+        "description": "Dispatch workers for changed files, applying debounce and filtering",
+        "tags": ["Worker"],
+        "responses": {
+          "200": {
+            "description": "Workers dispatched"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cwd": {
+                    "type": "string"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "autoExplain": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["cwd", "files"]
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.postWorkerTrigger({\n  ...\n})"
+          }
+        ]
+      }
+    },
     "/stratacode/session-import/project": {
       "post": {
         "operationId": "stratacode.sessionImport.project",
@@ -14421,6 +14480,82 @@
         },
         "required": ["type", "properties"]
       },
+      "Event.worker.started": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker.started"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "worker": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              }
+            },
+            "required": ["id", "worker"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "Event.worker.completed": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker.completed"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "worker": {
+                "type": "string"
+              },
+              "duration": {
+                "type": "number"
+              },
+              "result": {}
+            },
+            "required": ["id", "worker", "duration"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "Event.worker.failed": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker.failed"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "worker": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": ["id", "worker", "error"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
       "SyncEvent.message.updated": {
         "type": "object",
         "properties": {
@@ -15104,6 +15239,15 @@
               },
               {
                 "$ref": "#/components/schemas/Event.session.deleted"
+              },
+              {
+                "$ref": "#/components/schemas/Event.worker.started"
+              },
+              {
+                "$ref": "#/components/schemas/Event.worker.completed"
+              },
+              {
+                "$ref": "#/components/schemas/Event.worker.failed"
               },
               {
                 "$ref": "#/components/schemas/SyncEvent.message.updated"
@@ -16186,6 +16330,44 @@
               },
               "max_commits": {
                 "description": "Maximum number of recent commits to analyze per pull/branch change (default: 10)",
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          },
+          "workers": {
+            "description": "Background context workers configuration",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "description": "Enable background context workers (default: false)",
+                "type": "boolean"
+              },
+              "max_concurrency": {
+                "description": "Maximum concurrent worker executions (default: 1)",
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "debounce_ms": {
+                "description": "Milliseconds to wait after file change before triggering workers (default: 5000)",
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "review": {
+                "description": "Enable the review worker (default: true when workers enabled)",
+                "type": "boolean"
+              },
+              "summarizer": {
+                "description": "Enable the summarizer worker (default: true when workers enabled)",
+                "type": "boolean"
+              },
+              "auto_explain": {
+                "description": "Enable background diff explanations for the Changes tab (default: false)",
+                "type": "boolean"
+              },
+              "max_diff_chars": {
+                "description": "Maximum diff characters to send to workers (default: 8000). Larger diffs are skipped.",
                 "type": "number",
                 "exclusiveMinimum": 0
               }
@@ -17954,6 +18136,15 @@
           },
           {
             "$ref": "#/components/schemas/Event.session.deleted"
+          },
+          {
+            "$ref": "#/components/schemas/Event.worker.started"
+          },
+          {
+            "$ref": "#/components/schemas/Event.worker.completed"
+          },
+          {
+            "$ref": "#/components/schemas/Event.worker.failed"
           }
         ]
       },

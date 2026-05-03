@@ -60,6 +60,11 @@ export async function enhancePrompt(text: string, directory?: string): Promise<s
         const context = await fetchSessionContext(directory, limit)
         if (context) enriched = `${context}\n\n${text}`
       }
+
+      if (cfg.workers?.enabled) {
+        const { ContextMapService } = await import("./worker/context-map")
+        enriched = await ContextMapService.inject(enriched, directory)
+      }
     } catch (err) {
       log.warn("session context fetch failed, continuing without", { err })
     }

@@ -508,6 +508,28 @@ export function patchAgents(
       }
     }
   }
+
+  // If workers are enabled, unhide the worker agents so they appear in the UI
+  if (cfg.workers?.enabled) {
+    if (agents.review_worker) {
+      agents.review_worker.hidden = false
+      agents.review_worker.mode = "all"
+      agents.review_worker.displayName = "Review"
+      agents.review_worker.description = "Reviews code changes for issues and improvements"
+    }
+    if (agents.summarizer_worker) {
+      agents.summarizer_worker.hidden = false
+      agents.summarizer_worker.mode = "all"
+      agents.summarizer_worker.displayName = "Summarizer"
+      agents.summarizer_worker.description = "Generates concise summaries of code changes"
+    }
+    if (agents.explainer_worker) {
+      agents.explainer_worker.hidden = false
+      agents.explainer_worker.mode = "all"
+      agents.explainer_worker.displayName = "Explainer"
+      agents.explainer_worker.description = "Explains code changes in plain language"
+    }
+  }
 }
 
 export const RemoveError = NamedError.create(

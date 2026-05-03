@@ -1171,6 +1171,34 @@ export type EventSessionDeleted = {
   }
 }
 
+export type EventWorkerStarted = {
+  type: "worker.started"
+  properties: {
+    id: string
+    worker: string
+    file?: string
+  }
+}
+
+export type EventWorkerCompleted = {
+  type: "worker.completed"
+  properties: {
+    id: string
+    worker: string
+    duration: number
+    result?: unknown
+  }
+}
+
+export type EventWorkerFailed = {
+  type: "worker.failed"
+  properties: {
+    id: string
+    worker: string
+    error: string
+  }
+}
+
 export type SyncEventMessageUpdated = {
   type: "sync"
   name: "message.updated.1"
@@ -1352,6 +1380,9 @@ export type GlobalEvent = {
     | EventSessionCreated
     | EventSessionUpdated
     | EventSessionDeleted
+    | EventWorkerStarted
+    | EventWorkerCompleted
+    | EventWorkerFailed
     | SyncEventMessageUpdated
     | SyncEventMessageRemoved
     | SyncEventMessagePartUpdated
@@ -1967,6 +1998,39 @@ export type Config = {
      * Maximum number of recent commits to analyze per pull/branch change (default: 10)
      */
     max_commits?: number
+  }
+  /**
+   * Background context workers configuration
+   */
+  workers?: {
+    /**
+     * Enable background context workers (default: false)
+     */
+    enabled?: boolean
+    /**
+     * Maximum concurrent worker executions (default: 1)
+     */
+    max_concurrency?: number
+    /**
+     * Milliseconds to wait after file change before triggering workers (default: 5000)
+     */
+    debounce_ms?: number
+    /**
+     * Enable the review worker (default: true when workers enabled)
+     */
+    review?: boolean
+    /**
+     * Enable the summarizer worker (default: true when workers enabled)
+     */
+    summarizer?: boolean
+    /**
+     * Enable background diff explanations for the Changes tab (default: false)
+     */
+    auto_explain?: boolean
+    /**
+     * Maximum diff characters to send to workers (default: 8000). Larger diffs are skipped.
+     */
+    max_diff_chars?: number
   }
   /**
    * Model to use in the format of provider/model, eg anthropic/claude-2
@@ -2644,6 +2708,9 @@ export type Event =
   | EventSessionCreated
   | EventSessionUpdated
   | EventSessionDeleted
+  | EventWorkerStarted
+  | EventWorkerCompleted
+  | EventWorkerFailed
 
 export type McpStatusConnected = {
   status: "connected"
@@ -6793,6 +6860,27 @@ export type EnhancePromptEnhanceResponses = {
 }
 
 export type EnhancePromptEnhanceResponse = EnhancePromptEnhanceResponses[keyof EnhancePromptEnhanceResponses]
+
+export type PostWorkerTriggerData = {
+  body?: {
+    cwd: string
+    files: Array<string>
+    autoExplain?: boolean
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/worker/trigger"
+}
+
+export type PostWorkerTriggerResponses = {
+  /**
+   * Workers dispatched
+   */
+  200: unknown
+}
 
 export type StratacodeSessionImportProjectData = {
   body?: {

@@ -1,0 +1,31 @@
+// stratacode_change - new file
+export const DENY_PATTERNS = [
+  /\.env.*/i,
+  /\.key$/i,
+  /\.pem$/i,
+  /\.p12$/i,
+  /.*secret.*/i,
+  /.*credentials.*/i,
+  /\.lock$/i,
+  /.*lock\.json$/i,
+  /yarn\.lock$/i,
+  /bun\.lockb$/i,
+  /\.min\.(js|css)$/i,
+  /\.map$/i,
+  /\.d\.ts$/i,
+  /node_modules/,
+  /\.git/,
+  /dist\//,
+  /build\//,
+  /\.png$/i,
+  /\.jpg$/i,
+  /\.jpeg$/i,
+  /\.gif$/i,
+  /\.svg$/i,
+  /\.woff/i,
+  /\.ttf$/i,
+  /\.ico$/i,
+  /\.mp[34]$/i,
+]
+
+export const isDenied = (filepath: string) => DENY_PATTERNS.some((p) => p.test(filepath))

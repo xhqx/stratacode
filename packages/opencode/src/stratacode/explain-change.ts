@@ -100,18 +100,37 @@ export namespace ExplainChange {
    * Returns the full prompt string ready to send to the LLM.
    */
   export async function prompt(scope: Scope): Promise<string> {
+    let result = ""
     switch (scope.kind) {
       case "uncommitted":
-        return promptUncommitted()
+        result = await promptUncommitted()
+        break
       case "branch":
-        return promptBranch(scope.base)
+        result = await promptBranch(scope.base)
+        break
       case "range":
-        return promptRange(scope.from, scope.to)
+        result = await promptRange(scope.from, scope.to)
+        break
       case "file":
-        return promptFile(scope.path, scope.base)
+        result = await promptFile(scope.path, scope.base)
+        break
       case "hunk":
-        return promptHunk(scope.path, scope.hunk, scope.base)
+        result = await promptHunk(scope.path, scope.hunk, scope.base)
+        break
     }
+
+    try {
+      const { Config } = await import("@/config")
+      const cfg = await Config.get()
+      if (cfg.workers?.enabled) {
+        const { ContextMapService } = await import("./worker/context-map")
+        result = await ContextMapService.inject(result, Instance.directory)
+      }
+    } catch (err) {
+      log.warn("session context fetch failed for explain-change", { err })
+    }
+
+    return result
   }
 
   /**

@@ -149,6 +149,19 @@ export const ModeSwitcherBase: Component<ModeSwitcherBaseProps> = (props) => {
                         {language.t("settings.agentBehaviour.badge.deprecated")}
                       </span>
                     </Show>
+                    <Show when={agent.name.endsWith("_worker")}>
+                      <span
+                        style={{
+                          "font-size": "10px",
+                          padding: "1px 5px",
+                          "border-radius": "3px",
+                          background: "var(--vscode-testing-iconPassed, #4caf50)",
+                          color: "#fff",
+                        }}
+                      >
+                        worker
+                      </span>
+                    </Show>
                   </div>
                   <Show when={agent.description}>
                     <span class="mode-switcher-item-desc">{agent.description}</span>

@@ -667,7 +667,9 @@ const AgentBehaviourTab: Component = () => {
                       >
                         <div style={{ flex: 1, "min-width": 0 }}>
                           <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
-                            <div style={{ "font-weight": "500", "font-size": "13px" }}>{name}</div>
+                            <div style={{ "font-weight": "500", "font-size": "13px" }}>
+                              {agent()?.displayName ?? name.split(/[-_]/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                            </div>
                             <Show when={isCustom()}>
                               <span
                                 style={{
@@ -679,6 +681,19 @@ const AgentBehaviourTab: Component = () => {
                                 }}
                               >
                                 custom
+                              </span>
+                            </Show>
+                            <Show when={name.endsWith("_worker")}>
+                              <span
+                                style={{
+                                  "font-size": "10px",
+                                  padding: "1px 5px",
+                                  "border-radius": "3px",
+                                  background: "var(--vscode-testing-iconPassed, #4caf50)",
+                                  color: "#fff",
+                                }}
+                              >
+                                worker
                               </span>
                             </Show>
                             <Show when={agent()?.mode === "subagent"}>

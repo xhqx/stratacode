@@ -96,6 +96,14 @@
         "icon": "$(add)"
       },
       {
+        "command": "strata-code.new.agentManager.showView",
+        "title": "Strata: Show Agent Manager"
+      },
+      {
+        "command": "strata-code.new.workers.showStatus",
+        "title": "Strata: Show Background Worker Status"
+      },
+      {
         "command": "strata-code.new.agentManagerOpen",
         "title": "Agent Manager",
         "icon": "$(layout-panel)"
@@ -1038,8 +1046,26 @@
         }
       },
       {
-        "title": "Strata Code: Browser Automation",
+        "title": "Strata Code: Background Workers",
         "order": 4,
+        "properties": {
+          "strata-code.new.workers.enabled": {
+            "type": "boolean",
+            "default": false,
+            "order": 1,
+            "markdownDescription": "Enable background context workers. Configure in your project's `strata.jsonc` file under the `workers` key."
+          },
+          "strata-code.new.workers.autoExplain": {
+            "type": "boolean",
+            "default": false,
+            "order": 2,
+            "markdownDescription": "Automatically run the explainer in the background to pre-populate the Changes tab with AI explanations."
+          }
+        }
+      },
+      {
+        "title": "Strata Code: Browser Automation",
+        "order": 5,
         "properties": {
           "strata-code.new.browserAutomation.enabled": {
             "type": "boolean",

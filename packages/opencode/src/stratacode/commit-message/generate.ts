@@ -197,6 +197,11 @@ export async function generateCommitMessage(request: CommitMessageRequest): Prom
       const context = await fetchSessionContext(request.path, limit)
       if (context) userMessage = `${context}\n\n${userMessage}`
     }
+
+    if (cfg.workers?.enabled) {
+      const { ContextMapService } = await import("../worker/context-map")
+      userMessage = await ContextMapService.inject(userMessage, request.path)
+    }
   } catch (err) {
     log.warn("session context fetch failed, continuing without", { err })
   }

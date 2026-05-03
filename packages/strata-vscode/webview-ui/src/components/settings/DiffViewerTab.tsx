@@ -40,9 +40,7 @@ const DiffViewerTab: Component = () => {
   // Sync session_context from CLI config
   createEffect(() => {
     const cfg = config()
-    const sc = (cfg as Record<string, unknown>).session_context as
-      | { limit?: number; cache_days?: number }
-      | undefined
+    const sc = (cfg as Record<string, unknown>).session_context as { limit?: number; cache_days?: number } | undefined
     if (sc) {
       if (typeof sc.limit === "number") setCtxLimit(sc.limit)
       if (typeof sc.cache_days === "number") setCtxCache(sc.cache_days)

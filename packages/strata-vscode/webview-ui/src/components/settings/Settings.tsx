@@ -9,6 +9,7 @@ import { useConfig } from "../../context/config"
 import ProvidersTab from "./ProvidersTab"
 import AgentBehaviourTab from "./AgentBehaviourTab"
 import AutoApproveTab from "./AutoApproveTab"
+import BackgroundWorkersTab from "./BackgroundWorkersTab"
 import BrowserTab from "./BrowserTab"
 import CheckpointsTab from "./CheckpointsTab"
 import DisplayTab from "./DisplayTab"
@@ -245,6 +246,10 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="code-lines" />
             <span class="label">{language.t("settings.diffViewer.title")}</span>
           </Tabs.Trigger>
+          <Tabs.Trigger value="workers">
+            <Icon name="reset" />
+            <span class="label">{language.t("settings.workers.title")}</span>
+          </Tabs.Trigger>
           <Tabs.Trigger value="appearance">
             <Icon name="eye" />
             <span class="label">{language.t("settings.appearance.title")}</span>
@@ -347,6 +352,10 @@ const Settings: Component<SettingsProps> = (props) => {
         <Tabs.Content value="diffViewer">
           <h3>{language.t("settings.diffViewer.title")}</h3>
           <DiffViewerTab />
+        </Tabs.Content>
+        <Tabs.Content value="workers">
+          <h3>{language.t("settings.workers.title")}</h3>
+          <BackgroundWorkersTab />
         </Tabs.Content>
         <Tabs.Content value="appearance">
           <h3>{language.t("settings.appearance.title")}</h3>
