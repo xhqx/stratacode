@@ -36,14 +36,6 @@ export interface FeatureDefinition {
   requires?: keyof ExtensionFeatureFlags // Parent feature that must be ON for this one to be enabled
 }
 
-// Internal helper for translation (avoids coupling to SolidJS context)
-// Note: Since this is outside the component tree, dynamic translations for labels/descriptions
-// require either passing a translation function or resolving at render time.
-// For simplicity, we use the static string keys or English defaults here, and components
-// can translate them if needed, or we just rely on the static text for now (matching prior behavior).
-// Since language.t was used dynamically in FeaturesTab for some experimental keys, we will
-// use a function to resolve dynamic fields at render time.
-
 export type ResolvableFeatureDefinition = Omit<FeatureDefinition, "label" | "description"> & {
   label: (t: (key: string) => string) => string
   description: (t: (key: string) => string) => string
@@ -54,14 +46,14 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     key: "acpAgents",
     label: () => "ACP Agents",
     description: () => "Enable Agent Communication Protocol agents integration.",
-    icon: "circuit-board",
+    icon: "mcp",
     component: AcpAgentsTab,
   },
   {
     key: "agentManager",
     label: () => "Agent Manager",
     description: () => "Enable the multi-session Agent Manager panel with git worktree isolation.",
-    icon: "sidebar",
+    icon: "layout-left",
     component: AgentManagerTab,
   },
   {
@@ -76,7 +68,7 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     label: () => "Autocomplete",
     description: () =>
       "Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling requires a window reload.",
-    icon: "code-lines",
+    icon: "keyboard",
     component: AutocompleteTab,
     agents: ["autocomplete"],
     pinned: ["autocomplete"],
@@ -93,7 +85,7 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     label: (t) => t("settings.experimental.batchTool.title") || "Batch Tool",
     description: (t) =>
       t("settings.experimental.batchTool.description") || "Enable the experimental batch tool for agents.",
-    icon: "settings-gear",
+    icon: "layers",
   },
   {
     key: "browserAutomation",
@@ -114,7 +106,7 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     label: () => "Code Actions",
     description: () =>
       "Enable AI-powered Quick Fixes and code actions in the editor. Disabling requires a window reload.",
-    icon: "code-lines",
+    icon: "edit",
     component: CodeActionsTab,
   },
   {
@@ -130,7 +122,7 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     label: () => "Commit Message",
     description: () =>
       "Enable AI-generated commit messages in the Source Control panel. Disabling requires a window reload.",
-    icon: "branch",
+    icon: "pencil-line",
     component: CommitMessageTab,
     agents: ["commit"],
     pinned: ["commit"],
@@ -139,7 +131,7 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     key: "compaction",
     label: () => "Compaction",
     description: () => "Enable automatic context compaction for long sessions.",
-    icon: "archive",
+    icon: "compress",
     component: CompactionTab,
   },
   {
@@ -147,7 +139,7 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     label: () => "Diff Viewer",
     description: () =>
       "Enable the Changes tab, AI explain commands, and diff viewer panel. Disabling requires a window reload.",
-    icon: "code-lines",
+    icon: "review",
     component: DiffViewerTab,
   },
   {
@@ -162,7 +154,7 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     key: "explainer",
     label: () => "Explainer",
     description: () => "Enable the standalone AI explainer for code selection and symbol explanations.",
-    icon: "brain",
+    icon: "brain" as IconProps["name"],
     component: ExplainerTab,
     agents: ["explainer"],
   },
@@ -172,13 +164,13 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     description: (t) =>
       t("settings.agentBehaviour.formatter.description") ||
       "Use the AI formatter to automatically apply changes after code generation.",
-    icon: "code-lines",
+    icon: "edit-small-2",
   },
   {
     key: "kanban",
     label: () => "Kanban",
     description: () => "Enable the Kanban task board for tracking AI-generated tasks.",
-    icon: "checklist",
+    icon: "task",
     component: KanbanTab,
     tools: ["task", "todoread", "todowrite"],
   },
@@ -186,7 +178,7 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     key: "lsp",
     label: () => "LSP",
     description: () => "Enable Language Server Protocol integration for diagnostics and code intelligence.",
-    icon: "code",
+    icon: "circuit-board",
     component: LspTab,
     tools: ["lsp"],
   },
@@ -194,7 +186,7 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     key: "notifications",
     label: () => "Notifications",
     description: () => "Enable in-app notification center for agent activity and system events.",
-    icon: "circle-check",
+    icon: "bubble-5",
     component: NotificationsTab,
   },
   {
@@ -208,40 +200,40 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     key: "planningMode",
     label: () => "Planning Mode",
     description: () => "Enable planning mode for structured multi-step task orchestration.",
-    icon: "checklist",
+    icon: "bullet-list",
   },
   {
     key: "projectMemory",
     label: () => "Project Memory",
     description: () => "Enable project memory for persisting context across sessions.",
-    icon: "archive",
+    icon: "folder",
     component: ProjectMemoryTab,
   },
   {
     key: "promptAutocomplete",
     label: () => "Prompt Autocomplete",
     description: () => "Enable AI-powered autocomplete suggestions in the chat input.",
-    icon: "code-lines",
+    icon: "prompt",
   },
   {
     key: "promptEnhancer",
     label: () => "Prompt Enhancer",
     description: () => "Enable the prompt enhancer to refine and improve user prompts before sending.",
-    icon: "code-lines",
+    icon: "sliders",
     agents: ["enhance"],
   },
   {
     key: "promptEnhancerSuggestions",
     label: () => "Prompt Enhancer Suggestions",
     description: () => "Show inline suggestions from the prompt enhancer as you type.",
-    icon: "code-lines",
+    icon: "eye",
     requires: "promptEnhancer",
   },
   {
     key: "remoteControl",
     label: () => "Remote Control",
     description: () => "Enable remote control API for external tool integration.",
-    icon: "window-cursor",
+    icon: "console",
     component: RemoteControlTab,
   },
   {
@@ -250,69 +242,75 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     description: (t) =>
       t("settings.appearance.selectionTip.description") ||
       "Show a tip when you select code to explain or use code actions.",
-    icon: "code-lines",
-  },
-  {
-    key: "sessionSharing",
-    label: () => "Session Sharing",
-    description: () => "Enable session sharing and cloud sync for collaborative workflows.",
-    icon: "link",
-    component: SessionSharingTab,
+    icon: "glasses",
   },
   {
     key: "taskTimeline",
     label: (t) => t("settings.display.taskTimeline.title") || "Task Timeline",
     description: (t) => t("settings.display.taskTimeline.description") || "Show the task timeline view in the sidebar.",
-    icon: "checklist",
+    icon: "file-tree",
   },
   {
     key: "workers",
     label: () => "Workers",
     description: () =>
       "Enable background context workers. Configure in your project's strata.jsonc file under the workers key.",
-    icon: "reset",
+    icon: "providers",
     component: BackgroundWorkersTab,
   },
 ]
 
-export const FEATURE_KEYS: ReadonlySet<string> = new Set(FEATURES.map((f) => f.key))
+// O(1) Pre-computed Indices for Premium Performance
+const FEATURE_MAP = new Map<keyof ExtensionFeatureFlags, ResolvableFeatureDefinition>(
+  FEATURES.map((f) => [f.key, f]),
+)
+
+const AGENT_GATE_MAP = new Map<string, (keyof ExtensionFeatureFlags)[]>()
+const TOOL_GATE_MAP = new Map<string, (keyof ExtensionFeatureFlags)[]>()
+const CHILD_MAP = new Map<keyof ExtensionFeatureFlags, (keyof ExtensionFeatureFlags)[]>()
+
+for (const feature of FEATURES) {
+  if (feature.agents) {
+    for (const agent of feature.agents) {
+      const gates = AGENT_GATE_MAP.get(agent) || []
+      gates.push(feature.key)
+      AGENT_GATE_MAP.set(agent, gates)
+    }
+  }
+  if (feature.tools) {
+    for (const tool of feature.tools) {
+      const gates = TOOL_GATE_MAP.get(tool) || []
+      gates.push(feature.key)
+      TOOL_GATE_MAP.set(tool, gates)
+    }
+  }
+  if (feature.requires) {
+    const children = CHILD_MAP.get(feature.requires) || []
+    children.push(feature.key)
+    CHILD_MAP.set(feature.requires, children)
+  }
+}
+
+export const FEATURE_KEYS: ReadonlySet<keyof ExtensionFeatureFlags> = new Set(FEATURES.map((f) => f.key))
 
 /**
  * Returns true if an agent is visible given the current feature flags.
- * An agent is visible if it is NOT gated by any feature, or if ALL features gating it are ON.
- * Actually, typical gating is 1-to-1, but the rule is: if any feature lists this agent in its `agents` array
- * and that feature is OFF, the agent is hidden.
+ * An agent is visible if ALL features gating it are ON.
  */
 export function agentVisible(name: string, feats: ExtensionFeatureFlags): boolean {
-  for (const feature of FEATURES) {
-    if (feature.agents?.includes(name) && !feats[feature.key]) {
-      return false
-    }
-  }
-  return true
+  const gates = AGENT_GATE_MAP.get(name)
+  if (!gates) return true
+  return gates.every((key) => feats[key])
 }
 
 /**
  * Returns true if a tool is visible given the current feature flags.
- * A tool is visible if it has NO gating features, OR if ANY of its gating features are ON.
- * This supports the "task -> kanban || documentDrivenTasks" OR relationship.
+ * A tool is visible if ANY of its gating features are ON (OR relationship).
  */
 export function toolVisible(id: string, feats: ExtensionFeatureFlags): boolean {
-  let gatingFeaturesCount = 0
-  let enabledGatingFeaturesCount = 0
-
-  for (const feature of FEATURES) {
-    if (feature.tools?.includes(id)) {
-      gatingFeaturesCount++
-      if (feats[feature.key]) {
-        enabledGatingFeaturesCount++
-      }
-    }
-  }
-
-  // If no features gate this tool, it's visible.
-  // If some features gate it, it's visible if at least one of them is enabled.
-  return gatingFeaturesCount === 0 || enabledGatingFeaturesCount > 0
+  const gates = TOOL_GATE_MAP.get(id)
+  if (!gates) return true
+  return gates.some((key) => feats[key])
 }
 
 /**
@@ -331,12 +329,17 @@ export function pinnedFor(feats: ExtensionFeatureFlags): string[] {
 
 /** Returns true if a feature's parent dependency (if any) is enabled. */
 export function parentEnabled(key: keyof ExtensionFeatureFlags, feats: ExtensionFeatureFlags): boolean {
-  const feature = FEATURES.find((f) => f.key === key)
+  const feature = FEATURE_MAP.get(key)
   if (!feature?.requires) return true
   return feats[feature.requires]
 }
 
 /** Returns all child feature keys whose `requires` field points to the given parent. */
 export function children(parent: keyof ExtensionFeatureFlags): (keyof ExtensionFeatureFlags)[] {
-  return FEATURES.filter((f) => f.requires === parent).map((f) => f.key)
+  return CHILD_MAP.get(parent) || []
+}
+
+/** Returns a feature definition by its key. */
+export function getFeature(key: keyof ExtensionFeatureFlags): ResolvableFeatureDefinition | undefined {
+  return FEATURE_MAP.get(key)
 }

@@ -1,6 +1,6 @@
 import { Component, createSignal, createEffect, Show, onCleanup, For } from "solid-js"
 import { Dynamic } from "solid-js/web"
-import { Icon, type IconProps } from "@stratacode/strata-ui/icon"
+import { Icon } from "@stratacode/strata-ui/icon"
 import { Switch } from "@stratacode/strata-ui/switch"
 import { useVSCode } from "../../context/vscode"
 import { useConfig } from "../../context/config"
@@ -8,7 +8,7 @@ import { useLanguage } from "../../context/language"
 import type { ExtensionMessage } from "../../types/messages"
 import type { ExtensionFeatureFlags } from "../../types/messages/config"
 
-import { FEATURES, children as childFeatures } from "./feature-registry"
+import { FEATURES, children as childFeatures, getFeature } from "./feature-registry"
 
 export interface FeaturesTabProps {
   initialFeature?: string
@@ -37,7 +37,7 @@ const FeaturesTab: Component<FeaturesTabProps> = (props) => {
   }
 
   const resolveInitial = (tab?: string): keyof ExtensionFeatureFlags => {
-    if (tab && FEATURES.find((f) => f.key === tab)) return tab as keyof ExtensionFeatureFlags
+    if (tab && getFeature(tab as keyof ExtensionFeatureFlags)) return tab as keyof ExtensionFeatureFlags
     return FEATURES[0].key
   }
 
@@ -47,7 +47,7 @@ const FeaturesTab: Component<FeaturesTabProps> = (props) => {
     if (props.initialFeature) setActive(resolveInitial(props.initialFeature))
   })
 
-  const currentFeature = () => FEATURES.find((f) => f.key === active())
+  const currentFeature = () => getFeature(active())
 
   // ─── shared button style helper ─────────────────────────────────────────────
   const btnStyle = (key: keyof ExtensionFeatureFlags, enabled = true) => ({
@@ -126,7 +126,7 @@ const FeaturesTab: Component<FeaturesTabProps> = (props) => {
           {(feature) => {
             const enabled = () => extensionFeatures()[feature.key]
             const locked = () => !!feature.requires && !extensionFeatures()[feature.requires]
-            const parent = () => feature.requires && FEATURES.find((f) => f.key === feature.requires)
+            const parent = () => feature.requires && getFeature(feature.requires)
             return (
               <>
                 <div
