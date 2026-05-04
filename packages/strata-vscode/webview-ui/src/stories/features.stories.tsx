@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "storybook-solidjs"
+import type { Meta, StoryObj } from "storybook-solidjs-vite"
 import FeaturesTab from "../components/settings/FeaturesTab"
 import Settings from "../components/settings/Settings"
 import { StoryProviders } from "./StoryProviders"
