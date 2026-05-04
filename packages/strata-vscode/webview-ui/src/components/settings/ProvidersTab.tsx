@@ -25,7 +25,7 @@ type ProviderOption = { value: string; label: string }
 
 const ProvidersTab: Component = () => {
   const dialog = useDialog()
-  const { config, updateConfig } = useConfig()
+  const { config, updateConfig, extensionFeatures } = useConfig()
   const provider = useProvider()
   const language = useLanguage()
   const server = useServer()
@@ -65,7 +65,7 @@ const ProvidersTab: Component = () => {
   const disabledIds = createMemo(() => new Set(disabledProviders()))
   // Derive gateway availability from CLI provider data.
   // When STRATA_ENABLE_GATEWAY=false the CLI won't register the strata provider.
-  const gatewayEnabled = createMemo(() => !!provider.providers()[STRATA_PROVIDER_ID])
+  const gatewayEnabled = createMemo(() => extensionFeatures().strataAuth && !!provider.providers()[STRATA_PROVIDER_ID])
   const providers = createMemo(() =>
     gatewayEnabled() ? providersWithStrataFallback(provider.providers()) : provider.providers(),
   )

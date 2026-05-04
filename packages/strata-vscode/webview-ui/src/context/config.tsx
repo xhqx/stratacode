@@ -37,8 +37,10 @@ export const ConfigContext = createContext<ConfigContextValue>()
 
 const EXT_FEATURE_DEFAULTS: ExtensionFeatureFlags = {
   acpAgents: true,
+  agentManager: true,
   autoApprove: true,
   autocomplete: true,
+  cloudSessions: true,
   autoretries: true,
   batchTool: false,
   browserAutomation: false,
@@ -46,7 +48,7 @@ const EXT_FEATURE_DEFAULTS: ExtensionFeatureFlags = {
   codeActions: true,
   codebaseSearch: false,
   commitMessage: true,
-  compaction: false,
+  compaction: true,
   diffViewer: true,
   documentDrivenTasks: false,
   explainer: true,
@@ -63,6 +65,7 @@ const EXT_FEATURE_DEFAULTS: ExtensionFeatureFlags = {
   remoteControl: false,
   selectionTip: true,
   sessionSharing: false,
+  strataAuth: true,
   taskTimeline: true,
   workers: false,
 }

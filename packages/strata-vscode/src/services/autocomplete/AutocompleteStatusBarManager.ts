@@ -10,7 +10,7 @@ export class AutocompleteStatusBarManager {
 
   constructor(
     private settingsManager: AutocompleteSettingsManager,
-    private client: AutocompleteBackendClient
+    private client: AutocompleteBackendClient,
   ) {
     this.statusBar = new AutocompleteStatusBar({
       enabled: false,
@@ -31,7 +31,7 @@ export class AutocompleteStatusBarManager {
 
   public update(isSnoozed: boolean = false): void {
     const settings = this.settingsManager.getSettings()
-    
+
     this.statusBar.update({
       enabled: settings.enableAutoTrigger,
       snoozed: isSnoozed,

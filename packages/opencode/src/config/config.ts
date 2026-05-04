@@ -231,6 +231,15 @@ export const Info = Schema.Struct({
       auto_explain: Schema.optional(Schema.Boolean).annotate({
         description: "Enable background diff explanations for the Changes tab (default: false)",
       }),
+      summarizer_prompt: Schema.optional(Schema.String).annotate({
+        description: "Custom system prompt for the summarizer worker",
+      }),
+      review_prompt: Schema.optional(Schema.String).annotate({
+        description: "Custom system prompt for the review worker",
+      }),
+      explainer_prompt: Schema.optional(Schema.String).annotate({
+        description: "Custom system prompt for the explainer worker",
+      }),
       max_diff_chars: Schema.optional(Schema.Number.check(Schema.isGreaterThan(0))).annotate({
         description: "Maximum diff characters to send to workers (default: 8000). Larger diffs are skipped.",
       }),

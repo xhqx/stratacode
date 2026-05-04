@@ -52,20 +52,21 @@ const AutocompleteTab: Component = () => {
       <Card>
         <SettingsRow
           title={language.t("settings.autocomplete.autoTrigger.title") || "Auto-Trigger Inline Completions"}
-          description={language.t("settings.autocomplete.autoTrigger.description") || "Show ghost text automatically as you type."}
+          description={
+            language.t("settings.autocomplete.autoTrigger.description") || "Show ghost text automatically as you type."
+          }
         >
-          <Switch
-            checked={autoTrigger()}
-            onChange={(val) => updateSetting("enableAutoTrigger", val)}
-            hideLabel
-          >
+          <Switch checked={autoTrigger()} onChange={(val) => updateSetting("enableAutoTrigger", val)} hideLabel>
             {language.t("settings.autocomplete.autoTrigger.title") || "Auto-Trigger Inline Completions"}
           </Switch>
         </SettingsRow>
 
         <SettingsRow
           title={language.t("settings.autocomplete.smartKeybinding.title") || "Smart Inline Task Keybinding"}
-          description={language.t("settings.autocomplete.smartKeybinding.description") || "Enable the smart inline task keybinding."}
+          description={
+            language.t("settings.autocomplete.smartKeybinding.description") ||
+            "Enable the smart inline task keybinding."
+          }
         >
           <Switch
             checked={smartInline()}
@@ -78,13 +79,11 @@ const AutocompleteTab: Component = () => {
 
         <SettingsRow
           title={language.t("settings.autocomplete.chatAutocomplete.title") || "Chat Autocomplete"}
-          description={language.t("settings.autocomplete.chatAutocomplete.description") || "Enable chat autocomplete suggestions."}
+          description={
+            language.t("settings.autocomplete.chatAutocomplete.description") || "Enable chat autocomplete suggestions."
+          }
         >
-          <Switch
-            checked={chatAuto()}
-            onChange={(val) => updateSetting("enableChatAutocomplete", val)}
-            hideLabel
-          >
+          <Switch checked={chatAuto()} onChange={(val) => updateSetting("enableChatAutocomplete", val)} hideLabel>
             {language.t("settings.autocomplete.chatAutocomplete.title") || "Chat Autocomplete"}
           </Switch>
         </SettingsRow>

@@ -21,11 +21,11 @@ describe("AutocompleteRequestScheduler", () => {
     // Call multiple times quickly
     scheduler.schedule("const x = 1", "", task)
     scheduler.schedule("const x = 12", "", task)
-    
+
     // Fast forward timer
     vi.advanceTimersByTime(350)
     await Promise.resolve() // flush microtasks
-    
+
     // Only the last call should have been executed
     expect(callCount).toBe(1)
   })
@@ -38,14 +38,14 @@ describe("AutocompleteRequestScheduler", () => {
     }
 
     scheduler.schedule("const x = 1", "", task)
-    
+
     // The first call should execute without waiting for debounce
     expect(callCount).toBe(1)
   })
 
   it("should reuse pending requests for the same context", async () => {
     const scheduler = new AutocompleteRequestScheduler()
-    
+
     let callCount = 0
     const task = async () => {
       callCount++
@@ -54,9 +54,9 @@ describe("AutocompleteRequestScheduler", () => {
     // Two identical requests (same hash) should result in one execution but both promises resolved
     const p1 = scheduler.schedule("const x = 1", "", task)
     const p2 = scheduler.schedule("const x = 1", "", task)
-    
+
     await Promise.all([p1, p2])
-    
+
     expect(callCount).toBe(1) // Task ran only once
   })
 
@@ -66,7 +66,7 @@ describe("AutocompleteRequestScheduler", () => {
     for (let i = 0; i < 11; i++) {
       scheduler.recordLatency(150)
     }
-    
+
     // After success, delay should drop
     const currentDelay = scheduler["debounceDelayMs"]
     expect(currentDelay).toBeLessThan(300)

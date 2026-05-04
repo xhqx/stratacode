@@ -37,9 +37,19 @@ export const WorkerRoutes = lazy(() =>
           },
         },
       }),
+      validator(
+        "query",
+        z.object({
+          directory: z.string().optional(),
+          tier: z.enum(["big", "medium", "small"]).optional(),
+        }),
+      ),
       async (c) => {
-        const map = await ContextMapService.read(Instance.directory)
-        return c.json({ summary: map.summary ?? null })
+        const { directory, tier } = c.req.valid("query")
+        const dir = directory || Instance.directory
+        const map = await ContextMapService.read(dir)
+        const ctx = tier ? (map[tier] ?? map.summary) : map.summary
+        return c.json({ summary: ctx ?? null })
       },
     )
     .post(

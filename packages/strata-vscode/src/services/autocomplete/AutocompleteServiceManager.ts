@@ -44,7 +44,7 @@ export class AutocompleteServiceManager {
 
     this.settingsManager = AutocompleteSettingsManager.getInstance()
     this.snoozeManager = new AutocompleteSnoozeManager(this.settingsManager)
-    
+
     // Register Internal Components
     this.model = new AutocompleteBackendClient(connectionService)
 

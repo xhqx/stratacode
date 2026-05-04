@@ -4,8 +4,7 @@ import { Agent } from "@/agent/agent"
 import { Log } from "@/util"
 import type { CommitMessageRequest, CommitMessageResponse, GitContext } from "./types"
 import { getGitContext } from "./git-context"
-import { fetchSessionContext } from "../session-context" // stratacode_change
-import { injectProjectContext } from "../project-context"
+import { injectContext } from "../project-context"
 
 const log = Log.create({ service: "commit-message" })
 
@@ -191,25 +190,13 @@ export async function generateCommitMessage(request: CommitMessageRequest): Prom
 
   // stratacode_change start - inject session context for developer intent
   try {
-    const { Config } = await import("../../config")
-    const cfg = await Config.get()
-    const limit = cfg.session_context?.limit ?? 5
-    if (limit > 0) {
-      const context = await fetchSessionContext(request.path, limit)
-      if (context) userMessage = `${context}\n\n${userMessage}`
-    }
-
-    if (cfg.workers?.enabled) {
-      userMessage = await injectProjectContext(userMessage, {
-        cwd: request.path,
-        mentioned: ctx.files.map((f) => f.path),
-        summary: true,
-        repomap: true,
-        repomapBudget: 4000,
-      })
-    }
+    userMessage = await injectContext(userMessage, {
+      cwd: request.path,
+      mentioned: ctx.files.map((f) => f.path),
+      tier: "medium",
+    })
   } catch (err) {
-    log.warn("session context fetch failed, continuing without", { err })
+    log.warn("context injection failed, continuing without", { err })
   }
   // stratacode_change end
 

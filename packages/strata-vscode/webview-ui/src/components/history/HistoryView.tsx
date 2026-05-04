@@ -4,10 +4,11 @@
  * Contains a tab bar ("Local" | "Cloud") and an always-visible "Import session" button.
  */
 
-import { Component, createSignal } from "solid-js"
+import { Component, createSignal, Show, createEffect } from "solid-js"
 import { Button } from "@stratacode/strata-ui/button"
 import { useDialog } from "@stratacode/strata-ui/context/dialog"
 import { useLanguage } from "../../context/language"
+import { useConfig } from "../../context/config"
 import { useSession } from "../../context/session"
 import { CloudImportDialog } from "../chat/CloudImportDialog"
 import SessionList from "./SessionList"
@@ -20,6 +21,7 @@ interface HistoryViewProps {
 
 const HistoryView: Component<HistoryViewProps> = (props) => {
   const language = useLanguage()
+  const { extensionFeatures } = useConfig()
   const dialog = useDialog()
   const session = useSession()
   const [tab, setTab] = createSignal<"local" | "cloud">("local")
@@ -39,6 +41,13 @@ const HistoryView: Component<HistoryViewProps> = (props) => {
     props.onBack?.()
   }
 
+  // Auto-switch to local if cloud is disabled
+  createEffect(() => {
+    if (!extensionFeatures().cloudSessions && tab() === "cloud") {
+      setTab("local")
+    }
+  })
+
   return (
     <div class="history-view">
       <div class="history-view-header">
@@ -53,17 +62,21 @@ const HistoryView: Component<HistoryViewProps> = (props) => {
           >
             {language.t("session.tab.local")}
           </button>
-          <button
-            class="history-tab-btn"
-            classList={{ "history-tab-btn--active": tab() === "cloud" }}
-            onClick={() => setTab("cloud")}
-          >
-            {language.t("session.tab.cloud")}
-          </button>
+          <Show when={extensionFeatures().cloudSessions}>
+            <button
+              class="history-tab-btn"
+              classList={{ "history-tab-btn--active": tab() === "cloud" }}
+              onClick={() => setTab("cloud")}
+            >
+              {language.t("session.tab.cloud")}
+            </button>
+          </Show>
         </div>
-        <Button variant="secondary" size="small" onClick={openImport} class="history-import-btn">
-          {language.t("session.cloud.import")}
-        </Button>
+        <Show when={extensionFeatures().cloudSessions}>
+          <Button variant="secondary" size="small" onClick={openImport} class="history-import-btn">
+            {language.t("session.cloud.import")}
+          </Button>
+        </Show>
       </div>
 
       <div class="history-view-content">

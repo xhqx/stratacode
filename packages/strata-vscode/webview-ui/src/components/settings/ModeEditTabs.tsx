@@ -272,9 +272,12 @@ const ModelPoolSection: Component<{
               </div>
             </div>
           </SettingsRow>
-          <SettingsRow 
-            title={props.t("settings.agentBehaviour.modelPool.maxConcurrent")} 
-            description={props.t("settings.agentBehaviour.modelPool.maxConcurrent.description") || "Maximum number of concurrent executions per pool model."}
+          <SettingsRow
+            title={props.t("settings.agentBehaviour.modelPool.maxConcurrent")}
+            description={
+              props.t("settings.agentBehaviour.modelPool.maxConcurrent.description") ||
+              "Maximum number of concurrent executions per pool model."
+            }
           >
             <input
               type="number"
@@ -289,9 +292,12 @@ const ModelPoolSection: Component<{
               }}
             />
           </SettingsRow>
-          <SettingsRow 
-            title={props.t("settings.agentBehaviour.modelPool.timeout")} 
-            description={props.t("settings.agentBehaviour.modelPool.timeout.description") || "Maximum execution time before timing out the request."} 
+          <SettingsRow
+            title={props.t("settings.agentBehaviour.modelPool.timeout")}
+            description={
+              props.t("settings.agentBehaviour.modelPool.timeout.description") ||
+              "Maximum execution time before timing out the request."
+            }
             last
           >
             <input

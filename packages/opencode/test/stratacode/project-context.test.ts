@@ -39,7 +39,7 @@ describe("project-context", () => {
         get: mock(() => Promise.resolve({ workers: { enabled: false } })),
       },
     }))
-    
+
     const prompt = "Original prompt"
     const result = await injectProjectContext(prompt, { cwd: "/test" })
     expect(result).toBe(prompt)
@@ -47,10 +47,10 @@ describe("project-context", () => {
 
   it("should return prompt unchanged if summary and repomap are false", async () => {
     const prompt = "Original prompt"
-    const result = await injectProjectContext(prompt, { 
-      cwd: "/test", 
-      summary: false, 
-      repomap: false 
+    const result = await injectProjectContext(prompt, {
+      cwd: "/test",
+      summary: false,
+      repomap: false,
     })
     expect(result).toBe(prompt)
   })
@@ -58,7 +58,7 @@ describe("project-context", () => {
   it("should inject both summary and repomap by default", async () => {
     const prompt = "Original prompt"
     const result = await injectProjectContext(prompt, { cwd: "/test" })
-    
+
     expect(result).toContain("## Project Context")
     expect(result).toContain("Test Summary")
     expect(result).toContain("<repo_map>\nTest Map")
@@ -67,12 +67,12 @@ describe("project-context", () => {
 
   it("should inject only summary when repomap is false", async () => {
     const prompt = "Original prompt"
-    const result = await injectProjectContext(prompt, { 
-      cwd: "/test", 
-      summary: true, 
-      repomap: false 
+    const result = await injectProjectContext(prompt, {
+      cwd: "/test",
+      summary: true,
+      repomap: false,
     })
-    
+
     expect(result).toContain("## Project Context")
     expect(result).toContain("Test Summary")
     expect(result).not.toContain("<repo_map>")
@@ -85,7 +85,7 @@ describe("project-context", () => {
         read: mock(() => Promise.reject(new Error("summary failed"))),
       },
     }))
-    
+
     mock.module("@/stratacode/repomap", () => ({
       RepoMap: {
         generate: mock(() => Effect.fail(new Error("repomap failed"))),

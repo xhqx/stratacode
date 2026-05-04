@@ -38,6 +38,7 @@ import { hasIndexingPlugin } from "@stratacode/strata-indexing/detect"
 import { resolveTemplate } from "../context/language-utils"
 import type {
   Config,
+  ExtensionFeatureFlags,
   StratacodeNotification,
   PermissionRequest,
   QuestionRequest,
@@ -259,15 +260,25 @@ interface StoryProvidersProps {
   sessionID?: string
   /** When provided, injects a mock ConfigContext with this config instead of the real ConfigProvider. */
   config?: Config
+  /** When provided along with config, overrides the extension feature flags in the mock context. */
+  extensionFeatures?: Partial<ExtensionFeatureFlags>
   onConfigChange?: (config: Config) => void
   /** When true, renders children without the default 12px padding wrapper */
   noPadding?: boolean
 }
 
 /** Wraps children with either a mock ConfigContext (when config prop is given) or the real ConfigProvider. */
-const ConfigWrapper: ParentComponent<{ config?: Config; onConfigChange?: (config: Config) => void }> = (props) => {
+const ConfigWrapper: ParentComponent<{
+  config?: Config
+  extensionFeatures?: Partial<ExtensionFeatureFlags>
+  onConfigChange?: (config: Config) => void
+}> = (props) => {
   if (props.config) {
     const [cfg, setCfg] = createSignal(props.config)
+    const [featureOverrides, setFeatureOverrides] = createSignal<Partial<ExtensionFeatureFlags>>(
+      props.extensionFeatures || {},
+    )
+
     const features = createMemo(() => {
       const config = cfg() as Config & {
         plugin?: readonly PluginSpec[] | null
@@ -283,12 +294,14 @@ const ConfigWrapper: ParentComponent<{ config?: Config; onConfigChange?: (config
       features,
       extensionFeatures: createMemo(() => ({
         acpAgents: true,
+        agentManager: true,
         autoApprove: true,
         autocomplete: true,
         autoretries: true,
         batchTool: true,
         browserAutomation: true,
         checkpoints: true,
+        cloudSessions: true,
         codeActions: true,
         codebaseSearch: true,
         commitMessage: true,
@@ -309,8 +322,11 @@ const ConfigWrapper: ParentComponent<{ config?: Config; onConfigChange?: (config
         remoteControl: true,
         selectionTip: true,
         sessionSharing: true,
+        strataAuth: true,
         taskTimeline: true,
         workers: true,
+        ...(props.extensionFeatures || {}),
+        ...featureOverrides(),
       })),
       loading: () => false,
       isDirty: () => false,
@@ -323,7 +339,9 @@ const ConfigWrapper: ParentComponent<{ config?: Config; onConfigChange?: (config
           return next
         })
       },
-      updateExtensionFeature: noop,
+      updateExtensionFeature: (key: keyof ExtensionFeatureFlags, value: boolean) => {
+        setFeatureOverrides((prev) => ({ ...prev, [key]: value }))
+      },
       saveConfig: noop,
       discardConfig: noop,
     }
@@ -347,7 +365,11 @@ export const StoryProviders: ParentComponent<StoryProvidersProps> = (props) => {
   return (
     <VSCodeProvider>
       <ServerProvider>
-        <ConfigWrapper config={props.config} onConfigChange={props.onConfigChange}>
+        <ConfigWrapper
+          config={props.config}
+          extensionFeatures={props.extensionFeatures}
+          onConfigChange={props.onConfigChange}
+        >
           <MockProviderProvider>
             <DialogProvider>
               <LanguageContext.Provider

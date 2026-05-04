@@ -45,6 +45,7 @@ export class TelemetryProxy {
    * Fire-and-forget capture. Enriches with provider properties, then POSTs to CLI.
    */
   capture(event: TelemetryEventName, properties?: Record<string, unknown>) {
+    if (process.env.STRATA_DISABLE_CLOUD) return
     if (!this.isVSCodeTelemetryEnabled()) return
     if (!this.url || !this.password) return
 

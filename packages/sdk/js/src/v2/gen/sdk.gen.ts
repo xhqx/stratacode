@@ -6367,6 +6367,7 @@ export class StrataClient extends HeyApiClient {
     parameters?: {
       directory?: string
       workspace?: string
+      tier?: "big" | "medium" | "small"
     },
     options?: Options<never, ThrowOnError>,
   ) {
@@ -6377,6 +6378,7 @@ export class StrataClient extends HeyApiClient {
           args: [
             { in: "query", key: "directory" },
             { in: "query", key: "workspace" },
+            { in: "query", key: "tier" },
           ],
         },
       ],

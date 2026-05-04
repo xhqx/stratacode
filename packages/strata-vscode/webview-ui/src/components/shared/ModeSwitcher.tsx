@@ -12,6 +12,8 @@ import { PopupSelector } from "./PopupSelector"
 import { Button } from "@stratacode/strata-ui/button"
 import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
+import { useConfig } from "../../context/config" // stratacode_change
+import { agentVisible } from "../settings/feature-registry" // stratacode_change
 import type { AgentInfo } from "../../types/messages"
 
 /** Format an agent for display. Uses displayName if available, otherwise title-cases the slug. */
@@ -182,10 +184,12 @@ export const ModeSwitcherBase: Component<ModeSwitcherBaseProps> = (props) => {
 
 export const ModeSwitcher: Component = () => {
   const session = useSession()
+  const { extensionFeatures } = useConfig() // stratacode_change
+  const visibleAgents = () => session.agents().filter((a) => agentVisible(a.name, extensionFeatures())) // stratacode_change
 
   return (
     <ModeSwitcherBase
-      agents={session.agents()}
+      agents={visibleAgents()}
       value={session.selectedAgent()}
       onSelect={(name) => {
         session.selectAgent(name)

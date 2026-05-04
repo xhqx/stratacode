@@ -9079,6 +9079,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "tier",
+            "schema": {
+              "type": "string",
+              "enum": ["big", "medium", "small"]
+            }
           }
         ],
         "summary": "Get summarizer context",
@@ -12618,6 +12626,82 @@
         },
         "required": ["type", "properties"]
       },
+      "Event.worker.started": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker.started"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "worker": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              }
+            },
+            "required": ["id", "worker"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "Event.worker.completed": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker.completed"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "worker": {
+                "type": "string"
+              },
+              "duration": {
+                "type": "number"
+              },
+              "result": {}
+            },
+            "required": ["id", "worker", "duration"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "Event.worker.failed": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "worker.failed"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "worker": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": ["id", "worker", "error"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
       "Event.command.executed": {
         "type": "object",
         "properties": {
@@ -13026,82 +13110,6 @@
               }
             },
             "required": ["enabled", "connected"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
-      "Event.worker.started": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "worker.started"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "worker": {
-                "type": "string"
-              },
-              "file": {
-                "type": "string"
-              }
-            },
-            "required": ["id", "worker"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
-      "Event.worker.completed": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "worker.completed"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "worker": {
-                "type": "string"
-              },
-              "duration": {
-                "type": "number"
-              },
-              "result": {}
-            },
-            "required": ["id", "worker", "duration"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
-      "Event.worker.failed": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "worker.failed"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "worker": {
-                "type": "string"
-              },
-              "error": {
-                "type": "string"
-              }
-            },
-            "required": ["id", "worker", "error"]
           }
         },
         "required": ["type", "properties"]
@@ -15364,6 +15372,15 @@
                 "$ref": "#/components/schemas/Event.question.rejected"
               },
               {
+                "$ref": "#/components/schemas/Event.worker.started"
+              },
+              {
+                "$ref": "#/components/schemas/Event.worker.completed"
+              },
+              {
+                "$ref": "#/components/schemas/Event.worker.failed"
+              },
+              {
                 "$ref": "#/components/schemas/Event.command.executed"
               },
               {
@@ -15395,15 +15412,6 @@
               },
               {
                 "$ref": "#/components/schemas/Event.strata-sessions.remote-status-changed"
-              },
-              {
-                "$ref": "#/components/schemas/Event.worker.started"
-              },
-              {
-                "$ref": "#/components/schemas/Event.worker.completed"
-              },
-              {
-                "$ref": "#/components/schemas/Event.worker.failed"
               },
               {
                 "$ref": "#/components/schemas/Event.worktree.ready"
@@ -16577,6 +16585,18 @@
               "auto_explain": {
                 "description": "Enable background diff explanations for the Changes tab (default: false)",
                 "type": "boolean"
+              },
+              "summarizer_prompt": {
+                "description": "Custom system prompt for the summarizer worker",
+                "type": "string"
+              },
+              "review_prompt": {
+                "description": "Custom system prompt for the review worker",
+                "type": "string"
+              },
+              "explainer_prompt": {
+                "description": "Custom system prompt for the explainer worker",
+                "type": "string"
               },
               "max_diff_chars": {
                 "description": "Maximum diff characters to send to workers (default: 8000). Larger diffs are skipped.",
@@ -18266,6 +18286,15 @@
             "$ref": "#/components/schemas/Event.question.rejected"
           },
           {
+            "$ref": "#/components/schemas/Event.worker.started"
+          },
+          {
+            "$ref": "#/components/schemas/Event.worker.completed"
+          },
+          {
+            "$ref": "#/components/schemas/Event.worker.failed"
+          },
+          {
             "$ref": "#/components/schemas/Event.command.executed"
           },
           {
@@ -18297,15 +18326,6 @@
           },
           {
             "$ref": "#/components/schemas/Event.strata-sessions.remote-status-changed"
-          },
-          {
-            "$ref": "#/components/schemas/Event.worker.started"
-          },
-          {
-            "$ref": "#/components/schemas/Event.worker.completed"
-          },
-          {
-            "$ref": "#/components/schemas/Event.worker.failed"
           },
           {
             "$ref": "#/components/schemas/Event.worktree.ready"

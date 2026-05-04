@@ -32,7 +32,9 @@ const CommitMessageTab: Component = () => {
       <Card style={{ "margin-bottom": "12px" }}>
         <SettingsRow
           title={language.t("settings.commitMessage.format.title") || "Format"}
-          description={language.t("settings.commitMessage.format.description") || "Select the style of generated commit messages."}
+          description={
+            language.t("settings.commitMessage.format.description") || "Select the style of generated commit messages."
+          }
         >
           <Select
             options={FORMAT_OPTIONS}
@@ -50,7 +52,10 @@ const CommitMessageTab: Component = () => {
 
         <SettingsRow
           title={language.t("settings.commitMessage.model.title") || "Model Override"}
-          description={language.t("settings.commitMessage.model.description") || "Specify a model ID to override the default commit message model."}
+          description={
+            language.t("settings.commitMessage.model.description") ||
+            "Specify a model ID to override the default commit message model."
+          }
         >
           <div style={{ width: "160px" }}>
             <TextField
@@ -61,11 +66,14 @@ const CommitMessageTab: Component = () => {
           </div>
         </SettingsRow>
       </Card>
-      
+
       <Card style={{ "margin-bottom": "12px" }}>
         <SettingsRow
           title={language.t("settings.commitMessage.override.title") || "Override Default Prompt"}
-          description={language.t("settings.commitMessage.override.description") || "Override the default prompt used for AI-generated commit messages."}
+          description={
+            language.t("settings.commitMessage.override.description") ||
+            "Override the default prompt used for AI-generated commit messages."
+          }
           last={!expanded()}
         >
           <Switch checked={expanded()} onChange={handleToggle} hideLabel>
@@ -78,7 +86,10 @@ const CommitMessageTab: Component = () => {
             <div data-slot="settings-row-label-title" style={{ "margin-bottom": "4px" }}>
               {language.t("settings.commitMessage.prompt.title") || "Custom Prompt"}
             </div>
-            <div data-slot="settings-row-label-subtitle" style={{ "margin-bottom": "8px", "font-size": "12px", color: "var(--vscode-descriptionForeground)" }}>
+            <div
+              data-slot="settings-row-label-subtitle"
+              style={{ "margin-bottom": "8px", "font-size": "12px", color: "var(--vscode-descriptionForeground)" }}
+            >
               {language.t("settings.commitMessage.prompt.description") || "Provide a custom prompt for the AI to use."}
             </div>
             <MarkdownEditor

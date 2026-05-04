@@ -20,11 +20,7 @@ export class AutocompleteRequestScheduler {
     }
   }
 
-  public schedule(
-    prefix: string,
-    suffix: string,
-    execute: () => Promise<void>,
-  ): Promise<void> {
+  public schedule(prefix: string, suffix: string, execute: () => Promise<void>): Promise<void> {
     const coveringRequest = this.findCoveringPendingRequest(prefix, suffix)
     if (coveringRequest) {
       return coveringRequest.promise
@@ -48,7 +44,7 @@ export class AutocompleteRequestScheduler {
     const pendingRequest: PendingRequest = {
       prefix,
       suffix,
-      promise: null!, 
+      promise: null!,
     }
 
     const requestPromise = new Promise<void>((resolve) => {

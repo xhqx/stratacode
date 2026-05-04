@@ -7,6 +7,7 @@ import { Provider, ProviderTransform } from "@/provider"
 import { Agent } from "@/agent/agent"
 import { createHash } from "crypto"
 import * as Config from "@/config/config"
+import { getContext } from "../project-context"
 
 const log = Log.create({ service: "worker:explainer" })
 
@@ -41,8 +42,18 @@ export async function explainerWorker(cwd: string, payload: any): Promise<any> {
 
   const language = await Provider.getLanguage(model)
 
-  const systemPrompt =
+  let contextSnippet = ""
+  try {
+    const ctx = await getContext({ cwd, tier: "small" })
+    if (ctx) contextSnippet = `\n\nProject Context:\n${ctx}`
+  } catch (err) {
+    log.debug("failed to get project context for explainer", { err })
+  }
+
+  const basePrompt =
+    cfg.workers?.explainer_prompt ||
     "Explain the provided code diff. Focus on the 'why' and 'how'. Be concise but informative. Format as plain text or simple markdown."
+  const systemPrompt = basePrompt + contextSnippet
 
   const result = await generateText({
     model: language,

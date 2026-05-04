@@ -296,7 +296,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     TelemetryProxy.getInstance().setProvider(this)
 
     if (this.extensionContext) {
-      if (isEnabled("planningMode")) { // stratacode_change
+      if (isEnabled("planningMode")) {
+        // stratacode_change
         this.planningService = new PlanningService({
           context: this.extensionContext,
           connectionService: this.connectionService,
@@ -442,14 +443,16 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     // Profile returns 401 when user isn't logged into Strata Gateway — that's expected.
     // Use fire-and-forget (no throwOnError) to match old getProfile() which returned null on error.
     if (this.connectionState === "connected" && this.client) {
-      Logger.info("StrataProvider", "👤 syncWebviewState fetching profile...")
-      const profileResult = await retry(() => this.client!.strata.profile())
-      const profileData = profileResult.data ?? null
-      Logger.info("StrataProvider", "👤 syncWebviewState profile:", profileData ? "received" : "null")
-      this.postMessage({
-        type: "profileData",
-        data: profileData,
-      })
+      if (isEnabled("strataAuth")) {
+        Logger.info("StrataProvider", "👤 syncWebviewState fetching profile...")
+        const profileResult = await retry(() => this.client!.strata.profile())
+        const profileData = profileResult.data ?? null
+        Logger.info("StrataProvider", "👤 syncWebviewState profile:", profileData ? "received" : "null")
+        this.postMessage({
+          type: "profileData",
+          data: profileData,
+        })
+      }
 
       // Re-send cached worktree stats and git status after webview reload.
       if (this.cachedStats) this.postMessage(this.cachedStats)
@@ -660,7 +663,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.webviewMessageDisposable?.dispose()
     this.autocompleteConfigDisposable?.dispose()
     this.settingsConfigDisposable?.dispose()
-    this.autocompleteConfigDisposable = AutocompleteSettingsManager.getInstance().watchAutocompleteConfig((msg) => this.postMessage(msg))
+    this.autocompleteConfigDisposable = AutocompleteSettingsManager.getInstance().watchAutocompleteConfig((msg) =>
+      this.postMessage(msg),
+    )
     this.settingsConfigDisposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
       if (e.affectsConfiguration("strata-code.new.agents")) {
         this.fetchAndSendAgents()
@@ -673,7 +678,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       const affectsWorkers =
         e.affectsConfiguration("strata-code.new.workers.enabled") ||
         e.affectsConfiguration("strata-code.new.workers.autoExplain") ||
-        e.affectsConfiguration("strata-code.new.workers.pollingIntervalSec")
+        e.affectsConfiguration("strata-code.new.workers.pollingIntervalSec") ||
+        e.affectsConfiguration("strata-code.new.workers.summarizerPrompt") ||
+        e.affectsConfiguration("strata-code.new.workers.reviewPrompt") ||
+        e.affectsConfiguration("strata-code.new.workers.explainerPrompt")
 
       if (affectsWorkers) {
         if (e.affectsConfiguration("strata-code.new.workers.enabled")) {
@@ -685,11 +693,23 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         const enabled = config.get<boolean>("workers.enabled", false)
         const auto_explain = config.get<boolean>("workers.autoExplain", false)
         const polling_interval_sec = config.get<number>("workers.pollingIntervalSec", 5)
+        const summarizer_prompt = config.get<string>("workers.summarizerPrompt", "")
+        const review_prompt = config.get<string>("workers.reviewPrompt", "")
+        const explainer_prompt = config.get<string>("workers.explainerPrompt", "")
 
         if (this.client) {
           try {
             await this.client.global.config.update({
-              config: { workers: { enabled, auto_explain, polling_interval_sec } },
+              config: {
+                workers: {
+                  enabled,
+                  auto_explain,
+                  polling_interval_sec,
+                  summarizer_prompt,
+                  review_prompt,
+                  explainer_prompt,
+                },
+              },
             })
           } catch (err) {
             Logger.error("StrataProvider", "Failed to sync workers config to backend", err)
@@ -721,7 +741,12 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
       await routeSuggestionWebviewMessage(this.questionCtx, message)
       if (await ModelState.handleMessage(message.type, message, this.client, (msg) => this.postMessage(msg))) return
-      if (await AutocompleteSettingsManager.getInstance().routeAutocompleteMessage(message, (msg) => this.postMessage(msg))) return
+      if (
+        await AutocompleteSettingsManager.getInstance().routeAutocompleteMessage(message, (msg) =>
+          this.postMessage(msg),
+        )
+      )
+        return
       if (
         await handleSidebarWorktreeMessage(message, {
           post: (msg) => this.postMessage(msg),
@@ -890,23 +915,28 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           this.handleLoadSessions().catch((e) => Logger.error("StrataProvider", "handleLoadSessions failed:", e))
           break
         case "login": {
+          if (!isEnabled("strataAuth")) break
           const attempt = ++this.loginAttempt
           await handleLogin(this.authCtx, attempt, () => this.loginAttempt)
           break
         }
         case "cancelLogin":
+          if (!isEnabled("strataAuth")) break
           this.loginAttempt++
           this.postMessage({ type: "deviceAuthCancelled" })
           break
         case "logout":
+          if (!isEnabled("strataAuth")) break
           await handleLogout(this.authCtx)
           break
         case "setOrganization":
+          if (!isEnabled("strataAuth")) break
           if (typeof message.organizationId === "string" || message.organizationId === null) {
             await handleSetOrganization(this.authCtx, message.organizationId)
           }
           break
         case "refreshProfile":
+          if (!isEnabled("strataAuth")) break
           await handleRefreshProfile(this.authCtx)
           break
         case "openExternal":
@@ -1165,6 +1195,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           )
           break
         case "requestCloudSessions":
+          if (!isEnabled("cloudSessions")) break
           await handleRequestCloudSessions(this.cloudSessionCtx, message)
           break
         case "requestGitRemoteUrl":
@@ -1173,9 +1204,11 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           })
           break
         case "requestCloudSessionData":
+          if (!isEnabled("cloudSessions")) break
           void handleRequestCloudSessionData(this.cloudSessionCtx, message.sessionId)
           break
         case "importAndSend": {
+          if (!isEnabled("cloudSessions")) break
           const files = parseMessageFiles(message.files)
           void handleImportAndSend(
             this.cloudSessionCtx,
@@ -1497,7 +1530,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           try {
             // Profile fetch is best-effort — returns 401 when user isn't logged into gateway.
             const sdkClient = this.client
-            if (sdkClient) {
+            if (sdkClient && isEnabled("strataAuth")) {
               const profileResult = await sdkClient.strata.profile()
               this.postMessage({ type: "profileData", data: profileResult.data ?? null })
             }
@@ -1581,9 +1614,27 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.recoverPendingPrompts()
 
       // Sync specific VS Code settings to the CLI backend config before fetching agents
-      const enabled = vscode.workspace.getConfiguration("strata-code.new").get<boolean>("workers.enabled", false)
+      const config = vscode.workspace.getConfiguration("strata-code.new")
+      const enabled = config.get<boolean>("workers.enabled", false)
+      const auto_explain = config.get<boolean>("workers.autoExplain", false)
+      const polling_interval_sec = config.get<number>("workers.pollingIntervalSec", 5)
+      const summarizer_prompt = config.get<string>("workers.summarizerPrompt", "")
+      const review_prompt = config.get<string>("workers.reviewPrompt", "")
+      const explainer_prompt = config.get<string>("workers.explainerPrompt", "")
+
       try {
-        await this.client?.global.config.update({ config: { workers: { enabled } } })
+        await this.client?.global.config.update({
+          config: {
+            workers: {
+              enabled,
+              auto_explain,
+              polling_interval_sec,
+              summarizer_prompt,
+              review_prompt,
+              explainer_prompt,
+            },
+          },
+        })
       } catch (err) {
         Logger.error("StrataProvider", "Failed to sync workers.enabled to backend during init", err)
       }
@@ -3484,10 +3535,11 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         // Fetch session context once for all batches
         let sessionContext: string | undefined
         try {
-          const res = await client.sessionContext.create({
-            body_directory: targetDirectory,
+          const res = await client.getWorkerContext({
+            directory: targetDirectory,
+            tier: "big",
           })
-          if (res.data?.context) sessionContext = res.data.context
+          if (res.data?.summary) sessionContext = res.data.summary
         } catch (err) {
           Logger.info("StrataProvider", "handleDiffExplainAll: session context fetch failed, continuing without", err)
         }
@@ -3590,11 +3642,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.postMessage({ type: "extensionFeaturesLoaded", features: readAllFeatures() })
       // Sync runtime keys for features that have separate service toggles
       if (key === "features.workers") {
-        await vscode.workspace.getConfiguration("strata-code.new")
+        await vscode.workspace
+          .getConfiguration("strata-code.new")
           .update("workers.enabled", value, vscode.ConfigurationTarget.Global)
       }
       if (key === "features.browserAutomation") {
-        await vscode.workspace.getConfiguration("strata-code.new.browserAutomation")
+        await vscode.workspace
+          .getConfiguration("strata-code.new.browserAutomation")
           .update("enabled", value, vscode.ConfigurationTarget.Global)
       }
     }

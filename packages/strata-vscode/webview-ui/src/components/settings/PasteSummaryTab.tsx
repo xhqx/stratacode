@@ -15,8 +15,7 @@ export default function PasteSummaryTab() {
         <SettingsRow
           title={language.t("settings.experimental.pasteSummary.title") || "Paste Summary"}
           description={
-            language.t("settings.experimental.pasteSummary.description") ||
-            "Enable experimental paste summarization."
+            language.t("settings.experimental.pasteSummary.description") || "Enable experimental paste summarization."
           }
           last
         >

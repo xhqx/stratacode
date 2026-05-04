@@ -20,6 +20,8 @@ import { PluginConfigProvider } from "./context/plugin-config"
 import { IndexingProvider } from "./context/indexing"
 import { SessionProvider, useSession } from "./context/session"
 import { LanguageProvider } from "./context/language"
+import { useConfig } from "./context/config" // stratacode_change
+import { agentVisible } from "./components/settings/feature-registry" // stratacode_change
 import { ChatView } from "./components/chat"
 import { MarketplaceView } from "./components/marketplace"
 import { registerExpandedTaskTool } from "./components/chat/TaskToolExpanded"
@@ -211,6 +213,7 @@ const AppContent: Component = () => {
   const session = useSession()
   const server = useServer()
   const vscode = useVSCode()
+  const { extensionFeatures } = useConfig() // stratacode_change
 
   const handleViewAction = (action: string) => {
     switch (action) {
@@ -231,10 +234,10 @@ const AppContent: Component = () => {
         setCurrentView("settings")
         break
       case "kanbanButtonClicked":
-        setCurrentView("kanban")
+        if (extensionFeatures().kanban) setCurrentView("kanban") // stratacode_change
         break
       case "planningButtonClicked":
-        setCurrentView("planning")
+        if (extensionFeatures().planningMode) setCurrentView("planning") // stratacode_change
         break
       case "cycleAgentMode":
         if (document.hasFocus()) cycleAgent(1)
@@ -246,7 +249,9 @@ const AppContent: Component = () => {
   }
 
   const cycleAgent = (direction: 1 | -1) => {
-    const available = session.agents().filter((a) => a.mode !== "subagent" && !a.hidden)
+    const available = session
+      .agents()
+      .filter((a) => a.mode !== "subagent" && !a.hidden && agentVisible(a.name, extensionFeatures())) // stratacode_change
     if (available.length <= 1) return
     const current = session.selectedAgent()
     const idx = available.findIndex((a) => a.name === current)

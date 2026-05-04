@@ -17,12 +17,14 @@ const RetriesTab: Component = () => {
   // Sync from CLI config
   createEffect(() => {
     const cfg = config()
-    const r = (cfg as Record<string, unknown>).retry as {
-      enabled?: boolean
-      limit?: number
-      delay?: number
-      max_delay?: number
-    } | undefined
+    const r = (cfg as Record<string, unknown>).retry as
+      | {
+          enabled?: boolean
+          limit?: number
+          delay?: number
+          max_delay?: number
+        }
+      | undefined
     if (r) {
       if (typeof r.enabled === "boolean") setRetryEnabled(r.enabled)
       if (typeof r.limit === "number") setRetryLimit(r.limit)

@@ -162,8 +162,10 @@ export interface FeatureFlags {
 
 export interface ExtensionFeatureFlags {
   acpAgents: boolean
+  agentManager: boolean
   autoApprove: boolean
   autocomplete: boolean
+  cloudSessions: boolean
   autoretries: boolean
   batchTool: boolean
   browserAutomation: boolean
@@ -188,6 +190,7 @@ export interface ExtensionFeatureFlags {
   remoteControl: boolean
   selectionTip: boolean
   sessionSharing: boolean
+  strataAuth: boolean
   taskTimeline: boolean
   workers: boolean
 }

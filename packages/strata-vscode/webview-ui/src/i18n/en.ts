@@ -1284,7 +1284,8 @@ export const dict = {
   "settings.agentBehaviour.modelPool.models": "Pool Models",
   "settings.agentBehaviour.modelPool.models.description": "Models to rotate between for subagent execution.",
   "settings.agentBehaviour.modelPool.maxConcurrent": "Max Concurrent per Model",
-  "settings.agentBehaviour.modelPool.maxConcurrent.description": "Maximum number of concurrent executions per pool model.",
+  "settings.agentBehaviour.modelPool.maxConcurrent.description":
+    "Maximum number of concurrent executions per pool model.",
   "settings.agentBehaviour.modelPool.timeout": "Timeout (seconds)",
   "settings.agentBehaviour.modelPool.timeout.description": "Maximum execution time before timing out the request.",
   "settings.agentBehaviour.modelPool.add": "+ Add model to pool",

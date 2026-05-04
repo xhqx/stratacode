@@ -108,7 +108,6 @@
         "title": "Agent Manager",
         "icon": "$(layout-panel)"
       },
-
       {
         "command": "strata-code.new.historyButtonClicked",
         "title": "History",
@@ -540,7 +539,7 @@
         {
           "command": "strata-code.new.agentManagerOpen",
           "group": "navigation@2",
-          "when": "view == strata-code.SidebarProvider"
+          "when": "view == strata-code.SidebarProvider && stratacode.agentManager.enabled"
         },
         {
           "command": "strata-code.new.settingsButtonClicked",
@@ -550,7 +549,7 @@
         {
           "command": "strata-code.new.kanbanButtonClicked",
           "group": "navigation@3",
-          "when": "view == strata-code.SidebarProvider"
+          "when": "view == strata-code.SidebarProvider && stratacode.kanban.enabled"
         }
       ],
       "scm/title": [
@@ -642,6 +641,152 @@
           "command": "strata-code.new.terminalExplainCommand",
           "group": "1_actions@3"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "strata-code.new.agentManagerOpen",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.showView",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.previousSession",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.nextSession",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.previousTab",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.nextTab",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.showTerminal",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.runScript",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.toggleDiff",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.showShortcuts",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.newTab",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.newTerminal",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.closeTab",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.newWorktree",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.openWorktree",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.closeWorktree",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.advancedWorktree",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.jumpTo1",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.jumpTo2",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.jumpTo3",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.jumpTo4",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.jumpTo5",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.jumpTo6",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.jumpTo7",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.jumpTo8",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.agentManager.jumpTo9",
+          "when": "stratacode.agentManager.enabled"
+        },
+        {
+          "command": "strata-code.new.workers.showStatus",
+          "when": "stratacode.workers.enabled"
+        },
+        {
+          "command": "strata-code.new.kanbanButtonClicked",
+          "when": "stratacode.kanban.enabled"
+        },
+        {
+          "command": "strata-code.new.generateCommitMessage",
+          "when": "stratacode.commitMessage.enabled"
+        },
+        {
+          "command": "strata-code.new.explainChanges",
+          "when": "stratacode.diffViewer.enabled"
+        },
+        {
+          "command": "strata-code.new.explainBranch",
+          "when": "stratacode.diffViewer.enabled"
+        },
+        {
+          "command": "strata-code.new.explainMerge",
+          "when": "stratacode.diffViewer.enabled"
+        },
+        {
+          "command": "strata-code.new.explainFile",
+          "when": "stratacode.diffViewer.enabled"
+        },
+        {
+          "command": "strata-code.new.explainHunk",
+          "when": "stratacode.diffViewer.enabled"
+        },
+        {
+          "command": "strata-code.new.autocomplete.generateSuggestions",
+          "when": "stratacode.autocomplete.enabled"
+        },
+        {
+          "command": "strata-code.new.autocomplete.cancelSuggestions",
+          "when": "stratacode.autocomplete.enabled"
+        }
       ]
     },
     "keybindings": [
@@ -668,7 +813,8 @@
       {
         "command": "strata-code.new.agentManagerOpen",
         "key": "ctrl+shift+m",
-        "mac": "cmd+shift+m"
+        "mac": "cmd+shift+m",
+        "when": "stratacode.agentManager.enabled"
       },
       {
         "command": "strata-code.new.addToContext",
@@ -966,6 +1112,12 @@
             "order": 1,
             "description": "Enable Agent Communication Protocol agents integration."
           },
+          "strata-code.new.features.agentManager": {
+            "type": "boolean",
+            "default": true,
+            "order": 2,
+            "description": "Enable the multi-session Agent Manager panel with git worktree isolation."
+          },
           "strata-code.new.features.autoApprove": {
             "type": "boolean",
             "default": true,
@@ -977,6 +1129,12 @@
             "default": true,
             "order": 2,
             "description": "Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling this feature requires a window reload."
+          },
+          "strata-code.new.features.cloudSessions": {
+            "type": "boolean",
+            "default": true,
+            "order": 3,
+            "description": "Enable cloud session browsing and importing."
           },
           "strata-code.new.features.autoretries": {
             "type": "boolean",
@@ -1133,6 +1291,12 @@
             "default": false,
             "order": 21,
             "markdownDescription": "Enable background context workers. Configure in your project's `strata.jsonc` file under the `workers` key."
+          },
+          "strata-code.new.features.strataAuth": {
+            "type": "boolean",
+            "default": true,
+            "order": 22,
+            "description": "Enable Strata account login, profile, and organization switching."
           }
         }
       },
@@ -1259,6 +1423,24 @@
             "order": 2,
             "markdownDescription": "Automatically run the explainer in the background to pre-populate the Changes tab with AI explanations."
           },
+          "strata-code.new.workers.summarizerPrompt": {
+            "type": "string",
+            "default": "",
+            "order": 3,
+            "markdownDescription": "Custom system prompt for the background summarizer worker. Leave empty for default."
+          },
+          "strata-code.new.workers.reviewPrompt": {
+            "type": "string",
+            "default": "",
+            "order": 4,
+            "markdownDescription": "Custom system prompt for the code review feature. Leave empty for default."
+          },
+          "strata-code.new.workers.explainerPrompt": {
+            "type": "string",
+            "default": "",
+            "order": 5,
+            "markdownDescription": "Custom system prompt for the explainer feature. Leave empty for default."
+          },
           "strata-code.new.workers.pollingIntervalSec": {
             "type": "number",
             "default": 5,
@@ -1303,7 +1485,6 @@
           }
         }
       },
-
       {
         "title": "Strata Code: Notifications",
         "order": 6,

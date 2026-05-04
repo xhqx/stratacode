@@ -21,7 +21,7 @@ type ProviderItem = {
 
 const ProviderSelectDialog = () => {
   const dialog = useDialog()
-  const { config } = useConfig()
+  const { config, extensionFeatures } = useConfig()
   const provider = useProvider()
   const server = useServer()
   const language = useLanguage()
@@ -34,7 +34,7 @@ const ProviderSelectDialog = () => {
     const all = Object.values(provider.providers())
     // When the CLI has STRATA_ENABLE_GATEWAY=false, the strata provider
     // won't appear in the provider list — don't inject a fallback.
-    const gatewayEnabled = all.some((item) => item.id === STRATA_PROVIDER_ID)
+    const gatewayEnabled = extensionFeatures().strataAuth && all.some((item) => item.id === STRATA_PROVIDER_ID)
     const withStrata = gatewayEnabled ? all : all.filter((item) => item.id !== STRATA_PROVIDER_ID)
     const available = withStrata.filter((item) => !disabled.has(item.id) && !connected.has(item.id))
 

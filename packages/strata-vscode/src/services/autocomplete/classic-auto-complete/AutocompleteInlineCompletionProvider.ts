@@ -40,7 +40,7 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
       costTrackingCallback,
       workspacePath,
       telemetry,
-      onFatalError ?? null
+      onFatalError ?? null,
     )
 
     this.acceptedCommand = vscode.commands.registerCommand(INLINE_COMPLETION_ACCEPTED_COMMAND, () => {
@@ -87,7 +87,7 @@ export class AutocompleteInlineCompletionProvider implements vscode.InlineComple
 
     try {
       const completionText = await this.engine.getCompletion(document, position)
-      
+
       if (completionText) {
         vscode.commands.executeCommand("setContext", "strata-code.new.autocomplete.hasSuggestions", true)
         return stringToInlineCompletions(completionText, position)

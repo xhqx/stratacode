@@ -135,7 +135,8 @@ export const dict = {
 
   // Context keys
   "settings.context.autoCompaction.title": "Auto Compaction",
-  "settings.context.autoCompaction.description": "Automatically compact the session when context window limits are reached.",
+  "settings.context.autoCompaction.description":
+    "Automatically compact the session when context window limits are reached.",
   "settings.context.repomapBudget.title": "Repository Map Token Budget",
   "settings.context.repomapBudget.description": "Maximum number of tokens to allocate for the repository map.",
 

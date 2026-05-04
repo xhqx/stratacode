@@ -71,7 +71,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const session = useSession()
   const server = useServer()
   const indexing = useIndexing()
-  const { config, features } = useConfig()
+  const { config, features, extensionFeatures } = useConfig()
   const language = useLanguage()
   const vscode = useVSCode()
   const worktree = useWorktreeMode()
@@ -636,7 +636,12 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const shouldAutoEnhance = () => {
     const draft = text().trim()
     return (
-      config()?.experimental?.auto_improve_prompts && !pendingSend && !enhancing() && draft && !draft.startsWith("/")
+      config()?.experimental?.auto_improve_prompts &&
+      extensionFeatures().promptEnhancer &&
+      !pendingSend &&
+      !enhancing() &&
+      draft &&
+      !draft.startsWith("/")
     )
   }
 
@@ -1058,17 +1063,19 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
                 </Button>
               </Tooltip>
             </Show>
-            <Tooltip value={language.t("prompt.action.enhance")} placement="top">
-              <Button
-                variant="ghost"
-                size="small"
-                onClick={handleEnhance}
-                disabled={!canEnhance()}
-                aria-label={language.t("prompt.action.enhance")}
-              >
-                <WandSparkles size={16} class={enhancing() ? "enhance-spinner" : ""} />
-              </Button>
-            </Tooltip>
+            <Show when={extensionFeatures().promptEnhancer}>
+              <Tooltip value={language.t("prompt.action.enhance")} placement="top">
+                <Button
+                  variant="ghost"
+                  size="small"
+                  onClick={handleEnhance}
+                  disabled={!canEnhance()}
+                  aria-label={language.t("prompt.action.enhance")}
+                >
+                  <WandSparkles size={16} class={enhancing() ? "enhance-spinner" : ""} />
+                </Button>
+              </Tooltip>
+            </Show>
             <Show
               when={showStop()}
               fallback={

@@ -458,6 +458,34 @@ export type EventQuestionRejected = {
   properties: QuestionRejected
 }
 
+export type EventWorkerStarted = {
+  type: "worker.started"
+  properties: {
+    id: string
+    worker: string
+    file?: string
+  }
+}
+
+export type EventWorkerCompleted = {
+  type: "worker.completed"
+  properties: {
+    id: string
+    worker: string
+    duration: number
+    result?: unknown
+  }
+}
+
+export type EventWorkerFailed = {
+  type: "worker.failed"
+  properties: {
+    id: string
+    worker: string
+    error: string
+  }
+}
+
 export type EventCommandExecuted = {
   type: "command.executed"
   properties: {
@@ -620,34 +648,6 @@ export type EventStrataSessionsRemoteStatusChanged = {
   properties: {
     enabled: boolean
     connected: boolean
-  }
-}
-
-export type EventWorkerStarted = {
-  type: "worker.started"
-  properties: {
-    id: string
-    worker: string
-    file?: string
-  }
-}
-
-export type EventWorkerCompleted = {
-  type: "worker.completed"
-  properties: {
-    id: string
-    worker: string
-    duration: number
-    result?: unknown
-  }
-}
-
-export type EventWorkerFailed = {
-  type: "worker.failed"
-  properties: {
-    id: string
-    worker: string
-    error: string
   }
 }
 
@@ -1352,6 +1352,9 @@ export type GlobalEvent = {
     | EventQuestionAsked
     | EventQuestionReplied
     | EventQuestionRejected
+    | EventWorkerStarted
+    | EventWorkerCompleted
+    | EventWorkerFailed
     | EventCommandExecuted
     | EventSuggestionShown
     | EventSuggestionAccepted
@@ -1363,9 +1366,6 @@ export type GlobalEvent = {
     | EventIndexingStatus
     | EventSessionCompacted
     | EventStrataSessionsRemoteStatusChanged
-    | EventWorkerStarted
-    | EventWorkerCompleted
-    | EventWorkerFailed
     | EventWorktreeReady
     | EventWorktreeFailed
     | EventPtyCreated
@@ -2032,6 +2032,18 @@ export type Config = {
      */
     auto_explain?: boolean
     /**
+     * Custom system prompt for the summarizer worker
+     */
+    summarizer_prompt?: string
+    /**
+     * Custom system prompt for the review worker
+     */
+    review_prompt?: string
+    /**
+     * Custom system prompt for the explainer worker
+     */
+    explainer_prompt?: string
+    /**
      * Maximum diff characters to send to workers (default: 8000). Larger diffs are skipped.
      */
     max_diff_chars?: number
@@ -2684,6 +2696,9 @@ export type Event =
   | EventQuestionAsked
   | EventQuestionReplied
   | EventQuestionRejected
+  | EventWorkerStarted
+  | EventWorkerCompleted
+  | EventWorkerFailed
   | EventCommandExecuted
   | EventSuggestionShown
   | EventSuggestionAccepted
@@ -2695,9 +2710,6 @@ export type Event =
   | EventIndexingStatus
   | EventSessionCompacted
   | EventStrataSessionsRemoteStatusChanged
-  | EventWorkerStarted
-  | EventWorkerCompleted
-  | EventWorkerFailed
   | EventWorktreeReady
   | EventWorktreeFailed
   | EventPtyCreated
@@ -6871,6 +6883,7 @@ export type GetWorkerContextData = {
   query?: {
     directory?: string
     workspace?: string
+    tier?: "big" | "medium" | "small"
   }
   url: "/worker/context"
 }

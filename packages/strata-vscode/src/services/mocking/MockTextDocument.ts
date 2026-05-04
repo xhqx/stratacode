@@ -72,7 +72,7 @@ export class MockTextDocument implements vscode.TextDocument {
 
   getText(range?: vscode.Range): string {
     if (!range) return this.content
-    
+
     if (range.start.line === range.end.line) {
       return this.lines[range.start.line].substring(range.start.character, range.end.character)
     }

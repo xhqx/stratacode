@@ -5,8 +5,32 @@ export type { FeatureKey }
 
 const NS = "strata-code.new"
 
+/** Cloud features that can be globally disabled by STRATA_DISABLE_CLOUD */
+const CLOUD_FEATURES = new Set<FeatureKey>([
+  "cloudSessions",
+  "strataAuth",
+  "sessionSharing",
+  "remoteControl",
+  "notifications",
+])
+
+/** Features that require a parent feature to be enabled. child → parent */
+const FEATURE_DEPS: Partial<Record<FeatureKey, FeatureKey>> = {
+  promptEnhancerSuggestions: "promptEnhancer",
+  cloudSessions: "strataAuth",
+  sessionSharing: "strataAuth",
+}
+
 /** Read a feature's enabled state from VS Code settings. */
 export function isEnabled(key: FeatureKey): boolean {
+  if (CLOUD_FEATURES.has(key) && process.env.STRATA_DISABLE_CLOUD) {
+    return false
+  }
+  // If the feature has a parent dependency, it is disabled when the parent is off
+  const parent = FEATURE_DEPS[key]
+  if (parent && !isEnabled(parent)) {
+    return false
+  }
   return vscode.workspace.getConfiguration(NS).get<boolean>(`features.${key}`) ?? FEATURE_DEFAULTS[key]
 }
 

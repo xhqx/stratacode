@@ -4,7 +4,7 @@ import { mergeDeep } from "remeda"
 import { Provider, ProviderTransform } from "@/provider"
 import { Log } from "@/util"
 import { Agent } from "@/agent/agent"
-import { ContextMapService } from "./worker/context-map"
+import { getContext } from "./project-context"
 
 const log = Log.create({ service: "suggest-tasks" })
 
@@ -18,21 +18,10 @@ export interface SuggestTasksResult {
   suggestions: string[]
 }
 
-/** Build a trimmed context payload from the ContextMap. */
+/** Build a trimmed context payload. */
 async function buildContext(dir: string): Promise<string> {
-  const map = await ContextMapService.read(dir)
-  const parts: string[] = []
-  if (map.summary) parts.push(`Project summary:\n${map.summary}`)
-  const reviews = map.reviews
-    .slice(-5)
-    .map((r) => `- ${r.file}: ${r.summary}`)
-    .join("\n")
-  if (reviews) parts.push(`Recent file changes:\n${reviews}`)
-  const commits = (map.recent_commits ?? []).slice(0, 5).join(", ")
-  if (commits) parts.push(`Recent commits: ${commits}`)
-  const sessions = (map.session_titles ?? []).slice(0, 3).join(", ")
-  if (sessions) parts.push(`Recent sessions: ${sessions}`)
-  return parts.join("\n\n").slice(0, MAX_CTX_CHARS)
+  const ctx = await getContext({ cwd: dir, tier: "medium" })
+  return ctx.slice(0, MAX_CTX_CHARS)
 }
 
 /** Parse raw model output into a safe string array (max 3 items). */

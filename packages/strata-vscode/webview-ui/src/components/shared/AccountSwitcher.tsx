@@ -10,6 +10,7 @@ import { Spinner } from "@stratacode/strata-ui/spinner"
 import { useServer } from "../../context/server"
 import { useVSCode } from "../../context/vscode"
 import { useLanguage } from "../../context/language"
+import { useConfig } from "../../context/config"
 
 const PERSONAL = "personal"
 
@@ -17,13 +18,14 @@ export const AccountSwitcher: Component<{ class?: string }> = (props) => {
   const server = useServer()
   const vscode = useVSCode()
   const language = useLanguage()
+  const { extensionFeatures } = useConfig()
   const [open, setOpen] = createSignal(false)
   const [switching, setSwitching] = createSignal(false)
   let ref: HTMLDivElement | undefined
 
   const profile = () => server.profileData()
   const orgs = () => profile()?.profile.organizations ?? []
-  const visible = () => !!profile() && orgs().length > 0
+  const visible = () => extensionFeatures().strataAuth && !!profile() && orgs().length > 0
   const current = () => profile()?.currentOrgId ?? PERSONAL
 
   const selected = createMemo(() => {

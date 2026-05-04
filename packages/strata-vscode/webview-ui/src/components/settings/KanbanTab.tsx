@@ -33,7 +33,10 @@ const KanbanTab: Component = () => {
       <Card>
         <SettingsRow
           title={language.t("settings.display.planningTaskView.title") || "Planning Task View (Kanban)"}
-          description={language.t("settings.display.planningTaskView.description") || "Show the planning task view (Kanban board) in the sidebar"}
+          description={
+            language.t("settings.display.planningTaskView.description") ||
+            "Show the planning task view (Kanban board) in the sidebar"
+          }
           last
         >
           <Switch checked={taskView()} onChange={updateSetting} hideLabel>

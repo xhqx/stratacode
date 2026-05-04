@@ -162,11 +162,11 @@ const AutoApproveTab: Component = () => {
 
   const visibleGroupedTools = createMemo(() => {
     const feats = extensionFeatures()
-    return GROUPED_TOOLS.map(group => {
-      let ids = group.ids.filter(id => toolVisible(id, feats))
-      
+    return GROUPED_TOOLS.map((group) => {
+      let ids = group.ids.filter((id) => toolVisible(id, feats))
+
       if (ids.length === 0) return null
-      
+
       let label = group.label
       let descKey = group.descriptionKey
       if (ids.length < group.ids.length) {

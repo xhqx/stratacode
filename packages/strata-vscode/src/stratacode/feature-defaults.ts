@@ -1,8 +1,10 @@
 // stratacode_change - new file
 export type FeatureKey =
   | "acpAgents"
+  | "agentManager"
   | "autoApprove"
   | "autocomplete"
+  | "cloudSessions"
   | "autoretries"
   | "batchTool"
   | "browserAutomation"
@@ -27,13 +29,16 @@ export type FeatureKey =
   | "remoteControl"
   | "selectionTip"
   | "sessionSharing"
+  | "strataAuth"
   | "taskTimeline"
   | "workers"
 
 export const FEATURE_DEFAULTS: Record<FeatureKey, boolean> = {
   acpAgents: true,
+  agentManager: true,
   autoApprove: true,
   autocomplete: true,
+  cloudSessions: false,
   autoretries: true,
   batchTool: false,
   browserAutomation: false,
@@ -58,7 +63,7 @@ export const FEATURE_DEFAULTS: Record<FeatureKey, boolean> = {
   remoteControl: false,
   selectionTip: true,
   sessionSharing: false,
+  strataAuth: false,
   taskTimeline: true,
   workers: false,
 }
-

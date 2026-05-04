@@ -28,8 +28,6 @@ const DisplayTab: Component = () => {
   const language = useLanguage()
   const vscode = useVSCode()
 
-
-
   return (
     <div>
       <Card>

@@ -5,16 +5,14 @@ import {
   shouldShowOnlyFirstLine,
   getFirstLine,
   applyFirstLineOnly,
-  MatchingSuggestionWithFillIn
+  MatchingSuggestionWithFillIn,
 } from "../inline-utils"
 import { FillInAtCursorSuggestion } from "../../../types"
 
 describe("inline-utils", () => {
   describe("findMatchingSuggestion", () => {
     it("should return empty string when matching a failed lookup", () => {
-      const suggestions: FillInAtCursorSuggestion[] = [
-        { text: "", prefix: "const x = 1", suffix: "\nconst y = 2" }
-      ]
+      const suggestions: FillInAtCursorSuggestion[] = [{ text: "", prefix: "const x = 1", suffix: "\nconst y = 2" }]
       const result = findMatchingSuggestion("const x = 1", "\nconst y = 2", suggestions)
       expect(result).not.toBeNull()
       expect(result!.text).toBe("")
@@ -23,7 +21,7 @@ describe("inline-utils", () => {
 
     it("should return suggestion text when prefix and suffix match exactly", () => {
       const suggestions: FillInAtCursorSuggestion[] = [
-        { text: "console.log('Hello, World!');", prefix: "const x = 1", suffix: "\nconst y = 2" }
+        { text: "console.log('Hello, World!');", prefix: "const x = 1", suffix: "\nconst y = 2" },
       ]
       const result = findMatchingSuggestion("const x = 1", "\nconst y = 2", suggestions)
       expect(result).not.toBeNull()
@@ -61,7 +59,7 @@ describe("inline-utils", () => {
       const match: MatchingSuggestionWithFillIn = {
         text: "1\n}",
         matchType: "exact",
-        fillInAtCursor: { text: "1\n}", prefix: "const x = ", suffix: "" }
+        fillInAtCursor: { text: "1\n}", prefix: "const x = ", suffix: "" },
       }
       const result = applyFirstLineOnly(match, "const x = ")
       expect(result!.text).toBe("1")

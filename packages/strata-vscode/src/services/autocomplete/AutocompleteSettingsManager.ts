@@ -68,9 +68,7 @@ export class AutocompleteSettingsManager {
     if (!ALLOWED_KEYS.has(key)) return false
     if (!this.isValid(key, value)) return false
 
-    await vscode.workspace
-      .getConfiguration(CONFIG_SECTION)
-      .update(key, value, vscode.ConfigurationTarget.Global)
+    await vscode.workspace.getConfiguration(CONFIG_SECTION).update(key, value, vscode.ConfigurationTarget.Global)
 
     return true
   }
@@ -100,7 +98,7 @@ export class AutocompleteSettingsManager {
     }
 
     if (message.type === "updateAutocompleteSetting") {
-      if (typeof message.key === "string" && await this.updateSetting(message.key, message.value)) {
+      if (typeof message.key === "string" && (await this.updateSetting(message.key, message.value))) {
         post(this.buildAutocompleteSettingsMessage())
       }
       return true

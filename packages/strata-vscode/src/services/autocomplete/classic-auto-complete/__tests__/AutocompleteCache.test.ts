@@ -5,14 +5,14 @@ import { FillInAtCursorSuggestion } from "../../../types"
 describe("AutocompleteCache", () => {
   it("should store and retrieve suggestions", () => {
     const cache = new AutocompleteCache()
-    
+
     const suggestion: FillInAtCursorSuggestion = {
       text: "console.log('test')",
       prefix: "const x = 1",
-      suffix: "\nconst y = 2"
+      suffix: "\nconst y = 2",
     }
     cache.add(suggestion)
-    
+
     // Test that we can get the suggestion back
     const match = cache.get("const x = 1", "\nconst y = 2")
     expect(match).not.toBeNull()
@@ -24,10 +24,10 @@ describe("AutocompleteCache", () => {
     const suggestion: FillInAtCursorSuggestion = {
       text: "console.log('test')",
       prefix: "const x = 1",
-      suffix: "\nconst y = 2"
+      suffix: "\nconst y = 2",
     }
     cache.add(suggestion)
-    
+
     const match = cache.get("const x = 1", "\nconst y = 2")
     expect(match).not.toBeNull()
     expect(match!.text).toBe("console.log('test')")
@@ -39,10 +39,10 @@ describe("AutocompleteCache", () => {
     const suggestion: FillInAtCursorSuggestion = {
       text: "console.log('test')",
       prefix: "const x = 1",
-      suffix: "\nconst y = 2"
+      suffix: "\nconst y = 2",
     }
     cache.add(suggestion)
-    
+
     const match = cache.get("const z = 1", "\nconst y = 2")
     expect(match).toBeNull()
   })
@@ -52,11 +52,11 @@ describe("AutocompleteCache", () => {
     const suggestion: FillInAtCursorSuggestion = {
       text: "console.log('test')",
       prefix: "const x = 1",
-      suffix: "\nconst y = 2"
+      suffix: "\nconst y = 2",
     }
     cache.add(suggestion)
     cache.clear()
-    
+
     const match = cache.get("const x = 1", "\nconst y = 2")
     expect(match).toBeNull()
   })

@@ -1,0 +1,10 @@
+const { chromium } = require("playwright")
+;(async () => {
+  const browser = await chromium.launch()
+  const page = await browser.newPage()
+  await page.goto("http://localhost:6007/iframe.html?id=settings-features--features-deep-link&viewMode=story")
+  await page.waitForTimeout(2000)
+  const html = await page.evaluate(() => document.body.innerHTML)
+  console.log(html)
+  await browser.close()
+})()

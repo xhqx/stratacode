@@ -344,10 +344,11 @@ export class DiffViewerProvider implements vscode.Disposable {
       // Fetch session context once for all batches
       let sessionContext: string | undefined
       try {
-        const res = await client.sessionContext.create({
-          body_directory: root,
+        const res = await client.getWorkerContext({
+          directory: root,
+          tier: "big",
         })
-        if (res.data?.context) sessionContext = res.data.context
+        if (res.data?.summary) sessionContext = res.data.summary
       } catch (err) {
         this.log("explainAll: session context fetch failed, continuing without", err)
       }

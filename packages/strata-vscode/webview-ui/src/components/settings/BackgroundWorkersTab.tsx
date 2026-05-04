@@ -51,46 +51,46 @@ const BackgroundWorkersTab: Component = () => {
       </div>
 
       <Card>
-          <SettingsRow
-            title={language.t("settings.workers.autoExplain.title")}
-            description={language.t("settings.workers.autoExplain.description")}
+        <SettingsRow
+          title={language.t("settings.workers.autoExplain.title")}
+          description={language.t("settings.workers.autoExplain.description")}
+        >
+          <Switch
+            checked={autoExplain()}
+            onChange={(checked: boolean) => {
+              setAutoExplain(checked)
+              save("workers.autoExplain", checked)
+            }}
+            hideLabel
           >
-            <Switch
-              checked={autoExplain()}
-              onChange={(checked: boolean) => {
-                setAutoExplain(checked)
-                save("workers.autoExplain", checked)
-              }}
-              hideLabel
-            >
-              {language.t("settings.workers.autoExplain.title")}
-            </Switch>
-          </SettingsRow>
-          <SettingsRow
-            title={language.t("settings.workers.pollingIntervalSec.title")}
-            description={language.t("settings.workers.pollingIntervalSec.description")}
-            last
-          >
-            <input
-              type="number"
-              min="1"
-              style={{
-                width: "60px",
-                padding: "4px 8px",
-                background: "var(--vscode-input-background)",
-                color: "var(--vscode-input-foreground)",
-                border: "1px solid var(--vscode-input-border)",
-                "border-radius": "2px",
-              }}
-              value={pollingInterval()}
-              onInput={(e) => {
-                const val = parseInt(e.currentTarget.value)
-                if (!isNaN(val) && val > 0) {
-                  setPollingInterval(val)
-                  save("workers.pollingIntervalSec", val)
-                }
-              }}
-            />
+            {language.t("settings.workers.autoExplain.title")}
+          </Switch>
+        </SettingsRow>
+        <SettingsRow
+          title={language.t("settings.workers.pollingIntervalSec.title")}
+          description={language.t("settings.workers.pollingIntervalSec.description")}
+          last
+        >
+          <input
+            type="number"
+            min="1"
+            style={{
+              width: "60px",
+              padding: "4px 8px",
+              background: "var(--vscode-input-background)",
+              color: "var(--vscode-input-foreground)",
+              border: "1px solid var(--vscode-input-border)",
+              "border-radius": "2px",
+            }}
+            value={pollingInterval()}
+            onInput={(e) => {
+              const val = parseInt(e.currentTarget.value)
+              if (!isNaN(val) && val > 0) {
+                setPollingInterval(val)
+                save("workers.pollingIntervalSec", val)
+              }
+            }}
+          />
         </SettingsRow>
       </Card>
     </div>

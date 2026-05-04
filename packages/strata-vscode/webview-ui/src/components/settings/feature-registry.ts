@@ -2,8 +2,8 @@ import { Component } from "solid-js"
 import { IconProps } from "@stratacode/strata-ui/icon"
 import type { ExtensionFeatureFlags } from "../../types/messages/config"
 
-// Import feature-specific tabs
 import AcpAgentsTab from "./AcpAgentsTab"
+import AgentManagerTab from "./AgentManagerTab"
 import AutoApproveSettingsTab from "./AutoApproveSettingsTab"
 import AutocompleteTab from "./AutocompleteTab"
 import BackgroundWorkersTab from "./BackgroundWorkersTab"
@@ -33,6 +33,7 @@ export interface FeatureDefinition {
   agents?: string[] // Agent names gated by this feature (hidden when OFF)
   pinned?: string[] // Agents force-shown when this feature is ON
   tools?: string[] // Tool/group-member IDs hidden when this feature is OFF
+  requires?: keyof ExtensionFeatureFlags // Parent feature that must be ON for this one to be enabled
 }
 
 // Internal helper for translation (avoids coupling to SolidJS context)
@@ -57,6 +58,13 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     component: AcpAgentsTab,
   },
   {
+    key: "agentManager",
+    label: () => "Agent Manager",
+    description: () => "Enable the multi-session Agent Manager panel with git worktree isolation.",
+    icon: "sidebar",
+    component: AgentManagerTab,
+  },
+  {
     key: "autoApprove",
     label: () => "Auto-Approve",
     description: () => "Configure auto-approve timeouts and per-tool permission rules.",
@@ -66,7 +74,8 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
   {
     key: "autocomplete",
     label: () => "Autocomplete",
-    description: () => "Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling requires a window reload.",
+    description: () =>
+      "Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling requires a window reload.",
     icon: "code-lines",
     component: AutocompleteTab,
     agents: ["autocomplete"],
@@ -82,7 +91,8 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
   {
     key: "batchTool",
     label: (t) => t("settings.experimental.batchTool.title") || "Batch Tool",
-    description: (t) => t("settings.experimental.batchTool.description") || "Enable the experimental batch tool for agents.",
+    description: (t) =>
+      t("settings.experimental.batchTool.description") || "Enable the experimental batch tool for agents.",
     icon: "settings-gear",
   },
   {
@@ -102,21 +112,24 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
   {
     key: "codeActions",
     label: () => "Code Actions",
-    description: () => "Enable AI-powered Quick Fixes and code actions in the editor. Disabling requires a window reload.",
+    description: () =>
+      "Enable AI-powered Quick Fixes and code actions in the editor. Disabling requires a window reload.",
     icon: "code-lines",
     component: CodeActionsTab,
   },
   {
     key: "codebaseSearch",
     label: (t) => t("settings.experimental.codebaseSearch.title") || "Codebase Search",
-    description: (t) => t("settings.experimental.codebaseSearch.description") || "Enable semantic codebase search capability.",
+    description: (t) =>
+      t("settings.experimental.codebaseSearch.description") || "Enable semantic codebase search capability.",
     icon: "magnifying-glass",
     tools: ["codesearch"],
   },
   {
     key: "commitMessage",
     label: () => "Commit Message",
-    description: () => "Enable AI-generated commit messages in the Source Control panel. Disabling requires a window reload.",
+    description: () =>
+      "Enable AI-generated commit messages in the Source Control panel. Disabling requires a window reload.",
     icon: "branch",
     component: CommitMessageTab,
     agents: ["commit"],
@@ -132,7 +145,8 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
   {
     key: "diffViewer",
     label: () => "Diff Viewer",
-    description: () => "Enable the Changes tab, AI explain commands, and diff viewer panel. Disabling requires a window reload.",
+    description: () =>
+      "Enable the Changes tab, AI explain commands, and diff viewer panel. Disabling requires a window reload.",
     icon: "code-lines",
     component: DiffViewerTab,
   },
@@ -155,7 +169,9 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
   {
     key: "formatter",
     label: (t) => t("settings.agentBehaviour.formatter.title") || "AI Formatter",
-    description: (t) => t("settings.agentBehaviour.formatter.description") || "Use the AI formatter to automatically apply changes after code generation.",
+    description: (t) =>
+      t("settings.agentBehaviour.formatter.description") ||
+      "Use the AI formatter to automatically apply changes after code generation.",
     icon: "code-lines",
   },
   {
@@ -219,6 +235,7 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
     label: () => "Prompt Enhancer Suggestions",
     description: () => "Show inline suggestions from the prompt enhancer as you type.",
     icon: "code-lines",
+    requires: "promptEnhancer",
   },
   {
     key: "remoteControl",
@@ -230,7 +247,9 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
   {
     key: "selectionTip",
     label: (t) => t("settings.appearance.selectionTip.title") || "Selection Tip",
-    description: (t) => t("settings.appearance.selectionTip.description") || "Show a tip when you select code to explain or use code actions.",
+    description: (t) =>
+      t("settings.appearance.selectionTip.description") ||
+      "Show a tip when you select code to explain or use code actions.",
     icon: "code-lines",
   },
   {
@@ -249,7 +268,8 @@ export const FEATURES: ResolvableFeatureDefinition[] = [
   {
     key: "workers",
     label: () => "Workers",
-    description: () => "Enable background context workers. Configure in your project's strata.jsonc file under the workers key.",
+    description: () =>
+      "Enable background context workers. Configure in your project's strata.jsonc file under the workers key.",
     icon: "reset",
     component: BackgroundWorkersTab,
   },
@@ -296,7 +316,7 @@ export function toolVisible(id: string, feats: ExtensionFeatureFlags): boolean {
 }
 
 /**
- * Returns an array of agent names that should be pinned (force-included) 
+ * Returns an array of agent names that should be pinned (force-included)
  * based on the currently enabled features.
  */
 export function pinnedFor(feats: ExtensionFeatureFlags): string[] {
@@ -307,4 +327,16 @@ export function pinnedFor(feats: ExtensionFeatureFlags): string[] {
     }
   }
   return pinned
+}
+
+/** Returns true if a feature's parent dependency (if any) is enabled. */
+export function parentEnabled(key: keyof ExtensionFeatureFlags, feats: ExtensionFeatureFlags): boolean {
+  const feature = FEATURES.find((f) => f.key === key)
+  if (!feature?.requires) return true
+  return feats[feature.requires]
+}
+
+/** Returns all child feature keys whose `requires` field points to the given parent. */
+export function children(parent: keyof ExtensionFeatureFlags): (keyof ExtensionFeatureFlags)[] {
+  return FEATURES.filter((f) => f.requires === parent).map((f) => f.key)
 }

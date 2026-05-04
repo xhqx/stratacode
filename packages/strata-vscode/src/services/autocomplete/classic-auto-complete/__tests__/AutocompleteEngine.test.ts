@@ -44,9 +44,9 @@ vi.mock("../../AutocompleteSettingsManager", () => {
           enabled: true,
           showOnlyFirstLine: false,
           maxLines: 10,
-        }))
-      }))
-    }
+        })),
+      })),
+    },
   }
 })
 
@@ -56,7 +56,7 @@ vi.mock("../../shims/FileIgnoreController", () => {
       initialize = vi.fn().mockResolvedValue(undefined)
       validateAccess = vi.fn().mockReturnValue(true) // Always allow
       dispose = vi.fn()
-    }
+    },
   }
 })
 
@@ -77,7 +77,7 @@ vi.mock("../FillInTheMiddle", () => {
           outputTokens: 0,
         }
       })
-    }
+    },
   }
 })
 
@@ -92,7 +92,7 @@ describe("AutocompleteEngine", () => {
       isConfigured: vi.fn().mockResolvedValue(true),
       getFimModel: vi.fn().mockReturnValue({}),
       generateFimResponse: vi.fn().mockResolvedValue({
-        choices: [{ text: "console.log('test');" }]
+        choices: [{ text: "console.log('test');" }],
       }),
       getModelName: vi.fn().mockReturnValue("mock-model"),
       getProviderDisplayName: vi.fn().mockReturnValue("Mock Provider"),
@@ -121,7 +121,7 @@ describe("AutocompleteEngine", () => {
       vi.fn(),
       "/test/workspace",
       mockTelemetry,
-      vi.fn()
+      vi.fn(),
     )
   })
 
@@ -130,14 +130,11 @@ describe("AutocompleteEngine", () => {
   })
 
   it("should process requests correctly", async () => {
-    const document = new MockTextDocument(
-      { fsPath: __filename } as vscode.Uri, 
-      "const x = 1\n"
-    )
+    const document = new MockTextDocument({ fsPath: __filename } as vscode.Uri, "const x = 1\n")
     const position = new vscode.Position(0, 11)
-    
+
     const result = await engine.getCompletion(document, position)
-    
+
     // We mocked the backend to return "console.log('test');"
     // So the result should be the string
     expect(result).toBeDefined()

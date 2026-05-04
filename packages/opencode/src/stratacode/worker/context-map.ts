@@ -17,9 +17,19 @@ export interface ContextMap {
   updated: number
   reviews: ReviewEntry[]
   summarized_files: Record<string, string>
+
+  // Tiered summaries
+  big?: string
+  medium?: string
+  small?: string
+
+  // Legacy fields (populated from medium for backward compatibility)
   summary?: string
   recent_commits?: string[]
   session_titles?: string[]
+
+  // Invalidation hashes
+  source_hash?: string
 }
 
 const MAX_ENTRIES = 50
@@ -54,22 +64,7 @@ export namespace ContextMapService {
   export const write = async (cwd: string, map: ContextMap): Promise<void> => {
     writeLock = writeLock
       .then(async () => {
-        const absPath = path.join(cwd, getMapPath())
-
-        // Prune old entries
-        if (map.reviews.length > MAX_ENTRIES) {
-          map.reviews = map.reviews.sort((a, b) => b.ts - a.ts).slice(0, MAX_ENTRIES)
-        }
-
-        map.updated = Date.now()
-
-        const data = JSON.stringify(map, null, 2)
-
-        // Atomic write
-        const tempPath = `${absPath}.tmp.${Date.now()}`
-        await fs.promises.mkdir(path.dirname(absPath), { recursive: true }).catch(() => null)
-        await fs.promises.writeFile(tempPath, data, "utf-8")
-        await fs.promises.rename(tempPath, absPath)
+        await writeRaw(cwd, map)
       })
       .catch((err) => {
         log.error("context_map.json write failed", { err })
@@ -83,6 +78,47 @@ export namespace ContextMapService {
     if (!map.summary) return prompt
 
     return `## Developer Context (from background analysis)\n\n${map.summary}\n\n${prompt}`
+  }
+
+  /**
+   * Safely merges a partial update into the ContextMap, preventing concurrent clobbering.
+   */
+  export const merge = async (cwd: string, patch: Partial<ContextMap>): Promise<void> => {
+    writeLock = writeLock
+      .then(async () => {
+        const current = await read(cwd)
+        const merged: ContextMap = {
+          ...current,
+          ...patch,
+          updated: Date.now(),
+        }
+        await writeRaw(cwd, merged)
+      })
+      .catch((err) => {
+        log.error("context_map.json merge failed", { err })
+      })
+
+    return writeLock
+  }
+
+  // Internal write implementation used by both write() and merge()
+  const writeRaw = async (cwd: string, map: ContextMap): Promise<void> => {
+    const absPath = path.join(cwd, getMapPath())
+
+    // Prune old entries
+    if (map.reviews.length > MAX_ENTRIES) {
+      map.reviews = map.reviews.sort((a, b) => b.ts - a.ts).slice(0, MAX_ENTRIES)
+    }
+
+    map.updated = Date.now()
+
+    const data = JSON.stringify(map, null, 2)
+
+    // Atomic write
+    const tempPath = `${absPath}.tmp.${Date.now()}`
+    await fs.promises.mkdir(path.dirname(absPath), { recursive: true }).catch(() => null)
+    await fs.promises.writeFile(tempPath, data, "utf-8")
+    await fs.promises.rename(tempPath, absPath)
   }
 
   export const unsummarized = (map: ContextMap): ReviewEntry[] => {

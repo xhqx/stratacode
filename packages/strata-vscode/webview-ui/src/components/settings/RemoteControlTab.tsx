@@ -61,11 +61,13 @@ const RemoteControlTab: Component = () => {
                   ? language.t("settings.experimental.remote.active")
                   : language.t("settings.experimental.remote.inactive")}
               </span>
-              <span style={{ color: "var(--vscode-descriptionForeground)", "margin-left": "8px", "font-size": "0.9em" }}>
+              <span
+                style={{ color: "var(--vscode-descriptionForeground)", "margin-left": "8px", "font-size": "0.9em" }}
+              >
                 ({language.t("settings.experimental.remote.hint")})
               </span>
             </div>
-            
+
             <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
               <span style={{ color: "var(--vscode-descriptionForeground)" }}>
                 {language.t("settings.experimental.remote.startup")}

@@ -27,15 +27,15 @@ import { AutocompleteRequestScheduler } from "./AutocompleteRequestScheduler"
 export class AutocompleteEngine {
   private cache = new AutocompleteCache()
   private scheduler = new AutocompleteRequestScheduler()
-  
+
   private fimPromptBuilder: FimPromptBuilder
   private recentlyVisitedRangesService: RecentlyVisitedRangesService
   private recentlyEditedTracker: RecentlyEditedTracker
   private ignoreController: Promise<FileIgnoreController>
-  
+
   private fimAbortController: AbortController | null = null
   public readonly backoff = new ErrorBackoff()
-  
+
   public lastSuggestion: LastSuggestionInfo | null = null
   private fatalNotified = false
 
@@ -45,7 +45,7 @@ export class AutocompleteEngine {
     private costTrackingCallback: CostTrackingCallback,
     workspacePath: string,
     private telemetry: AutocompleteTelemetry | null,
-    private onFatalError: ((status: number | null) => void) | null
+    private onFatalError: ((status: number | null) => void) | null,
   ) {
     this.ignoreController = (async () => {
       const controller = new FileIgnoreController(workspacePath)
@@ -76,16 +76,16 @@ export class AutocompleteEngine {
 
     this.telemetry?.captureSuggestionRequested(telemetryContext)
 
-    if (!this.checkClientValidity() || await this.isBlockedByBackoff()) {
+    if (!this.checkClientValidity() || (await this.isBlockedByBackoff())) {
       return null
     }
 
-    if (!document?.uri?.fsPath || await this.isIgnored(document)) {
+    if (!document?.uri?.fsPath || (await this.isIgnored(document))) {
       return null
     }
 
     const { prefix, suffix } = extractPrefixSuffix(document, position)
-    
+
     // 1. Check cache first
     const cachedMatch = this.cache.get(prefix, suffix)
     if (cachedMatch) {
@@ -104,8 +104,8 @@ export class AutocompleteEngine {
 
     // 3. Fetch from LLM via scheduler
     const { prompt, prefix: promptPrefix, suffix: promptSuffix } = await this.getPrompt(document, position)
-    await this.scheduler.schedule(promptPrefix, promptSuffix, () => 
-      this.fetchAndCacheSuggestion(prompt, promptPrefix, promptSuffix, document.languageId)
+    await this.scheduler.schedule(promptPrefix, promptSuffix, () =>
+      this.fetchAndCacheSuggestion(prompt, promptPrefix, promptSuffix, document.languageId),
     )
 
     // 4. Return result from cache if LLM returned one
@@ -126,7 +126,7 @@ export class AutocompleteEngine {
     prompt: AutocompletePrompt,
     prefix: string,
     suffix: string,
-    languageId: string
+    languageId: string,
   ): Promise<void> {
     this.fimAbortController?.abort()
     const controller = new AbortController()
@@ -142,26 +142,22 @@ export class AutocompleteEngine {
     if (!this.client.hasValidCredentials()) return
 
     try {
-      const curriedProcess = (text: string) => this.processSuggestion(text, prefix, suffix, telemetryContext, languageId)
-      
-      const result = await this.fimPromptBuilder.getFromFIM(
-        this.client,
-        prompt,
-        curriedProcess,
-        controller.signal
-      )
+      const curriedProcess = (text: string) =>
+        this.processSuggestion(text, prefix, suffix, telemetryContext, languageId)
+
+      const result = await this.fimPromptBuilder.getFromFIM(this.client, prompt, curriedProcess, controller.signal)
 
       const latencyMs = performance.now() - startTime
       this.telemetry?.captureLlmRequestCompleted(
         { latencyMs, cost: result.cost, inputTokens: result.inputTokens, outputTokens: result.outputTokens },
-        telemetryContext
+        telemetryContext,
       )
       this.scheduler.recordLatency(latencyMs)
       this.costTrackingCallback(result.cost, result.inputTokens, result.outputTokens)
-      
+
       this.backoff.success()
       this.fatalNotified = false
-      
+
       this.cache.add(result.suggestion)
     } catch (error) {
       if (controller.signal.aborted) return
@@ -169,7 +165,7 @@ export class AutocompleteEngine {
       const latencyMs = performance.now() - startTime
       this.telemetry?.captureLlmRequestFailed(
         { latencyMs, error: error instanceof Error ? error.message : String(error) },
-        telemetryContext
+        telemetryContext,
       )
 
       const kind = this.backoff.failure(error)
@@ -185,7 +181,7 @@ export class AutocompleteEngine {
     prefix: string,
     suffix: string,
     telemetryContext: AutocompleteContext,
-    languageId?: string
+    languageId?: string,
   ): FillInAtCursorSuggestion {
     if (!suggestionText) {
       this.telemetry?.captureSuggestionFiltered("empty_response", telemetryContext)
@@ -210,7 +206,7 @@ export class AutocompleteEngine {
 
   private async getPrompt(
     document: vscode.TextDocument,
-    position: vscode.Position
+    position: vscode.Position,
   ): Promise<{ prompt: AutocompletePrompt; prefix: string; suffix: string }> {
     const recentlyVisitedRanges = this.recentlyVisitedRangesService.getSnippets()
     const recentlyEditedRanges = await this.recentlyEditedTracker.getRecentlyEditedRanges()
@@ -224,7 +220,10 @@ export class AutocompleteEngine {
 
     const autocompleteInput = contextToAutocompleteInput(context)
     const { prefix, suffix } = extractPrefixSuffix(document, position)
-    const prompt = await this.fimPromptBuilder.getFimPrompts(autocompleteInput, this.client.getModelName() ?? "codestral")
+    const prompt = await this.fimPromptBuilder.getFimPrompts(
+      autocompleteInput,
+      this.client.getModelName() ?? "codestral",
+    )
 
     return { prompt, prefix, suffix }
   }
@@ -277,6 +276,6 @@ export class AutocompleteEngine {
     this.telemetry?.dispose()
     this.recentlyVisitedRangesService.dispose()
     this.recentlyEditedTracker.dispose()
-    this.ignoreController.then(c => c?.dispose()).catch(() => {})
+    this.ignoreController.then((c) => c?.dispose()).catch(() => {})
   }
 }

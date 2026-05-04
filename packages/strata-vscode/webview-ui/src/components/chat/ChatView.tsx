@@ -22,6 +22,7 @@ import { useVSCode } from "../../context/vscode"
 import { useLanguage } from "../../context/language"
 import { useWorktreeMode } from "../../context/worktree-mode"
 import { useServer } from "../../context/server"
+import { useConfig } from "../../context/config"
 import { isPromptBlocked, isSuggesting, isQuestioning } from "./prompt-input-utils"
 
 interface ChatViewProps {
@@ -41,10 +42,11 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const language = useLanguage()
   const worktreeMode = useWorktreeMode()
   const server = useServer()
+  const { extensionFeatures } = useConfig()
   // Show "Show Changes" only in the standalone sidebar, not inside Agent Manager
   const isSidebar = () => worktreeMode === undefined
   // Show "Continue in Worktree": only when explicitly enabled via prop
-  const canContinueInWorktree = () => props.continueInWorktree === true
+  const canContinueInWorktree = () => props.continueInWorktree === true && extensionFeatures().agentManager
 
   const id = () => session.currentSessionID()
   const hasMessages = () => session.messages().length > 0
@@ -151,7 +153,11 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const startWorktreeFromBranch = () =>
     vscode.postMessage({ type: "agentManager.createWorktree", baseBranch: repoBranch()! })
 
-  const openAgentManager = () => vscode.postMessage({ type: "openAgentManager" })
+  const openAgentManager = () => {
+    if (extensionFeatures().agentManager) {
+      vscode.postMessage({ type: "openAgentManager" })
+    }
+  }
 
   const openChanges = () => vscode.postMessage({ type: "openChanges" })
 
@@ -218,7 +224,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
             {language.t("sidebar.session.newSession")}
           </Button>
         </Tooltip>
-        <Show when={isSidebar() && server.gitInstalled()}>
+        <Show when={isSidebar() && server.gitInstalled() && extensionFeatures().agentManager}>
           <div class="session-worktree-split" ref={worktreeRef}>
             <Tooltip value={worktreeTooltip} placement="top">
               <Button

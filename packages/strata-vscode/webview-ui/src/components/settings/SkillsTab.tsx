@@ -386,7 +386,11 @@ const SkillsTab: Component = () => {
         <Show when={config().tools && Object.keys(config().tools ?? {}).length > 0}>
           <For each={Object.entries(config().tools ?? {})}>
             {([name, enabled], index) => (
-              <SettingsRow title={name} description={`Enable or disable the ${name} tool.`} last={index() >= Object.keys(config().tools ?? {}).length - 1}>
+              <SettingsRow
+                title={name}
+                description={`Enable or disable the ${name} tool.`}
+                last={index() >= Object.keys(config().tools ?? {}).length - 1}
+              >
                 <Switch
                   checked={enabled as boolean}
                   onChange={(checked) => updateConfig({ tools: { ...config().tools, [name]: checked } })}

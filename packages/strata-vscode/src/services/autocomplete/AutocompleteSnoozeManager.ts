@@ -30,7 +30,7 @@ export class AutocompleteSnoozeManager {
 
   public async snooze(seconds: number): Promise<void> {
     this.clearTimer()
-    
+
     const snoozeUntil = Date.now() + seconds * 1000
     await this.settingsManager.updateSetting("snoozeUntil", snoozeUntil)
 

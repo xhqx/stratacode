@@ -162,8 +162,6 @@ const ModeEditView: Component<Props> = (props) => {
         <PermissionsTab {...tabContext} agentData={agent} />
       </Show>
 
-
-
       <div style={{ display: "flex", "justify-content": "flex-end" }}>
         <Button variant="ghost" onClick={props.onBack}>
           {language.t("settings.agentBehaviour.editMode.back")}

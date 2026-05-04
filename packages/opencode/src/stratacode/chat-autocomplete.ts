@@ -4,7 +4,7 @@ import { mergeDeep } from "remeda"
 import { Provider, ProviderTransform } from "@/provider"
 import { Log } from "@/util"
 import { Agent } from "@/agent/agent"
-import { ContextMapService } from "./worker/context-map"
+import { getContext } from "./project-context"
 
 const log = Log.create({ service: "chat-autocomplete" })
 
@@ -37,13 +37,9 @@ export async function chatAutocomplete(text: string, directory?: string): Promis
   let content = text
   if (directory) {
     try {
-      const { Config } = await import("@/config")
-      const cfg = await Config.get()
-      if (cfg.workers?.enabled) {
-        const map = await ContextMapService.read(directory)
-        if (map.summary) {
-          content = `## Project Context\n${map.summary.slice(0, 2000)}\n\nUser input so far:\n${text}`
-        }
+      const ctx = await getContext({ cwd: directory, tier: "small" })
+      if (ctx) {
+        content = `## Project Context\n${ctx}\n\nUser input so far:\n${text}`
       }
     } catch {
       // context enrichment is best-effort

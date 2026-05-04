@@ -150,9 +150,12 @@ const AcpEditView: Component<Props> = (props) => {
       {/* Name (create mode only) */}
       <Show when={creating()}>
         <Card data-variant="wide-input" style={{ "margin-bottom": "12px" }}>
-          <SettingsRow 
-            title={language.t("settings.agentBehaviour.acpCreate.name")} 
-            description={language.t("settings.agentBehaviour.acpCreate.name.description") || "A unique identifier for this ACP server."}
+          <SettingsRow
+            title={language.t("settings.agentBehaviour.acpCreate.name")}
+            description={
+              language.t("settings.agentBehaviour.acpCreate.name.description") ||
+              "A unique identifier for this ACP server."
+            }
             last
           >
             <TextField

@@ -39,11 +39,7 @@ const DocumentDrivenTasksTab: Component = () => {
           }
           last
         >
-          <Switch
-            checked={documentDriven()}
-            onChange={updateSetting}
-            hideLabel
-          >
+          <Switch checked={documentDriven()} onChange={updateSetting} hideLabel>
             {language.t("settings.display.documentDrivenTasks.title") || "Document-Driven Tasks"}
           </Switch>
         </SettingsRow>

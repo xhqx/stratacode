@@ -35,9 +35,10 @@ const Settings: Component<SettingsProps> = (props) => {
   // fall back to "models". If it is a removed tab, fallback to "agentBehaviour".
   const resolveTab = (tab?: string) => {
     tab = tab ?? props.tab ?? "agentBehaviour"
-    
+
     // Route legacy feature tabs to the new consolidated "features" tab
-    if (FEATURE_KEYS.has(tab)) {
+    const featureName = tab.startsWith("features.") ? tab.replace("features.", "") : tab
+    if (FEATURE_KEYS.has(featureName as any)) {
       return "features"
     }
 
@@ -200,7 +201,7 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="providers" />
             <span class="label">{language.t("settings.providers.title")}</span>
           </Tabs.Trigger>
-          
+
           <Tabs.Trigger value="agentBehaviour">
             <Icon name="brain" />
             <span class="label">{language.t("settings.agents.title") || "Agents"}</span>
@@ -210,7 +211,7 @@ const Settings: Component<SettingsProps> = (props) => {
             <Icon name="history" />
             <span class="label">{language.t("settings.tab.context") || "Context"}</span>
           </Tabs.Trigger>
-          
+
           <Tabs.Trigger value="tools">
             <Icon name="settings-gear" />
             <span class="label">{language.t("settings.tab.tools")}</span>
@@ -259,7 +260,16 @@ const Settings: Component<SettingsProps> = (props) => {
             </For>
           </Show>
 
-          <div style={{ "margin-top": "auto", padding: "16px 12px", "text-align": "center", color: "var(--vscode-descriptionForeground)", "font-size": "11px", opacity: 0.7 }}>
+          <div
+            style={{
+              "margin-top": "auto",
+              padding: "16px 12px",
+              "text-align": "center",
+              color: "var(--vscode-descriptionForeground)",
+              "font-size": "11px",
+              opacity: 0.7,
+            }}
+          >
             {language.t("settings.aboutStrataCode.version.label")} 0.0.1
           </div>
         </Tabs.List>
@@ -268,7 +278,7 @@ const Settings: Component<SettingsProps> = (props) => {
           <h3>{language.t("settings.providers.title")}</h3>
           <ProvidersTab />
         </Tabs.Content>
-        
+
         <Tabs.Content value="agentBehaviour" style={{ display: "flex", "flex-direction": "column", height: "100%" }}>
           <h3 style={{ "margin-bottom": "16px" }}>{language.t("settings.agents.title") || "Agents"}</h3>
           <AgentsTab initialTab={props.tab} />
@@ -278,7 +288,7 @@ const Settings: Component<SettingsProps> = (props) => {
           <h3 style={{ "margin-bottom": "16px" }}>{language.t("settings.tab.context") || "Context"}</h3>
           <SessionTab />
         </Tabs.Content>
-        
+
         <Tabs.Content value="tools" style={{ display: "flex", "flex-direction": "column", height: "100%" }}>
           <h3 style={{ "margin-bottom": "16px" }}>{language.t("settings.tab.tools")}</h3>
           <ToolsTab initialTab={props.tab} />
@@ -296,9 +306,12 @@ const Settings: Component<SettingsProps> = (props) => {
           </Tabs.Content>
         </Show>
 
-        <Tabs.Content value="features" style={{ display: "flex", "flex-direction": "column", height: "100%", padding: 0 }}>
+        <Tabs.Content
+          value="features"
+          style={{ display: "flex", "flex-direction": "column", height: "100%", padding: 0 }}
+        >
           {/* Note: FeaturesTab implements its own padding and layout to support the two-pane design */}
-          <FeaturesTab initialFeature={props.tab} />
+          <FeaturesTab initialFeature={props.tab?.startsWith("features.") ? props.tab.split(".")[1] : props.tab} />
         </Tabs.Content>
 
         <For each={pluginConfig.sections()}>
