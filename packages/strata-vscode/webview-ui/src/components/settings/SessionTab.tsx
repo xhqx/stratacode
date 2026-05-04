@@ -9,7 +9,7 @@ import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
 import SettingsRow from "./SettingsRow"
 
-const ContextTab: Component = () => {
+const SessionTab: Component = () => {
   const { config, updateConfig } = useConfig()
   const language = useLanguage()
   const [newPattern, setNewPattern] = createSignal("")
@@ -35,84 +35,7 @@ const ContextTab: Component = () => {
 
   return (
     <div>
-      {/* Compaction settings */}
-      <Card>
-        <SettingsRow
-          title={language.t("settings.context.prune.title")}
-          description={language.t("settings.context.prune.description")}
-        >
-          <Switch
-            checked={config().compaction?.prune ?? false}
-            onChange={(checked) => updateConfig({ compaction: { ...config().compaction, prune: checked } })}
-            hideLabel
-          >
-            {language.t("settings.context.prune.title")}
-          </Switch>
-        </SettingsRow>
-        <SettingsRow
-          title={language.t("settings.context.compactionThreshold.title")}
-          description={language.t("settings.context.compactionThreshold.description")}
-        >
-          <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
-            <input
-              id="compaction-threshold-range"
-              type="range"
-              min="10"
-              max="100"
-              step="5"
-              value={config().compaction?.threshold_percent ?? 100}
-              onInput={(e) => {
-                const val = parseInt((e.target as HTMLInputElement).value, 10)
-                updateConfig({ compaction: { ...config().compaction, threshold_percent: val } })
-              }}
-              style={{
-                flex: 1,
-                "accent-color": "var(--vscode-focusBorder)",
-                cursor: "pointer",
-              }}
-            />
-            <span
-              style={{
-                "min-width": "36px",
-                "text-align": "right",
-                "font-size": "13px",
-                "font-variant-numeric": "tabular-nums",
-              }}
-            >
-              {config().compaction?.threshold_percent ?? 100}%
-            </span>
-          </div>
-        </SettingsRow>
-        <SettingsRow
-          title={language.t("settings.experimental.lsp.title")}
-          description={language.t("settings.experimental.lsp.description")}
-        >
-          <Switch
-            checked={config().lsp !== false}
-            onChange={(checked) => updateConfig({ lsp: checked ? {} : false })}
-            hideLabel
-          >
-            {language.t("settings.experimental.lsp.title")}
-          </Switch>
-        </SettingsRow>
-        <SettingsRow
-          title={language.t("settings.experimental.pasteSummary.title")}
-          description={language.t("settings.experimental.pasteSummary.description")}
-          last
-        >
-          <Switch
-            checked={config().experimental?.disable_paste_summary ?? false}
-            onChange={(checked) =>
-              updateConfig({ experimental: { ...(config().experimental ?? {}), disable_paste_summary: checked } })
-            }
-            hideLabel
-          >
-            {language.t("settings.experimental.pasteSummary.title")}
-          </Switch>
-        </SettingsRow>
-      </Card>
-
-      <h4 style={{ "margin-top": "16px", "margin-bottom": "8px" }}>{language.t("settings.context.watcherPatterns")}</h4>
+      <h4 style={{ "margin-top": "16px", "margin-bottom": "8px" }}>{language.t("settings.session.watcherPatterns")}</h4>
 
       <Card>
         <div
@@ -123,7 +46,7 @@ const ContextTab: Component = () => {
             "border-bottom": patterns().length > 0 || newPattern() ? "1px solid var(--border-weak-base)" : "none",
           }}
         >
-          {language.t("settings.context.watcherPatterns.description")}
+          {language.t("settings.session.watcherPatterns.description")}
         </div>
 
         {/* Add new pattern */}
@@ -180,4 +103,4 @@ const ContextTab: Component = () => {
   )
 }
 
-export default ContextTab
+export default SessionTab

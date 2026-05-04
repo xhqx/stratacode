@@ -1,4 +1,4 @@
-import { Component, createSignal, onCleanup } from "solid-js"
+import { Component } from "solid-js"
 import { Switch } from "@stratacode/strata-ui/switch"
 import { Select } from "@stratacode/strata-ui/select"
 import { TextField } from "@stratacode/strata-ui/text-field"
@@ -6,7 +6,6 @@ import { Card } from "@stratacode/strata-ui/card"
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
-import type { ExtensionMessage } from "../../types/messages"
 import SettingsRow from "./SettingsRow"
 import { LOCALES, LOCALE_LABELS, type Locale } from "../../context/language"
 
@@ -29,19 +28,7 @@ const DisplayTab: Component = () => {
   const language = useLanguage()
   const vscode = useVSCode()
 
-  const [showTaskTimeline, setShowTaskTimeline] = createSignal(false)
-  const [showSelectionTip, setShowSelectionTip] = createSignal(true)
 
-  const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
-    if (message.type === "timelineSettingLoaded") {
-      setShowTaskTimeline(message.visible)
-    } else if (message.type === "settingLoaded" && message.key === "showSelectionTip") {
-      setShowSelectionTip(message.value as boolean)
-    }
-  })
-  onCleanup(unsubscribe)
-  vscode.postMessage({ type: "requestTimelineSetting" })
-  vscode.postMessage({ type: "requestSetting", key: "showSelectionTip" })
 
   return (
     <div>
@@ -83,6 +70,7 @@ const DisplayTab: Component = () => {
         <SettingsRow
           title={language.t("settings.language.title")}
           description={language.t("settings.language.description")}
+          last
         >
           <div style={{ display: "flex", "flex-direction": "column", "align-items": "flex-end" }}>
             <Select
@@ -103,47 +91,6 @@ const DisplayTab: Component = () => {
               {language.t("settings.language.current")} {LOCALE_LABELS[language.locale()]}
             </div>
           </div>
-        </SettingsRow>
-
-        <SettingsRow
-          title={language.t("settings.display.taskTimeline.title")}
-          description={language.t("settings.display.taskTimeline.description")}
-        >
-          <Switch
-            checked={showTaskTimeline()}
-            onChange={(checked) => {
-              setShowTaskTimeline(checked)
-              vscode.postMessage({
-                type: "updateSetting",
-                key: "showTaskTimeline",
-                value: checked,
-              })
-            }}
-            hideLabel
-          >
-            {language.t("settings.display.taskTimeline.title")}
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title={language.t("settings.appearance.selectionTip.title")}
-          description={language.t("settings.appearance.selectionTip.description")}
-          last
-        >
-          <Switch
-            checked={showSelectionTip()}
-            onChange={(checked) => {
-              setShowSelectionTip(checked)
-              vscode.postMessage({
-                type: "updateSetting",
-                key: "showSelectionTip",
-                value: checked,
-              })
-            }}
-            hideLabel
-          >
-            {language.t("settings.appearance.selectionTip.title")}
-          </Switch>
         </SettingsRow>
       </Card>
     </div>

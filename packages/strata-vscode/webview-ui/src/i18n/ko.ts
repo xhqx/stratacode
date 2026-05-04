@@ -1023,7 +1023,7 @@ export const dict = {
   "settings.autocomplete.model.title": "자동 완성 모델",
   "settings.autocomplete.model.description": "인라인 코드 완성에 사용되는 모델 선택",
   "settings.notifications.title": "알림",
-  "settings.context.title": "컨텍스트",
+  "settings.session.title": "컨텍스트",
 
   "settings.experimental.title": "실험적",
   "settings.language.title": "언어",
@@ -1360,8 +1360,8 @@ export const dict = {
   "settings.context.autoCompaction.description": "컨텍스트가 가득 차면 자동으로 압축",
   "settings.context.prune.title": "이전 출력 정리",
   "settings.context.prune.description": "압축 중 이전 도구 출력 제거",
-  "settings.context.watcherPatterns": "파일 감시자 무시 패턴",
-  "settings.context.watcherPatterns.description": "감시자가 무시해야 할 파일의 글로브 패턴",
+  "settings.session.watcherPatterns": "파일 감시자 무시 패턴",
+  "settings.session.watcherPatterns.description": "감시자가 무시해야 할 파일의 글로브 패턴",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "사용자 지정 prompt 사용",

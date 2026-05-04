@@ -156,6 +156,7 @@ const IndexingTab: Component = () => {
         <SettingsRow
           title={language.t("settings.experimental.semanticIndexing.title")}
           description={language.t("settings.experimental.semanticIndexing.description")}
+          last
         >
           <Switch
             checked={config().experimental?.semantic_indexing ?? false}
@@ -165,21 +166,6 @@ const IndexingTab: Component = () => {
             hideLabel
           >
             {language.t("settings.experimental.semanticIndexing.title")}
-          </Switch>
-        </SettingsRow>
-        <SettingsRow
-          title={language.t("settings.experimental.codebaseSearch.title")}
-          description={language.t("settings.experimental.codebaseSearch.description")}
-          last
-        >
-          <Switch
-            checked={config().experimental?.codebase_search ?? false}
-            onChange={(checked) =>
-              updateConfig({ experimental: { ...(config().experimental ?? {}), codebase_search: checked } })
-            }
-            hideLabel
-          >
-            {language.t("settings.experimental.codebaseSearch.title")}
           </Switch>
         </SettingsRow>
       </Card>

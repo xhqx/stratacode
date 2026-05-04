@@ -966,6 +966,12 @@
             "order": 1,
             "description": "Enable Agent Communication Protocol agents integration."
           },
+          "strata-code.new.features.autoApprove": {
+            "type": "boolean",
+            "default": true,
+            "order": 1,
+            "description": "Enable auto-approve settings for tool permission timeouts and behavior."
+          },
           "strata-code.new.features.autocomplete": {
             "type": "boolean",
             "default": true,
@@ -978,10 +984,16 @@
             "order": 3,
             "description": "Enable automatic retry logic for failed AI requests with exponential backoff."
           },
-          "strata-code.new.features.browserAutomation": {
+          "strata-code.new.features.batchTool": {
             "type": "boolean",
             "default": false,
             "order": 4,
+            "description": "Enable the experimental batch tool for agents."
+          },
+          "strata-code.new.features.browserAutomation": {
+            "type": "boolean",
+            "default": false,
+            "order": 5,
             "description": "Enable browser automation powered by Playwright. When enabled, the AI agent can interact with web pages in a visible Chrome window."
           },
           "strata-code.new.features.checkpoints": {
@@ -996,11 +1008,23 @@
             "order": 6,
             "description": "Enable editor code actions (Explain, Fix, Improve), terminal actions, and lightbulb quick fixes. Disabling requires a window reload."
           },
+          "strata-code.new.features.codebaseSearch": {
+            "type": "boolean",
+            "default": false,
+            "order": 7,
+            "description": "Enable semantic codebase search capability."
+          },
           "strata-code.new.features.commitMessage": {
             "type": "boolean",
             "default": true,
             "order": 7,
             "description": "Enable AI-generated commit messages in the Source Control panel. Disabling requires a window reload."
+          },
+          "strata-code.new.features.compaction": {
+            "type": "boolean",
+            "default": true,
+            "order": 8,
+            "description": "Enable context compaction capabilities including auto compaction and pruning."
           },
           "strata-code.new.features.diffViewer": {
             "type": "boolean",
@@ -1020,6 +1044,12 @@
             "order": 10,
             "description": "Enable the standalone AI explainer for code selection and symbol explanations."
           },
+          "strata-code.new.features.formatter": {
+            "type": "boolean",
+            "default": true,
+            "order": 11,
+            "description": "Enable the experimental whole-file formatter agent."
+          },
           "strata-code.new.features.kanban": {
             "type": "boolean",
             "default": false,
@@ -1037,6 +1067,12 @@
             "default": true,
             "order": 13,
             "description": "Enable in-app notification center for agent activity and system events."
+          },
+          "strata-code.new.features.pasteSummary": {
+            "type": "boolean",
+            "default": true,
+            "order": 14,
+            "description": "Enable experimental paste summarization."
           },
           "strata-code.new.features.planningMode": {
             "type": "boolean",
@@ -1068,16 +1104,28 @@
             "order": 18,
             "description": "Show inline suggestions from the prompt enhancer as you type."
           },
+          "strata-code.new.features.selectionTip": {
+            "type": "boolean",
+            "default": true,
+            "order": 19,
+            "description": "Show an inline hint when selecting code, reminding you of the shortcut to add the selection to Strata chat."
+          },
           "strata-code.new.features.remoteControl": {
             "type": "boolean",
             "default": false,
-            "order": 19,
+            "order": 20,
             "description": "Enable remote control API for external tool integration."
+          },
+          "strata-code.new.features.taskTimeline": {
+            "type": "boolean",
+            "default": true,
+            "order": 21,
+            "description": "Show the task timeline graph in the chat header."
           },
           "strata-code.new.features.sessionSharing": {
             "type": "boolean",
             "default": false,
-            "order": 20,
+            "order": 22,
             "description": "Enable session sharing and cloud sync for collaborative workflows."
           },
           "strata-code.new.features.workers": {

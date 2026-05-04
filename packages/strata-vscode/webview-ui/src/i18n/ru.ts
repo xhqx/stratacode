@@ -1061,7 +1061,7 @@ export const dict = {
   "settings.autocomplete.model.title": "Модель автодополнения",
   "settings.autocomplete.model.description": "Выберите модель для встроенного (inline) автодополнения кода",
   "settings.notifications.title": "Уведомления",
-  "settings.context.title": "Контекст",
+  "settings.session.title": "Контекст",
 
   "settings.experimental.title": "Экспериментальное",
   "settings.language.title": "Язык",
@@ -1384,8 +1384,8 @@ export const dict = {
   "settings.context.autoCompaction.description": "Автоматически сжимать контекст при заполнении",
   "settings.context.prune.title": "Очистить старые выходные данные",
   "settings.context.prune.description": "Удалить старые выходные данные инструментов при сжатии",
-  "settings.context.watcherPatterns": "Шаблоны игнорирования наблюдателя файлов",
-  "settings.context.watcherPatterns.description": "Glob-шаблоны для файлов, которые наблюдатель должен игнорировать",
+  "settings.session.watcherPatterns": "Шаблоны игнорирования наблюдателя файлов",
+  "settings.session.watcherPatterns.description": "Glob-шаблоны для файлов, которые наблюдатель должен игнорировать",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "Использовать пользовательский prompt",

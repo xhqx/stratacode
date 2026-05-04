@@ -6,16 +6,14 @@ import { useVSCode } from "../../context/vscode"
 import { useLanguage } from "../../context/language"
 import type { ExtensionMessage } from "../../types/messages"
 
-const PlanningTab: Component = () => {
+const DocumentDrivenTasksTab: Component = () => {
   const vscode = useVSCode()
   const language = useLanguage()
 
-  const [taskView, setTaskView] = createSignal(true)
   const [documentDriven, setDocumentDriven] = createSignal(true)
 
   const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
     if (message.type === "planningSettingsLoaded") {
-      setTaskView(message.settings.taskView)
       setDocumentDriven(message.settings.documentDrivenTasks)
     }
   })
@@ -26,36 +24,27 @@ const PlanningTab: Component = () => {
     vscode.postMessage({ type: "requestPlanningSettings" })
   })
 
-  const updateSetting = (key: "taskView" | "documentDrivenTasks", value: boolean) => {
-    vscode.postMessage({ type: "updatePlanningSetting", key, value })
+  const updateSetting = (value: boolean) => {
+    vscode.postMessage({ type: "updatePlanningSetting", key: "documentDrivenTasks", value })
   }
 
   return (
     <div>
-      <Card style={{ "margin-bottom": "12px" }}>
+      <Card>
         <SettingsRow
-          title={language.t("settings.plan.taskView.title") || "Planning Task View"}
-          description={language.t("settings.plan.taskView.description") || "Show the Kanban task board in the sidebar."}
-        >
-          <Switch checked={taskView()} onChange={(val) => updateSetting("taskView", val)} hideLabel>
-            {language.t("settings.plan.taskView.title") || "Planning Task View"}
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title={language.t("settings.plan.documentDriven.title") || "Document Driven Tasks"}
+          title={language.t("settings.display.documentDrivenTasks.title") || "Document-Driven Tasks"}
           description={
-            language.t("settings.plan.documentDriven.description") ||
+            language.t("settings.display.documentDrivenTasks.description") ||
             "Automatically sync tasks with markdown plan files."
           }
           last
         >
           <Switch
             checked={documentDriven()}
-            onChange={(val) => updateSetting("documentDrivenTasks", val)}
+            onChange={updateSetting}
             hideLabel
           >
-            {language.t("settings.plan.documentDriven.title") || "Document Driven Tasks"}
+            {language.t("settings.display.documentDrivenTasks.title") || "Document-Driven Tasks"}
           </Switch>
         </SettingsRow>
       </Card>
@@ -63,4 +52,4 @@ const PlanningTab: Component = () => {
   )
 }
 
-export default PlanningTab
+export default DocumentDrivenTasksTab

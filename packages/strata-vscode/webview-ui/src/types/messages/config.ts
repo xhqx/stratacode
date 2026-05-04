@@ -162,24 +162,32 @@ export interface FeatureFlags {
 
 export interface ExtensionFeatureFlags {
   acpAgents: boolean
+  autoApprove: boolean
   autocomplete: boolean
   autoretries: boolean
+  batchTool: boolean
   browserAutomation: boolean
   checkpoints: boolean
   codeActions: boolean
+  codebaseSearch: boolean
   commitMessage: boolean
+  compaction: boolean
   diffViewer: boolean
   documentDrivenTasks: boolean
   explainer: boolean
+  formatter: boolean
   kanban: boolean
   lsp: boolean
   notifications: boolean
   planningMode: boolean
   projectMemory: boolean
   promptAutocomplete: boolean
+  pasteSummary: boolean
   promptEnhancer: boolean
   promptEnhancerSuggestions: boolean
   remoteControl: boolean
+  selectionTip: boolean
   sessionSharing: boolean
+  taskTimeline: boolean
   workers: boolean
 }

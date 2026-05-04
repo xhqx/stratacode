@@ -1035,7 +1035,7 @@ export const dict = {
   "settings.autocomplete.model.title": "自动补全模型",
   "settings.autocomplete.model.description": "选择用于内联代码补全的模型",
   "settings.notifications.title": "通知",
-  "settings.context.title": "上下文",
+  "settings.session.title": "上下文",
 
   "settings.experimental.title": "实验性功能",
   "settings.language.title": "语言",
@@ -1329,8 +1329,8 @@ export const dict = {
   "settings.context.autoCompaction.description": "上下文满时自动压缩",
   "settings.context.prune.title": "修剪旧输出",
   "settings.context.prune.description": "压缩期间移除旧的工具输出",
-  "settings.context.watcherPatterns": "文件监视器忽略模式",
-  "settings.context.watcherPatterns.description": "监视器应忽略的文件的 glob 模式",
+  "settings.session.watcherPatterns": "文件监视器忽略模式",
+  "settings.session.watcherPatterns.description": "监视器应忽略的文件的 glob 模式",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "使用自定义 prompt",

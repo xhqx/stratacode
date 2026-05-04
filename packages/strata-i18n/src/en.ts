@@ -83,6 +83,12 @@ export const dict = {
   "plan.followup.answer.newSession.description": "Implement in a fresh session with a clean context",
   "plan.followup.answer.continue": "Continue here",
   "plan.followup.answer.continue.description": "Implement the plan in this session",
+  "settings.agentBehaviour.removeMode.button": "Remove",
+  "settings.agents.title": "Session",
+  "settings.agents.subtab.models": "Models",
+  "settings.agents.subtab.agents": "Agents",
+  "settings.agents.subtab.autoApprove": "Permissions",
+  "settings.agents.subtab.context": "Context",
   "settings.agentBehaviour.importOpenCodeSettings": "Import settings from OpenCode",
 
   // Retry UI keys
@@ -120,4 +126,25 @@ export const dict = {
   "settings.agentBehaviour.acpDetail.command": "Command",
   "settings.agentBehaviour.acpDetail.args": "Args",
   "settings.agentBehaviour.acpDetail.env": "Environment",
+
+  // Commit Message keys
+  "settings.commitMessage.format.title": "Format",
+  "settings.commitMessage.format.description": "Select the style of generated commit messages.",
+  "settings.commitMessage.model.title": "Model Override",
+  "settings.commitMessage.model.description": "Specify a model ID to override the default commit message model.",
+
+  // Context keys
+  "settings.context.autoCompaction.title": "Auto Compaction",
+  "settings.context.autoCompaction.description": "Automatically compact the session when context window limits are reached.",
+  "settings.context.repomapBudget.title": "Repository Map Token Budget",
+  "settings.context.repomapBudget.description": "Maximum number of tokens to allocate for the repository map.",
+
+  // Experimental keys
+  "settings.experimental.batchTool.title": "Batch Tool",
+  "settings.experimental.batchTool.description": "Enable the experimental batch tool for agents.",
+  "settings.experimental.codebaseSearch.title": "Codebase Search",
+  "settings.experimental.codebaseSearch.description": "Enable semantic codebase search capability.",
+  "settings.experimental.mcpTimeout.title": "MCP Timeout (ms)",
+  "settings.experimental.mcpTimeout.description": "Timeout in milliseconds for MCP server operations.",
+  "settings.experimental.continueOnDeny.title": "Continue Loop on Deny",
 }

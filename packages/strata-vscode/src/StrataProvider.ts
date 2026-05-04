@@ -2684,7 +2684,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     const config = vscode.workspace.getConfiguration("strata-code.new")
     this.postMessage({
       type: "timelineSettingLoaded",
-      visible: config.get<boolean>("showTaskTimeline", true),
+      visible: config.get<boolean>("features.taskTimeline", true),
     })
   }
 

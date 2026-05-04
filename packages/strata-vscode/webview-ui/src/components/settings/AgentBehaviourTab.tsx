@@ -29,13 +29,14 @@ interface SelectOption {
 }
 
 import SettingsRow from "./SettingsRow"
+import { agentVisible, pinnedFor } from "./feature-registry"
 
 // View states for the agents subtab
 type AgentView = "list" | "create" | "edit"
 
 const AgentBehaviourTab: Component = () => {
   const language = useLanguage()
-  const { config, updateConfig } = useConfig()
+  const { config, updateConfig, extensionFeatures } = useConfig()
   const session = useSession()
   const dialog = useDialog()
   const vscode = useVSCode()
@@ -45,45 +46,26 @@ const AgentBehaviourTab: Component = () => {
   const [agentView, setAgentView] = createSignal<AgentView>("list")
   const [editingAgent, setEditingAgent] = createSignal<string>("")
 
-  const [activeRemote, setActiveRemote] = createSignal(false)
-  const [planningTaskView, setPlanningTaskView] = createSignal(true)
-  const [documentDrivenTasks, setDocumentDrivenTasks] = createSignal(true)
-
-  const handler = (msg: ExtensionMessage) => {
-    if (msg.type === "remoteStatus") {
-      setActiveRemote(msg.enabled)
-    }
-    if (msg.type === "settingLoaded" && msg.key === "planning.taskView") {
-      setPlanningTaskView(msg.value as boolean)
-    }
-    if (msg.type === "settingLoaded" && msg.key === "planning.documentDrivenTasks") {
-      setDocumentDrivenTasks(msg.value as boolean)
-    }
-  }
-
-  onMount(() => {
-    const unsub = vscode.onMessage(handler)
-    vscode.postMessage({ type: "requestRemoteStatus" })
-    vscode.postMessage({ type: "requestSetting", key: "planning.taskView" })
-    vscode.postMessage({ type: "requestSetting", key: "planning.documentDrivenTasks" })
-    onCleanup(unsub)
-  })
-
-  const PINNED = ["commit", "autocomplete"] as const
-
   const agentNames = createMemo(() => {
     // Exclude server-side hidden internal modes (compaction, title, summary)
     // from the list by using the pre-filtered visible agents list, which safely
     // includes any agents explicitly force-shown by the user.
-    const names = session.agents().map((a) => a.name)
-    // Always include pinned native agents so users can re-enable them
-    for (const pin of PINNED) {
-      if (!names.includes(pin)) names.push(pin)
+    const feats = extensionFeatures()
+    const names = session
+      .agents()
+      .map((a) => a.name)
+      .filter((name) => agentVisible(name, feats))
+
+    // Always include pinned native agents so users can re-enable them if their feature is active
+    for (const name of pinnedFor(feats)) {
+      if (!names.includes(name)) names.push(name)
     }
+
     // Also include any agents from config that might not be in the agent list
     const agents = Object.keys(config().agent ?? {})
     for (const name of agents) {
       if (!names.includes(name)) {
+        if (!agentVisible(name, feats)) continue
         names.push(name)
       }
     }
@@ -93,10 +75,12 @@ const AgentBehaviourTab: Component = () => {
   // Default-agent picker must only show visible primary agents (not subagents
   // or hidden modes) since the CLI rejects those as default_agent values.
   const defaultAgentOptions = createMemo<SelectOption[]>(() => {
+    const feats = extensionFeatures()
     const visible = session
       .agents()
       .filter((a) => !a.hidden)
       .map((a) => a.name)
+      .filter((name) => agentVisible(name, feats))
     return [
       { value: "", label: language.t("common.default") },
       ...visible.map((name) => ({ value: name, label: name })),
@@ -215,16 +199,7 @@ const AgentBehaviourTab: Component = () => {
     input.click()
   }
 
-  function handleModelSelect(configKey: "model" | "small_model") {
-    return (providerID: string, modelID: string) => {
-      if (!providerID || !modelID) {
-        updateConfig({ [configKey]: null })
-        return
-      }
-      updateConfig({ [configKey]: `${providerID}/${modelID}` })
-    }
-  }
-  const [activeMainTab, setActiveMainTab] = createSignal<"agents" | "models">("agents")
+
 
   return (
     <>
@@ -243,338 +218,41 @@ const AgentBehaviourTab: Component = () => {
       </Show>
       <Show when={agentView() === "list"}>
         <div>
+          <Card style={{ "margin-bottom": "24px" }}>
+            <SettingsRow
+              title={language.t("settings.agentBehaviour.defaultAgent.title")}
+              description={language.t("settings.agentBehaviour.defaultAgent.description")}
+              last
+            >
+              <Select
+                options={defaultAgentOptions()}
+                current={defaultAgentOptions().find((o) => o.value === (config().default_agent ?? ""))}
+                value={(o) => o.value}
+                label={(o) => o.label}
+                onSelect={(o) => {
+                  if (!o) return
+                  const next = o.value || undefined
+                  if (next === (config().default_agent ?? undefined)) return
+                  updateConfig({ default_agent: next })
+                }}
+                variant="secondary"
+                size="small"
+                triggerVariant="settings"
+              />
+            </SettingsRow>
+          </Card>
+
+          {/* Action buttons */}
           <div
             style={{
               display: "flex",
-              gap: "0",
-              "border-bottom": "1px solid var(--vscode-panel-border)",
-              "margin-bottom": "16px",
+              "align-items": "center",
+              "justify-content": "flex-end",
+              "margin-bottom": "8px",
+              "margin-top": "16px",
             }}
           >
-            <For
-              each={[
-                { id: "agents", label: language.t("settings.tab.general") || "General" },
-                { id: "models", label: language.t("settings.agentBehaviour.subtab.globals") || "Globals" },
-              ]}
-            >
-              {(tab) => (
-                <button
-                  onClick={() => setActiveMainTab(tab.id as any)}
-                  style={{
-                    padding: "8px 16px",
-                    border: "none",
-                    background: "transparent",
-                    color:
-                      activeMainTab() === tab.id
-                        ? "var(--vscode-tab-activeForeground)"
-                        : "var(--vscode-tab-inactiveForeground)",
-                    "border-bottom":
-                      activeMainTab() === tab.id ? "2px solid var(--vscode-tab-activeBorder)" : "2px solid transparent",
-                    cursor: "pointer",
-                    "font-size": "12px",
-                    "text-transform": "uppercase",
-                    "font-weight": activeMainTab() === tab.id ? "600" : "normal",
-                  }}
-                >
-                  {tab.label}
-                </button>
-              )}
-            </For>
-          </div>
-
-          <Show when={activeMainTab() === "models"}>
-            <Card style={{ "margin-bottom": "24px" }}>
-              <SettingsRow
-                title={language.t("settings.providers.defaultModel.title")}
-                description={language.t("settings.providers.defaultModel.description")}
-              >
-                <ModelSelectorBase
-                  value={parseModelString(config().model ?? undefined)}
-                  onSelect={handleModelSelect("model")}
-                  placement="bottom-start"
-                  allowClear
-                  clearLabel={language.t("settings.providers.notSet")}
-                />
-              </SettingsRow>
-              <SettingsRow
-                title={language.t("settings.providers.smallModel.title")}
-                description={language.t("settings.providers.smallModel.description")}
-              >
-                <ModelSelectorBase
-                  value={parseModelString(config().small_model ?? undefined)}
-                  onSelect={handleModelSelect("small_model")}
-                  placement="bottom-start"
-                  allowClear
-                  clearLabel={language.t("settings.providers.notSet")}
-                  includeAutoSmall
-                />
-              </SettingsRow>
-              <SettingsRow
-                title={language.t("settings.agentBehaviour.defaultAgent.title")}
-                description={language.t("settings.agentBehaviour.defaultAgent.description")}
-              >
-                <Select
-                  options={defaultAgentOptions()}
-                  current={defaultAgentOptions().find((o) => o.value === (config().default_agent ?? ""))}
-                  value={(o) => o.value}
-                  label={(o) => o.label}
-                  onSelect={(o) => {
-                    if (!o) return
-                    const next = o.value || undefined
-                    if (next === (config().default_agent ?? undefined)) return
-                    updateConfig({ default_agent: next })
-                  }}
-                  variant="secondary"
-                  size="small"
-                  triggerVariant="settings"
-                />
-              </SettingsRow>
-              <SettingsRow
-                title={language.t("settings.experimental.remote.title")}
-                description={language.t("settings.experimental.remote.description")}
-                vertical
-              >
-                <div style={{ display: "flex", "flex-direction": "column", gap: "8px", width: "100%" }}>
-                  <div style={{ display: "flex", "align-items": "center", "justify-content": "space-between" }}>
-                    <span style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))" }}>
-                      {language.t("settings.experimental.remote.current")}
-                    </span>
-                    <span
-                      style={{
-                        "font-size": "13px",
-                        color: activeRemote()
-                          ? "var(--vscode-testing-iconPassed, #4caf50)"
-                          : "var(--text-weak-base, var(--vscode-descriptionForeground))",
-                      }}
-                    >
-                      {activeRemote()
-                        ? language.t("settings.experimental.remote.active")
-                        : language.t("settings.experimental.remote.inactive")}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      "font-size": "12px",
-                      color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
-                      "margin-bottom": "8px",
-                    }}
-                  >
-                    {language.t("settings.experimental.remote.hint")}
-                  </div>
-                  <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-                    <label
-                      style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}
-                    >
-                      {language.t("settings.experimental.remote.startup")}
-                    </label>
-                    <Switch
-                      checked={config().remote_control ?? false}
-                      onChange={(checked) => updateConfig({ remote_control: checked })}
-                      hideLabel
-                    >
-                      {language.t("settings.experimental.remote.startup")}
-                    </Switch>
-                  </div>
-                </div>
-              </SettingsRow>
-              <SettingsRow
-                title={language.t("settings.agentBehaviour.retry.title")}
-                description={language.t("settings.agentBehaviour.retry.description")}
-                vertical
-              >
-                <div style={{ display: "flex", "flex-direction": "column", gap: "8px", width: "100%" }}>
-                  <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-                    <label
-                      style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}
-                    >
-                      Enabled
-                    </label>
-                    <Switch
-                      checked={config().retry?.enabled !== false}
-                      onChange={(checked) => {
-                        const existing = config().retry ?? {}
-                        const updated = { ...existing, enabled: checked }
-                        updateConfig({ retry: updated })
-                      }}
-                      hideLabel
-                    >
-                      Enabled
-                    </Switch>
-                  </div>
-                  <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-                    <label
-                      style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}
-                    >
-                      Limit (attempts)
-                    </label>
-                    <input
-                      type="number"
-                      style={{
-                        width: "80px",
-                        padding: "4px 8px",
-                        "background-color": "var(--vscode-input-background)",
-                        color: "var(--vscode-input-foreground)",
-                        border: "1px solid var(--vscode-input-border)",
-                      }}
-                      value={config().retry?.limit ?? ""}
-                      placeholder="2"
-                      min="0"
-                      max="10"
-                      onChange={(e) => {
-                        const parsed = parseInt(e.currentTarget.value, 10)
-                        const existing = config().retry ?? {}
-                        const updated = { ...existing, limit: isNaN(parsed) ? undefined : parsed }
-                        updateConfig({
-                          retry: Object.keys(updated).length === 0 && updated.limit === undefined ? null : updated,
-                        })
-                      }}
-                    />
-                  </div>
-                  <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-                    <label
-                      style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}
-                    >
-                      Base Delay (seconds)
-                    </label>
-                    <input
-                      type="number"
-                      style={{
-                        width: "80px",
-                        padding: "4px 8px",
-                        "background-color": "var(--vscode-input-background)",
-                        color: "var(--vscode-input-foreground)",
-                        border: "1px solid var(--vscode-input-border)",
-                      }}
-                      value={config().retry?.delay ?? ""}
-                      placeholder="5"
-                      min="1"
-                      onChange={(e) => {
-                        const parsed = parseFloat(e.currentTarget.value)
-                        const existing = config().retry ?? {}
-                        const updated = { ...existing, delay: isNaN(parsed) ? undefined : parsed }
-                        updateConfig({
-                          retry: Object.keys(updated).length === 0 && updated.delay === undefined ? null : updated,
-                        })
-                      }}
-                    />
-                  </div>
-                  <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-                    <label
-                      style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}
-                    >
-                      Max Delay Cap (seconds)
-                    </label>
-                    <input
-                      type="number"
-                      style={{
-                        width: "80px",
-                        padding: "4px 8px",
-                        "background-color": "var(--vscode-input-background)",
-                        color: "var(--vscode-input-foreground)",
-                        border: "1px solid var(--vscode-input-border)",
-                      }}
-                      value={config().retry?.max_delay ?? ""}
-                      placeholder="60"
-                      min="1"
-                      onChange={(e) => {
-                        const parsed = parseFloat(e.currentTarget.value)
-                        const existing = config().retry ?? {}
-                        const updated = { ...existing, max_delay: isNaN(parsed) ? undefined : parsed }
-                        updateConfig({
-                          retry: Object.keys(updated).length === 0 && updated.max_delay === undefined ? null : updated,
-                        })
-                      }}
-                    />
-                  </div>
-                </div>
-              </SettingsRow>
-              <SettingsRow
-                title={language.t("settings.experimental.share.title")}
-                description={language.t("settings.experimental.share.description")}
-              >
-                <Select
-                  options={[
-                    { value: "manual", labelKey: "settings.experimental.share.manual" },
-                    { value: "auto", labelKey: "settings.experimental.share.auto" },
-                    { value: "disabled", labelKey: "settings.experimental.share.disabled" },
-                  ]}
-                  current={[
-                    { value: "manual", labelKey: "settings.experimental.share.manual" },
-                    { value: "auto", labelKey: "settings.experimental.share.auto" },
-                    { value: "disabled", labelKey: "settings.experimental.share.disabled" },
-                  ].find((o) => o.value === (config().share ?? "manual"))}
-                  value={(o) => o.value}
-                  label={(o) => language.t(o.labelKey)}
-                  onSelect={(o) => {
-                    if (!o) return
-                    const next = o.value as "manual" | "auto" | "disabled"
-                    if (next === (config().share ?? "manual")) return
-                    updateConfig({ share: next })
-                  }}
-                  variant="secondary"
-                  size="small"
-                  triggerVariant="settings"
-                />
-              </SettingsRow>
-              <SettingsRow
-                title={language.t("settings.experimental.formatter.title")}
-                description={language.t("settings.experimental.formatter.description")}
-              >
-                <Switch
-                  checked={config().formatter !== false}
-                  onChange={(checked) => updateConfig({ formatter: checked ? {} : false })}
-                  hideLabel
-                >
-                  {language.t("settings.experimental.formatter.title")}
-                </Switch>
-              </SettingsRow>
-              <SettingsRow
-                title={language.t("settings.display.planningTaskView.title")}
-                description={language.t("settings.display.planningTaskView.description")}
-              >
-                <Switch
-                  checked={planningTaskView()}
-                  onChange={(checked) => {
-                    setPlanningTaskView(checked)
-                    vscode.postMessage({ type: "updateSetting", key: "planning.taskView", value: checked })
-                  }}
-                  hideLabel
-                >
-                  {language.t("settings.display.planningTaskView.title")}
-                </Switch>
-              </SettingsRow>
-              <SettingsRow
-                title={language.t("settings.display.documentDrivenTasks.title")}
-                description={language.t("settings.display.documentDrivenTasks.description")}
-                last
-              >
-                <Switch
-                  checked={documentDrivenTasks()}
-                  onChange={(checked) => {
-                    setDocumentDrivenTasks(checked)
-                    vscode.postMessage({ type: "updateSetting", key: "planning.documentDrivenTasks", value: checked })
-                  }}
-                  hideLabel
-                >
-                  {language.t("settings.display.documentDrivenTasks.title")}
-                </Switch>
-              </SettingsRow>
-            </Card>
-          </Show>
-
-          {/* Agents Section */}
-          <Show when={activeMainTab() === "agents"}>
-            {/* Action buttons */}
-            <div
-              style={{
-                display: "flex",
-                "align-items": "center",
-                "justify-content": "flex-end",
-                "margin-bottom": "8px",
-                "margin-top": "16px",
-              }}
-            >
-              <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "8px" }}>
                 <Button variant="secondary" size="small" icon="plus" onClick={() => setAgentView("create")}>
                   {language.t("common.add")}
                 </Button>
@@ -789,7 +467,6 @@ const AgentBehaviourTab: Component = () => {
                 </For>
               </Card>
             </Show>
-          </Show>
         </div>
       </Show>
     </>

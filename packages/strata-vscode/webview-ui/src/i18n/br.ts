@@ -1032,7 +1032,7 @@ export const dict = {
   "settings.autocomplete.model.title": "Modelo de autocompletar",
   "settings.autocomplete.model.description": "Selecione o modelo usado para preenchimento de código inline",
   "settings.notifications.title": "Notificações",
-  "settings.context.title": "Contexto",
+  "settings.session.title": "Contexto",
 
   "settings.experimental.title": "Experimental",
   "settings.language.title": "Idioma",
@@ -1390,8 +1390,8 @@ export const dict = {
   "settings.context.autoCompaction.description": "Compactar automaticamente o contexto quando estiver cheio",
   "settings.context.prune.title": "Remover saídas antigas",
   "settings.context.prune.description": "Remover saídas antigas de ferramentas durante a compactação",
-  "settings.context.watcherPatterns": "Padrões de ignorar do observador",
-  "settings.context.watcherPatterns.description": "Padrões glob para arquivos que o observador deve ignorar",
+  "settings.session.watcherPatterns": "Padrões de ignorar do observador",
+  "settings.session.watcherPatterns.description": "Padrões glob para arquivos que o observador deve ignorar",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "Usar prompt personalizado",

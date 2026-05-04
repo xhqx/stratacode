@@ -301,8 +301,8 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
     }),
     vscode.commands.registerCommand("strata-code.new.toggleSelectionTip", () => {
       const cfg = vscode.workspace.getConfiguration("strata-code.new")
-      const current = cfg.get<boolean>("showSelectionTip") ?? true
-      cfg.update("showSelectionTip", !current, vscode.ConfigurationTarget.Global)
+      const current = cfg.get<boolean>("features.selectionTip") ?? true
+      cfg.update("features.selectionTip", !current, vscode.ConfigurationTarget.Global)
       vscode.window.showInformationMessage(`Selection tip ${!current ? "enabled" : "disabled"}`)
     }),
     vscode.commands.registerCommand("strata-code.new.toggleGateway", async () => {

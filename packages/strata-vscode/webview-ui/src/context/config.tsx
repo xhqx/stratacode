@@ -28,6 +28,7 @@ interface ConfigContextValue {
   saving: Accessor<boolean>
   saveError: Accessor<SaveError | null>
   updateConfig: (partial: Partial<Config>) => void
+  updateExtensionFeature: (key: keyof ExtensionFeatureFlags, value: boolean) => void
   saveConfig: () => void
   discardConfig: () => void
 }
@@ -36,25 +37,33 @@ export const ConfigContext = createContext<ConfigContextValue>()
 
 const EXT_FEATURE_DEFAULTS: ExtensionFeatureFlags = {
   acpAgents: true,
+  autoApprove: true,
   autocomplete: true,
   autoretries: true,
+  batchTool: false,
   browserAutomation: false,
   checkpoints: true,
   codeActions: true,
+  codebaseSearch: false,
   commitMessage: true,
+  compaction: false,
   diffViewer: true,
   documentDrivenTasks: false,
   explainer: true,
+  formatter: true,
   kanban: false,
   lsp: true,
   notifications: true,
+  pasteSummary: true,
   planningMode: false,
   projectMemory: true,
   promptAutocomplete: true,
   promptEnhancer: true,
   promptEnhancerSuggestions: true,
   remoteControl: false,
+  selectionTip: true,
   sessionSharing: false,
+  taskTimeline: true,
   workers: false,
 }
 
@@ -183,6 +192,10 @@ export const ConfigProvider: ParentComponent = (props) => {
     setSaveError(null)
   }
 
+  function updateExtensionFeature(key: keyof ExtensionFeatureFlags, value: boolean) {
+    setExtensionFeatures((prev) => ({ ...prev, [key]: value }))
+  }
+
   const value: ConfigContextValue = {
     config,
     features,
@@ -192,6 +205,7 @@ export const ConfigProvider: ParentComponent = (props) => {
     saving,
     saveError,
     updateConfig,
+    updateExtensionFeature,
     saveConfig,
     discardConfig,
   }

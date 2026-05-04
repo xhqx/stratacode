@@ -383,25 +383,10 @@ const SkillsTab: Component = () => {
         {language.t("settings.experimental.toolToggles")}
       </h4>
       <Card>
-        <SettingsRow
-          title={language.t("settings.experimental.batch.title")}
-          description={language.t("settings.experimental.batch.description")}
-          last={!config().tools || Object.keys(config().tools ?? {}).length === 0}
-        >
-          <Switch
-            checked={config().experimental?.batch_tool ?? false}
-            onChange={(checked) =>
-              updateConfig({ experimental: { ...(config().experimental ?? {}), batch_tool: checked } })
-            }
-            hideLabel
-          >
-            {language.t("settings.experimental.batch.title")}
-          </Switch>
-        </SettingsRow>
         <Show when={config().tools && Object.keys(config().tools ?? {}).length > 0}>
           <For each={Object.entries(config().tools ?? {})}>
             {([name, enabled], index) => (
-              <SettingsRow title={name} description="" last={index() >= Object.keys(config().tools ?? {}).length - 1}>
+              <SettingsRow title={name} description={`Enable or disable the ${name} tool.`} last={index() >= Object.keys(config().tools ?? {}).length - 1}>
                 <Switch
                   checked={enabled as boolean}
                   onChange={(checked) => updateConfig({ tools: { ...config().tools, [name]: checked } })}

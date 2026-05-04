@@ -1032,7 +1032,7 @@ export const dict = {
   "settings.autocomplete.model.title": "Autocomplete-modell",
   "settings.autocomplete.model.description": "Velg modellen som brukes for inline kodefullføring",
   "settings.notifications.title": "Varslinger",
-  "settings.context.title": "Kontekst",
+  "settings.session.title": "Kontekst",
 
   "settings.experimental.title": "Eksperimentelt",
   "settings.language.title": "Språk",
@@ -1374,8 +1374,8 @@ export const dict = {
   "settings.context.autoCompaction.description": "Komprimer automatisk kontekst når den er full",
   "settings.context.prune.title": "Fjern gamle utdata",
   "settings.context.prune.description": "Fjern gamle verktøyutdata under komprimering",
-  "settings.context.watcherPatterns": "Filvakt-ignormønstre",
-  "settings.context.watcherPatterns.description": "Glob-mønstre for filer som vakten skal ignorere",
+  "settings.session.watcherPatterns": "Filvakt-ignormønstre",
+  "settings.session.watcherPatterns.description": "Glob-mønstre for filer som vakten skal ignorere",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "Bruk egendefinert prompt",

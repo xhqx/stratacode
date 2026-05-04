@@ -1064,7 +1064,7 @@ export const dict = {
   "settings.autocomplete.model.title": "Model za automatsko dovršavanje",
   "settings.autocomplete.model.description": "Odaberite model koji se koristi za inline dovršavanje koda",
   "settings.notifications.title": "Obavještenja",
-  "settings.context.title": "Kontekst",
+  "settings.session.title": "Kontekst",
 
   "settings.experimental.title": "Eksperimentalno",
   "settings.language.title": "Jezik",
@@ -1389,8 +1389,8 @@ export const dict = {
   "settings.context.autoCompaction.description": "Automatski komprimiraj kontekst kada je pun",
   "settings.context.prune.title": "Očisti stare izlaze",
   "settings.context.prune.description": "Ukloni stare izlaze alata tokom kompresije",
-  "settings.context.watcherPatterns": "Uzorci ignoriranja za promatrač datoteka",
-  "settings.context.watcherPatterns.description": "Glob uzorci za datoteke koje promatrač treba ignorirati",
+  "settings.session.watcherPatterns": "Uzorci ignoriranja za promatrač datoteka",
+  "settings.session.watcherPatterns.description": "Glob uzorci za datoteke koje promatrač treba ignorirati",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "Koristi prilagođeni prompt",

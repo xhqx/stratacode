@@ -1049,7 +1049,7 @@ export const dict = {
   "settings.autocomplete.model.title": "โมเดล Autocomplete",
   "settings.autocomplete.model.description": "เลือกโมเดลที่ใช้สำหรับการเติมโค้ดแบบอินไลน์ (inline completions)",
   "settings.notifications.title": "การแจ้งเตือน",
-  "settings.context.title": "บริบท",
+  "settings.session.title": "บริบท",
 
   "settings.experimental.title": "ทดลอง",
   "settings.language.title": "ภาษา",
@@ -1361,8 +1361,8 @@ export const dict = {
   "settings.context.autoCompaction.description": "บีบอัดบริบทอัตโนมัติเมื่อเต็ม",
   "settings.context.prune.title": "ตัดผลลัพธ์เก่า",
   "settings.context.prune.description": "ลบผลลัพธ์เครื่องมือเก่าระหว่างการบีบอัด",
-  "settings.context.watcherPatterns": "รูปแบบการละเว้นตัวเฝ้าดูไฟล์",
-  "settings.context.watcherPatterns.description": "รูปแบบ glob สำหรับไฟล์ที่ตัวเฝ้าดูควรละเว้น",
+  "settings.session.watcherPatterns": "รูปแบบการละเว้นตัวเฝ้าดูไฟล์",
+  "settings.session.watcherPatterns.description": "รูปแบบ glob สำหรับไฟล์ที่ตัวเฝ้าดูควรละเว้น",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "ใช้ prompt แบบกำหนดเอง",

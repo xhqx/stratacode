@@ -5,6 +5,7 @@ import { IconButton } from "@stratacode/strata-ui/icon-button"
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
 import type { PermissionLevel, PermissionRule } from "../../types/messages"
+import { toolVisible } from "./feature-registry"
 
 interface LevelOption {
   value: PermissionLevel
@@ -151,8 +152,31 @@ function toolTitle(id: string): string {
 }
 
 const AutoApproveTab: Component = () => {
-  const { config, updateConfig } = useConfig()
+  const { config, updateConfig, extensionFeatures } = useConfig()
   const language = useLanguage()
+
+  const visibleSimpleTools = createMemo(() => {
+    const feats = extensionFeatures()
+    return SIMPLE_TOOLS.filter((tool) => toolVisible(tool.id, feats))
+  })
+
+  const visibleGroupedTools = createMemo(() => {
+    const feats = extensionFeatures()
+    return GROUPED_TOOLS.map(group => {
+      let ids = group.ids.filter(id => toolVisible(id, feats))
+      
+      if (ids.length === 0) return null
+      
+      let label = group.label
+      let descKey = group.descriptionKey
+      if (ids.length < group.ids.length) {
+        label = ids.join(" / ")
+        // Fallback for single websearch tool
+        if (ids.length === 1 && ids[0] === "websearch") descKey = "settings.autoApprove.tool.websearch"
+      }
+      return { ...group, ids, label, descriptionKey: descKey }
+    }).filter(Boolean) as GroupedToolDef[]
+  })
 
   const permissions = createMemo(() => config().permission ?? {})
 
@@ -228,67 +252,6 @@ const AutoApproveTab: Component = () => {
         {language.t("settings.autoApprove.description")}
       </div>
 
-      <div
-        style={{
-          "padding-top": "12px",
-          "padding-bottom": "12px",
-          "border-bottom": "1px solid var(--border-weak-base)",
-        }}
-      >
-        <div style={{ display: "flex", "align-items": "center", gap: "12px", "margin-bottom": "8px" }}>
-          <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
-            Auto-approve timeout (seconds)
-          </label>
-          <input
-            type="number"
-            style={{
-              width: "80px",
-              padding: "4px 8px",
-              "background-color": "var(--vscode-input-background)",
-              color: "var(--vscode-input-foreground)",
-              border: "1px solid var(--vscode-input-border)",
-            }}
-            value={config().auto_approve?.timeout ?? 0}
-            min="0"
-            max="300"
-            onChange={(e) => updateConfig({ auto_approve: { timeout: Number(e.currentTarget.value) } })}
-          />
-        </div>
-        <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
-          <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
-            Auto-answer question timeout (seconds)
-          </label>
-          <input
-            type="number"
-            style={{
-              width: "80px",
-              padding: "4px 8px",
-              "background-color": "var(--vscode-input-background)",
-              color: "var(--vscode-input-foreground)",
-              border: "1px solid var(--vscode-input-border)",
-            }}
-            value={config().auto_approve?.question_timeout ?? 0}
-            min="0"
-            max="300"
-            onChange={(e) => updateConfig({ auto_approve: { question_timeout: Number(e.currentTarget.value) } })}
-          />
-        </div>
-        <div style={{ display: "flex", "align-items": "center", gap: "12px", "margin-top": "8px" }}>
-          <label style={{ "font-size": "13px", color: "var(--text-base, var(--vscode-foreground))", flex: 1 }}>
-            {language.t("settings.experimental.continueOnDeny.title")}
-          </label>
-          <Switch
-            checked={config().experimental?.continue_loop_on_deny ?? false}
-            onChange={(checked) =>
-              updateConfig({ experimental: { ...(config().experimental ?? {}), continue_loop_on_deny: checked } })
-            }
-            hideLabel
-          >
-            {language.t("settings.experimental.continueOnDeny.title")}
-          </Switch>
-        </div>
-      </div>
-
       <For each={GRANULAR_TOOLS}>
         {(tool) => (
           <GranularToolRow
@@ -303,7 +266,7 @@ const AutoApproveTab: Component = () => {
         )}
       </For>
 
-      <For each={SIMPLE_TOOLS}>
+      <For each={visibleSimpleTools()}>
         {(tool) => (
           <SimpleToolRow
             id={tool.id}
@@ -314,7 +277,7 @@ const AutoApproveTab: Component = () => {
         )}
       </For>
 
-      <For each={GROUPED_TOOLS}>
+      <For each={visibleGroupedTools()}>
         {(group) => (
           <SimpleToolRow
             id={group.label}

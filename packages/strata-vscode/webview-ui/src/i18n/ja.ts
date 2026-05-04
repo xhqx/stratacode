@@ -1053,7 +1053,7 @@ export const dict = {
   "settings.autocomplete.model.title": "オートコンプリートモデル",
   "settings.autocomplete.model.description": "インラインでのコード補完に使用するモデルを選択します",
   "settings.notifications.title": "通知",
-  "settings.context.title": "コンテキスト",
+  "settings.session.title": "コンテキスト",
 
   "settings.experimental.title": "実験的機能",
   "settings.language.title": "言語",
@@ -1377,8 +1377,8 @@ export const dict = {
   "settings.context.autoCompaction.description": "コンテキストが満杯のとき自動的に圧縮",
   "settings.context.prune.title": "古い出力を削除",
   "settings.context.prune.description": "圧縮時に古いツール出力を削除",
-  "settings.context.watcherPatterns": "ファイルウォッチャー無視パターン",
-  "settings.context.watcherPatterns.description": "ウォッチャーが無視すべきファイルのglobパターン",
+  "settings.session.watcherPatterns": "ファイルウォッチャー無視パターン",
+  "settings.session.watcherPatterns.description": "ウォッチャーが無視すべきファイルのglobパターン",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "カスタム prompt を使用",

@@ -1054,7 +1054,7 @@ export const dict = {
   "settings.autocomplete.model.title": "Autocomplete-model",
   "settings.autocomplete.model.description": "Vælg den model, der bruges til inline kodefuldførelse",
   "settings.notifications.title": "Notifikationer",
-  "settings.context.title": "Kontekst",
+  "settings.session.title": "Kontekst",
 
   "settings.experimental.title": "Eksperimentelt",
   "settings.language.title": "Sprog",
@@ -1375,8 +1375,8 @@ export const dict = {
   "settings.context.autoCompaction.description": "Komprimér automatisk kontekst, når den er fuld",
   "settings.context.prune.title": "Fjern gamle output",
   "settings.context.prune.description": "Fjern gamle værktøjsoutput under komprimering",
-  "settings.context.watcherPatterns": "Filvagt-ignormønstre",
-  "settings.context.watcherPatterns.description": "Glob-mønstre for filer, som vagten skal ignorere",
+  "settings.session.watcherPatterns": "Filvagt-ignormønstre",
+  "settings.session.watcherPatterns.description": "Glob-mønstre for filer, som vagten skal ignorere",
 
   "settings.commitMessage.title": "Commit Message",
   "settings.commitMessage.override.title": "Brug brugerdefineret prompt",

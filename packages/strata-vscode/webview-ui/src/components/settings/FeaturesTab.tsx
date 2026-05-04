@@ -1,295 +1,121 @@
-import { Component } from "solid-js"
+import { Component, createSignal, createEffect, Show, onCleanup, For } from "solid-js"
+import { Dynamic } from "solid-js/web"
+import { Icon, type IconProps } from "@stratacode/strata-ui/icon"
 import { Switch } from "@stratacode/strata-ui/switch"
-import { Card } from "@stratacode/strata-ui/card"
 import { useVSCode } from "../../context/vscode"
 import { useConfig } from "../../context/config"
-import SettingsRow from "./SettingsRow"
+import { useLanguage } from "../../context/language"
+import type { ExtensionMessage } from "../../types/messages"
+import type { ExtensionFeatureFlags } from "../../types/messages/config"
 
-const FeaturesTab: Component = () => {
+import { FEATURES } from "./feature-registry"
+
+export interface FeaturesTabProps {
+  initialFeature?: string
+}
+
+const FeaturesTab: Component<FeaturesTabProps> = (props) => {
   const vscode = useVSCode()
-  const { extensionFeatures } = useConfig()
+  const { extensionFeatures, updateExtensionFeature } = useConfig()
+  const language = useLanguage()
 
-  const save = (key: string, value: boolean) => {
+  const unsubscribe = vscode.onMessage((_message: ExtensionMessage) => {})
+  onCleanup(unsubscribe)
+
+  const save = (key: keyof ExtensionFeatureFlags, value: boolean) => {
+    updateExtensionFeature(key, value)
     vscode.postMessage({ type: "updateSetting", key: `features.${key}`, value })
   }
 
+  const resolveInitial = (tab?: string): keyof ExtensionFeatureFlags => {
+    if (tab && FEATURES.find(f => f.key === tab)) return tab as keyof ExtensionFeatureFlags
+    return FEATURES[0].key
+  }
+
+  const [active, setActive] = createSignal<keyof ExtensionFeatureFlags>(resolveInitial(props.initialFeature))
+
+  createEffect(() => {
+    if (props.initialFeature) setActive(resolveInitial(props.initialFeature))
+  })
+
+  const currentFeature = () => FEATURES.find(f => f.key === active())
+
+  // ─── shared button style helper ─────────────────────────────────────────────
+  const btnStyle = (key: keyof ExtensionFeatureFlags, enabled = true) => ({
+    display: "flex",
+    "align-items": "center",
+    gap: "8px",
+    padding: "10px 16px",
+    background: active() === key ? "var(--vscode-list-activeSelectionBackground)" : "transparent",
+    color: active() === key
+      ? "var(--vscode-list-activeSelectionForeground)"
+      : enabled ? "var(--vscode-foreground)" : "var(--vscode-descriptionForeground)",
+    border: "none",
+    "border-left": `3px solid ${active() === key ? "var(--vscode-focusBorder)" : "transparent"}`,
+    cursor: "pointer",
+    "text-align": "left" as const,
+    "font-size": "13px",
+    "font-family": "inherit",
+    width: "100%",
+    transition: "background 120ms ease, color 120ms ease",
+    opacity: enabled ? 1 : 0.6,
+  })
+
   return (
-    <div>
-      <Card>
-        <SettingsRow
-          title="ACP Agents"
-          description="Enable Agent Communication Protocol agents integration."
-        >
-          <Switch
-            checked={extensionFeatures().acpAgents}
-            onChange={(checked) => save("acpAgents", checked)}
-            hideLabel
-          >
-            ACP Agents
-          </Switch>
-        </SettingsRow>
+    <div style={{ display: "flex", height: "100%", "min-height": 0, gap: "1px", background: "var(--border-weak-base)" }}>
 
-        <SettingsRow
-          title="Autocomplete"
-          description="Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling requires a window reload."
-        >
-          <Switch
-            checked={extensionFeatures().autocomplete}
-            onChange={(checked) => save("autocomplete", checked)}
-            hideLabel
-          >
-            Autocomplete
-          </Switch>
-        </SettingsRow>
+      {/* ── Left pane: unified list ─────────────────────────────────────────── */}
+      <div style={{ width: "220px", background: "var(--vscode-sideBar-background)", display: "flex", "flex-direction": "column", overflow: "auto", "flex-shrink": 0 }}>
 
-        <SettingsRow
-          title="Auto-Retries"
-          description="Enable automatic retry logic for failed AI requests with exponential backoff."
-        >
-          <Switch
-            checked={extensionFeatures().autoretries}
-            onChange={(checked) => save("autoretries", checked)}
-            hideLabel
-          >
-            Auto-Retries
-          </Switch>
-        </SettingsRow>
+        <For each={FEATURES}>
+          {(feature) => (
+            <button
+              type="button"
+              onClick={() => setActive(feature.key)}
+              style={btnStyle(feature.key, extensionFeatures()[feature.key])}
+            >
+              <Icon name={feature.icon} size="small" />
+              <span style={{ flex: 1, "white-space": "nowrap", overflow: "hidden", "text-overflow": "ellipsis" }}>
+                {feature.label(language.t)}
+              </span>
+            </button>
+          )}
+        </For>
+      </div>
 
-        <SettingsRow
-          title="Browser Automation"
-          description="Enable AI browser tools for UI testing and navigation. Disabling requires a window reload."
-        >
-          <Switch
-            checked={extensionFeatures().browserAutomation}
-            onChange={(checked) => save("browserAutomation", checked)}
-            hideLabel
-          >
-            Browser Automation
-          </Switch>
-        </SettingsRow>
+      {/* ── Right pane ─────────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, background: "var(--vscode-editor-background)", padding: "20px", overflow: "auto", display: "flex", "flex-direction": "column", gap: "16px" }}>
 
-        <SettingsRow
-          title="Checkpoints"
-          description="Enable git-based checkpoints for tracking and reverting AI changes."
-        >
-          <Switch
-            checked={extensionFeatures().checkpoints}
-            onChange={(checked) => save("checkpoints", checked)}
-            hideLabel
-          >
-            Checkpoints
-          </Switch>
-        </SettingsRow>
+        {/* Regular feature */}
+        <Show when={currentFeature()} keyed>
+          {(feature) => {
+            const enabled = () => extensionFeatures()[feature.key]
+            return (
+              <>
+                <div style={{ display: "flex", "align-items": "flex-start", "justify-content": "space-between", gap: "16px", "padding-bottom": "16px", "border-bottom": "1px solid var(--border-weak-base)" }}>
+                  <div style={{ opacity: enabled() ? 1 : 0.5, transition: "opacity 150ms ease" }}>
+                    <h2 style={{ margin: "0 0 8px 0", "font-size": "16px", "font-weight": "600" }}>{feature.label(language.t)}</h2>
+                    <p style={{ margin: 0, "font-size": "13px", color: "var(--vscode-descriptionForeground)", "line-height": "1.4" }}>{feature.description(language.t)}</p>
+                  </div>
+                  <Switch
+                    checked={enabled()}
+                    onChange={(checked) => save(feature.key, checked)}
+                    hideLabel
+                  >
+                    {feature.label(language.t)}
+                  </Switch>
+                </div>
 
-        <SettingsRow
-          title="Code Actions"
-          description="Enable AI-powered Quick Fixes and code actions in the editor. Disabling requires a window reload."
-        >
-          <Switch
-            checked={extensionFeatures().codeActions}
-            onChange={(checked) => save("codeActions", checked)}
-            hideLabel
-          >
-            Code Actions
-          </Switch>
-        </SettingsRow>
+                <Show when={enabled() && feature.component}>
+                  <Dynamic component={feature.component} />
+                </Show>
+              </>
+            )
+          }}
+        </Show>
 
-        <SettingsRow
-          title="Commit Message"
-          description="Enable AI-generated commit messages in the Source Control panel. Disabling requires a window reload."
-        >
-          <Switch
-            checked={extensionFeatures().commitMessage}
-            onChange={(checked) => save("commitMessage", checked)}
-            hideLabel
-          >
-            Commit Message
-          </Switch>
-        </SettingsRow>
 
-        <SettingsRow
-          title="Diff Viewer"
-          description="Enable the Changes tab, AI explain commands, and diff viewer panel. Disabling requires a window reload."
-        >
-          <Switch
-            checked={extensionFeatures().diffViewer}
-            onChange={(checked) => save("diffViewer", checked)}
-            hideLabel
-          >
-            Diff Viewer
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Document-Driven Tasks"
-          description="Enable document-driven task execution from markdown plans and specs."
-        >
-          <Switch
-            checked={extensionFeatures().documentDrivenTasks}
-            onChange={(checked) => save("documentDrivenTasks", checked)}
-            hideLabel
-          >
-            Document-Driven Tasks
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Explainer"
-          description="Enable the standalone AI explainer for code selection and symbol explanations."
-        >
-          <Switch
-            checked={extensionFeatures().explainer}
-            onChange={(checked) => save("explainer", checked)}
-            hideLabel
-          >
-            Explainer
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Kanban"
-          description="Enable the Kanban task board for tracking AI-generated tasks."
-        >
-          <Switch
-            checked={extensionFeatures().kanban}
-            onChange={(checked) => save("kanban", checked)}
-            hideLabel
-          >
-            Kanban
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="LSP"
-          description="Enable Language Server Protocol integration for diagnostics and code intelligence."
-        >
-          <Switch
-            checked={extensionFeatures().lsp}
-            onChange={(checked) => save("lsp", checked)}
-            hideLabel
-          >
-            LSP
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Notifications"
-          description="Enable in-app notification center for agent activity and system events."
-        >
-          <Switch
-            checked={extensionFeatures().notifications}
-            onChange={(checked) => save("notifications", checked)}
-            hideLabel
-          >
-            Notifications
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Planning Mode"
-          description="Enable planning mode for structured multi-step task orchestration."
-        >
-          <Switch
-            checked={extensionFeatures().planningMode}
-            onChange={(checked) => save("planningMode", checked)}
-            hideLabel
-          >
-            Planning Mode
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Project Memory"
-          description="Enable project memory for persisting context across sessions."
-        >
-          <Switch
-            checked={extensionFeatures().projectMemory}
-            onChange={(checked) => save("projectMemory", checked)}
-            hideLabel
-          >
-            Project Memory
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Prompt Autocomplete"
-          description="Enable AI-powered autocomplete suggestions in the chat input."
-        >
-          <Switch
-            checked={extensionFeatures().promptAutocomplete}
-            onChange={(checked) => save("promptAutocomplete", checked)}
-            hideLabel
-          >
-            Prompt Autocomplete
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Prompt Enhancer"
-          description="Enable the prompt enhancer to refine and improve user prompts before sending."
-        >
-          <Switch
-            checked={extensionFeatures().promptEnhancer}
-            onChange={(checked) => save("promptEnhancer", checked)}
-            hideLabel
-          >
-            Prompt Enhancer
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Prompt Enhancer Suggestions"
-          description="Show inline suggestions from the prompt enhancer as you type."
-        >
-          <Switch
-            checked={extensionFeatures().promptEnhancerSuggestions}
-            onChange={(checked) => save("promptEnhancerSuggestions", checked)}
-            hideLabel
-          >
-            Prompt Enhancer Suggestions
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Remote Control"
-          description="Enable remote control API for external tool integration."
-        >
-          <Switch
-            checked={extensionFeatures().remoteControl}
-            onChange={(checked) => save("remoteControl", checked)}
-            hideLabel
-          >
-            Remote Control
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Session Sharing"
-          description="Enable session sharing and cloud sync for collaborative workflows."
-        >
-          <Switch
-            checked={extensionFeatures().sessionSharing}
-            onChange={(checked) => save("sessionSharing", checked)}
-            hideLabel
-          >
-            Session Sharing
-          </Switch>
-        </SettingsRow>
-
-        <SettingsRow
-          title="Workers"
-          description="Enable background context workers. Configure in your project's strata.jsonc file under the workers key."
-          last
-        >
-          <Switch
-            checked={extensionFeatures().workers}
-            onChange={(checked) => save("workers", checked)}
-            hideLabel
-          >
-            Workers
-          </Switch>
-        </SettingsRow>
-      </Card>
+      </div>
     </div>
   )
 }
