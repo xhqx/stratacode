@@ -1,4 +1,4 @@
-import { Component, createSignal, For, Show } from "solid-js"
+import { Component, createMemo, createSignal, For, Show } from "solid-js"
 import { PopupSelector } from "./PopupSelector"
 import { Button } from "@stratacode/strata-ui/button"
 import { Book } from "@stratacode/strata-ui/lucide"
@@ -12,11 +12,22 @@ export interface PromptLibrarySelectorProps {
 export const PromptLibrarySelector: Component<PromptLibrarySelectorProps> = (props) => {
   const [open, setOpen] = createSignal(false)
   const [focused, setFocused] = createSignal(-1)
+  const [query, setQuery] = createSignal("")
   let listRef: HTMLDivElement | undefined
+  let searchRef: HTMLInputElement | undefined
+
+  const filtered = createMemo(() => {
+    const q = query().toLowerCase().trim()
+    if (!q) return props.workflows
+    return props.workflows.filter(
+      (w) => w.name.toLowerCase().includes(q) || w.description?.toLowerCase().includes(q),
+    )
+  })
 
   function pick(workflow: SlashCommandEntry) {
     props.onSelect(workflow)
     setOpen(false)
+    setQuery("")
   }
 
   function focusItem(idx: number) {
@@ -24,18 +35,20 @@ export const PromptLibrarySelector: Component<PromptLibrarySelectorProps> = (pro
     if (!items) return
     const clamped = Math.max(0, Math.min(idx, items.length - 1))
     setFocused(clamped)
-    items[clamped]?.focus()
+    items[clamped]?.scrollIntoView({ block: "nearest" })
   }
 
   function onOpen(val: boolean) {
     setOpen(val)
     if (val) {
-      requestAnimationFrame(() => focusItem(0))
+      setQuery("")
+      setFocused(0)
+      requestAnimationFrame(() => searchRef?.focus())
     }
   }
 
   function onKeyDown(e: KeyboardEvent) {
-    const len = props.workflows.length
+    const len = filtered().length
     if (len === 0) return
     const cur = focused()
     if (e.key === "ArrowDown") {
@@ -50,9 +63,9 @@ export const PromptLibrarySelector: Component<PromptLibrarySelectorProps> = (pro
     } else if (e.key === "End") {
       e.preventDefault()
       focusItem(len - 1)
-    } else if (e.key === "Enter" || e.key === " ") {
+    } else if (e.key === "Enter") {
       e.preventDefault()
-      if (cur >= 0 && cur < len) pick(props.workflows[cur])
+      if (cur >= 0 && cur < len) pick(filtered()[cur])
     }
   }
 
@@ -61,7 +74,9 @@ export const PromptLibrarySelector: Component<PromptLibrarySelectorProps> = (pro
       <PopupSelector
         expanded={false}
         placement="top-start"
-        minHeight={100}
+        preferredWidth={260}
+        preferredHeight={220}
+        minHeight={80}
         open={open()}
         onOpenChange={onOpen}
         triggerAs={Button}
@@ -73,31 +88,51 @@ export const PromptLibrarySelector: Component<PromptLibrarySelectorProps> = (pro
         }
       >
         {(bodyH) => (
-          <div
-            class="mode-switcher-list"
-            role="listbox"
-            ref={listRef}
-            onKeyDown={onKeyDown}
-            style={bodyH() !== undefined ? { "max-height": `${bodyH()}px` } : {}}
-          >
-            <For each={props.workflows}>
-              {(workflow, i) => (
-                <div
-                  class="mode-switcher-item"
-                  role="option"
-                  tabindex={focused() === i() ? 0 : -1}
-                  onClick={() => pick(workflow)}
-                  onFocus={() => setFocused(i())}
-                >
-                  <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
-                    <span class="mode-switcher-item-name">/{workflow.name}</span>
-                  </div>
-                  <Show when={workflow.description}>
-                    <span class="mode-switcher-item-desc">{workflow.description}</span>
-                  </Show>
-                </div>
-              )}
-            </For>
+          <div class="prompt-library-popup" onKeyDown={onKeyDown}>
+            <div class="prompt-library-search">
+              <input
+                ref={searchRef}
+                type="text"
+                class="prompt-library-search-input"
+                placeholder="Search workflows…"
+                value={query()}
+                onInput={(e) => {
+                  setQuery(e.currentTarget.value)
+                  setFocused(0)
+                }}
+              />
+            </div>
+            <div
+              class="mode-switcher-list"
+              role="listbox"
+              ref={listRef}
+              style={bodyH() !== undefined ? { "max-height": `${bodyH()! - 38}px` } : {}}
+            >
+              <Show
+                when={filtered().length > 0}
+                fallback={<div class="prompt-library-empty">No workflows found</div>}
+              >
+                <For each={filtered()}>
+                  {(workflow, i) => (
+                    <div
+                      class="mode-switcher-item"
+                      classList={{ "mode-switcher-item--focused": focused() === i() }}
+                      role="option"
+                      tabindex={-1}
+                      onClick={() => pick(workflow)}
+                      onMouseEnter={() => setFocused(i())}
+                    >
+                      <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
+                        <span class="mode-switcher-item-name">/{workflow.name}</span>
+                      </div>
+                      <Show when={workflow.description}>
+                        <span class="mode-switcher-item-desc">{workflow.description}</span>
+                      </Show>
+                    </div>
+                  )}
+                </For>
+              </Show>
+            </div>
           </div>
         )}
       </PopupSelector>

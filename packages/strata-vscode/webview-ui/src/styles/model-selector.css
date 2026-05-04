@@ -510,3 +510,51 @@
 .mode-switcher-item.selected .mode-switcher-item-desc {
   color: inherit;
 }
+
+/* ============================================
+   Prompt Library Selector (compact workflow picker)
+   ============================================ */
+
+.prompt-library-popup {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.prompt-library-search {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-base, var(--vscode-panel-border));
+  flex-shrink: 0;
+}
+
+.prompt-library-search-input {
+  width: 100%;
+  padding: 4px 8px;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: var(--vscode-font-family);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.prompt-library-search-input:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+.prompt-library-search-input::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+.prompt-library-empty {
+  padding: 12px 16px;
+  color: var(--text-weak, var(--vscode-descriptionForeground));
+  font-size: 12px;
+  text-align: center;
+}
+
+.mode-switcher-item--focused {
+  background: var(--surface-interactive-hover, var(--vscode-list-hoverBackground));
+}
