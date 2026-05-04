@@ -35,47 +35,12 @@ interface ConfigContextValue {
 
 export const ConfigContext = createContext<ConfigContextValue>()
 
-const EXT_FEATURE_DEFAULTS: ExtensionFeatureFlags = {
-  acpAgents: true,
-  agentManager: true,
-  autoApprove: true,
-  autocomplete: true,
-  cloudSessions: true,
-  autoretries: true,
-  batchTool: false,
-  browserAutomation: false,
-  checkpoints: true,
-  codeActions: true,
-  codebaseSearch: false,
-  commitMessage: true,
-  compaction: true,
-  diffViewer: true,
-  documentDrivenTasks: false,
-  explainer: true,
-  formatter: true,
-  kanban: false,
-  lsp: true,
-  notifications: true,
-  pasteSummary: true,
-  planningMode: false,
-  projectMemory: true,
-  promptAutocomplete: true,
-  promptEnhancer: true,
-  promptEnhancerSuggestions: true,
-  remoteControl: false,
-  selectionTip: true,
-  sessionSharing: false,
-  strataAuth: true,
-  taskTimeline: true,
-  workers: false,
-}
-
 export const ConfigProvider: ParentComponent = (props) => {
   const vscode = useVSCode()
 
   const [config, setConfig] = createSignal<Config>({})
   const [features, setFeatures] = createSignal<FeatureFlags>({ indexing: false })
-  const [extensionFeatures, setExtensionFeatures] = createSignal<ExtensionFeatureFlags>(EXT_FEATURE_DEFAULTS)
+  const [extensionFeatures, setExtensionFeatures] = createSignal<ExtensionFeatureFlags>({} as ExtensionFeatureFlags)
   const [loading, setLoading] = createSignal(true)
   const [draft, setDraft] = createSignal<Partial<Config>>({})
   let timer: ReturnType<typeof setTimeout> | undefined

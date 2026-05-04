@@ -408,6 +408,12 @@ export interface SavePluginConfigMessage {
   changes: Record<string, import("@stratacode/vscode-api").JSONValue>
 }
 
+export interface TogglePluginFeatureMessage {
+  type: "togglePluginFeature"
+  featureId: string
+  enabled: boolean
+}
+
 export interface RequestNotificationSettingsMessage {
   type: "requestNotificationSettings"
 }
@@ -1187,6 +1193,7 @@ export type WebviewMessage =
   | ExecutePluginContributionMessage
   | RequestPluginConfigMessage
   | SavePluginConfigMessage
+  | TogglePluginFeatureMessage
   | SaveKanbanTasksRequest
   | RequestKanbanTasksMessage
   | PlanningAddMessage

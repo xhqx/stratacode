@@ -242,6 +242,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
   private webviewMessageDisposable: vscode.Disposable | null = null
   private autocompleteConfigDisposable: vscode.Disposable | null = null
   private settingsConfigDisposable: vscode.Disposable | null = null
+  private pluginFeaturesDisposable: vscode.Disposable | null = null
+  private pluginConfigSectionsDisposable: vscode.Disposable | null = null
+  private pluginConfigDisposable: vscode.Disposable | null = null
+  private pluginContributionsDisposable: vscode.Disposable | null = null
   private viewStateDisposable: vscode.Disposable | null = null
   private visibilityDisposable: vscode.Disposable | null = null
   /** Whether the sidebar panel is currently visible to the user. */
@@ -438,6 +442,12 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
     // Push plugin config sections
     this.postMessage(buildPluginConfigLoaded())
+
+    // Push plugin features
+    this.postMessage({
+      type: "pluginFeaturesLoaded",
+      features: pluginRegistry.getRenderablePluginFeatures(),
+    })
 
     // Always attempt to fetch+push profile when connected.
     // Profile returns 401 when user isn't logged into Strata Gateway — that's expected.
@@ -663,6 +673,28 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.webviewMessageDisposable?.dispose()
     this.autocompleteConfigDisposable?.dispose()
     this.settingsConfigDisposable?.dispose()
+    this.pluginFeaturesDisposable?.dispose()
+    this.pluginConfigSectionsDisposable?.dispose()
+    this.pluginConfigDisposable?.dispose()
+    this.pluginContributionsDisposable?.dispose()
+
+    this.pluginFeaturesDisposable = pluginRegistry.onDidChangeFeatures((features) => {
+      this.postMessage({ type: "pluginFeaturesLoaded", features })
+    })
+    this.pluginConfigSectionsDisposable = pluginRegistry.onDidChangeConfigSections(() => {
+      this.postMessage(buildPluginConfigLoaded())
+    })
+    this.pluginConfigDisposable = pluginRegistry.onDidChangePluginConfig(({ sectionId, key, value }) => {
+      this.postMessage({
+        type: "pluginConfigUpdated",
+        sectionId,
+        values: { [key]: value },
+      })
+    })
+    this.pluginContributionsDisposable = pluginRegistry.onDidChangeContributions((contributions) => {
+      this.postMessage({ type: "pluginContributionsLoaded", contributions })
+    })
+
     this.autocompleteConfigDisposable = AutocompleteSettingsManager.getInstance().watchAutocompleteConfig((msg) =>
       this.postMessage(msg),
     )
@@ -1072,6 +1104,11 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         }
         case "savePluginConfig": {
           await handleSavePluginConfig(message.sectionId, message.changes, (msg) => this.postMessage(msg))
+          break
+        }
+        case "togglePluginFeature": {
+          const cfg = vscode.workspace.getConfiguration(message.featureId)
+          await cfg.update("enabled", message.enabled, vscode.ConfigurationTarget.Global)
           break
         }
         case "setLanguage":
@@ -4356,6 +4393,10 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.webviewMessageDisposable?.dispose()
     this.autocompleteConfigDisposable?.dispose()
     this.settingsConfigDisposable?.dispose()
+    this.pluginFeaturesDisposable?.dispose()
+    this.pluginConfigSectionsDisposable?.dispose()
+    this.pluginConfigDisposable?.dispose()
+    this.pluginContributionsDisposable?.dispose()
     this._onDidRegisterSession.dispose()
     this.loadMessagesAbort?.abort()
     this.loadMessagesAbort = null

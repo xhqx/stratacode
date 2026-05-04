@@ -64,6 +64,21 @@ export interface PluginConfigSection {
   fields: PluginConfigField[]
 }
 
+export interface PluginFeatureMetadata {
+  /** Unique ID (e.g. "my-plugin.codeReview"). Must not collide with built-in IDs. */
+  id: string
+  /** Human-readable label */
+  label: string
+  /** Short description for the settings UI */
+  description: string
+  /** Codicon icon name */
+  icon?: string
+  /** Default enabled state */
+  default?: boolean
+  /** Optional settings fields rendered in the feature's detail panel */
+  settings?: PluginConfigField[]
+}
+
 export interface ContextItem {
   type: "text"
   content: string
@@ -143,6 +158,18 @@ export interface StrataPluginAPI {
    * before they are sent to the CLI.
    */
   registerContextProvider(provider: ContextProvider): vscode.Disposable
+
+  /**
+   * Register feature metadata that appears as a toggleable entry in
+   * Settings → Features. The toggle state is stored in the plugin's
+   * own VS Code settings namespace.
+   *
+   * Plugins are responsible for reading their own setting and activating
+   * or deactivating their functionality accordingly.
+   *
+   * @returns A disposable that removes the feature listing when disposed.
+   */
+  registerFeatureMetadata(feature: PluginFeatureMetadata): vscode.Disposable
 
   /** Strata Code extension version */
   readonly version: string

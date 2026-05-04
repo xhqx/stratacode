@@ -20,6 +20,17 @@ export interface RenderablePluginConfigSection {
   fields: import("@stratacode/vscode-api").PluginConfigField[]
 }
 
+export interface RenderablePluginFeature {
+  id: string
+  label: string
+  description: string
+  icon?: string
+  default?: boolean
+  settings?: import("@stratacode/vscode-api").PluginConfigField[]
+  /** Current enabled state read from plugin's VS Code setting */
+  enabled: boolean
+}
+
 export type Target = {
   provider: StrataProvider
   directory: string
@@ -31,12 +42,16 @@ export class PluginRegistry {
   private readonly _contributions = new Map<string, UIContribution>()
   private readonly _configSections = new Map<string, import("@stratacode/vscode-api").PluginConfigSection>()
   private readonly _contextProviders = new Map<string, import("@stratacode/vscode-api").ContextProvider>()
+  private readonly _pluginFeatures = new Map<string, import("@stratacode/vscode-api").PluginFeatureMetadata>()
 
   private readonly _onDidChangeContributions = new vscode.EventEmitter<RenderableUIContribution[]>()
   public readonly onDidChangeContributions = this._onDidChangeContributions.event
 
   private readonly _onDidChangeConfigSections = new vscode.EventEmitter<RenderablePluginConfigSection[]>()
   public readonly onDidChangeConfigSections = this._onDidChangeConfigSections.event
+
+  private readonly _onDidChangeFeatures = new vscode.EventEmitter<RenderablePluginFeature[]>()
+  public readonly onDidChangeFeatures = this._onDidChangeFeatures.event
 
   private readonly _onDidChangePluginConfig = new vscode.EventEmitter<{
     sectionId: string
@@ -115,6 +130,28 @@ export class PluginRegistry {
     })
   }
 
+  registerFeatureMetadata(feature: import("@stratacode/vscode-api").PluginFeatureMetadata): vscode.Disposable {
+    if (this._pluginFeatures.has(feature.id)) {
+      console.warn(`[StrataPluginAPI] Duplicate plugin feature: ${feature.id}`)
+      return new vscode.Disposable(() => {})
+    }
+    this._pluginFeatures.set(feature.id, feature)
+    this.broadcastFeatures()
+
+    // Watch for setting changes
+    const disp = vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration(feature.id)) {
+        this.broadcastFeatures()
+      }
+    })
+
+    return new vscode.Disposable(() => {
+      this._pluginFeatures.delete(feature.id)
+      disp.dispose()
+      this.broadcastFeatures()
+    })
+  }
+
   getRenderableContributions(): RenderableUIContribution[] {
     return Array.from(this._contributions.values()).map((c) => ({
       id: c.id,
@@ -132,6 +169,13 @@ export class PluginRegistry {
       title: s.title,
       icon: s.icon,
       fields: s.fields,
+    }))
+  }
+
+  getRenderablePluginFeatures(): RenderablePluginFeature[] {
+    return Array.from(this._pluginFeatures.values()).map((f) => ({
+      ...f,
+      enabled: vscode.workspace.getConfiguration(f.id).get<boolean>("enabled") ?? f.default ?? false,
     }))
   }
 
@@ -177,6 +221,10 @@ export class PluginRegistry {
 
   private broadcastConfigSections() {
     this._onDidChangeConfigSections.fire(this.getRenderableConfigSections())
+  }
+
+  private broadcastFeatures() {
+    this._onDidChangeFeatures.fire(this.getRenderablePluginFeatures())
   }
 }
 
@@ -313,6 +361,10 @@ export function createPluginAPI(deps: {
 
     registerContextProvider(provider: import("@stratacode/vscode-api").ContextProvider) {
       return pluginRegistry.registerContextProvider(provider)
+    },
+
+    registerFeatureMetadata(feature: import("@stratacode/vscode-api").PluginFeatureMetadata) {
+      return pluginRegistry.registerFeatureMetadata(feature)
     },
 
     onDidChangePluginConfig: pluginRegistry.onDidChangePluginConfig,

@@ -5,7 +5,7 @@ import { Switch } from "@stratacode/strata-ui/switch"
 import { useVSCode } from "../../context/vscode"
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
-import type { ExtensionMessage } from "../../types/messages"
+import type { ExtensionMessage, RenderablePluginFeature } from "../../types/messages"
 import type { ExtensionFeatureFlags } from "../../types/messages/config"
 
 import { FEATURES, children as childFeatures, getFeature } from "./feature-registry"
@@ -19,8 +19,21 @@ const FeaturesTab: Component<FeaturesTabProps> = (props) => {
   const { extensionFeatures, updateExtensionFeature } = useConfig()
   const language = useLanguage()
 
-  const unsubscribe = vscode.onMessage((_message: ExtensionMessage) => {})
+  const [pluginFeatures, setPluginFeatures] = createSignal<RenderablePluginFeature[]>([])
+  const filteredPluginFeatures = () => pluginFeatures().filter((pf) => !FEATURES.some((f) => f.key === pf.id))
+
+  const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
+    if (message.type === "pluginFeaturesLoaded") {
+      setPluginFeatures(message.features)
+    }
+  })
   onCleanup(unsubscribe)
+
+  const savePluginFeature = (id: string, value: boolean) => {
+    vscode.postMessage({ type: "togglePluginFeature", featureId: id, enabled: value })
+    // Optimistic UI update
+    setPluginFeatures((prev) => prev.map((f) => (f.id === id ? { ...f, enabled: value } : f)))
+  }
 
   const save = (key: keyof ExtensionFeatureFlags, value: boolean) => {
     updateExtensionFeature(key, value)
@@ -36,21 +49,21 @@ const FeaturesTab: Component<FeaturesTabProps> = (props) => {
     }
   }
 
-  const resolveInitial = (tab?: string): keyof ExtensionFeatureFlags => {
-    if (tab && getFeature(tab as keyof ExtensionFeatureFlags)) return tab as keyof ExtensionFeatureFlags
+  const resolveInitial = (tab?: string): string => {
+    if (tab && getFeature(tab as keyof ExtensionFeatureFlags)) return tab
     return FEATURES[0].key
   }
 
-  const [active, setActive] = createSignal<keyof ExtensionFeatureFlags>(resolveInitial(props.initialFeature))
+  const [active, setActive] = createSignal<string>(resolveInitial(props.initialFeature))
 
   createEffect(() => {
     if (props.initialFeature) setActive(resolveInitial(props.initialFeature))
   })
 
-  const currentFeature = () => getFeature(active())
+  const currentFeature = () => getFeature(active() as keyof ExtensionFeatureFlags)
 
   // ─── shared button style helper ─────────────────────────────────────────────
-  const btnStyle = (key: keyof ExtensionFeatureFlags, enabled = true) => ({
+  const btnStyle = (key: string, enabled = true) => ({
     display: "flex",
     "align-items": "center",
     gap: "8px",
@@ -107,6 +120,36 @@ const FeaturesTab: Component<FeaturesTabProps> = (props) => {
             </button>
           )}
         </For>
+
+        <Show when={filteredPluginFeatures().length > 0}>
+          <div
+            style={{
+              padding: "16px 16px 8px",
+              "font-size": "11px",
+              "font-weight": "600",
+              "text-transform": "uppercase",
+              color: "var(--vscode-descriptionForeground)",
+            }}
+          >
+            Extensions
+          </div>
+          <For each={filteredPluginFeatures()}>
+            {(feature) => (
+              <button
+                type="button"
+                onClick={() => setActive(feature.id)}
+                style={btnStyle(feature.id, true)}
+              >
+                <Show when={feature.icon} fallback={<Icon name="code" size="small" />}>
+                  {(icon) => <Icon name={icon() as any} size="small" />}
+                </Show>
+                <span style={{ flex: 1, "white-space": "nowrap", overflow: "hidden", "text-overflow": "ellipsis" }}>
+                  {feature.label}
+                </span>
+              </button>
+            )}
+          </For>
+        </Show>
       </div>
 
       {/* ── Right pane ─────────────────────────────────────────────────────── */}
@@ -191,6 +234,48 @@ const FeaturesTab: Component<FeaturesTabProps> = (props) => {
               </>
             )
           }}
+        </Show>
+
+        {/* Plugin feature */}
+        <Show when={filteredPluginFeatures().find((f) => f.id === active())} keyed>
+          {(feature) => (
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  "align-items": "flex-start",
+                  "justify-content": "space-between",
+                  gap: "16px",
+                  "padding-bottom": "16px",
+                  "border-bottom": "1px solid var(--border-weak-base)",
+                }}
+              >
+                <div style={{ opacity: feature.enabled ? 1 : 0.5, transition: "opacity 150ms ease" }}>
+                  <h2 style={{ margin: "0 0 8px 0", "font-size": "16px", "font-weight": "600" }}>
+                    {feature.label}
+                  </h2>
+                  <p
+                    style={{
+                      margin: 0,
+                      "font-size": "13px",
+                      color: "var(--vscode-descriptionForeground)",
+                      "line-height": "1.4",
+                    }}
+                  >
+                    {feature.description}
+                  </p>
+                </div>
+                <Switch
+                  data-testid="plugin-feature-switch"
+                  checked={feature.enabled}
+                  onChange={(checked) => savePluginFeature(feature.id, checked)}
+                  hideLabel
+                >
+                  {feature.label}
+                </Switch>
+              </div>
+            </>
+          )}
         </Show>
       </div>
     </div>

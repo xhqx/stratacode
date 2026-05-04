@@ -160,37 +160,4 @@ export interface FeatureFlags {
   indexing: boolean
 }
 
-export interface ExtensionFeatureFlags {
-  acpAgents: boolean
-  agentManager: boolean
-  autoApprove: boolean
-  autocomplete: boolean
-  cloudSessions: boolean
-  autoretries: boolean
-  batchTool: boolean
-  browserAutomation: boolean
-  checkpoints: boolean
-  codeActions: boolean
-  codebaseSearch: boolean
-  commitMessage: boolean
-  compaction: boolean
-  diffViewer: boolean
-  documentDrivenTasks: boolean
-  explainer: boolean
-  formatter: boolean
-  kanban: boolean
-  lsp: boolean
-  notifications: boolean
-  planningMode: boolean
-  projectMemory: boolean
-  promptAutocomplete: boolean
-  pasteSummary: boolean
-  promptEnhancer: boolean
-  promptEnhancerSuggestions: boolean
-  remoteControl: boolean
-  selectionTip: boolean
-  sessionSharing: boolean
-  strataAuth: boolean
-  taskTimeline: boolean
-  workers: boolean
-}
+export type ExtensionFeatureFlags = Record<Extract<keyof typeof import("../../../../src/stratacode/feature-manifest").MANIFEST, string>, boolean>

@@ -41,224 +41,44 @@ export type ResolvableFeatureDefinition = Omit<FeatureDefinition, "label" | "des
   description: (t: (key: string) => string) => string
 }
 
-export const FEATURES: ResolvableFeatureDefinition[] = [
-  {
-    key: "acpAgents",
-    label: () => "ACP Agents",
-    description: () => "Enable Agent Communication Protocol agents integration.",
-    icon: "mcp",
-    component: AcpAgentsTab,
-  },
-  {
-    key: "agentManager",
-    label: () => "Agent Manager",
-    description: () => "Enable the multi-session Agent Manager panel with git worktree isolation.",
-    icon: "layout-left",
-    component: AgentManagerTab,
-  },
-  {
-    key: "autoApprove",
-    label: () => "Auto-Approve",
-    description: () => "Configure auto-approve timeouts and per-tool permission rules.",
-    icon: "shield",
-    component: AutoApproveSettingsTab,
-  },
-  {
-    key: "autocomplete",
-    label: () => "Autocomplete",
-    description: () =>
-      "Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling requires a window reload.",
-    icon: "keyboard",
-    component: AutocompleteTab,
-    agents: ["autocomplete"],
-    pinned: ["autocomplete"],
-  },
-  {
-    key: "autoretries",
-    label: () => "Auto-Retries",
-    description: () => "Enable automatic retry logic for failed AI requests with exponential backoff.",
-    icon: "reset",
-    component: RetriesTab,
-  },
-  {
-    key: "batchTool",
-    label: (t) => t("settings.experimental.batchTool.title") || "Batch Tool",
-    description: (t) =>
-      t("settings.experimental.batchTool.description") || "Enable the experimental batch tool for agents.",
-    icon: "layers",
-  },
-  {
-    key: "browserAutomation",
-    label: () => "Browser Automation",
-    description: () => "Enable AI browser tools for UI testing and navigation. Disabling requires a window reload.",
-    icon: "window-cursor",
-    component: BrowserTab,
-  },
-  {
-    key: "checkpoints",
-    label: () => "Checkpoints",
-    description: () => "Enable git-based checkpoints for tracking and reverting AI changes.",
-    icon: "branch",
-    component: CheckpointsTab,
-  },
-  {
-    key: "codeActions",
-    label: () => "Code Actions",
-    description: () =>
-      "Enable AI-powered Quick Fixes and code actions in the editor. Disabling requires a window reload.",
-    icon: "edit",
-    component: CodeActionsTab,
-  },
-  {
-    key: "codebaseSearch",
-    label: (t) => t("settings.experimental.codebaseSearch.title") || "Codebase Search",
-    description: (t) =>
-      t("settings.experimental.codebaseSearch.description") || "Enable semantic codebase search capability.",
-    icon: "magnifying-glass",
-    tools: ["codesearch"],
-  },
-  {
-    key: "commitMessage",
-    label: () => "Commit Message",
-    description: () =>
-      "Enable AI-generated commit messages in the Source Control panel. Disabling requires a window reload.",
-    icon: "pencil-line",
-    component: CommitMessageTab,
-    agents: ["commit"],
-    pinned: ["commit"],
-  },
-  {
-    key: "compaction",
-    label: () => "Compaction",
-    description: () => "Enable automatic context compaction for long sessions.",
-    icon: "compress",
-    component: CompactionTab,
-  },
-  {
-    key: "diffViewer",
-    label: () => "Diff Viewer",
-    description: () =>
-      "Enable the Changes tab, AI explain commands, and diff viewer panel. Disabling requires a window reload.",
-    icon: "review",
-    component: DiffViewerTab,
-  },
-  {
-    key: "documentDrivenTasks",
-    label: () => "Document-Driven Tasks",
-    description: () => "Enable document-driven task execution from markdown plans and specs.",
-    icon: "checklist",
-    component: DocumentDrivenTasksTab,
-    tools: ["task", "todoread", "todowrite"],
-  },
-  {
-    key: "explainer",
-    label: () => "Explainer",
-    description: () => "Enable the standalone AI explainer for code selection and symbol explanations.",
-    icon: "brain" as IconProps["name"],
-    component: ExplainerTab,
-    agents: ["explainer"],
-  },
-  {
-    key: "formatter",
-    label: (t) => t("settings.agentBehaviour.formatter.title") || "AI Formatter",
-    description: (t) =>
-      t("settings.agentBehaviour.formatter.description") ||
-      "Use the AI formatter to automatically apply changes after code generation.",
-    icon: "edit-small-2",
-  },
-  {
-    key: "kanban",
-    label: () => "Kanban",
-    description: () => "Enable the Kanban task board for tracking AI-generated tasks.",
-    icon: "task",
-    component: KanbanTab,
-    tools: ["task", "todoread", "todowrite"],
-  },
-  {
-    key: "lsp",
-    label: () => "LSP",
-    description: () => "Enable Language Server Protocol integration for diagnostics and code intelligence.",
-    icon: "circuit-board",
-    component: LspTab,
-    tools: ["lsp"],
-  },
-  {
-    key: "notifications",
-    label: () => "Notifications",
-    description: () => "Enable in-app notification center for agent activity and system events.",
-    icon: "bubble-5",
-    component: NotificationsTab,
-  },
-  {
-    key: "pasteSummary",
-    label: () => "Paste Summary",
-    description: () => "Enable experimental paste summarization.",
-    icon: "copy",
-    component: PasteSummaryTab,
-  },
-  {
-    key: "planningMode",
-    label: () => "Planning Mode",
-    description: () => "Enable planning mode for structured multi-step task orchestration.",
-    icon: "bullet-list",
-  },
-  {
-    key: "projectMemory",
-    label: () => "Project Memory",
-    description: () => "Enable project memory for persisting context across sessions.",
-    icon: "folder",
-    component: ProjectMemoryTab,
-  },
-  {
-    key: "promptAutocomplete",
-    label: () => "Prompt Autocomplete",
-    description: () => "Enable AI-powered autocomplete suggestions in the chat input.",
-    icon: "prompt",
-  },
-  {
-    key: "promptEnhancer",
-    label: () => "Prompt Enhancer",
-    description: () => "Enable the prompt enhancer to refine and improve user prompts before sending.",
-    icon: "sliders",
-    agents: ["enhance"],
-  },
-  {
-    key: "promptEnhancerSuggestions",
-    label: () => "Prompt Enhancer Suggestions",
-    description: () => "Show inline suggestions from the prompt enhancer as you type.",
-    icon: "eye",
-    requires: "promptEnhancer",
-  },
-  {
-    key: "remoteControl",
-    label: () => "Remote Control",
-    description: () => "Enable remote control API for external tool integration.",
-    icon: "console",
-    component: RemoteControlTab,
-  },
-  {
-    key: "selectionTip",
-    label: (t) => t("settings.appearance.selectionTip.title") || "Selection Tip",
-    description: (t) =>
-      t("settings.appearance.selectionTip.description") ||
-      "Show a tip when you select code to explain or use code actions.",
-    icon: "glasses",
-  },
-  {
-    key: "taskTimeline",
-    label: (t) => t("settings.display.taskTimeline.title") || "Task Timeline",
-    description: (t) => t("settings.display.taskTimeline.description") || "Show the task timeline view in the sidebar.",
-    icon: "file-tree",
-  },
-  {
-    key: "workers",
-    label: () => "Workers",
-    description: () =>
-      "Enable background context workers. Configure in your project's strata.jsonc file under the workers key.",
-    icon: "providers",
-    component: BackgroundWorkersTab,
-  },
-]
+import { MANIFEST } from "../../../../src/stratacode/feature-manifest"
+
+const COMPONENT_MAP: Partial<Record<keyof ExtensionFeatureFlags, Component>> = {
+  acpAgents: AcpAgentsTab,
+  agentManager: AgentManagerTab,
+  autoApprove: AutoApproveSettingsTab,
+  autocomplete: AutocompleteTab,
+  autoretries: RetriesTab,
+  browserAutomation: BrowserTab,
+  checkpoints: CheckpointsTab,
+  codeActions: CodeActionsTab,
+  commitMessage: CommitMessageTab,
+  compaction: CompactionTab,
+  diffViewer: DiffViewerTab,
+  documentDrivenTasks: DocumentDrivenTasksTab,
+  explainer: ExplainerTab,
+  kanban: KanbanTab,
+  lsp: LspTab,
+  notifications: NotificationsTab,
+  pasteSummary: PasteSummaryTab,
+  projectMemory: ProjectMemoryTab,
+  remoteControl: RemoteControlTab,
+  workers: BackgroundWorkersTab,
+}
+
+export const FEATURES: ResolvableFeatureDefinition[] = Object.entries(MANIFEST)
+  .filter(([_, spec]) => !(spec as any).hidden)
+  .map(([key, spec]) => ({
+    key: key as keyof ExtensionFeatureFlags,
+    label: () => spec.label,
+    description: () => spec.description,
+    icon: spec.icon as IconProps["name"],
+    component: COMPONENT_MAP[key as keyof ExtensionFeatureFlags],
+    agents: (spec as any).agents,
+    pinned: (spec as any).pinned,
+    tools: (spec as any).tools,
+    requires: (spec as any).requires as keyof ExtensionFeatureFlags,
+  }))
 
 // O(1) Pre-computed Indices for Premium Performance
 const FEATURE_MAP = new Map<keyof ExtensionFeatureFlags, ResolvableFeatureDefinition>(

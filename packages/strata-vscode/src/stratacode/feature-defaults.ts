@@ -1,69 +1,9 @@
 // stratacode_change - new file
-export type FeatureKey =
-  | "acpAgents"
-  | "agentManager"
-  | "autoApprove"
-  | "autocomplete"
-  | "cloudSessions"
-  | "autoretries"
-  | "batchTool"
-  | "browserAutomation"
-  | "checkpoints"
-  | "codeActions"
-  | "codebaseSearch"
-  | "commitMessage"
-  | "compaction"
-  | "diffViewer"
-  | "documentDrivenTasks"
-  | "explainer"
-  | "formatter"
-  | "kanban"
-  | "lsp"
-  | "notifications"
-  | "pasteSummary"
-  | "planningMode"
-  | "projectMemory"
-  | "promptAutocomplete"
-  | "promptEnhancer"
-  | "promptEnhancerSuggestions"
-  | "remoteControl"
-  | "selectionTip"
-  | "sessionSharing"
-  | "strataAuth"
-  | "taskTimeline"
-  | "workers"
+import { MANIFEST } from "./feature-manifest"
 
-export const FEATURE_DEFAULTS: Record<FeatureKey, boolean> = {
-  acpAgents: true,
-  agentManager: true,
-  autoApprove: true,
-  autocomplete: true,
-  cloudSessions: false,
-  autoretries: true,
-  batchTool: false,
-  browserAutomation: false,
-  checkpoints: true,
-  codeActions: true,
-  codebaseSearch: false,
-  commitMessage: true,
-  compaction: true,
-  diffViewer: true,
-  documentDrivenTasks: false,
-  explainer: true,
-  formatter: true,
-  kanban: false,
-  lsp: true,
-  notifications: true,
-  pasteSummary: true,
-  planningMode: false,
-  projectMemory: true,
-  promptAutocomplete: true,
-  promptEnhancer: true,
-  promptEnhancerSuggestions: true,
-  remoteControl: false,
-  selectionTip: true,
-  sessionSharing: false,
-  strataAuth: false,
-  taskTimeline: true,
-  workers: false,
-}
+export type FeatureKey = keyof typeof MANIFEST
+
+export const FEATURE_DEFAULTS: Record<FeatureKey, boolean> =
+  Object.fromEntries(
+    Object.entries(MANIFEST).map(([k, v]) => [k, v.default])
+  ) as Record<FeatureKey, boolean>

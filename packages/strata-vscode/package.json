@@ -1109,194 +1109,162 @@
           "strata-code.new.features.acpAgents": {
             "type": "boolean",
             "default": true,
-            "order": 1,
             "description": "Enable Agent Communication Protocol agents integration."
           },
           "strata-code.new.features.agentManager": {
             "type": "boolean",
             "default": true,
-            "order": 2,
             "description": "Enable the multi-session Agent Manager panel with git worktree isolation."
           },
           "strata-code.new.features.autoApprove": {
             "type": "boolean",
             "default": true,
-            "order": 1,
-            "description": "Enable auto-approve settings for tool permission timeouts and behavior."
+            "description": "Configure auto-approve timeouts and per-tool permission rules."
           },
           "strata-code.new.features.autocomplete": {
             "type": "boolean",
             "default": true,
-            "order": 2,
-            "description": "Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling this feature requires a window reload."
-          },
-          "strata-code.new.features.cloudSessions": {
-            "type": "boolean",
-            "default": true,
-            "order": 3,
-            "description": "Enable cloud session browsing and importing."
+            "description": "Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling requires a window reload."
           },
           "strata-code.new.features.autoretries": {
             "type": "boolean",
             "default": true,
-            "order": 3,
             "description": "Enable automatic retry logic for failed AI requests with exponential backoff."
           },
           "strata-code.new.features.batchTool": {
             "type": "boolean",
             "default": false,
-            "order": 4,
             "description": "Enable the experimental batch tool for agents."
           },
           "strata-code.new.features.browserAutomation": {
             "type": "boolean",
             "default": false,
-            "order": 5,
-            "description": "Enable browser automation powered by Playwright. When enabled, the AI agent can interact with web pages in a visible Chrome window."
+            "description": "Enable AI browser tools for UI testing and navigation. Disabling requires a window reload."
           },
           "strata-code.new.features.checkpoints": {
             "type": "boolean",
             "default": true,
-            "order": 5,
             "description": "Enable git-based checkpoints for tracking and reverting AI changes."
+          },
+          "strata-code.new.features.cloudSessions": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable cloud session syncing and sharing."
           },
           "strata-code.new.features.codeActions": {
             "type": "boolean",
             "default": true,
-            "order": 6,
-            "description": "Enable editor code actions (Explain, Fix, Improve), terminal actions, and lightbulb quick fixes. Disabling requires a window reload."
+            "description": "Enable AI-powered Quick Fixes and code actions in the editor. Disabling requires a window reload."
           },
           "strata-code.new.features.codebaseSearch": {
             "type": "boolean",
             "default": false,
-            "order": 7,
             "description": "Enable semantic codebase search capability."
           },
           "strata-code.new.features.commitMessage": {
             "type": "boolean",
             "default": true,
-            "order": 7,
             "description": "Enable AI-generated commit messages in the Source Control panel. Disabling requires a window reload."
           },
           "strata-code.new.features.compaction": {
             "type": "boolean",
             "default": true,
-            "order": 8,
-            "description": "Enable context compaction capabilities including auto compaction and pruning."
+            "description": "Enable automatic context compaction for long sessions."
           },
           "strata-code.new.features.diffViewer": {
             "type": "boolean",
             "default": true,
-            "order": 8,
             "description": "Enable the Changes tab, AI explain commands, and diff viewer panel. Disabling requires a window reload."
           },
           "strata-code.new.features.documentDrivenTasks": {
             "type": "boolean",
             "default": false,
-            "order": 9,
             "description": "Enable document-driven task execution from markdown plans and specs."
           },
           "strata-code.new.features.explainer": {
             "type": "boolean",
             "default": true,
-            "order": 10,
             "description": "Enable the standalone AI explainer for code selection and symbol explanations."
           },
           "strata-code.new.features.formatter": {
             "type": "boolean",
             "default": true,
-            "order": 11,
-            "description": "Enable the experimental whole-file formatter agent."
+            "description": "Use the AI formatter to automatically apply changes after code generation."
           },
           "strata-code.new.features.kanban": {
             "type": "boolean",
             "default": false,
-            "order": 11,
             "description": "Enable the Kanban task board for tracking AI-generated tasks."
           },
           "strata-code.new.features.lsp": {
             "type": "boolean",
             "default": true,
-            "order": 12,
             "description": "Enable Language Server Protocol integration for diagnostics and code intelligence."
           },
           "strata-code.new.features.notifications": {
             "type": "boolean",
             "default": true,
-            "order": 13,
             "description": "Enable in-app notification center for agent activity and system events."
           },
           "strata-code.new.features.pasteSummary": {
             "type": "boolean",
             "default": true,
-            "order": 14,
             "description": "Enable experimental paste summarization."
           },
           "strata-code.new.features.planningMode": {
             "type": "boolean",
             "default": false,
-            "order": 14,
             "description": "Enable planning mode for structured multi-step task orchestration."
           },
           "strata-code.new.features.projectMemory": {
             "type": "boolean",
             "default": true,
-            "order": 15,
             "description": "Enable project memory for persisting context across sessions."
           },
           "strata-code.new.features.promptAutocomplete": {
             "type": "boolean",
             "default": true,
-            "order": 16,
             "description": "Enable AI-powered autocomplete suggestions in the chat input."
           },
           "strata-code.new.features.promptEnhancer": {
             "type": "boolean",
             "default": true,
-            "order": 17,
             "description": "Enable the prompt enhancer to refine and improve user prompts before sending."
           },
           "strata-code.new.features.promptEnhancerSuggestions": {
             "type": "boolean",
             "default": true,
-            "order": 18,
             "description": "Show inline suggestions from the prompt enhancer as you type."
-          },
-          "strata-code.new.features.selectionTip": {
-            "type": "boolean",
-            "default": true,
-            "order": 19,
-            "description": "Show an inline hint when selecting code, reminding you of the shortcut to add the selection to Strata chat."
           },
           "strata-code.new.features.remoteControl": {
             "type": "boolean",
             "default": false,
-            "order": 20,
             "description": "Enable remote control API for external tool integration."
           },
-          "strata-code.new.features.taskTimeline": {
+          "strata-code.new.features.selectionTip": {
             "type": "boolean",
             "default": true,
-            "order": 21,
-            "description": "Show the task timeline graph in the chat header."
+            "description": "Show a tip when you select code to explain or use code actions."
           },
           "strata-code.new.features.sessionSharing": {
             "type": "boolean",
             "default": false,
-            "order": 22,
-            "description": "Enable session sharing and cloud sync for collaborative workflows."
+            "description": "Enable sharing sessions."
+          },
+          "strata-code.new.features.strataAuth": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable Strata authentication and cloud account features."
+          },
+          "strata-code.new.features.taskTimeline": {
+            "type": "boolean",
+            "default": true,
+            "description": "Show the task timeline view in the sidebar."
           },
           "strata-code.new.features.workers": {
             "type": "boolean",
             "default": false,
-            "order": 21,
-            "markdownDescription": "Enable background context workers. Configure in your project's `strata.jsonc` file under the `workers` key."
-          },
-          "strata-code.new.features.strataAuth": {
-            "type": "boolean",
-            "default": true,
-            "order": 22,
-            "description": "Enable Strata account login, profile, and organization switching."
+            "description": "Enable background context workers. Configure in your project's strata.jsonc file under the workers key."
           }
         }
       },

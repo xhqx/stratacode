@@ -6,22 +6,17 @@
  * Each user message is rendered as a VscodeSessionTurn — a custom component that
  * renders all assistant parts as a flat, verbose list with no context grouping,
  * and fully expands sub-agent (task tool) parts inline.
- * Shows recent sessions in the empty state for quick resumption.
  */
 
-import { type Component, For, Show, createEffect, createMemo, createSignal, on, onCleanup, JSX } from "solid-js"
+import { type Component, For, Show, createEffect, createMemo, createSignal, on, onCleanup } from "solid-js"
 import { Icon } from "@stratacode/strata-ui/icon"
 import { Spinner } from "@stratacode/strata-ui/spinner"
-import { useDialog } from "@stratacode/strata-ui/context/dialog"
 import { createAutoScroll } from "@stratacode/strata-ui/hooks"
 import { useSession } from "../../context/session"
 import { useServer } from "../../context/server"
 import { useLanguage } from "../../context/language"
-import { formatRelativeDate } from "../../utils/date"
 import { VscodeSessionTurn } from "./VscodeSessionTurn"
 import { RevertBanner } from "./RevertBanner"
-import { AccountSwitcher } from "../shared/AccountSwitcher"
-import { StrataNotifications } from "./StrataNotifications"
 import { WorkingIndicator } from "../shared/WorkingIndicator"
 import { QuestionDock } from "./QuestionDock"
 import { Virtualizer } from "virtua/solid"
@@ -34,17 +29,6 @@ import {
   type MessageTurn,
 } from "../../context/session-queue"
 import type { QuestionRequest, SuggestionRequest } from "../../types/messages"
-
-const StrataLogo = (): JSX.Element => {
-  const iconsBaseUri = (window as { ICONS_BASE_URI?: string }).ICONS_BASE_URI || ""
-  const iconFile = "strata-icon.svg"
-
-  return (
-    <div class="strata-logo">
-      <img src={`${iconsBaseUri}/${iconFile}`} alt="Strata Code" />
-    </div>
-  )
-}
 
 interface MessageListProps {
   onSelectSession?: (id: string) => void
@@ -62,7 +46,6 @@ export const MessageList: Component<MessageListProps> = (props) => {
   const session = useSession()
   const server = useServer()
   const language = useLanguage()
-  const dialog = useDialog()
 
   const autoScroll = createAutoScroll({
     working: () => session.status() !== "idle",
@@ -89,12 +72,6 @@ export const MessageList: Component<MessageListProps> = (props) => {
     stableMessageTurns(messageTurns(session.messages(), boundary()), prev),
   )
   const isEmpty = () => turns().length === 0 && !session.loading() && !boundary()
-
-  const recent = createMemo(() =>
-    [...session.sessions()]
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .slice(0, 3),
-  )
 
   const activeUserID = createMemo(() => getActiveUserMessageID(session.messages(), session.statusInfo()))
   const queuedIDs = createMemo(() => new Set(queuedUserMessageIDs(session.messages(), session.statusInfo())))
@@ -167,12 +144,6 @@ export const MessageList: Component<MessageListProps> = (props) => {
 
   return (
     <div class="message-list-container">
-      <Show when={isEmpty()}>
-        <div class="welcome-header">
-          <AccountSwitcher class="account-switcher-welcome" />
-          <StrataNotifications />
-        </div>
-      </Show>
       <div ref={setScrollRef} onScroll={handleScroll} class="message-list" role="log" aria-live="polite">
         <div ref={autoScroll.contentRef} class={isEmpty() ? "message-list-content-empty" : "message-list-content"}>
           <Show when={session.loading()}>
@@ -184,30 +155,6 @@ export const MessageList: Component<MessageListProps> = (props) => {
           <Show when={isEmpty() && props.readonly}>
             <div class="message-list-empty">
               <p class="strata-about-text">{language.t("session.messages.initializing")}</p>
-            </div>
-          </Show>
-          <Show when={isEmpty() && !props.readonly}>
-            <div class="message-list-empty">
-              <p class="strata-about-text">{language.t("session.messages.welcome")}</p>
-              <Show when={recent().length > 0 && props.onSelectSession}>
-                <div class="recent-sessions">
-                  <span class="recent-sessions-label">{language.t("session.recent")}</span>
-                  <For each={recent()}>
-                    {(s) => (
-                      <button class="recent-session-item" onClick={() => props.onSelectSession?.(s.id)}>
-                        <span class="recent-session-title">{s.title || language.t("session.untitled")}</span>
-                        <span class="recent-session-date">{formatRelativeDate(s.updatedAt)}</span>
-                      </button>
-                    )}
-                  </For>
-                  <Show when={props.onShowHistory}>
-                    <button class="show-history-btn" onClick={() => props.onShowHistory?.()}>
-                      <Icon name="history" size="small" />
-                      {language.t("session.showHistory")}
-                    </button>
-                  </Show>
-                </div>
-              </Show>
             </div>
           </Show>
           <Show when={!session.loading() && !isEmpty()}>

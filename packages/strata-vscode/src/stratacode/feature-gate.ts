@@ -1,44 +1,40 @@
 // stratacode_change - new file
 import * as vscode from "vscode"
 import { FEATURE_DEFAULTS, type FeatureKey } from "./feature-defaults"
+import { FeatureGraph } from "./feature-graph"
+import { MANIFEST } from "./feature-manifest"
+
 export type { FeatureKey }
 
 const NS = "strata-code.new"
 
-/** Cloud features that can be globally disabled by STRATA_DISABLE_CLOUD */
-const CLOUD_FEATURES = new Set<FeatureKey>([
-  "cloudSessions",
-  "strataAuth",
-  "sessionSharing",
-  "remoteControl",
-  "notifications",
-])
+const graph = new FeatureGraph(MANIFEST)
+graph.validate()
 
-/** Features that require a parent feature to be enabled. child → parent */
-const FEATURE_DEPS: Partial<Record<FeatureKey, FeatureKey>> = {
-  promptEnhancerSuggestions: "promptEnhancer",
-  cloudSessions: "strataAuth",
-  sessionSharing: "strataAuth",
+function readRaw(): Record<string, boolean> {
+  const result: Record<string, boolean> = {}
+  for (const k of Object.keys(MANIFEST)) {
+    const key = k as FeatureKey
+    result[key] = vscode.workspace.getConfiguration(NS).get<boolean>(`features.${key}`) ?? MANIFEST[key].default
+  }
+  return result
 }
 
-/** Read a feature's enabled state from VS Code settings. */
+/** Read a feature's enabled state from VS Code settings and resolve dependencies. */
 export function isEnabled(key: FeatureKey): boolean {
-  if (CLOUD_FEATURES.has(key) && process.env.STRATA_DISABLE_CLOUD) {
+  const rawFlags = readRaw()
+  if (!graph.canEnable(key, rawFlags, process.env)) {
     return false
   }
-  // If the feature has a parent dependency, it is disabled when the parent is off
-  const parent = FEATURE_DEPS[key]
-  if (parent && !isEnabled(parent)) {
-    return false
-  }
-  return vscode.workspace.getConfiguration(NS).get<boolean>(`features.${key}`) ?? FEATURE_DEFAULTS[key]
+  return rawFlags[key]
 }
 
 /** Read all extension feature flags. */
 export function readAll(): Record<FeatureKey, boolean> {
   const result = {} as Record<FeatureKey, boolean>
-  for (const key of Object.keys(FEATURE_DEFAULTS) as FeatureKey[]) {
-    result[key] = isEnabled(key)
+  const rawFlags = readRaw()
+  for (const key of Object.keys(MANIFEST) as FeatureKey[]) {
+    result[key] = graph.canEnable(key, rawFlags, process.env) && rawFlags[key]
   }
   return result
 }
@@ -50,7 +46,7 @@ function sync(key: FeatureKey) {
 
 /** Sync all feature gates immediately (call on activation). */
 export function syncAll() {
-  for (const key of Object.keys(FEATURE_DEFAULTS) as FeatureKey[]) {
+  for (const key of Object.keys(MANIFEST) as FeatureKey[]) {
     sync(key)
   }
 }
@@ -59,9 +55,14 @@ export function syncAll() {
 export function watchAll(): vscode.Disposable {
   return vscode.workspace.onDidChangeConfiguration((e) => {
     if (!e.affectsConfiguration(NS)) return
-    for (const key of Object.keys(FEATURE_DEFAULTS) as FeatureKey[]) {
+    for (const key of Object.keys(MANIFEST) as FeatureKey[]) {
       if (e.affectsConfiguration(`${NS}.features.${key}`)) {
         sync(key)
+        // Also sync children, as their effective state may have changed
+        const cascade = graph.cascade(key)
+        for (const child of cascade) {
+          sync(child as FeatureKey)
+        }
       }
     }
   })

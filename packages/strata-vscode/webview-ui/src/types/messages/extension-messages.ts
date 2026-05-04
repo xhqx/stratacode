@@ -855,6 +855,21 @@ export interface PluginContributionsLoadedMessage {
   contributions: RenderableUIContribution[]
 }
 
+export interface RenderablePluginFeature {
+  id: string
+  label: string
+  description: string
+  icon?: string
+  default?: boolean
+  settings?: import("@stratacode/vscode-api").PluginConfigField[]
+  enabled: boolean
+}
+
+export interface PluginFeaturesLoadedMessage {
+  type: "pluginFeaturesLoaded"
+  features: RenderablePluginFeature[]
+}
+
 export interface RenderablePluginConfigSection {
   id: string
   title: string
@@ -918,6 +933,7 @@ export type ExtensionMessage =
   | DeviceAuthFailedMessage
   | DeviceAuthCancelledMessage
   | PluginContributionsLoadedMessage
+  | PluginFeaturesLoadedMessage
   | PluginConfigLoadedMessage
   | PluginConfigUpdatedMessage
   | PluginConfigUpdateFailedMessage

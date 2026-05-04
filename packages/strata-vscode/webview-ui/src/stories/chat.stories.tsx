@@ -15,7 +15,6 @@ import { QuestionDock } from "../components/chat/QuestionDock"
 import { SuggestBar } from "../components/chat/SuggestBar"
 import { MessageList } from "../components/chat/MessageList"
 import { SessionContext } from "../context/session"
-import { ServerContext } from "../context/server"
 import type { Message, Part, QuestionRequest, SuggestionRequest, TodoItem } from "../types/messages"
 
 const SESSION_ID = "story-session-chat-001"
@@ -646,51 +645,3 @@ export const TaskHeaderWithTodosAllDone: Story = {
   },
 }
 
-// ---------------------------------------------------------------------------
-// Welcome screen with AccountSwitcher + StrataNotifications
-// ---------------------------------------------------------------------------
-
-const MOCK_NOTIFICATION = {
-  id: "notif-1",
-  title: "Try BYOK for Strata Gateway",
-  message: "Bring your own API key for even more flexibility with Strata Gateway models.",
-  action: { actionText: "Learn more", actionURL: "https://strata.ai/docs" },
-}
-
-/** Mock server context with profile data so AccountSwitcher is visible */
-const mockServer = {
-  connectionState: () => "connected" as const,
-  serverInfo: () => undefined,
-  extensionVersion: () => "1.0.0",
-  errorMessage: () => undefined,
-  errorDetails: () => undefined,
-  isConnected: () => true,
-  profileData: () => ({
-    profile: {
-      email: "dev@strata.dev",
-      name: "Dev User",
-      organizations: [{ id: "org-1", name: "Strata Org", role: "member" }],
-    },
-    balance: { balance: 5.0 },
-    currentOrgId: "org-1",
-  }),
-  deviceAuth: () => ({ status: "idle" as const }),
-  startLogin: () => {},
-  vscodeLanguage: () => "en",
-  languageOverride: () => undefined,
-  workspaceDirectory: () => "/project",
-  gitInstalled: () => true,
-}
-
-export const WelcomeWithSwitcherAndNotification: Story = {
-  name: "Welcome — account switcher + notification",
-  render: () => (
-    <StoryProviders sessionID={SESSION_ID} status="idle" noPadding notifications={[MOCK_NOTIFICATION]}>
-      <ServerContext.Provider value={mockServer as any}>
-        <div style={{ width: "100%", height: "600px", display: "flex", "flex-direction": "column" }}>
-          <ChatView />
-        </div>
-      </ServerContext.Provider>
-    </StoryProviders>
-  ),
-}
