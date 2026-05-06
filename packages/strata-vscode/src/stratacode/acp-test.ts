@@ -8,8 +8,6 @@
  */
 import { execSync, spawn } from "child_process"
 import { Logger } from "./logger"
-import { PREDEFINED } from "@stratacode/cli/stratacode/acp-client/registry"
-
 interface ProviderModel {
   id: string
   name: string
@@ -29,7 +27,7 @@ interface PredefinedProvider {
 }
 
 function registry(): Record<string, PredefinedProvider> {
-  return PREDEFINED as unknown as Record<string, PredefinedProvider>
+  return require("../../../opencode/src/stratacode/acp-client/registry").PREDEFINED
 }
 
 const TAG = "ACP"
