@@ -54,35 +54,8 @@ export class ProviderHandler implements MessageHandler {
   }
 
   private async sendAcpProviderMeta(ctx: ProviderContext): Promise<void> {
-    try {
-      const PREDEFINED = require("../../../../opencode/src/stratacode/acp-client/registry").PREDEFINED
-      const configObj = ctx.getCachedConfigMessage?.() as any
-      const userConf = configObj?.config?.acp_providers || {}
-      
-      const providers: Record<string, any> = {}
-      for (const [key, preset] of Object.entries(PREDEFINED)) {
-        const p = preset as any
-        const cfg = userConf[key] || {}
-        
-        providers[key] = {
-          name: p.name,
-          description: p.description,
-          icon: p.icon,
-          defaultModel: p.default,
-          enabled: cfg.enabled === true,
-          configuredModel: cfg.model ?? p.default,
-          status: "disconnected",
-          staticModels: p.models,
-          liveModels: p.models,
-          env: p.env,
-          installed: true,
-        }
-      }
-
-      ctx.postMessage({ type: "acpProviderMeta", providers })
-    } catch (e) {
-      console.error("Failed to send ACP provider meta:", e)
-    }
+    const { sendAcpProviderMeta } = require("../../stratacode/acp-test")
+    sendAcpProviderMeta((m: any) => ctx.postMessage(m), ctx.getCachedConfigMessage?.())
   }
 
   private async handleProviderAction(msg: Record<string, unknown>, ctx: ProviderContext): Promise<void> {
@@ -161,85 +134,12 @@ export class ProviderHandler implements MessageHandler {
     const key = typeof msg.key === "string" ? msg.key : ""
     if (!key) return
 
-    let isDone = false
-    const done = (result: { success: boolean; models?: { id: string; name: string }[]; error?: string }) => {
-      if (isDone) return
-      isDone = true
-      ctx.postMessage({ type: "acpTestResult", key, ...result })
-    }
-
-    try {
-      const PREDEFINED = require("../../../../opencode/src/stratacode/acp-client/registry").PREDEFINED
-      const predefined = PREDEFINED[key]
-      
-      const configObj = ctx.getCachedConfigMessage?.() as any
-      const userConf = configObj?.acp_providers?.[key] || {}
-      
-      const cmdStr = userConf.command ?? predefined?.command
-      if (!cmdStr) {
-        return done({ success: false, error: "No command configured for this provider" })
-      }
-
-      const argsList = Array.isArray(cmdStr) ? cmdStr : cmdStr.split(" ")
-      const cmd = argsList[0]
-      const args = argsList.slice(1)
-
-      const { spawn } = require("child_process")
-      const child = spawn(cmd, args, {
-        env: {
-          ...process.env,
-          ...(userConf.env || {}),
-          STRATA_DISABLE_DEFAULT_PLUGINS: "1",
-          STRATA_DISABLE_PROJECT_CONFIG: "1",
-        },
-        cwd: ctx.getWorkspaceDirectory() ?? process.cwd(),
-        stdio: ["pipe", "pipe", "pipe"],
-      })
-
-      const timeout = setTimeout(() => {
-        child.kill()
-        done({ success: false, error: "Connection timed out" })
-      }, 15000)
-
-      child.on("error", (err: Error) => {
-        clearTimeout(timeout)
-        done({ success: false, error: err.message })
-      })
-
-      const { ClientSideConnection, ndJsonStream } = require("@agentclientprotocol/sdk")
-      const { Writable, Readable } = require("stream")
-
-      const stream = ndJsonStream(
-        Writable.toWeb(child.stdin),
-        Readable.toWeb(child.stdout),
-      )
-
-      const conn = new ClientSideConnection((agent: any) => {
-        return {} as any
-      }, stream)
-
-      conn.initialize({
-        protocolVersion: 1,
-        clientInfo: { name: "strata-test", version: "1.0.0" },
-        clientCapabilities: {},
-      }).then(() => {
-        return conn.newSession({ cwd: ctx.getWorkspaceDirectory() ?? process.cwd(), mcpServers: [] })
-      }).then((session: any) => {
-        clearTimeout(timeout)
-        const available = session.models?.availableModels ?? []
-        const models = available.map((m: any) => ({
-          id: m.modelId ?? m.id,
-          name: m.name ?? m.modelId ?? m.id,
-        }))
-        done({ success: true, models })
-        child.kill()
-      }).catch((e: any) => {
-        clearTimeout(timeout)
-        done({ success: false, error: e.message })
-        child.kill()
-      })
-    } catch (e: any) {
-      done({ success: false, error: e.message })
-    }
+    const { testAcpConnection } = require("../../stratacode/acp-test")
+    await testAcpConnection(
+      key,
+      (m: any) => ctx.postMessage(m),
+      ctx.getCachedConfigMessage?.(),
+      ctx.getWorkspaceDirectory() ?? process.cwd(),
+    )
   }
 }
