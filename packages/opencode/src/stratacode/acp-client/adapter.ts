@@ -70,48 +70,47 @@ export const layer = Layer.effect(
           const onSessionUpdate = (params: any) => {
             if (params.sessionId !== sessionId) return
             
-            const event = params.event
-            if (!event) return
+            const update = params.update
+            if (!update) return
 
-            // Simple event mapping
-            if (event.type === "text-start") {
-              currentTextId = PartID.ascending()
-              Effect.runFork(Queue.offer(queue, { type: "text-start", id: currentTextId }))
-            } else if (event.type === "text-delta" && event.text) {
-              if (!currentTextId) {
-                currentTextId = PartID.ascending()
-                Effect.runFork(Queue.offer(queue, { type: "text-start", id: currentTextId }))
+            // Map ACP session updates to Strata LLM events
+            if (update.sessionUpdate === "agent_message_chunk" || update.sessionUpdate === "agent_thought_chunk") {
+              const content = update.content
+              if (content?.type === "text" && content.text) {
+                if (!currentTextId) {
+                  currentTextId = PartID.ascending()
+                  Effect.runFork(Queue.offer(queue, { type: "text-start", id: currentTextId }))
+                }
+                Effect.runFork(Queue.offer(queue, { type: "text-delta", id: currentTextId, text: content.text }))
               }
-              Effect.runFork(Queue.offer(queue, { type: "text-delta", id: currentTextId, text: event.text }))
-            } else if (event.type === "text-end") {
-              if (currentTextId) {
-                Effect.runFork(Queue.offer(queue, { type: "text-end", id: currentTextId }))
-                currentTextId = ""
-              }
-            } else if (event.type === "finish-step") {
-              Effect.runFork(
-                Queue.offer(queue, { 
-                  type: "finish-step", 
-                  finishReason: "stop", 
-                  usage: { promptTokens: 0, completionTokens: 0 } 
-                } as unknown as Extract<LLM.Event, { type: "finish-step" }>).pipe(
-                  Effect.andThen(() => Queue.shutdown(queue))
-                )
-              )
             }
           }
 
           events.on("sessionUpdate", onSessionUpdate)
 
           Effect.runFork(Queue.offer(queue, { type: "start" } as Extract<LLM.Event, { type: "start" }>))
+          Effect.runFork(Queue.offer(queue, { type: "start-step" } as Extract<LLM.Event, { type: "start-step" }>))
 
           // We fire the prompt asynchronously so the stream can start yielding
           Effect.runFork(
             Effect.promise(async () => {
               try {
                 await conn.prompt(promptReq)
+                
+                if (currentTextId) {
+                  await Effect.runPromise(Queue.offer(queue, { type: "text-end", id: currentTextId }))
+                  currentTextId = ""
+                }
+                
+                await Effect.runPromise(Queue.offer(queue, { 
+                  type: "finish-step", 
+                  finishReason: "stop", 
+                  usage: { promptTokens: 0, completionTokens: 0 } 
+                } as unknown as Extract<LLM.Event, { type: "finish-step" }>))
               } catch (e) {
                 log.error("Error from ACP agent prompt", { error: e })
+                await Effect.runPromise(Queue.offer(queue, { type: "error", error: e }))
+              } finally {
                 await Effect.runPromise(Queue.shutdown(queue))
               }
             })
