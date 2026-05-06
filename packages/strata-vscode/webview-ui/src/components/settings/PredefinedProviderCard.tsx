@@ -155,9 +155,9 @@ const PredefinedProviderCard = (props: Props) => {
               variant="secondary"
               size="small"
               onClick={test}
-              disabled={testing()}
+              disabled={testing() || result()?.success === true}
             >
-              {testing() ? "Testing…" : result()?.success ? "Retest" : "Test Connection"}
+              {testing() ? "Testing…" : result()?.success ? "Connected!" : "Test Connection"}
             </Button>
             <Show when={result()}>
               {(res) => (
