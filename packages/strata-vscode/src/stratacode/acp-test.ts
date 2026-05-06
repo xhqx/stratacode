@@ -30,7 +30,7 @@ interface PredefinedProvider {
 
 function registry(): Record<string, PredefinedProvider> {
   const extensionDir = __dirname
-  const pkgDir = path.resolve(extensionDir, "..", "..", "..")
+  const pkgDir = path.resolve(extensionDir, "..", "..") // /packages
   const opencodeDir = path.join(pkgDir, "opencode")
   const registryPath = path.join(opencodeDir, "src", "stratacode", "acp-client", "registry")
   const { PREDEFINED } = require(registryPath)
