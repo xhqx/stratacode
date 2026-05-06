@@ -27,6 +27,7 @@ interface ConfigContextValue {
   isDirty: Accessor<boolean>
   saving: Accessor<boolean>
   saveError: Accessor<SaveError | null>
+  acpProviders: Accessor<Record<string, any>>
   updateConfig: (partial: Partial<Config>) => void
   updateExtensionFeature: (key: keyof ExtensionFeatureFlags, value: boolean) => void
   saveConfig: () => void
@@ -41,6 +42,7 @@ export const ConfigProvider: ParentComponent = (props) => {
   const [config, setConfig] = createSignal<Config>({})
   const [features, setFeatures] = createSignal<FeatureFlags>({ indexing: false })
   const [extensionFeatures, setExtensionFeatures] = createSignal<ExtensionFeatureFlags>({} as ExtensionFeatureFlags)
+  const [acpProviders, setAcpProviders] = createSignal<Record<string, any>>({})
   const [loading, setLoading] = createSignal(true)
   const [draft, setDraft] = createSignal<Partial<Config>>({})
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -99,6 +101,10 @@ export const ConfigProvider: ParentComponent = (props) => {
       setExtensionFeatures(message.features)
       return
     }
+    if (message.type === "acpProviderMeta") {
+      setAcpProviders(message.providers)
+      return
+    }
   })
 
   onCleanup(unsubscribe)
@@ -106,11 +112,13 @@ export const ConfigProvider: ParentComponent = (props) => {
   // Request config immediately; if the extension's httpClient is not yet ready,
   // extensionDataReady will fire once initialization completes and we retry once.
   vscode.postMessage({ type: "requestConfig" })
+  vscode.postMessage({ type: "requestProviders" })
   vscode.postMessage({ type: "requestExtensionFeatures" })
 
   const fallback = setTimeout(() => {
     if (loading()) {
       vscode.postMessage({ type: "requestConfig" })
+      vscode.postMessage({ type: "requestProviders" })
     }
   }, 3000)
 
@@ -120,6 +128,7 @@ export const ConfigProvider: ParentComponent = (props) => {
     clearTimeout(fallback)
     if (loading()) {
       vscode.postMessage({ type: "requestConfig" })
+      vscode.postMessage({ type: "requestProviders" })
     }
   })
 
@@ -172,6 +181,7 @@ export const ConfigProvider: ParentComponent = (props) => {
     isDirty,
     saving,
     saveError,
+    acpProviders,
     updateConfig,
     updateExtensionFeature,
     saveConfig,

@@ -522,21 +522,6 @@ export function patchAgents(
     native: true,
   }
 
-  // Add ACP agents from config
-  if (cfg.acp_agents) {
-    for (const [key, agent] of Object.entries(cfg.acp_agents)) {
-      agents[key] = {
-        name: key,
-        displayName: agent.name,
-        description: `External ACP Agent: ${agent.name ?? key}`,
-        options: { isACP: true, acp_config: agent },
-        permission: Permission.merge(defaults, Permission.fromConfig({ "*": agent.trusted ? "allow" : "ask" }), user),
-        mode: "primary",
-        native: false,
-      }
-    }
-  }
-
   // If workers are enabled, unhide the worker agents so they appear in the UI
   if (cfg.workers?.enabled) {
     if (agents.review_worker) {
@@ -648,7 +633,7 @@ export async function remove(name: string) {
     // Config entry may not exist — that's fine
   }
 
-  // 4. Clear default_agent if it matches
+  // 5. Clear default_agent if it matches
   const cfg = await Config.get()
   if (cfg.default_agent === name) {
     const clear = { default_agent: null } as unknown as Config.Info

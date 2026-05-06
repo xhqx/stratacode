@@ -5,7 +5,17 @@ import { AUTOCOMPLETE_MODELS } from "../../src/shared/autocomplete-models"
 
 describe("autocomplete model enum ↔ AUTOCOMPLETE_MODELS sync", () => {
   const pkg = JSON.parse(readFileSync(join(__dirname, "../../package.json"), "utf8"))
-  const prop = pkg.contributes.configuration.properties["strata-code.new.autocomplete.model"]
+  let prop: any
+  if (Array.isArray(pkg.contributes.configuration)) {
+    for (const section of pkg.contributes.configuration) {
+      if (section.properties && section.properties["strata-code.new.autocomplete.model"]) {
+        prop = section.properties["strata-code.new.autocomplete.model"]
+        break
+      }
+    }
+  } else {
+    prop = pkg.contributes.configuration.properties["strata-code.new.autocomplete.model"]
+  }
 
   it("package.json enum matches AUTOCOMPLETE_MODELS ids", () => {
     const ids = AUTOCOMPLETE_MODELS.map((m) => m.id)

@@ -37,7 +37,12 @@ import { MigrationWizard } from "./components/migration" // legacy-migration
 import { NotificationsProvider } from "./context/notifications"
 import { KanbanProvider } from "./context/kanban"
 import { TaskBoardView } from "./components/kanban"
+// stratacode_change start
+import { DocsProvider } from "./context/docs"
+import { DocHubView } from "./components/docs/DocHubView"
+// stratacode_change end
 import { PlanningProvider } from "./context/planning"
+import { ScenarioProvider } from "./context/stratacode/scenario"
 import { lazy } from "solid-js"
 const PlanningView = lazy(() => import("./components/planning/PlanningView").then((m) => ({ default: m.PlanningView })))
 import type { Message as SDKMessage, Part as SDKPart } from "@stratacode/sdk/v2"
@@ -53,6 +58,7 @@ type ViewType =
   | "subAgentViewer"
   | "kanban"
   | "planning"
+  | "docs" // stratacode_change
 const VALID_VIEWS = new Set<string>([
   "newTask",
   "marketplace",
@@ -62,6 +68,7 @@ const VALID_VIEWS = new Set<string>([
   "subAgentViewer",
   "kanban",
   "planning",
+  "docs", // stratacode_change
 ])
 
 /**
@@ -239,6 +246,11 @@ const AppContent: Component = () => {
       case "planningButtonClicked":
         if (extensionFeatures().planningMode) setCurrentView("planning") // stratacode_change
         break
+      // stratacode_change start
+      case "docsButtonClicked":
+        if (extensionFeatures().docHub) setCurrentView("docs")
+        break
+      // stratacode_change end
       case "cycleAgentMode":
         if (document.hasFocus()) cycleAgent(1)
         break
@@ -368,6 +380,13 @@ const AppContent: Component = () => {
             <Match when={currentView() === "planning"}>
               <PlanningView onBack={() => setCurrentView("newTask")} />
             </Match>
+            {/* stratacode_change start */}
+            <Match when={currentView() === "docs"}>
+              <DocsProvider>
+                <DocHubView onBack={() => setCurrentView("newTask")} />
+              </DocsProvider>
+            </Match>
+            {/* stratacode_change end */}
           </Switch>
         }
       >
@@ -398,7 +417,9 @@ const App: Component = () => {
                                 <SessionProvider>
                                   <DataBridge>
                                     <PlanningProvider>
-                                      <AppContent />
+                                      <ScenarioProvider>
+                                        <AppContent />
+                                      </ScenarioProvider>
                                     </PlanningProvider>
                                   </DataBridge>
                                 </SessionProvider>

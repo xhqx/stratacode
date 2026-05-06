@@ -7,6 +7,7 @@ import * as Config from "@/config/config"
 import { reviewWorker } from "./review"
 import { explainerWorker } from "./explainer"
 import { summarizerWorker } from "./summarizer"
+import { docWorker } from "./doc-worker" // stratacode_change
 
 const log = Log.create({ service: "worker:manager" })
 
@@ -35,6 +36,7 @@ export const registerWorker = (name: string, fn: WorkerFn) => {
 registerWorker("review_worker", reviewWorker)
 registerWorker("explainer_worker", explainerWorker)
 registerWorker("summarizer_worker", summarizerWorker)
+registerWorker("doc_worker", docWorker) // stratacode_change
 
 export const dispatch = async (cwd: string, worker: string, payload: any) => {
   try {

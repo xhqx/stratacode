@@ -8396,6 +8396,308 @@
         ]
       }
     },
+    "/docs/manifest": {
+      "get": {
+        "operationId": "docs.manifest",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Get documents manifest",
+        "description": "Returns the current documentation manifest including all generated pages and their statuses.",
+        "responses": {
+          "200": {
+            "description": "Manifest retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "number"
+                    },
+                    "generated": {
+                      "type": "string"
+                    },
+                    "pages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": ["pending", "generating", "ready", "stale", "error"]
+                          },
+                          "symbols": {
+                            "type": "number"
+                          },
+                          "generated": {
+                            "type": "string"
+                          },
+                          "hash": {
+                            "type": "string"
+                          },
+                          "error": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "path", "title", "status", "symbols", "generated", "hash"]
+                      }
+                    }
+                  },
+                  "required": ["version", "generated", "pages"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.docs.manifest({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/docs/page/{id}": {
+      "get": {
+        "operationId": "docs.page",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Get document page content",
+        "description": "Returns the generated Markdown content for a specific document page.",
+        "responses": {
+          "200": {
+            "description": "Page content retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "string"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["pending", "generating", "ready", "stale", "error"]
+                        },
+                        "symbols": {
+                          "type": "number"
+                        },
+                        "generated": {
+                          "type": "string"
+                        },
+                        "hash": {
+                          "type": "string"
+                        },
+                        "error": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["id", "path", "title", "status", "symbols", "generated", "hash"]
+                    }
+                  },
+                  "required": ["content", "meta"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.docs.page({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/docs/generate": {
+      "post": {
+        "operationId": "docs.generate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "summary": "Generate documentation",
+        "description": "Triggers background generation of documentation for all files.",
+        "responses": {
+          "200": {
+            "description": "Generation started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["status"]
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.docs.generate({\n  ...\n})"
+          }
+        ]
+      }
+    },
+    "/docs/regenerate/{id}": {
+      "post": {
+        "operationId": "docs.regenerate",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "directory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "summary": "Regenerate document page",
+        "description": "Triggers background regeneration of documentation for a specific file.",
+        "responses": {
+          "200": {
+            "description": "Regeneration started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["status"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundError"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createStrataClient } from \"@stratacode/sdk\n\nconst client = createStrataClient()\nawait client.docs.regenerate({\n  ...\n})"
+          }
+        ]
+      }
+    },
     "/suggestion": {
       "get": {
         "operationId": "suggestion.list",
@@ -17003,8 +17305,8 @@
               }
             }
           },
-          "acp_agents": {
-            "description": "External ACP (Agent Client Protocol) agents",
+          "acp_providers": {
+            "description": "External ACP (Agent Client Protocol) providers",
             "type": "object",
             "propertyNames": {
               "type": "string"
@@ -17017,14 +17319,14 @@
                   "type": "string"
                 },
                 "command": {
-                  "description": "Command to execute the ACP agent",
+                  "description": "Command to execute the ACP provider",
                   "type": "array",
                   "items": {
                     "type": "string"
                   }
                 },
                 "env": {
-                  "description": "Environment variables for the ACP agent",
+                  "description": "Environment variables for the ACP provider",
                   "type": "object",
                   "propertyNames": {
                     "type": "string"
@@ -17034,7 +17336,7 @@
                   }
                 },
                 "cwd": {
-                  "description": "Working directory for the ACP agent",
+                  "description": "Working directory for the ACP provider",
                   "type": "string"
                 },
                 "transport": {
@@ -17047,7 +17349,57 @@
                   "type": "string"
                 },
                 "trusted": {
-                  "description": "Auto-approve file operations from this agent",
+                  "description": "Auto-approve file operations from this provider",
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "acp_agents": {
+            "description": "Deprecated — use acp_providers instead",
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "description": "Display name",
+                  "type": "string"
+                },
+                "command": {
+                  "description": "Command to execute the ACP provider",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "env": {
+                  "description": "Environment variables for the ACP provider",
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "cwd": {
+                  "description": "Working directory for the ACP provider",
+                  "type": "string"
+                },
+                "transport": {
+                  "description": "Transport type (stdio or http)",
+                  "type": "string",
+                  "enum": ["stdio", "http"]
+                },
+                "url": {
+                  "description": "URL for HTTP transport",
+                  "type": "string"
+                },
+                "trusted": {
+                  "description": "Auto-approve file operations from this provider",
                   "type": "boolean"
                 }
               }

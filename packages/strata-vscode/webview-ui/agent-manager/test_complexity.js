@@ -1,0 +1,7 @@
+function test() {
+  if (1) {}
+  if (2) {}
+  if (3) {}
+  if (4) {}
+  if (5) {}
+}

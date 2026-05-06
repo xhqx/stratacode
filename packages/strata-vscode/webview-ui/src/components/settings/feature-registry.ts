@@ -2,8 +2,6 @@ import { Component } from "solid-js"
 import { IconProps } from "@stratacode/strata-ui/icon"
 import type { ExtensionFeatureFlags } from "../../types/messages/config"
 
-import AcpAgentsTab from "./AcpAgentsTab"
-import AgentManagerTab from "./AgentManagerTab"
 import AutoApproveSettingsTab from "./AutoApproveSettingsTab"
 import AutocompleteTab from "./AutocompleteTab"
 import BackgroundWorkersTab from "./BackgroundWorkersTab"
@@ -13,16 +11,16 @@ import CodeActionsTab from "./CodeActionsTab"
 import CommitMessageTab from "./CommitMessageTab"
 import CompactionTab from "./CompactionTab"
 import DiffViewerTab from "./DiffViewerTab"
-import DocumentDrivenTasksTab from "./DocumentDrivenTasksTab"
 import ExplainerTab from "./ExplainerTab"
-import KanbanTab from "./KanbanTab"
+import ExplainerWorkerTab from "./ExplainerWorkerTab"
 import LspTab from "./LspTab"
 import NotificationsTab from "./NotificationsTab"
 import PasteSummaryTab from "./PasteSummaryTab"
 import ProjectMemoryTab from "./ProjectMemoryTab"
 import RemoteControlTab from "./RemoteControlTab"
+import RepoMapTab from "./RepoMapTab"
 import RetriesTab from "./RetriesTab"
-import SessionSharingTab from "./SessionSharingTab"
+import ReviewerWorkerTab from "./ReviewerWorkerTab"
 
 export interface FeatureDefinition {
   key: keyof ExtensionFeatureFlags
@@ -41,11 +39,9 @@ export type ResolvableFeatureDefinition = Omit<FeatureDefinition, "label" | "des
   description: (t: (key: string) => string) => string
 }
 
-import { MANIFEST } from "../../../../src/stratacode/feature-manifest"
+import { MANIFEST, type FeatureSpec } from "../../../../src/stratacode/feature-manifest"
 
 const COMPONENT_MAP: Partial<Record<keyof ExtensionFeatureFlags, Component>> = {
-  acpAgents: AcpAgentsTab,
-  agentManager: AgentManagerTab,
   autoApprove: AutoApproveSettingsTab,
   autocomplete: AutocompleteTab,
   autoretries: RetriesTab,
@@ -55,35 +51,37 @@ const COMPONENT_MAP: Partial<Record<keyof ExtensionFeatureFlags, Component>> = {
   commitMessage: CommitMessageTab,
   compaction: CompactionTab,
   diffViewer: DiffViewerTab,
-  documentDrivenTasks: DocumentDrivenTasksTab,
   explainer: ExplainerTab,
-  kanban: KanbanTab,
+  explainerWorker: ExplainerWorkerTab,
   lsp: LspTab,
   notifications: NotificationsTab,
   pasteSummary: PasteSummaryTab,
   projectMemory: ProjectMemoryTab,
   remoteControl: RemoteControlTab,
+  repoMap: RepoMapTab,
+  reviewerWorker: ReviewerWorkerTab,
   workers: BackgroundWorkersTab,
 }
 
 export const FEATURES: ResolvableFeatureDefinition[] = Object.entries(MANIFEST)
-  .filter(([_, spec]) => !(spec as any).hidden)
-  .map(([key, spec]) => ({
-    key: key as keyof ExtensionFeatureFlags,
-    label: () => spec.label,
-    description: () => spec.description,
-    icon: spec.icon as IconProps["name"],
-    component: COMPONENT_MAP[key as keyof ExtensionFeatureFlags],
-    agents: (spec as any).agents,
-    pinned: (spec as any).pinned,
-    tools: (spec as any).tools,
-    requires: (spec as any).requires as keyof ExtensionFeatureFlags,
-  }))
+  .filter(([_, raw]) => !(raw as FeatureSpec).hidden)
+  .map(([key, raw]) => {
+    const spec = raw as FeatureSpec
+    return {
+      key: key as keyof ExtensionFeatureFlags,
+      label: () => spec.label,
+      description: () => spec.description,
+      icon: spec.icon as IconProps["name"],
+      component: COMPONENT_MAP[key as keyof ExtensionFeatureFlags],
+      agents: spec.agents,
+      pinned: spec.pinned,
+      tools: spec.tools,
+      requires: spec.requires as keyof ExtensionFeatureFlags | undefined,
+    }
+  })
 
 // O(1) Pre-computed Indices for Premium Performance
-const FEATURE_MAP = new Map<keyof ExtensionFeatureFlags, ResolvableFeatureDefinition>(
-  FEATURES.map((f) => [f.key, f]),
-)
+const FEATURE_MAP = new Map<keyof ExtensionFeatureFlags, ResolvableFeatureDefinition>(FEATURES.map((f) => [f.key, f]))
 
 const AGENT_GATE_MAP = new Map<string, (keyof ExtensionFeatureFlags)[]>()
 const TOOL_GATE_MAP = new Map<string, (keyof ExtensionFeatureFlags)[]>()

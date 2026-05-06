@@ -3,4 +3,4 @@
  * Only add icons here that are actually used — esbuild/Vite will
  * tree-shake unused exports but explicit re-exports keep the API small.
  */
-export { WandSparkles, Trash2, Plus, Book } from "lucide-solid"
+export { WandSparkles, Trash2, Plus, Book, ListTree, Check, X } from "lucide-solid"

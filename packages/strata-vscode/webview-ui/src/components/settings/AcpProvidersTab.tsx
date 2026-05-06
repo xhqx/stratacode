@@ -1,27 +1,61 @@
-import { Component, createSignal, createMemo, For, Show } from "solid-js"
+import { Component, createEffect, createMemo, createSignal, For, Show, on, onCleanup } from "solid-js"
 import { Card } from "@stratacode/strata-ui/card"
 import { Button } from "@stratacode/strata-ui/button"
 import { IconButton } from "@stratacode/strata-ui/icon-button"
 import { Dialog } from "@stratacode/strata-ui/dialog"
 import { useDialog } from "@stratacode/strata-ui/context/dialog"
-import { Switch } from "@stratacode/strata-ui/switch"
 
 import { useConfig } from "../../context/config"
-import { useSession } from "../../context/session"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
-import AcpEditView from "./AcpEditView"
+import type { ExtensionMessage } from "../../types/messages"
+import AcpProviderEditView from "./AcpProviderEditView"
+import PredefinedProviderCard from "./PredefinedProviderCard"
 
-const AcpAgentsTab: Component = () => {
+const AcpProvidersTab: Component = () => {
   const language = useLanguage()
-  const { config, updateConfig } = useConfig()
-  const session = useSession()
+  const { config, updateConfig, acpProviders } = useConfig()
   const dialog = useDialog()
   const vscode = useVSCode()
 
   const [editingAcp, setEditingAcp] = createSignal<string>("")
   const [creatingAcp, setCreatingAcp] = createSignal(false)
   const [expanded, setExpanded] = createSignal<Record<string, boolean>>({})
+
+  const [testing, setTesting] = createSignal<Record<string, boolean>>({})
+  const [result, setResult] = createSignal<
+    Record<string, { success: boolean; error?: string; models?: { id: string; name: string }[] }>
+  >({})
+
+  const unsub = vscode.onMessage((msg: ExtensionMessage) => {
+    if (msg.type !== "acpTestResult") return
+    setTesting((prev) => ({ ...prev, [msg.key]: false }))
+    setResult((prev) => ({
+      ...prev,
+      [msg.key]: {
+        success: msg.success,
+        error: msg.error,
+        models: msg.models,
+      },
+    }))
+  })
+  onCleanup(unsub)
+
+  // Auto-connect every custom provider on mount / when the list changes
+  const probe = (name: string) => {
+    if (testing()[name] || result()[name]) return
+    setTesting((prev) => ({ ...prev, [name]: true }))
+    vscode.postMessage({ type: "testAcpConnection", key: name })
+  }
+
+  const acpEntries = createMemo(() => Object.entries(config().acp_providers ?? {}))
+  const custom = createMemo(() => acpEntries().filter(([name]) => !(name in (acpProviders() ?? {}))))
+
+  createEffect(
+    on(custom, (entries) => {
+      for (const [name] of entries) probe(name)
+    }),
+  )
 
   const browse = () => vscode.postMessage({ type: "openMarketplacePanel" })
 
@@ -40,10 +74,10 @@ const AcpAgentsTab: Component = () => {
               onClick={() => {
                 dialog.close()
                 setTimeout(() => {
-                  const existing = config().acp_agents ?? {}
+                  const existing = config().acp_providers ?? {}
                   const newConfig = { ...existing }
                   delete newConfig[name]
-                  updateConfig({ acp_agents: newConfig })
+                  updateConfig({ acp_providers: newConfig })
                 }, 150)
               }}
             >
@@ -55,30 +89,58 @@ const AcpAgentsTab: Component = () => {
     ))
   }
 
-  const acpEntries = createMemo(() => Object.entries(config().acp_agents ?? {}))
+
+  const patch = (name: string, next: Record<string, unknown>) => {
+    const existing = config().acp_providers ?? {}
+    const current = existing[name] ?? {}
+    const predefinedMeta = acpProviders()[name]
+    updateConfig({
+      acp_providers: {
+        ...existing,
+        [name]: {
+          ...current,
+          ...next,
+          predefined: true,
+          model: (next.model as string | undefined) ?? current.model ?? predefinedMeta?.defaultModel,
+        },
+      },
+    })
+  }
 
   const toggle = (name: string) => {
     setExpanded((prev) => ({ ...prev, [name]: !prev[name] }))
   }
 
-  const statusColor = (name: string) => "var(--vscode-disabledForeground, #888)"
-  const statusLabel = (name: string) => ""
-  const isConnected = (name: string) => false
+  const statusColor = (name: string) => {
+    if (testing()[name]) return "var(--vscode-editorWarning-foreground, #ff9800)"
+    const res = result()[name]
+    if (res?.success) return "var(--vscode-testing-iconPassed, #4caf50)"
+    if (res && !res.success) return "var(--vscode-testing-iconFailed, #f44336)"
+    return "var(--vscode-disabledForeground, #888)"
+  }
+
+  const statusLabel = (name: string) => {
+    if (testing()[name]) return "connecting…"
+    const res = result()[name]
+    if (res?.success) return "connected"
+    if (res && !res.success) return "failed"
+    return ""
+  }
 
   return (
     <div>
       <Show when={creatingAcp()}>
-        <AcpEditView
+        <AcpProviderEditView
           name=""
           mode="create"
-          taken={Object.keys(config().acp_agents ?? {})}
+          taken={Object.keys(config().acp_providers ?? {})}
           onBack={() => setCreatingAcp(false)}
           onRemove={() => setCreatingAcp(false)}
         />
       </Show>
 
       <Show when={!creatingAcp() && editingAcp()}>
-        <AcpEditView
+        <AcpProviderEditView
           name={editingAcp()}
           onBack={() => setEditingAcp("")}
           onRemove={(name) => {
@@ -90,6 +152,31 @@ const AcpAgentsTab: Component = () => {
 
       <Show when={!creatingAcp() && !editingAcp()}>
         <>
+          <Show when={Object.keys(acpProviders() ?? {}).length > 0}>
+            <div style={{ "margin-bottom": "12px" }}>
+              <div style={{ "font-size": "12px", "font-weight": "600", "margin-bottom": "8px" }}>
+                {language.t("settings.agentBehaviour.acpPredefined.title")}
+              </div>
+              <For each={Object.entries(acpProviders())}>
+                {([name, item]) => (
+                  <PredefinedProviderCard
+                    name={name}
+                    item={item as any}
+                    cfg={config().acp_providers?.[name] ?? { predefined: true, model: (item as any).defaultModel }}
+                    onToggle={(enabled) => patch(name, { enabled })}
+                    onModel={(model) => patch(name, { model, enabled: true })}
+                    onEnv={(key, value) =>
+                      patch(name, {
+                        enabled: true,
+                        env: { ...(config().acp_providers?.[name]?.env ?? {}), [key]: value },
+                      })
+                    }
+                  />
+                )}
+              </For>
+            </div>
+          </Show>
+
           <div
             style={{
               display: "flex",
@@ -105,8 +192,11 @@ const AcpAgentsTab: Component = () => {
               {language.t("settings.agentBehaviour.acpBrowseMarketplace")}
             </Button>
           </div>
+          <div style={{ "font-size": "12px", "font-weight": "600", "margin-bottom": "8px" }}>
+            {language.t("settings.agentBehaviour.acpCustom.title")}
+          </div>
           <Show
-            when={acpEntries().length > 0}
+            when={custom().length > 0}
             fallback={
               <Card>
                 <div
@@ -121,18 +211,23 @@ const AcpAgentsTab: Component = () => {
             }
           >
             <Card>
-              <For each={acpEntries()}>
+              <For each={custom()}>
                 {([name, acp], index) => {
                   const open = () => expanded()[name] ?? false
                   const env = () => Object.entries(acp.env ?? {})
-                  const error = () => undefined
+                  const error = () => {
+                    const res = result()[name]
+                    if (res && !res.success) return res.error
+                    return undefined
+                  }
+                  const models = () => result()[name]?.models ?? []
                   return (
                     <div
-                      style={{
-                        "border-bottom":
-                          index() < acpEntries().length - 1 ? "1px solid var(--border-weak-base)" : "none",
-                      }}
-                    >
+                        style={{
+                          "border-bottom":
+                          index() < custom().length - 1 ? "1px solid var(--border-weak-base)" : "none",
+                        }}
+                      >
                       {/* Header row */}
                       <div
                         style={{
@@ -157,23 +252,23 @@ const AcpAgentsTab: Component = () => {
                           {/* Status dot */}
                           <div
                             style={{
-                              width: "6px",
-                              height: "6px",
-                              "border-radius": "50%",
-                              "background-color": statusColor(name),
-                              "flex-shrink": "0",
-                            }}
-                          />
+                               width: "6px",
+                               height: "6px",
+                               "border-radius": "50%",
+                               "background-color": statusColor(name),
+                               "flex-shrink": "0",
+                             }}
+                           />
                           <div style={{ "font-weight": "500" }}>{name}</div>
                           <span
                             style={{
                               "font-size": "10px",
                               color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
                             }}
-                          >
-                            {statusLabel(name) || (acp.url ? "remote" : "stdio")}
-                          </span>
-                        </div>
+                            >
+                             {statusLabel(name) || (acp.url ? "remote" : "stdio")}
+                           </span>
+                         </div>
                         <div style={{ display: "flex", gap: "4px", "align-items": "center" }}>
                           <IconButton
                             size="small"
@@ -267,6 +362,49 @@ const AcpAgentsTab: Component = () => {
                               )}
                             </For>
                           </Show>
+
+                          {/* Models list (on successful connection) */}
+                          <Show when={models().length > 0}>
+                            <div style={{ "margin-top": "8px" }}>
+                              <span style={{ "font-weight": "500" }}>Models:</span>
+                              <div
+                                style={{
+                                  "margin-top": "4px",
+                                  display: "grid",
+                                  gap: "2px",
+                                  "padding-left": "8px",
+                                  "font-family": "var(--vscode-editor-font-family, monospace)",
+                                  "font-size": "11px",
+                                }}
+                              >
+                                <For each={models()}>
+                                  {(m) => <div>{m.name}</div>}
+                                </For>
+                              </div>
+                            </div>
+                          </Show>
+
+                          {/* Retry button — shown only when auto-connect failed */}
+                          <Show when={!testing()[name] && result()[name] && !result()[name]!.success}>
+                            <div style={{ "margin-top": "8px", display: "flex", "align-items": "center", gap: "8px" }}>
+                              <Button
+                                variant="secondary"
+                                size="small"
+                                onClick={(e: MouseEvent) => {
+                                  e.stopPropagation()
+                                  setTesting((prev) => ({ ...prev, [name]: true }))
+                                  setResult((prev) => {
+                                    const next = { ...prev }
+                                    delete next[name]
+                                    return next
+                                  })
+                                  vscode.postMessage({ type: "testAcpConnection", key: name })
+                                }}
+                              >
+                                Retry Connection
+                              </Button>
+                            </div>
+                          </Show>
                         </div>
                       </Show>
                     </div>
@@ -281,4 +419,4 @@ const AcpAgentsTab: Component = () => {
   )
 }
 
-export default AcpAgentsTab
+export default AcpProvidersTab

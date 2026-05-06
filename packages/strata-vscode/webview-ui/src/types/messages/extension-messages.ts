@@ -278,7 +278,18 @@ export interface DeviceAuthCancelledMessage {
 
 export interface NavigateMessage {
   type: "navigate"
-  view: "newTask" | "marketplace" | "history" | "profile" | "settings" | "subAgentViewer" | "kanban" | "planning"
+  // stratacode_change start
+  view:
+    | "newTask"
+    | "marketplace"
+    | "history"
+    | "profile"
+    | "settings"
+    | "subAgentViewer"
+    | "kanban"
+    | "planning"
+    | "docs"
+  // stratacode_change end
   tab?: string
 }
 
@@ -323,7 +334,6 @@ export interface AutocompleteSettingsLoadedMessage {
     model: string
     chatMode: "fim" | "agent"
     chatDebounceMs: number
-    taskSuggestionsEnabled: boolean
   }
 }
 
@@ -901,11 +911,19 @@ export interface RemoteStatusMessage {
   connected: boolean
 }
 
+
+export interface ScenariosLoadedMessage {
+
+  type: "scenariosLoaded"
+  scenarios: { name: string; sequence: string[] }[]
+}
+
 export type ExtensionMessage =
   | ReadyMessage
   | GitStatusMessage
   | ConnectionStateMessage
   | ErrorMessage
+  | ScenariosLoadedMessage
   | SendMessageFailedMessage
   | PartUpdatedMessage
   | PartsUpdatedMessage
@@ -939,7 +957,6 @@ export type ExtensionMessage =
   | PluginConfigUpdateFailedMessage
   | NavigateMessage
   | PlanningStateMessage
-  | PlanningSettingsLoadedMessage
   | PlanningDispatchResultMessage
   | PlannedKanbanTasksMessage
   | IndexingStatusLoadedMessage
@@ -983,6 +1000,8 @@ export type ExtensionMessage =
   | AgentManagerSendInitialMessage
   | SetChatBoxMessage
   | AppendChatBoxMessage
+  | AcpProviderMetaMessage
+
   | AppendReviewCommentsMessage
   | TriggerTaskMessage
   | VariantsLoadedMessage
@@ -1049,6 +1068,13 @@ export type ExtensionMessage =
   | { type: "repoMapStatsLoaded"; stats: { files: number; symbols: number; chars: number; budget: number } }
   | TaskSuggestionsResultMessage
   | AgentChatCompletionResultMessage
+  // stratacode_change start
+  | AcpProviderMetaMessage
+  | DocsManifestMessage
+  | DocsPageContentMessage
+  | DocsPageStatusMessage
+  | AcpTestResultMessage
+// stratacode_change end
 
 export interface KanbanTasksLoadedMessage {
   type: "kanbanTasksLoaded"
@@ -1070,17 +1096,71 @@ export interface AgentChatCompletionResultMessage {
 }
 // stratacode_change end
 
+// stratacode_change start
+export interface DocPageMeta {
+  id: string
+  path: string
+  title: string
+  status: "pending" | "generating" | "ready" | "stale" | "error"
+  symbols: number
+  generated: string
+  hash: string
+  error?: string
+}
+
+export interface DocsManifestMessage {
+  type: "docsManifest"
+  pages: DocPageMeta[]
+  generated: string
+}
+
+export interface DocsPageContentMessage {
+  type: "docsPageContent"
+  id: string
+  content: string
+  meta: DocPageMeta
+}
+
+export interface DocsPageStatusMessage {
+  type: "docsPageStatus"
+  id: string
+  status: DocPageMeta["status"]
+  error?: string
+}
+// stratacode_change end
+
+// stratacode_change start
+export interface AcpProviderMetaMessage {
+  type: "acpProviderMeta"
+  providers: Record<string, {
+    name: string
+    description: string
+    icon: string
+    defaultModel: string
+    enabled: boolean
+    configuredModel: string
+    status: "disconnected" | "connecting" | "connected" | "error"
+    staticModels: { id: string; name: string; description?: string }[]
+    liveModels: { id: string; name: string; description?: string }[]
+    env: string[]
+    installed: boolean
+  }>
+}
+// stratacode_change end
+
+// stratacode_change start
+export interface AcpTestResultMessage {
+  type: "acpTestResult"
+  key: string
+  success: boolean
+  models?: { id: string; name: string }[]
+  error?: string
+}
+// stratacode_change end
+
 export interface PlanningStateMessage {
   type: "planningState"
   tasks: import("./planning").PlanningTask[]
-}
-
-export interface PlanningSettingsLoadedMessage {
-  type: "planningSettingsLoaded"
-  settings: {
-    taskView: boolean
-    documentDrivenTasks: boolean
-  }
 }
 
 export interface PlanningDispatchResultMessage {

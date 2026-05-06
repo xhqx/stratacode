@@ -25,10 +25,18 @@ export interface FeatureSpec {
 }
 
 export const MANIFEST = {
-  acpAgents: {
+  claudeCodeCompat: {
+    default: false,
+    label: "Claude Code Compatibility",
+    description: "Enable compatibility with Claude Code.",
+    icon: "terminal",
+    lifecycle: "runtime",
+    hidden: true,
+  },
+  acpProviders: {
     default: true,
-    label: "ACP Agents",
-    description: "Enable Agent Communication Protocol agents integration.",
+    label: "ACP Providers",
+    description: "Enable Agent Communication Protocol providers integration.",
     icon: "mcp",
     lifecycle: "runtime",
   },
@@ -49,7 +57,8 @@ export const MANIFEST = {
   autocomplete: {
     default: true,
     label: "Autocomplete",
-    description: "Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling requires a window reload.",
+    description:
+      "Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling requires a window reload.",
     icon: "keyboard",
     lifecycle: "reload",
     agents: ["autocomplete"],
@@ -81,6 +90,13 @@ export const MANIFEST = {
     label: "Checkpoints",
     description: "Enable git-based checkpoints for tracking and reverting AI changes.",
     icon: "branch",
+    lifecycle: "runtime",
+  },
+  chatScenarios: {
+    default: true,
+    label: "Chat Scenarios",
+    description: "Enable automated multi-agent sequences.",
+    icon: "task",
     lifecycle: "runtime",
   },
   cloudSessions: {
@@ -127,7 +143,8 @@ export const MANIFEST = {
   diffViewer: {
     default: true,
     label: "Diff Viewer",
-    description: "Enable the Changes tab, AI explain commands, and diff viewer panel. Disabling requires a window reload.",
+    description:
+      "Enable the Changes tab, AI explain commands, and diff viewer panel. Disabling requires a window reload.",
     icon: "review",
     lifecycle: "reload",
   },
@@ -139,6 +156,35 @@ export const MANIFEST = {
     lifecycle: "runtime",
     tools: ["task", "todoread", "todowrite"],
   },
+  taskSuggestions: {
+    default: true,
+    label: "Task Suggestion Chips",
+    description:
+      "Show AI-generated next-task chips below the chat input. Requires background workers for optimal context.",
+    icon: "sparkle",
+    lifecycle: "runtime",
+    requires: "workers",
+  },
+  // stratacode_change start
+  docHub: {
+    default: true,
+    label: "Document Hub",
+    description: "Enable the Confluence-style sidebar view for codebase documentation.",
+    icon: "book",
+    lifecycle: "reload",
+    requires: "repoMap",
+    agents: ["doc_worker"],
+    pinned: ["doc_worker"],
+  },
+  docWorker: {
+    default: false,
+    label: "Doc Worker",
+    description: "Background worker that auto-generates codebase documentation from the repo map.",
+    icon: "book",
+    lifecycle: "runtime",
+    requires: "docHub",
+  },
+  // stratacode_change end
   explainer: {
     default: true,
     label: "Explainer",
@@ -146,6 +192,14 @@ export const MANIFEST = {
     icon: "brain",
     lifecycle: "runtime",
     agents: ["explainer"],
+  },
+  explainerWorker: {
+    default: false,
+    label: "Explainer Worker",
+    description: "Background worker that automatically explains code changes on save.",
+    icon: "server",
+    lifecycle: "runtime",
+    requires: "workers",
   },
   formatter: {
     default: true,
@@ -230,6 +284,21 @@ export const MANIFEST = {
     lifecycle: "runtime",
     policy: "cloud",
   },
+  repoMap: {
+    default: true,
+    label: "Repository Map",
+    description: "Generate a token-budgeted structural map of your codebase for AI context.",
+    icon: "file-tree",
+    lifecycle: "runtime",
+  },
+  reviewerWorker: {
+    default: false,
+    label: "Reviewer Worker",
+    description: "Background worker that automatically reviews code changes.",
+    icon: "review",
+    lifecycle: "runtime",
+    requires: "workers",
+  },
   selectionTip: {
     default: true,
     label: "Selection Tip",
@@ -266,9 +335,12 @@ export const MANIFEST = {
   workers: {
     default: false,
     label: "Workers",
-    description: "Enable background context workers. Configure in your project's strata.jsonc file under the workers key.",
+    description:
+      "Enable background context workers. Configure in your project's strata.jsonc file under the workers key.",
     icon: "providers",
     lifecycle: "reload",
   },
-} as const satisfies Record<string, Omit<FeatureSpec, "default" | "lifecycle"> & { default: boolean; lifecycle: "runtime" | "reload" }>
-
+} as const satisfies Record<
+  string,
+  Omit<FeatureSpec, "default" | "lifecycle"> & { default: boolean; lifecycle: "runtime" | "reload" }
+>

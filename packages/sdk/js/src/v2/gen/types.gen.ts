@@ -2253,26 +2253,26 @@ export type Config = {
     question_timeout?: number
   }
   /**
-   * External ACP (Agent Client Protocol) agents
+   * External ACP (Agent Client Protocol) providers
    */
-  acp_agents?: {
+  acp_providers?: {
     [key: string]: {
       /**
        * Display name
        */
       name?: string
       /**
-       * Command to execute the ACP agent
+       * Command to execute the ACP provider
        */
       command?: Array<string>
       /**
-       * Environment variables for the ACP agent
+       * Environment variables for the ACP provider
        */
       env?: {
         [key: string]: string
       }
       /**
-       * Working directory for the ACP agent
+       * Working directory for the ACP provider
        */
       cwd?: string
       /**
@@ -2284,9 +2284,70 @@ export type Config = {
        */
       url?: string
       /**
-       * Auto-approve file operations from this agent
+       * Auto-approve file operations from this provider
        */
       trusted?: boolean
+      /**
+       * Selected model ID for this provider
+       */
+      model?: string
+      /**
+       * Whether this provider is enabled
+       */
+      enabled?: boolean
+      /**
+       * Whether this provider comes from the built-in registry
+       */
+      predefined?: boolean
+    }
+  }
+  /**
+   * Deprecated — use acp_providers instead
+   */
+  acp_agents?: {
+    [key: string]: {
+      /**
+       * Display name
+       */
+      name?: string
+      /**
+       * Command to execute the ACP provider
+       */
+      command?: Array<string>
+      /**
+       * Environment variables for the ACP provider
+       */
+      env?: {
+        [key: string]: string
+      }
+      /**
+       * Working directory for the ACP provider
+       */
+      cwd?: string
+      /**
+       * Transport type (stdio or http)
+       */
+      transport?: "stdio" | "http"
+      /**
+       * URL for HTTP transport
+       */
+      url?: string
+      /**
+       * Auto-approve file operations from this provider
+       */
+      trusted?: boolean
+      /**
+       * Selected model ID for this provider
+       */
+      model?: string
+      /**
+       * Whether this provider is enabled
+       */
+      enabled?: boolean
+      /**
+       * Whether this provider comes from the built-in registry
+       */
+      predefined?: boolean
     }
   }
 }
@@ -6558,6 +6619,142 @@ export type RepoMapInvalidateResponses = {
 }
 
 export type RepoMapInvalidateResponse = RepoMapInvalidateResponses[keyof RepoMapInvalidateResponses]
+
+export type DocsManifestData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/docs/manifest"
+}
+
+export type DocsManifestErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type DocsManifestError = DocsManifestErrors[keyof DocsManifestErrors]
+
+export type DocsManifestResponses = {
+  /**
+   * Manifest retrieved successfully
+   */
+  200: {
+    version: number
+    generated: string
+    pages: Array<{
+      id: string
+      path: string
+      title: string
+      status: "pending" | "generating" | "ready" | "stale" | "error"
+      symbols: number
+      generated: string
+      hash: string
+      error?: string
+    }>
+  }
+}
+
+export type DocsManifestResponse = DocsManifestResponses[keyof DocsManifestResponses]
+
+export type DocsPageData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/docs/page/{id}"
+}
+
+export type DocsPageErrors = {
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type DocsPageError = DocsPageErrors[keyof DocsPageErrors]
+
+export type DocsPageResponses = {
+  /**
+   * Page content retrieved
+   */
+  200: {
+    content: string
+    meta: {
+      id: string
+      path: string
+      title: string
+      status: "pending" | "generating" | "ready" | "stale" | "error"
+      symbols: number
+      generated: string
+      hash: string
+      error?: string
+    }
+  }
+}
+
+export type DocsPageResponse = DocsPageResponses[keyof DocsPageResponses]
+
+export type DocsGenerateData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/docs/generate"
+}
+
+export type DocsGenerateResponses = {
+  /**
+   * Generation started
+   */
+  200: {
+    status: string
+  }
+}
+
+export type DocsGenerateResponse = DocsGenerateResponses[keyof DocsGenerateResponses]
+
+export type DocsRegenerateData = {
+  body?: never
+  path: {
+    id: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/docs/regenerate/{id}"
+}
+
+export type DocsRegenerateErrors = {
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type DocsRegenerateError = DocsRegenerateErrors[keyof DocsRegenerateErrors]
+
+export type DocsRegenerateResponses = {
+  /**
+   * Regeneration started
+   */
+  200: {
+    status: string
+  }
+}
+
+export type DocsRegenerateResponse = DocsRegenerateResponses[keyof DocsRegenerateResponses]
 
 export type SuggestionListData = {
   body?: never

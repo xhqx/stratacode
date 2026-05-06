@@ -3,10 +3,11 @@ import { TextField } from "@stratacode/strata-ui/text-field"
 import { Card } from "@stratacode/strata-ui/card"
 import { Button } from "@stratacode/strata-ui/button"
 import { IconButton } from "@stratacode/strata-ui/icon-button"
+import { Select } from "@stratacode/strata-ui/select"
 
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
-import type { AcpAgentConfig } from "../../types/messages/config"
+import type { AcpProviderConfig } from "../../types/messages/config"
 import SettingsRow from "./SettingsRow"
 
 interface Props {
@@ -18,9 +19,9 @@ interface Props {
   onRemove: (name: string) => void
 }
 
-const AcpEditView: Component<Props> = (props) => {
+const AcpProviderEditView: Component<Props> = (props) => {
   const language = useLanguage()
-  const { config, updateConfig } = useConfig()
+  const { config, updateConfig, acpProviders } = useConfig()
 
   const creating = () => props.mode === "create"
 
@@ -34,16 +35,17 @@ const AcpEditView: Component<Props> = (props) => {
   const [nameError, setNameError] = createSignal("")
 
   // --- Edit-mode: live config access ---
-  const cfg = createMemo<AcpAgentConfig>(() => config().acp_agents?.[props.name] ?? {})
+  const cfg = createMemo<AcpProviderConfig>(() => config().acp_providers?.[props.name] ?? {})
+  const preset = createMemo(() => acpProviders()[props.name])
 
   const [envKey, setEnvKey] = createSignal("")
   const [envVal, setEnvVal] = createSignal("")
 
-  const update = (partial: Partial<AcpAgentConfig>) => {
-    const existing = config().acp_agents ?? {}
+  const update = (partial: Partial<AcpProviderConfig>) => {
+    const existing = config().acp_providers ?? {}
     const current = existing[props.name] ?? {}
     updateConfig({
-      acp_agents: { ...existing, [props.name]: { ...current, ...partial } },
+      acp_providers: { ...existing, [props.name]: { ...current, ...partial } },
     })
   }
 
@@ -111,16 +113,17 @@ const AcpEditView: Component<Props> = (props) => {
       setNameError(msg)
       return
     }
-    const existing = config().acp_agents ?? {}
-    const entry: AcpAgentConfig =
+    const existing = config().acp_providers ?? {}
+    const entry: AcpProviderConfig =
       draftTransport() === "stdio"
         ? {
             transport: "stdio",
             command: [draftCmd().trim(), ...draftArgs().split(/\n/).filter(Boolean)],
             env: Object.fromEntries(draftEnv()),
+            enabled: true,
           }
-        : { transport: "http", url: draftUrl().trim() }
-    updateConfig({ acp_agents: { ...existing, [slug]: entry } })
+        : { transport: "http", url: draftUrl().trim(), enabled: true }
+    updateConfig({ acp_providers: { ...existing, [slug]: entry } })
     props.onBack()
   }
 
@@ -154,7 +157,7 @@ const AcpEditView: Component<Props> = (props) => {
             title={language.t("settings.agentBehaviour.acpCreate.name")}
             description={
               language.t("settings.agentBehaviour.acpCreate.name.description") ||
-              "A unique identifier for this ACP server."
+              "A unique identifier for this ACP provider."
             }
             last
           >
@@ -214,8 +217,10 @@ const AcpEditView: Component<Props> = (props) => {
               variant={draftTransport() === "http" ? "primary" : "secondary"}
               size="small"
               onClick={() => setDraftTransport("http")}
+              disabled={true}
+              title="HTTP transport is not yet supported"
             >
-              {language.t("settings.agentBehaviour.acpCreate.transportHttp")}
+              {language.t("settings.agentBehaviour.acpCreate.transportHttp")} (coming soon)
             </Button>
           </div>
         </Show>
@@ -223,6 +228,24 @@ const AcpEditView: Component<Props> = (props) => {
 
       {/* Command / URL */}
       <Show when={transport() === "stdio"}>
+        <Show when={!creating() && preset()}>
+          <Card style={{ "margin-bottom": "12px" }}>
+            <div data-slot="settings-row-label-title" style={{ "margin-bottom": "8px" }}>
+              {language.t("settings.agentBehaviour.acpPredefined.model")}
+            </div>
+            <Select
+              options={preset()?.liveModels ?? []}
+              current={(preset()?.liveModels ?? []).find((item: any) => item.id === (cfg().model ?? preset()?.defaultModel))}
+              value={(item) => item.id}
+              label={(item) => item.name}
+              onSelect={(item) => item && update({ model: item.id })}
+              variant="secondary"
+              size="small"
+              triggerVariant="settings"
+            />
+          </Card>
+        </Show>
+
         <Card style={{ "margin-bottom": "12px" }}>
           <div data-slot="settings-row-label-title" style={{ "margin-bottom": "8px" }}>
             {language.t("settings.agentBehaviour.addAcp.command")}
@@ -360,4 +383,4 @@ const AcpEditView: Component<Props> = (props) => {
   )
 }
 
-export default AcpEditView
+export default AcpProviderEditView

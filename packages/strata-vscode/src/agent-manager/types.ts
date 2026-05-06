@@ -609,6 +609,11 @@ interface RequestTerminalContextIn {
   sessionID?: string
 }
 
+interface InputFocusedIn {
+  type: "inputFocused"
+  draftID?: string
+}
+
 interface ClearSessionIn {
   type: "clearSession"
 }
@@ -744,6 +749,7 @@ export type AgentManagerInMessage =
   | LoadMessagesIn
   | SendMessageIn
   | SendCommandIn
+  | InputFocusedIn
   | RequestTerminalContextIn
   | ClearSessionIn
   | AbortIn

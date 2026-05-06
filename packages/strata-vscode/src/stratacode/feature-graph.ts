@@ -57,12 +57,16 @@ export class FeatureGraph {
 
   /** Returns true if the feature can be enabled given current flags + policy. */
   canEnable(key: string, flags: Record<string, boolean>, env?: NodeJS.ProcessEnv): boolean {
-    if (this.blocked(env).includes(key)) return false
+    const deny = this.blockedSet(env)
+    return this.canEnableWith(key, flags, deny)
+  }
+
+  private canEnableWith(key: string, flags: Record<string, boolean>, deny: Set<string>): boolean {
+    if (deny.has(key)) return false
     const parent = this.parentMap.get(key)
     if (parent) {
       if (!flags[parent]) return false
-      // Recursively check parents
-      return this.canEnable(parent, flags, env)
+      return this.canEnableWith(parent, flags, deny)
     }
     return true
   }
@@ -86,14 +90,18 @@ export class FeatureGraph {
 
   /** Returns all features blocked by a policy (e.g. "cloud" when STRATA_DISABLE_CLOUD is set). */
   blocked(env: NodeJS.ProcessEnv = process.env): string[] {
-    const disableCloud = !!env.STRATA_DISABLE_CLOUD
-    const blocked: string[] = []
+    return [...this.blockedSet(env)]
+  }
+
+  private blockedSet(env: NodeJS.ProcessEnv = process.env): Set<string> {
+    const cloud = !!env.STRATA_DISABLE_CLOUD
+    const result = new Set<string>()
     for (const [key, spec] of Object.entries(this.manifest)) {
-      if (disableCloud && spec.policy === "cloud") {
-        blocked.push(key)
+      if (cloud && spec.policy === "cloud") {
+        result.add(key)
       }
     }
-    return blocked
+    return result
   }
 
   /** Topological sort for activation order (parents before children). */

@@ -22,6 +22,8 @@ import { useConfig } from "../../context/config"
 import { useProvider } from "../../context/provider"
 import { ModelSelector } from "../shared/ModelSelector"
 import { ModeSwitcher } from "../shared/ModeSwitcher"
+import { ScenarioSwitcher } from "./ScenarioSwitcher"
+import { useScenario, Scenario } from "../../context/stratacode/scenario"
 import { ThinkingSelector } from "../shared/ThinkingSelector"
 import { PromptLibrarySelector } from "../shared/PromptLibrarySelector"
 import { useFileMention } from "../../hooks/useFileMention"
@@ -76,6 +78,8 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const vscode = useVSCode()
   const worktree = useWorktreeMode()
   const dialog = useDialog()
+  const { configuredScenarios, startScenario } = useScenario()
+  const [selectedScenario, setSelectedScenario] = createSignal<Scenario | undefined>(undefined)
   const { connected, models, providers: providerMap } = useProvider()
   const noModels = () => {
     const c = connected()
@@ -348,16 +352,15 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     }
   }
 
-  const unsubscribe = vscode.onMessage((message) => {
-    if (message.type === "setChatBoxMessage") {
+  const messageHandlers: Record<string, (message: any) => void> = {
+    setChatBoxMessage: (message) => {
       setText(message.text)
       if (textareaRef) {
         textareaRef.value = message.text
         adjustHeight()
       }
-    }
-
-    if (message.type === "appendChatBoxMessage") {
+    },
+    appendChatBoxMessage: (message) => {
       const current = text()
       const separator = current && !current.endsWith("\n") ? "\n\n" : ""
       const next = current + separator + message.text
@@ -369,9 +372,8 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         textareaRef.scrollTop = textareaRef.scrollHeight
         syncHighlightScroll()
       }
-    }
-
-    if (message.type === "appendReviewComments") {
+    },
+    appendReviewComments: (message) => {
       const empty = !text().trim() && reviewComments().length === 0 && imageAttach.images().length === 0
       const merged = mergeReviewComments(reviewComments(), message.comments)
       replaceReviewComments(merged)
@@ -380,32 +382,29 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       } else {
         textareaRef?.focus()
       }
-    }
-
-    if (message.type === "triggerTask") {
+    },
+    triggerTask: (message) => {
       if (isDisabled()) return
       const sel = session.selected()
       session.sendMessage(message.text, sel?.providerID, sel?.modelID)
-    }
-
-    if (message.type === "sendMessageFailed") {
-      const failed = message as import("../../types/messages").SendMessageFailedMessage
+    },
+    sendMessageFailed: (message: import("../../types/messages").SendMessageFailedMessage) => {
       // Only restore draft if the failure is for the current session and the
       // input is empty (user hasn't started typing something new).
       const target = scopeDraftKey(
         boxKey(),
-        sessionDraftKey(failed.sessionID) ?? pendingDraftKey(failed.draftID) ?? "new",
+        sessionDraftKey(message.sessionID) ?? pendingDraftKey(message.draftID) ?? "new",
       )
       if (target === draftKey() && !text().trim() && imageAttach.images().length === 0) {
-        if (failed.text) {
-          setText(failed.text)
+        if (message.text) {
+          setText(message.text)
           if (textareaRef) {
-            textareaRef.value = failed.text
+            textareaRef.value = message.text
             adjustHeight()
             textareaRef.focus()
           }
         }
-        const images = (failed.files ?? [])
+        const images = (message.files ?? [])
           .filter((f) => f.mime.startsWith("image/") && f.url.startsWith("data:"))
           .map((f) => ({
             id: crypto.randomUUID(),
@@ -418,9 +417,9 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
           imageDrafts.set(target, images)
         }
       }
-    }
-
-    if (message.type === "sessionCreated" && message.draftID) {
+    },
+    sessionCreated: (message) => {
+      if (!message.draftID) return
       const target = scopeDraftKey(boxKey(), pendingDraftKey(message.draftID) ?? "new")
       const next = scopeDraftKey(boxKey(), sessionDraftKey(message.session.id) ?? "new")
       const draft = drafts.get(target)
@@ -435,26 +434,26 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       if (!session.currentSessionID() && (props.pendingSessionID ?? session.draftSessionID()) === message.draftID) {
         session.setDraftSessionID(message.session.id)
       }
-    }
-
-    if (message.type === "action" && message.action === "focusInput") {
-      textareaRef?.focus()
-    }
-
-    if (message.type === "enhancePromptResult") {
-      const result = message as import("../../types/messages").EnhancePromptResultMessage
-      if (result.requestId === `enhance-${draftKey()}-${enhanceCounter}`) {
-        applyEnhanced(result.text)
+    },
+    action: (message) => {
+      if (message.action === "focusInput") textareaRef?.focus()
+    },
+    enhancePromptResult: (message: import("../../types/messages").EnhancePromptResultMessage) => {
+      if (message.requestId === `enhance-${draftKey()}-${enhanceCounter}`) {
+        applyEnhanced(message.text)
       }
-    }
-
-    if (message.type === "enhancePromptError") {
-      const result = message as import("../../types/messages").EnhancePromptErrorMessage
-      if (result.requestId === `enhance-${draftKey()}-${enhanceCounter}`) {
+    },
+    enhancePromptError: (message: import("../../types/messages").EnhancePromptErrorMessage) => {
+      if (message.requestId === `enhance-${draftKey()}-${enhanceCounter}`) {
         setEnhancing(false)
         pendingSend = false
       }
     }
+  }
+
+  const unsubscribe = vscode.onMessage((message) => {
+    const handler = messageHandlers[message.type]
+    if (handler) handler(message)
   })
 
   onCleanup(() => {
@@ -478,6 +477,14 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   }
 
   const syncGhost = () => ghost.sync(textareaRef)
+
+  const handleInputFocused = () => {
+    vscode.postMessage({
+      type: "inputFocused",
+      draftID: props.pendingSessionID ?? session.draftSessionID(),
+    })
+    syncGhost()
+  }
 
   const scrollToActiveItem = () => {
     if (!dropdownRef) return
@@ -531,8 +538,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     ghost.scheduleRequest(val, textareaRef)
   }
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    // Undo enhanced prompt with Ctrl+Z / ⌘Z
+  const handleUndoEnhance = (e: KeyboardEvent): boolean => {
     if (e.key === "z" && (e.metaKey || e.ctrlKey) && !e.shiftKey && preEnhanceText !== null) {
       e.preventDefault()
       const restored = preEnhanceText
@@ -542,8 +548,58 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         textareaRef.value = restored
         adjustHeight()
       }
-      return
+      return true
     }
+    return false
+  }
+
+  const handleHistoryNavigation = (e: KeyboardEvent): boolean => {
+    if ((e.key === "ArrowUp" || e.key === "ArrowDown") && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+      const start = textareaRef?.selectionStart ?? 0
+      const end = textareaRef?.selectionEnd ?? 0
+      if (start !== end) return false // don't replace active text selection
+      const cursor = start
+      const direction = e.key === "ArrowUp" ? ("up" as const) : ("down" as const)
+      const entry = history.navigate(direction, text(), cursor)
+      if (entry !== null) {
+        e.preventDefault()
+        setText(entry)
+        if (textareaRef) {
+          textareaRef.value = entry
+          adjustHeight()
+          const pos = direction === "up" ? 0 : entry.length
+          textareaRef.setSelectionRange(pos, pos)
+        }
+        return true
+      }
+    }
+    return false
+  }
+
+  const handleGhostTextKeyDown = (e: KeyboardEvent): boolean => {
+    if (e.key === "Tab" && ghost.text()) {
+      if (!isAtEnd()) return false
+      e.preventDefault()
+      acceptSuggestion()
+      return true
+    }
+    if (e.key === "ArrowRight" && ghost.text()) {
+      if (!isAtEnd()) return false
+      e.preventDefault()
+      acceptSuggestion()
+      return true
+    }
+    if (e.key === "Escape" && ghost.text()) {
+      e.preventDefault()
+      e.stopPropagation()
+      ghost.dismiss()
+      return true
+    }
+    return false
+  }
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (handleUndoEnhance(e)) return
 
     if (slash.onKeyDown(e, textareaRef, setText, adjustHeight)) {
       ghost.setMentionOpen(slash.show())
@@ -557,45 +613,9 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       return
     }
 
-    // Prompt history: ArrowUp/ArrowDown at cursor boundaries cycles through sent prompts
-    if ((e.key === "ArrowUp" || e.key === "ArrowDown") && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-      const start = textareaRef?.selectionStart ?? 0
-      const end = textareaRef?.selectionEnd ?? 0
-      if (start !== end) return // don't replace active text selection
-      const cursor = start
-      const direction = e.key === "ArrowUp" ? ("up" as const) : ("down" as const)
-      const entry = history.navigate(direction, text(), cursor)
-      if (entry !== null) {
-        e.preventDefault()
-        setText(entry)
-        if (textareaRef) {
-          textareaRef.value = entry
-          adjustHeight()
-          const pos = direction === "up" ? 0 : entry.length
-          textareaRef.setSelectionRange(pos, pos)
-        }
-        return
-      }
-    }
+    if (handleHistoryNavigation(e)) return
+    if (handleGhostTextKeyDown(e)) return
 
-    if (e.key === "Tab" && ghost.text()) {
-      if (!isAtEnd()) return
-      e.preventDefault()
-      acceptSuggestion()
-      return
-    }
-    if (e.key === "ArrowRight" && ghost.text()) {
-      if (!isAtEnd()) return
-      e.preventDefault()
-      acceptSuggestion()
-      return
-    }
-    if (e.key === "Escape" && ghost.text()) {
-      e.preventDefault()
-      e.stopPropagation()
-      ghost.dismiss()
-      return
-    }
     if (e.key === "Escape" && isBusy()) {
       e.preventDefault()
       e.stopPropagation()
@@ -645,6 +665,86 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     )
   }
 
+  const handleClientSideCommand = (matched: any): boolean => {
+    if (matched?.action) {
+      setText("")
+      clearReviewComments()
+      imageAttach.clear()
+      mention.closeMention()
+      slash.close()
+      drafts.delete(draftKey())
+      reviewDrafts.delete(draftKey())
+      imageDrafts.delete(draftKey())
+      if (textareaRef) textareaRef.style.height = "auto"
+      matched.action()
+      return true
+    }
+    return false
+  }
+
+  const resolveAllAttachments = async (message: string, draft: string) => {
+    const imgs = imageAttach.images()
+    const mentionFiles = mention.parseFileAttachments(draft)
+    const imgFiles = imgs.map((img) => ({ mime: img.mime, url: img.dataUrl, filename: img.filename }))
+    const id = sid()
+
+    const terminalFile = await terminal.resolveAttachment(message, id).catch((err: Error) => {
+      showToast({ variant: "error", title: "Terminal context unavailable", description: err.message })
+      return undefined
+    })
+    if (hasTerminalMention(message) && !terminalFile) return "abort"
+
+    const gitFile = await git.resolveAttachment(message, id).catch((err: Error) => {
+      showToast({ variant: "error", title: "Git changes unavailable", description: err.message })
+      return undefined
+    })
+    if (hasGit() && hasGitChangesMention(message) && !gitFile) return "abort"
+
+    const allFiles = [
+      ...mentionFiles,
+      ...imgFiles,
+      ...(terminalFile ? [terminalFile] : []),
+      ...(gitFile ? [gitFile] : []),
+    ]
+    return allFiles.length > 0 ? allFiles : undefined
+  }
+
+  const dispatchCommandOrMessage = (
+    draft: string,
+    message: string,
+    matched: any,
+    cmdMatch: RegExpMatchArray | null,
+    attachments: any[] | undefined
+  ) => {
+    const sel = session.selected()
+    const pendingId = props.pendingSessionID ?? session.draftSessionID()
+    const pending = reviewComments()
+    const review = pending.length > 0 ? formatReviewCommentsMarkdown(pending) : ""
+
+    if (matched) {
+      const rest = draft.slice(cmdMatch![0].length).trim()
+      const args = review && rest ? `${review}\n\n${rest}` : rest || review
+      session.sendCommand(matched.name, args, sel?.providerID, sel?.modelID, attachments, pendingId)
+    } else {
+      session.sendMessage(message, sel?.providerID, sel?.modelID, attachments, pendingId)
+    }
+  }
+
+  const resetInputState = (draft: string) => {
+    const key = draftKey()
+    history.append(draft)
+    history.reset()
+    setText("")
+    clearReviewComments()
+    imageAttach.clear()
+    mention.closeMention()
+    slash.close()
+    drafts.delete(key)
+    reviewDrafts.delete(key)
+    imageDrafts.delete(key)
+    if (textareaRef) textareaRef.style.height = "auto"
+  }
+
   const handleSend = async () => {
     // Auto-enhance interception: if auto_improve_prompts is enabled and
     // we haven't already enhanced in this send cycle, trigger enhance first.
@@ -666,75 +766,25 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       : undefined
 
     // Client-side slash command — runs locally without a backend round-trip
-    if (matched?.action) {
-      setText("")
-      clearReviewComments()
-      imageAttach.clear()
-      mention.closeMention()
-      slash.close()
-      drafts.delete(draftKey())
-      reviewDrafts.delete(draftKey())
-      imageDrafts.delete(draftKey())
-      if (textareaRef) textareaRef.style.height = "auto"
-      matched.action()
-      return
-    }
+    if (handleClientSideCommand(matched)) return
 
-    const imgs = imageAttach.images()
     const pending = reviewComments()
     const review = pending.length > 0 ? formatReviewCommentsMarkdown(pending) : ""
     const message = draft && review ? `${review}\n\n${draft}` : draft || review
-    if ((!message && imgs.length === 0) || isDisabled() || terminal.pending() || git.pending() || props.blocked?.())
+    if ((!message && imageAttach.images().length === 0) || isDisabled() || terminal.pending() || git.pending() || props.blocked?.())
       return
 
-    const mentionFiles = mention.parseFileAttachments(draft)
-    const imgFiles = imgs.map((img) => ({ mime: img.mime, url: img.dataUrl, filename: img.filename }))
-    const sel = session.selected()
-    const pendingId = props.pendingSessionID ?? session.draftSessionID()
-    const id = sid()
+    const attachments = await resolveAllAttachments(message, draft)
+    if (attachments === "abort") return
 
-    const terminalFile = await terminal.resolveAttachment(message, id).catch((err: Error) => {
-      showToast({ variant: "error", title: "Terminal context unavailable", description: err.message })
-      return undefined
-    })
-    if (hasTerminalMention(message) && !terminalFile) return
+    dispatchCommandOrMessage(draft, message, matched, cmdMatch, attachments)
 
-    const gitFile = await git.resolveAttachment(message, id).catch((err: Error) => {
-      showToast({ variant: "error", title: "Git changes unavailable", description: err.message })
-      return undefined
-    })
-    if (hasGit() && hasGitChangesMention(message) && !gitFile) return
-
-    const allFiles = [
-      ...mentionFiles,
-      ...imgFiles,
-      ...(terminalFile ? [terminalFile] : []),
-      ...(gitFile ? [gitFile] : []),
-    ]
-    const attachments = allFiles.length > 0 ? allFiles : undefined
-
-    const key = draftKey()
-    // Server-side slash command (cmdMatch/matched already computed above)
-    if (matched) {
-      const rest = draft.slice(cmdMatch![0].length).trim()
-      const args = review && rest ? `${review}\n\n${rest}` : rest || review
-      session.sendCommand(matched.name, args, sel?.providerID, sel?.modelID, attachments, pendingId)
-    } else {
-      session.sendMessage(message, sel?.providerID, sel?.modelID, attachments, pendingId)
+    if (selectedScenario() && selectedScenario()!.sequence.length > 0) {
+      startScenario(selectedScenario()!.sequence)
+      setSelectedScenario(undefined)
     }
 
-    history.append(draft)
-    history.reset()
-    setText("")
-    clearReviewComments()
-    imageAttach.clear()
-    mention.closeMention()
-    slash.close()
-    drafts.delete(key)
-    reviewDrafts.delete(key)
-    imageDrafts.delete(key)
-
-    if (textareaRef) textareaRef.style.height = "auto"
+    resetInputState(draft)
   }
 
   return (
@@ -987,8 +1037,8 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
               onKeyDown={handleKeyDown}
               onKeyUp={syncGhost}
               onPaste={handlePaste}
-              onClick={syncGhost}
-              onFocus={syncGhost}
+              onClick={handleInputFocused}
+              onFocus={handleInputFocused}
               onBlur={syncGhost}
               onSelect={syncGhost}
               onScroll={syncHighlightScroll}
@@ -1019,6 +1069,18 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
               }}
             />
             <ModeSwitcher />
+            <Show when={extensionFeatures().chatScenarios && configuredScenarios().length > 0}>
+              <ScenarioSwitcher
+                scenarios={configuredScenarios()}
+                selectedScenario={selectedScenario()}
+                onSelect={(scenario) => {
+                  setSelectedScenario(scenario)
+                  if (scenario && scenario.sequence.length > 0) {
+                    session.selectAgent(scenario.sequence[0]!)
+                  }
+                }}
+              />
+            </Show>
             <ModelSelector />
             <ThinkingSelector />
             <Show when={session.hasModelOverride()}>

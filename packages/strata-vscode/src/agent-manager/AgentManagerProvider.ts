@@ -8,6 +8,7 @@ import { isAbsolutePath } from "../path-utils"
 import { WorktreeManager, type CreateWorktreeResult } from "./WorktreeManager"
 import { remoteRef, WorktreeStateManager } from "./WorktreeStateManager"
 import { handleSection } from "./section-handler"
+import { type ChainResult, handled, unhandled } from "./chain-result"
 import { chooseBaseBranch, normalizeBaseBranch } from "./base-branch"
 import { GitStatsPoller, type LocalStats, type WorktreePresenceResult, type WorktreeStats } from "./GitStatsPoller"
 import { PRStatusBridge } from "./pr-status-bridge"
@@ -278,6 +279,17 @@ export class AgentManagerProvider implements Disposable {
   // Message interceptor
   // ---------------------------------------------------------------------------
 
+  private readonly messageHandlers: Array<(m: AgentManagerInMessage, msg: Record<string, unknown>) => Promise<ChainResult> | ChainResult> = [
+    (m) => this.onWorktreeMessage(m),
+    (m, msg) => this.onSessionMessage(m, msg),
+    (m, msg) => this.onUiMessage(m, msg),
+    (m) => this.onStateMessage(m),
+    (m) => this.onImportMessage(m),
+    (m) => this.onDiffMessage(m),
+    (m) => this.onBridgeMessage(m),
+    (m) => this.terminalRouter.handle(m) ? handled() : unhandled()
+  ]
+
   private async onMessage(msg: Record<string, unknown>): Promise<Record<string, unknown> | null> {
     if (this.prBridge.handleMessage(msg)) return null
     if (msg.type === "requestFileSearch" && typeof msg.sessionID !== "string" && this.activeSessionId) {
@@ -286,21 +298,10 @@ export class AgentManagerProvider implements Disposable {
     msg = await this.contextMessage(msg)
     const m = msg as unknown as AgentManagerInMessage
 
-    const worktree = await this.onWorktreeMessage(m)
-    if (worktree !== undefined) return worktree
-    const session = this.onSessionMessage(m, msg)
-    if (session !== undefined) return session
-    const ui = this.onUiMessage(m, msg)
-    if (ui !== undefined) return ui
-    const state = this.onStateMessage(m)
-    if (state !== undefined) return state
-    const imports = this.onImportMessage(m)
-    if (imports !== undefined) return imports
-    const diff = this.onDiffMessage(m)
-    if (diff !== undefined) return diff
-    const bridge = this.onBridgeMessage(m)
-    if (bridge !== undefined) return bridge
-    if (this.terminalRouter.handle(m)) return null
+    for (const handler of this.messageHandlers) {
+      const result = await handler(m, msg)
+      if (result.handled) return result.response
+    }
 
     return msg
   }
@@ -335,20 +336,20 @@ export class AgentManagerProvider implements Disposable {
     return { contextDirectory: worktree.path, gitChangesBase: remoteRef(worktree) }
   }
 
-  private async onWorktreeMessage(m: AgentManagerInMessage): Promise<Record<string, unknown> | null | undefined> {
-    if (m.type === "agentManager.createWorktree") return this.onCreateWorktree(m.baseBranch, m.branchName)
-    if (m.type === "agentManager.deleteWorktree") return this.onDeleteWorktree(m.worktreeId)
-    if (m.type === "agentManager.removeStaleWorktree") return this.onRemoveStaleWorktree(m.worktreeId)
-    if (m.type === "agentManager.promoteSession") return this.onPromoteSession(m.sessionId)
-    if (m.type === "agentManager.addSessionToWorktree") return this.onAddSessionToWorktree(m.worktreeId)
-    if (m.type === "agentManager.forkSession") return this.onForkSession(m.sessionId, m.worktreeId, m.messageId)
-    if (m.type === "agentManager.closeSession") return this.onCloseSession(m.sessionId)
+  private async onWorktreeMessage(m: AgentManagerInMessage): Promise<ChainResult> {
+    switch (m.type) {
+      case "agentManager.createWorktree": return handled(await this.onCreateWorktree(m.baseBranch, m.branchName))
+      case "agentManager.deleteWorktree": return handled(await this.onDeleteWorktree(m.worktreeId))
+      case "agentManager.removeStaleWorktree": return handled(await this.onRemoveStaleWorktree(m.worktreeId))
+      case "agentManager.promoteSession": return handled(await this.onPromoteSession(m.sessionId))
+      case "agentManager.addSessionToWorktree": return handled(await this.onAddSessionToWorktree(m.worktreeId))
+      case "agentManager.forkSession": return handled(await this.onForkSession(m.sessionId, m.worktreeId, m.messageId))
+      case "agentManager.closeSession": return handled(await this.onCloseSession(m.sessionId))
+      default: return unhandled()
+    }
   }
 
-  private onSessionMessage(
-    m: AgentManagerInMessage,
-    msg: Record<string, unknown>,
-  ): Record<string, unknown> | null | undefined {
+  private handleLocalAndContinue(m: AgentManagerInMessage): boolean {
     if (m.type === "agentManager.openLocally") {
       this.panel?.sessions.clearSessionDirectory(m.sessionId)
       const state = this.getStateManager()
@@ -356,16 +357,18 @@ export class AgentManagerProvider implements Disposable {
         state.moveSession(m.sessionId, null)
         this.pushState()
       }
-      return null
+      return true
     }
-
     if (m.type === "continueInWorktree") {
       void this.continueFromSidebar(m.sessionId, (status, detail, error) => {
         this.panel?.postMessage({ type: "continueInWorktreeProgress", status, detail, error })
       })
-      return null
+      return true
     }
+    return false
+  }
 
+  private handlePersistSession(m: AgentManagerInMessage): boolean {
     if (m.type === "agentManager.persistSession" || m.type === "agentManager.forgetSession") {
       const persist = m.type === "agentManager.persistSession"
       void this.stateReady?.then(() => {
@@ -377,27 +380,19 @@ export class AgentManagerProvider implements Disposable {
         }
         state.removeSession(m.sessionId)
       })
-      return null
+      return true
     }
+    return false
+  }
 
-    if ((m.type === "sendMessage" || m.type === "sendCommand") && m.draftID && !m.sessionID) {
-      this.activeSessionId = m.draftID
-      return msg
-    }
-
-    if (m.type === "requestTerminalContext") {
-      if (m.sessionID) this.terminalManager.showExisting(m.sessionID)
-      return msg
-    }
-
+  private handleLoadClearSession(m: AgentManagerInMessage): boolean {
     if (m.type === "loadMessages") {
       this.activeSessionId = m.sessionID
       this.connectionService.registerFocused("agent-manager", m.sessionID)
       this.terminalManager.syncOnSessionSwitch(m.sessionID)
       this.prBridge.poller.setActiveWorktreeId(this.state?.getSession(m.sessionID)?.worktreeId ?? undefined)
-      return msg
+      return true
     }
-
     if (m.type === "clearSession") {
       this.activeSessionId = undefined
       this.connectionService.unregisterFocused("agent-manager")
@@ -407,7 +402,27 @@ export class AgentManagerProvider implements Disposable {
           this.panel.sessions.trackSession(id)
         }
       })
-      return msg
+      return true
+    }
+    return false
+  }
+
+  private onSessionMessage(
+    m: AgentManagerInMessage,
+    msg: Record<string, unknown>,
+  ): ChainResult {
+    if (this.handleLocalAndContinue(m)) return handled()
+    if (this.handlePersistSession(m)) return handled()
+    if (this.handleLoadClearSession(m)) return handled(msg)
+
+    if ((m.type === "sendMessage" || m.type === "sendCommand") && m.draftID && !m.sessionID) {
+      this.activeSessionId = m.draftID
+      return handled(msg)
+    }
+
+    if (m.type === "requestTerminalContext") {
+      if (m.sessionID) this.terminalManager.showExisting(m.sessionID)
+      return handled(msg)
     }
 
     if (m.type === "abort") {
@@ -415,52 +430,54 @@ export class AgentManagerProvider implements Disposable {
         source: PLATFORM,
         sessionId: m.sessionID,
       })
-      return msg
+      return handled(msg)
     }
 
     if (m.type === "agentManager.openSessions") {
       this.connectionService.registerOpen("agent-manager", m.sessionIDs)
-      return null
+      return handled()
     }
+
+    return unhandled()
   }
 
   private onUiMessage(
     m: AgentManagerInMessage,
     msg: Record<string, unknown>,
-  ): Record<string, unknown> | null | undefined {
+  ): ChainResult {
     if (m.type === "agentManager.configureSetupScript") {
       void this.configureSetupScript()
-      return null
+      return handled()
     }
-    if (handleRunMessage(this.run, m)) return null
+    if (handleRunMessage(this.run, m)) return handled()
     if (m.type === "agentManager.showTerminal") {
       this.terminalManager.showTerminal(m.sessionId, this.state)
-      return null
+      return handled()
     }
     if (m.type === "agentManager.showLocalTerminal") {
       this.terminalManager.showLocalTerminal()
-      return null
+      return handled()
     }
     if (m.type === "agentManager.openWorktree") {
       this.openWorktreeDirectory(m.worktreeId)
-      return null
+      return handled()
     }
     if (m.type === "agentManager.copyToClipboard") {
       this.host.copyToClipboard(m.text)
-      return null
+      return handled()
     }
-    if (m.type === "previewImage") return msg
+    if (m.type === "previewImage") return handled(msg)
     if (m.type === "agentManager.showExistingLocalTerminal") {
       this.terminalManager.syncLocalOnSessionSwitch()
-      return null
+      return handled()
     }
     if (m.type === "agentManager.requestRepoInfo") {
       void this.sendRepoInfo()
-      return null
+      return handled()
     }
     if (m.type === "agentManager.createMultiVersion") {
       void this.onCreateMultiVersion(m)
-      return null
+      return handled()
     }
     if (m.type === "agentManager.renameWorktree") {
       const state = this.getStateManager()
@@ -468,106 +485,105 @@ export class AgentManagerProvider implements Disposable {
         state.updateWorktreeLabel(m.worktreeId, m.label)
         this.pushState()
       }
-      return null
+      return handled()
     }
+    return unhandled()
   }
 
-  private onStateMessage(m: AgentManagerInMessage): Record<string, unknown> | null | undefined {
+  private onStateMessage(m: AgentManagerInMessage): ChainResult {
     if (m.type === "agentManager.requestState") {
       this.onRequestState()
-      return null
+      return handled()
     }
     if (m.type === "agentManager.setTabOrder") {
       this.state?.setTabOrder(m.key, m.order)
-      return null
+      return handled()
     }
     if (m.type === "agentManager.setWorktreeOrder") {
       this.state?.setWorktreeOrder(m.order)
-      return null
+      return handled()
     }
     if (m.type === "agentManager.setSessionsCollapsed") {
       this.state?.setSessionsCollapsed(m.collapsed)
-      return null
+      return handled()
     }
-    if (this.handleSection(m)) return null
+    const sectionResult = this.handleSection(m)
+    if (sectionResult.handled) return sectionResult
     if (m.type === "agentManager.setReviewDiffStyle") {
       this.state?.setReviewDiffStyle(m.style)
-      return null
+      return handled()
     }
     if (m.type === "agentManager.setDefaultBaseBranch") {
       this.state?.setDefaultBaseBranch(normalizeBaseBranch(m.branch))
       this.pushState()
-      return null
+      return handled()
+    }
+    return unhandled()
+  }
+
+  private onImportMessage(m: AgentManagerInMessage): ChainResult {
+    switch (m.type) {
+      case "agentManager.requestBranches":
+        void this.importer.branches()
+        return handled()
+      case "agentManager.requestExternalWorktrees":
+        void this.importer.external()
+        return handled()
+      case "agentManager.importFromBranch":
+        void this.importer.branch(m.branch)
+        return handled()
+      case "agentManager.importFromPR":
+        void this.importer.pr(m.url)
+        return handled()
+      case "agentManager.importExternalWorktree":
+        void this.importer.path(m.path, m.branch)
+        return handled()
+      case "agentManager.importAllExternalWorktrees":
+        void this.importer.all()
+        return handled()
+      default:
+        return unhandled()
     }
   }
 
-  private onImportMessage(m: AgentManagerInMessage): Record<string, unknown> | null | undefined {
-    if (m.type === "agentManager.requestBranches") {
-      void this.importer.branches()
-      return null
-    }
-    if (m.type === "agentManager.requestExternalWorktrees") {
-      void this.importer.external()
-      return null
-    }
-    if (m.type === "agentManager.importFromBranch") {
-      void this.importer.branch(m.branch)
-      return null
-    }
-    if (m.type === "agentManager.importFromPR") {
-      void this.importer.pr(m.url)
-      return null
-    }
-    if (m.type === "agentManager.importExternalWorktree") {
-      void this.importer.path(m.path, m.branch)
-      return null
-    }
-    if (m.type === "agentManager.importAllExternalWorktrees") {
-      void this.importer.all()
-      return null
-    }
-  }
-
-  private onDiffMessage(m: AgentManagerInMessage): Record<string, unknown> | null | undefined {
-    if (m.type === "agentManager.requestWorktreeDiff") {
-      void this.diffs.request(m.sessionId)
-      return null
-    }
-    if (m.type === "agentManager.requestWorktreeDiffFile") {
-      void this.diffs.requestFile(m.sessionId, m.file)
-      return null
-    }
-    if (m.type === "agentManager.applyWorktreeDiff") {
-      void this.diffs.apply(m.worktreeId, m.selectedFiles)
-      return null
-    }
-    if (m.type === "agentManager.revertWorktreeFile") {
-      void this.diffs.revert(m.sessionId, m.file)
-      return null
-    }
-    if (m.type === "agentManager.startDiffWatch") {
-      this.diffs.start(m.sessionId)
-      return null
-    }
-    if (m.type === "agentManager.stopDiffWatch") {
-      this.diffs.stop()
-      return null
-    }
-    if (m.type === "agentManager.openFile") {
-      this.openWorktreeFile(m.sessionId, m.filePath, m.line, m.column)
-      return null
+  private onDiffMessage(m: AgentManagerInMessage): ChainResult {
+    switch (m.type) {
+      case "agentManager.requestWorktreeDiff":
+        void this.diffs.request(m.sessionId)
+        return handled()
+      case "agentManager.requestWorktreeDiffFile":
+        void this.diffs.requestFile(m.sessionId, m.file)
+        return handled()
+      case "agentManager.applyWorktreeDiff":
+        void this.diffs.apply(m.worktreeId, m.selectedFiles)
+        return handled()
+      case "agentManager.revertWorktreeFile":
+        void this.diffs.revert(m.sessionId, m.file)
+        return handled()
+      case "agentManager.startDiffWatch":
+        this.diffs.start(m.sessionId)
+        return handled()
+      case "agentManager.stopDiffWatch":
+        this.diffs.stop()
+        return handled()
+      case "agentManager.openFile":
+        this.openWorktreeFile(m.sessionId, m.filePath, m.line, m.column)
+        return handled()
+      default:
+        return unhandled()
     }
   }
 
-  private onBridgeMessage(m: AgentManagerInMessage): Record<string, unknown> | null | undefined {
-    if (m.type !== "openFile") return undefined
+  private onBridgeMessage(m: AgentManagerInMessage): ChainResult {
+    if (m.type !== "openFile") return unhandled()
 
     const sessionId = this.activeSessionId
     const state = this.getStateManager()
     if (sessionId && state?.directoryFor(sessionId)) {
       this.openWorktreeFile(sessionId, m.filePath, m.line, m.column)
-      return null
+      return handled()
     }
+    return handled()
   }
 
   private onRequestState(): void {
@@ -1016,6 +1032,121 @@ export class AgentManagerProvider implements Disposable {
   // Multi-version worktree creation
   // ---------------------------------------------------------------------------
 
+  private async createMultiVersionWorktree(
+    i: number,
+    versions: number,
+    groupId: string | undefined,
+    branchName: string | undefined,
+    worktreeName: string | undefined,
+    baseBranch: string | undefined,
+    models: any[],
+    providerID: string | undefined,
+    modelID: string | undefined,
+  ): Promise<CreatedVersion | null> {
+    this.log(`Creating worktree ${i + 1}/${versions}`)
+
+    const version = versionedName(branchName || worktreeName, i, versions)
+    const wt = await this.createWorktreeOnDisk({
+      groupId,
+      baseBranch,
+      branchName: version.branch,
+      name: version.branch,
+      label: version.label,
+    })
+    if (!wt) {
+      this.log(`Failed to create worktree for version ${i + 1}`)
+      return null
+    }
+
+    await this.runSetupScriptForWorktree(wt.result.path, wt.result.branch, wt.worktree.id)
+
+    const session = await this.createSessionInWorktree(wt.result.path, wt.result.branch, wt.worktree.id)
+    if (!session) {
+      const state = this.getStateManager()
+      const manager = this.getWorktreeManager()
+      state?.removeWorktree(wt.worktree.id)
+      await manager?.removeWorktree(wt.result.path)
+      this.log(`Failed to create session for version ${i + 1}`)
+      return null
+    }
+
+    const state = this.getStateManager()!
+    state.addSession(session.id, wt.worktree.id)
+    this.registerWorktreeSession(session.id, wt.result.path)
+    this.notifyWorktreeReady(session.id, wt.result, wt.worktree.id)
+
+    const versionModel = models[i]
+    const earlyProviderID = versionModel?.providerID ?? providerID
+    const earlyModelID = versionModel?.modelID ?? modelID
+    if (earlyProviderID && earlyModelID) {
+      this.postToWebview({
+        type: "agentManager.setSessionModel",
+        sessionId: session.id,
+        providerID: earlyProviderID,
+        modelID: earlyModelID,
+      })
+    }
+
+    this.host.capture("Agent Manager Session Started", {
+      source: PLATFORM,
+      sessionId: session.id,
+      worktreeId: wt.worktree.id,
+      branch: wt.result.branch,
+      multiVersion: true,
+      version: i + 1,
+      totalVersions: versions,
+      groupId,
+    })
+    this.log(`Version ${i + 1} worktree ready: session=${session.id}`)
+
+    return {
+      worktreeId: wt.worktree.id,
+      sessionId: session.id,
+      path: wt.result.path,
+      branch: wt.result.branch,
+      parentBranch: wt.result.parentBranch,
+      versionIndex: i,
+    }
+  }
+
+  private async createMultiVersionWorktrees(
+    versions: number,
+    groupId: string | undefined,
+    branchName: string | undefined,
+    worktreeName: string | undefined,
+    baseBranch: string | undefined,
+    models: any[],
+    providerID: string | undefined,
+    modelID: string | undefined,
+  ): Promise<CreatedVersion[]> {
+    const created: CreatedVersion[] = []
+
+    for (let i = 0; i < versions; i++) {
+      const version = await this.createMultiVersionWorktree(
+        i,
+        versions,
+        groupId,
+        branchName,
+        worktreeName,
+        baseBranch,
+        models,
+        providerID,
+        modelID,
+      )
+      if (version) created.push(version)
+
+      // Update progress
+      this.postToWebview({
+        type: "agentManager.multiVersionProgress",
+        status: "creating",
+        total: versions,
+        completed: created.length,
+        groupId,
+      })
+    }
+    return created
+  }
+
   /** Create N worktree sessions for the same prompt (multi-version mode). */
   private async onCreateMultiVersion(
     msg: Extract<AgentManagerInMessage, { type: "agentManager.createMultiVersion" }>,
@@ -1050,86 +1181,16 @@ export class AgentManagerProvider implements Disposable {
     })
 
     // Phase 1: Create all worktrees + sessions first
-    const created: CreatedVersion[] = []
-
-    for (let i = 0; i < versions; i++) {
-      this.log(`Creating worktree ${i + 1}/${versions}`)
-
-      const version = versionedName(branchName || worktreeName, i, versions)
-      const wt = await this.createWorktreeOnDisk({
-        groupId,
-        baseBranch,
-        branchName: version.branch,
-        name: version.branch,
-        label: version.label,
-      })
-      if (!wt) {
-        this.log(`Failed to create worktree for version ${i + 1}`)
-        continue
-      }
-
-      await this.runSetupScriptForWorktree(wt.result.path, wt.result.branch, wt.worktree.id)
-
-      const session = await this.createSessionInWorktree(wt.result.path, wt.result.branch, wt.worktree.id)
-      if (!session) {
-        const state = this.getStateManager()
-        const manager = this.getWorktreeManager()
-        state?.removeWorktree(wt.worktree.id)
-        await manager?.removeWorktree(wt.result.path)
-        this.log(`Failed to create session for version ${i + 1}`)
-        continue
-      }
-
-      const state = this.getStateManager()!
-      state.addSession(session.id, wt.worktree.id)
-      this.registerWorktreeSession(session.id, wt.result.path)
-      this.notifyWorktreeReady(session.id, wt.result, wt.worktree.id)
-
-      // Set the per-version model immediately so the UI selector reflects
-      // the correct model as soon as the worktree appears, before Phase 2.
-      // Uses a dedicated message type to avoid clearing the busy state.
-      const versionModel = models[i]
-      const earlyProviderID = versionModel?.providerID ?? providerID
-      const earlyModelID = versionModel?.modelID ?? modelID
-      if (earlyProviderID && earlyModelID) {
-        this.postToWebview({
-          type: "agentManager.setSessionModel",
-          sessionId: session.id,
-          providerID: earlyProviderID,
-          modelID: earlyModelID,
-        })
-      }
-
-      created.push({
-        worktreeId: wt.worktree.id,
-        sessionId: session.id,
-        path: wt.result.path,
-        branch: wt.result.branch,
-        parentBranch: wt.result.parentBranch,
-        versionIndex: i,
-      })
-
-      this.host.capture("Agent Manager Session Started", {
-        source: PLATFORM,
-        sessionId: session.id,
-        worktreeId: wt.worktree.id,
-        branch: wt.result.branch,
-        multiVersion: true,
-        version: i + 1,
-        totalVersions: versions,
-        groupId,
-      })
-      this.log(`Version ${i + 1} worktree ready: session=${session.id}`)
-
-      // Update progress
-      this.postToWebview({
-        type: "agentManager.multiVersionProgress",
-        status: "creating",
-        total: versions,
-        completed: created.length,
-        groupId,
-      })
-    }
+    const created = await this.createMultiVersionWorktrees(
+      versions,
+      groupId,
+      branchName,
+      worktreeName,
+      baseBranch,
+      models,
+      providerID,
+      modelID,
+    )
 
     // Phase 2: Send the initial prompt to all sessions, or clear busy state if no text.
     const messages = buildInitialMessages(created, models, { providerID, modelID }, text, agent, msg.variant, files)
@@ -1557,7 +1618,7 @@ export class AgentManagerProvider implements Disposable {
     queueMicrotask(() => this.postToWebview({ type: "action", action: "advancedWorktree" }))
   }
 
-  private handleSection(m: AgentManagerInMessage): boolean {
+  private handleSection(m: AgentManagerInMessage): ChainResult {
     return handleSection(this.state, m, () => this.pushState())
   }
 

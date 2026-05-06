@@ -23,6 +23,7 @@ import type { StrataPluginAPI, SendOptions } from "@stratacode/vscode-api"
 import { SelectionTipService } from "./stratacode/selection-tip"
 import { registerExplainChangeCommands } from "./commands/explain-change"
 import { Logger } from "./stratacode/logger"
+
 import { syncAll, watchAll, isEnabled } from "./stratacode/feature-gate" // stratacode_change
 
 // Activated via "onStartupFinished" (package.json) so that commands, code actions, keybindings,
@@ -48,6 +49,8 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
   // Create browser automation service (manages Playwright MCP registration)
   const browserAutomationService = new BrowserAutomationService(connectionService)
   browserAutomationService.syncWithSettings()
+
+
 
   // Create remote status service (one status bar item for all webviews)
   const remoteService = new RemoteStatusService()
@@ -256,7 +259,18 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
     }),
     vscode.commands.registerCommand("strata-code.new.agentManagerOpen", () => {
       if (!isEnabled("agentManager")) return
-      agentManagerProvider?.openPanel()
+      if (!agentManagerProvider) {
+        void vscode.window.showInformationMessage(
+          "Agent Manager has been enabled. Please reload the window to use it.",
+          "Reload Window"
+        ).then(selection => {
+          if (selection === "Reload Window") {
+            void vscode.commands.executeCommand("workbench.action.reloadWindow")
+          }
+        })
+        return
+      }
+      agentManagerProvider.openPanel()
     }),
     vscode.commands.registerCommand("strata-code.new.marketplaceButtonClicked", (directory?: string) => {
       settingsEditorProvider.openPanel("marketplace", undefined, directory)
@@ -292,6 +306,11 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
     vscode.commands.registerCommand("strata-code.new.kanbanButtonClicked", () => {
       provider.postMessage({ type: "navigate", view: "kanban" })
     }),
+    // stratacode_change start
+    vscode.commands.registerCommand("strata-code.new.docsButtonClicked", () => {
+      provider.postMessage({ type: "navigate", view: "docs" })
+    }),
+    // stratacode_change end
     vscode.commands.registerCommand("strata-code.new.openIndexingSettings", () => {
       settingsEditorProvider.openPanel("settings", "indexing")
     }),

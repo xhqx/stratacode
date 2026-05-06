@@ -165,21 +165,7 @@ export class WorktreeManager {
     }
   }
 
-  private async createWorktreeImpl(params: {
-    prompt?: string
-    existingBranch?: string
-    baseBranch?: string
-    branchName?: string
-    onProgress?: (step: WorktreeProgressStep, message: string, detail?: string) => void
-  }): Promise<CreateWorktreeResult> {
-    await this.ensureGitAvailable()
-    const repo = await this.git.checkIsRepo()
-    if (!repo)
-      throw new Error(
-        "This folder is not a git repository. Initialize a repository or open a git project to use worktrees.",
-      )
-
-    // Git LFS Pre-flight Check
+  private async ensureLfsAvailableIfUsed(): Promise<void> {
     if (await this.repoUsesLfs()) {
       if (!(await this.checkLfsAvailable())) {
         throw new Error(
@@ -187,40 +173,46 @@ export class WorktreeManager {
         )
       }
     }
+  }
 
-    await this.ensureDir()
-    await this.ensureGitExclude()
-
-    // Resolve start point (parent branch + remote)
-    let parent: string
-    let parentRemote: string | undefined
-    let startPoint: StartPointResult | undefined
-
+  private async resolveWorktreeStartPoint(params: {
+    existingBranch?: string
+    baseBranch?: string
+    onProgress?: (step: WorktreeProgressStep, message: string, detail?: string) => void
+  }): Promise<{ parent: string; parentRemote?: string; startPoint: StartPointResult }> {
     if (params.existingBranch) {
-      // Existing branch provided directly — only attach remote when the
-      // remote tracking ref actually exists (the branch may be local-only).
       const remote = await this.resolveRemote()
       const hasRemoteRef = remote && (await this.refExistsLocally(`${remote}/${params.existingBranch}`))
-      parent = params.existingBranch
-      parentRemote = hasRemoteRef ? remote : undefined
-      startPoint = {
-        ref: params.existingBranch,
-        branch: params.existingBranch,
-        remote: hasRemoteRef ? remote : undefined,
-        source: "local-branch",
+      return {
+        parent: params.existingBranch,
+        parentRemote: hasRemoteRef ? remote : undefined,
+        startPoint: {
+          ref: params.existingBranch,
+          branch: params.existingBranch,
+          remote: hasRemoteRef ? remote : undefined,
+          source: "local-branch",
+        },
       }
     } else {
-      // Resolve best start point for new branch
       const requestedBase = params.baseBranch || (await this.defaultBranch())
       params.onProgress?.("verifying", `Resolving start point: ${requestedBase}`)
 
-      startPoint = await this.resolveStartPoint(requestedBase, params.onProgress, {
-        allowFallback: !params.baseBranch, // Only fallback if user didn't explicitly request a specific base
+      const startPoint = await this.resolveStartPoint(requestedBase, params.onProgress, {
+        allowFallback: !params.baseBranch,
       })
-      parent = startPoint.branch
-      parentRemote = startPoint.remote
+      return {
+        parent: startPoint.branch,
+        parentRemote: startPoint.remote,
+        startPoint,
+      }
     }
+  }
 
+  private async resolveTargetBranch(params: {
+    prompt?: string
+    existingBranch?: string
+    branchName?: string
+  }): Promise<string> {
     const sanitized = params.branchName ? sanitizeBranchName(params.branchName) : undefined
     let branch: string
     if (params.existingBranch) {
@@ -239,8 +231,16 @@ export class WorktreeManager {
       const exists = await this.branchExists(branch)
       if (!exists) throw new Error(`Branch "${branch}" does not exist`)
     }
+    return branch
+  }
 
-    const dirName = branch.replace(/\//g, "-")
+  private async executeWorktreeAdd(
+    originalBranch: string,
+    startRef: string | undefined,
+    existingBranch: boolean,
+  ): Promise<{ worktreePath: string; branch: string }> {
+    let branch = originalBranch
+    let dirName = branch.replace(/\//g, "-")
     let worktreePath = path.join(this.dir, dirName)
 
     if (fs.existsSync(worktreePath)) {
@@ -248,36 +248,60 @@ export class WorktreeManager {
       await this.removeWorktreeImpl(worktreePath)
     }
 
-    params.onProgress?.("creating", `Creating worktree for ${branch}...`)
-
-    // Dereference to commit SHA to prevent upstream tracking for new branches
-    const startRef = params.existingBranch ? undefined : `${startPoint.ref}^{commit}`
-
     try {
-      const args = params.existingBranch
+      const args = existingBranch
         ? ["worktree", "add", worktreePath, branch]
         : ["worktree", "add", "-b", branch, worktreePath, startRef!]
       await this.runWorktreeAdd(args, worktreePath)
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
       if (msg.includes("already checked out")) {
-        // Extract worktree path from error like "fatal: 'branch' is already checked out at '/path'"
         const match = msg.match(/already checked out at '([^']+)'/)
         const loc = match ? match[1] : "another worktree"
         throw new Error(`Branch "${branch}" is already checked out in worktree at: ${loc}`)
       }
-      if (!msg.includes("already exists") || params.existingBranch) {
+      if (!msg.includes("already exists") || existingBranch) {
         throw new Error(`Failed to create worktree: ${msg}`)
       }
       // Branch name collision -- retry with unique suffix
       branch = `${branch}-${Date.now()}`
-      const retryDir = branch.replace(/\//g, "-")
-      worktreePath = path.join(this.dir, retryDir)
-      const retryArgs = params.existingBranch
+      dirName = branch.replace(/\//g, "-")
+      worktreePath = path.join(this.dir, dirName)
+      const retryArgs = existingBranch
         ? ["worktree", "add", worktreePath, branch]
         : ["worktree", "add", "-b", branch, worktreePath, startRef!]
       await this.runWorktreeAdd(retryArgs, worktreePath)
     }
+
+    return { worktreePath, branch }
+  }
+
+  private async createWorktreeImpl(params: {
+    prompt?: string
+    existingBranch?: string
+    baseBranch?: string
+    branchName?: string
+    onProgress?: (step: WorktreeProgressStep, message: string, detail?: string) => void
+  }): Promise<CreateWorktreeResult> {
+    await this.ensureGitAvailable()
+    const repo = await this.git.checkIsRepo()
+    if (!repo) {
+      throw new Error(
+        "This folder is not a git repository. Initialize a repository or open a git project to use worktrees.",
+      )
+    }
+
+    await this.ensureLfsAvailableIfUsed()
+    await this.ensureDir()
+    await this.ensureGitExclude()
+
+    const { parent, parentRemote, startPoint } = await this.resolveWorktreeStartPoint(params)
+    const targetBranch = await this.resolveTargetBranch(params)
+
+    params.onProgress?.("creating", `Creating worktree for ${targetBranch}...`)
+
+    const startRef = params.existingBranch ? undefined : `${startPoint.ref}^{commit}`
+    const { worktreePath, branch } = await this.executeWorktreeAdd(targetBranch, startRef, !!params.existingBranch)
 
     this.log(
       `Created worktree: ${worktreePath} (branch: ${branch}, base: ${parentRemote ? `${parentRemote}/` : ""}${parent})`,

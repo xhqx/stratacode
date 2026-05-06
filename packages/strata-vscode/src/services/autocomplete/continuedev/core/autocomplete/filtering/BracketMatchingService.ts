@@ -38,6 +38,38 @@ export class BracketMatchingService {
     this.lastCompletionFile = filepath
   }
 
+
+  private getInitialStack(prefix: string, suffix: string, filepath: string, multiline: boolean): string[] {
+    let stack: string[] = []
+    if (multiline) {
+      if (this.lastCompletionFile === filepath) {
+        stack = [...this.openingBracketsFromLastCompletion]
+      } else {
+        this.lastCompletionFile = undefined
+      }
+    } else {
+      const currentLine = (prefix.split("\n").pop() ?? "") + (suffix.split("\n")[0] ?? "")
+      for (let i = 0; i < currentLine.length; i++) {
+        const char = currentLine[i]
+        if (Object.keys(BRACKETS).includes(char)) {
+          stack.push(char)
+        } else if (Object.values(BRACKETS).includes(char)) {
+          if (stack.length === 0 || BRACKETS[stack.pop()!] !== char) {
+            break
+          }
+        }
+      }
+    }
+
+    for (let i = 0; i < suffix.length; i++) {
+      if (suffix[i] === " ") continue
+      const openBracket = BRACKETS_REVERSE[suffix[i]]
+      if (!openBracket) break
+      stack.unshift(openBracket)
+    }
+    return stack
+  }
+
   async *stopOnUnmatchedClosingBracket(
     stream: AsyncGenerator<string>,
     prefix: string,
@@ -45,46 +77,7 @@ export class BracketMatchingService {
     filepath: string,
     multiline: boolean, // Whether this is a multiline completion or not
   ): AsyncGenerator<string> {
-    let stack: string[] = []
-    if (multiline) {
-      // Add opening brackets from the previous response
-      if (this.lastCompletionFile === filepath) {
-        stack = [...this.openingBracketsFromLastCompletion]
-      } else {
-        this.lastCompletionFile = undefined
-      }
-    } else {
-      // If single line completion, then allow completing bracket pairs that are
-      // started on the current line but not finished on the current line
-      if (!multiline) {
-        const currentLine = (prefix.split("\n").pop() ?? "") + (suffix.split("\n")[0] ?? "")
-        for (let i = 0; i < currentLine.length; i++) {
-          const char = currentLine[i]
-          if (Object.keys(BRACKETS).includes(char)) {
-            // It's an opening bracket
-            stack.push(char)
-          } else if (Object.values(BRACKETS).includes(char)) {
-            // It's a closing bracket
-            if (stack.length === 0 || BRACKETS[stack.pop()!] !== char) {
-              break
-            }
-          }
-        }
-      }
-    }
-
-    // Add corresponding open brackets from suffix to stack
-    // because we overwrite them and the diff is displayed, and this allows something to be edited after that
-    for (let i = 0; i < suffix.length; i++) {
-      if (suffix[i] === " ") {
-        continue
-      }
-      const openBracket = BRACKETS_REVERSE[suffix[i]]
-      if (!openBracket) {
-        break
-      }
-      stack.unshift(openBracket)
-    }
+    let stack = this.getInitialStack(prefix, suffix, filepath, multiline)
 
     let seenNonWhitespaceOrClosingBracket = false
     for await (let chunk of stream) {

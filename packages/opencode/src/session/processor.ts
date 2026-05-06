@@ -632,7 +632,7 @@ export const layer: Layer.Layer<
             ctx.currentText = undefined
             ctx.reasoningMap = {}
             // stratacode_change start
-            const stream = streamInput.agent.options?.isACP ? acpAdapter.stream(streamInput) : llm.stream(streamInput)
+            const stream = streamInput.model.options?.acp ? acpAdapter.stream(streamInput) : llm.stream(streamInput)
             // stratacode_change end
 
             yield* stream.pipe(

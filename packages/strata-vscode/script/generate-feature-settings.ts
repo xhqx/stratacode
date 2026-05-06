@@ -7,7 +7,7 @@ const PACKAGE_JSON_PATH = join(__dirname, "../package.json")
 function main() {
   const pkg = JSON.parse(readFileSync(PACKAGE_JSON_PATH, "utf8"))
   const configSections = pkg.contributes.configuration
-  
+
   const featuresSection = configSections.find((s: any) => s.title === "Strata Code: Features")
   if (!featuresSection) {
     throw new Error("Could not find 'Strata Code: Features' configuration section in package.json")

@@ -67,6 +67,23 @@ export async function setMigrationStatus(context: vscode.ExtensionContext, statu
 // Detection
 // ---------------------------------------------------------------------------
 
+export function hasLegacySettings(settings: LegacySettings): boolean {
+  return (
+    settings.autoApprovalEnabled !== undefined ||
+    (settings.allowedCommands?.length ?? 0) > 0 ||
+    (settings.deniedCommands?.length ?? 0) > 0 ||
+    settings.alwaysAllowReadOnly !== undefined ||
+    settings.alwaysAllowReadOnlyOutsideWorkspace !== undefined ||
+    settings.alwaysAllowWrite !== undefined ||
+    settings.alwaysAllowExecute !== undefined ||
+    settings.alwaysAllowMcp !== undefined ||
+    settings.alwaysAllowModeSwitch !== undefined ||
+    settings.alwaysAllowSubtasks !== undefined ||
+    Boolean(settings.language) ||
+    Boolean(settings.autocomplete)
+  )
+}
+
 /**
  * Reads legacy data from SecretStorage and global storage files.
  * Returns a structured summary for display in the migration wizard.
@@ -88,19 +105,7 @@ export async function detectLegacyData(context: vscode.ExtensionContext): Promis
   const modes = buildCustomModeList(customModes, prompts)
   const defaultModel = resolveDefaultModel(profiles, oauthProviders)
 
-  const hasSettings =
-    settings.autoApprovalEnabled !== undefined ||
-    (settings.allowedCommands?.length ?? 0) > 0 ||
-    (settings.deniedCommands?.length ?? 0) > 0 ||
-    settings.alwaysAllowReadOnly !== undefined ||
-    settings.alwaysAllowReadOnlyOutsideWorkspace !== undefined ||
-    settings.alwaysAllowWrite !== undefined ||
-    settings.alwaysAllowExecute !== undefined ||
-    settings.alwaysAllowMcp !== undefined ||
-    settings.alwaysAllowModeSwitch !== undefined ||
-    settings.alwaysAllowSubtasks !== undefined ||
-    Boolean(settings.language) ||
-    Boolean(settings.autocomplete)
+  const hasSettings = hasLegacySettings(settings)
 
   const hasData =
     providers.length > 0 || mcpServers.length > 0 || modes.length > 0 || hasSettings || sessions.length > 0
@@ -155,33 +160,15 @@ export type SessionProgressCallback = (progress: MigrationSessionProgress) => vo
 const SESSION_DELAY = 300
 const SESSION_SUMMARY_DELAY = 1000
 
-/**
- * Executes migration for the selected items.
- * Calls onProgress for each item with real-time status updates.
- * Pass `cachedSettings` (from a prior detectLegacyData call) to avoid re-reading
- * globalState. Provider profiles, MCP servers, and custom modes are always re-read
- * from SecretStorage/disk to ensure the data is current at migration time.
- */
-export async function migrate(
+async function migrateProvidersSelection(
   context: vscode.ExtensionContext,
   client: StrataClient,
-  selections: MigrationSelections,
+  selections: string[],
+  profiles: LegacyProviderProfiles | null | undefined,
   onProgress: ProgressCallback,
-  onSessionProgress?: SessionProgressCallback,
-  cachedSettings?: LegacySettings,
-  cachedSessions?: MigrationSessionInfo[],
 ): Promise<MigrationResultItem[]> {
-  const profiles = await readLegacyProviderProfiles(context)
-  const mcpSettings = await readLegacyMcpSettings(context)
-  const customModes = await readLegacyCustomModes(context)
-  const prompts = readLegacyCustomModePrompts(context)
-  const legacySettings = cachedSettings ?? readLegacySettings(context)
-  const sessions = cachedSessions ?? (await readSessionsInGlobalStorage(context))
-
   const results: MigrationResultItem[] = []
-
-  // Migrate provider API keys
-  for (const profileName of selections.providers) {
+  for (const profileName of selections) {
     const settings = profiles?.apiConfigs[profileName]
     if (!settings) {
       results.push({ item: profileName, category: "provider", status: "error", message: "Profile not found" })
@@ -192,11 +179,19 @@ export async function migrate(
     results.push(result)
     onProgress(profileName, result.status, result.message)
   }
+  return results
+}
 
-  // Migrate MCP servers
-  if (selections.mcpServers.length > 0 && mcpSettings) {
+async function migrateMcpServersSelection(
+  client: StrataClient,
+  selections: string[],
+  mcpSettings: LegacyMcpSettings | null | undefined,
+  onProgress: ProgressCallback,
+): Promise<MigrationResultItem[]> {
+  const results: MigrationResultItem[] = []
+  if (selections.length > 0 && mcpSettings) {
     const mcpConfig: Record<string, McpLocalConfig | McpRemoteConfig> = {}
-    for (const name of selections.mcpServers) {
+    for (const name of selections) {
       const server = mcpSettings.mcpServers[name]
       if (!server) {
         results.push({ item: name, category: "mcpServer", status: "error", message: "Server not found" })
@@ -222,13 +217,21 @@ export async function migrate(
       await client.global.config.update({ config: { mcp: mcpConfig } })
     }
   }
+  return results
+}
 
-  // Migrate custom modes as agents
-  if (selections.customModes.length > 0) {
+async function migrateCustomModesSelection(
+  client: StrataClient,
+  selections: string[],
+  customModes: LegacyCustomMode[] | null | undefined,
+  prompts: Record<string, LegacyPromptComponent> | null | undefined,
+  onProgress: ProgressCallback,
+): Promise<MigrationResultItem[]> {
+  const results: MigrationResultItem[] = []
+  if (selections.length > 0) {
     const agentConfig: Record<string, AgentConfig> = {}
-    // Build a lookup of detected modes by slug so we can resolve nativeSlug
     const detected = buildCustomModeList(customModes, prompts)
-    for (const slug of selections.customModes) {
+    for (const slug of selections) {
       const info = detected.find((m) => m.slug === slug)
       if (!info) {
         results.push({ item: slug, category: "customMode", status: "error", message: "Mode not found" })
@@ -236,7 +239,6 @@ export async function migrate(
       }
 
       if (info.nativeSlug) {
-        // Modified native mode — merge YAML custom mode + customModePrompts
         const merged = buildMergedNativeMode(
           customModes?.find((m) => m.slug === info.nativeSlug),
           prompts?.[info.nativeSlug],
@@ -245,7 +247,6 @@ export async function migrate(
         if (merged) {
           onProgress(info.name, "migrating")
           const agent = convertCustomMode(merged)
-          // Set explicit name so the UI shows "(Custom)" instead of title-casing the slug
           agent.name = info.name
           agentConfig[slug] = agent
           results.push({ item: info.name, category: "customMode", status: "success" })
@@ -259,7 +260,6 @@ export async function migrate(
           })
         }
       } else {
-        // Regular custom mode (existing behavior)
         const mode = customModes?.find((m) => m.slug === slug)
         if (!mode) {
           results.push({ item: slug, category: "customMode", status: "error", message: "Mode not found" })
@@ -275,13 +275,23 @@ export async function migrate(
       await client.global.config.update({ config: { agent: agentConfig } })
     }
   }
+  return results
+}
 
-  if (selections.sessions?.length) {
-    const list = selections.sessions
-    for (const [index, item] of list.entries()) {
+async function migrateSessionsSelection(
+  context: vscode.ExtensionContext,
+  client: StrataClient,
+  selections: { id: string }[],
+  sessions: MigrationSessionInfo[],
+  onProgress: ProgressCallback,
+  onSessionProgress?: SessionProgressCallback,
+): Promise<MigrationResultItem[]> {
+  const results: MigrationResultItem[] = []
+  if (selections.length > 0) {
+    for (const [index, item] of selections.entries()) {
       onProgress(item.id, "migrating")
-      const session = sessions.find((entry: MigrationSessionInfo) => entry.id === item.id)
-      const meta = buildSessionMeta(session, index, list.length)
+      const session = sessions.find((entry) => entry.id === item.id)
+      const meta = buildSessionMeta(session, index, selections.length)
       const progress = buildSessionProgress(meta, onSessionProgress)
       const result = await migrateSession(item, context, client, meta, progress)
       const reason = result.ok ? "Session migrated" : result.message
@@ -292,22 +302,69 @@ export async function migrate(
         message: reason,
       })
       onProgress(item.id, result.ok ? "success" : "error", reason)
-      if (index < list.length - 1) {
+      if (index < selections.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, SESSION_DELAY))
       }
     }
-    const last = list.at(-1)
-    const session = last ? sessions.find((item: MigrationSessionInfo) => item.id === last.id) : undefined
+    const last = selections.at(-1)
+    const session = last ? sessions.find((item) => item.id === last.id) : undefined
     if (session && onSessionProgress) {
       onSessionProgress({
         session,
-        index: list.length,
-        total: list.length,
+        index: selections.length,
+        total: selections.length,
         phase: "summary",
       })
       await new Promise((resolve) => setTimeout(resolve, SESSION_SUMMARY_DELAY))
     }
   }
+  return results
+}
+
+/**
+ * Executes migration for the selected items.
+ * Calls onProgress for each item with real-time status updates.
+ * Pass `cachedSettings` (from a prior detectLegacyData call) to avoid re-reading
+ * globalState. Provider profiles, MCP servers, and custom modes are always re-read
+ * from SecretStorage/disk to ensure the data is current at migration time.
+ */
+export async function migrate(
+  context: vscode.ExtensionContext,
+  client: StrataClient,
+  selections: MigrationSelections,
+  onProgress: ProgressCallback,
+  onSessionProgress?: SessionProgressCallback,
+  cachedSettings?: LegacySettings,
+  cachedSessions?: MigrationSessionInfo[],
+): Promise<MigrationResultItem[]> {
+  const profiles = await readLegacyProviderProfiles(context)
+  const mcpSettings = await readLegacyMcpSettings(context)
+  const customModes = await readLegacyCustomModes(context)
+  const prompts = readLegacyCustomModePrompts(context)
+  const legacySettings = cachedSettings ?? readLegacySettings(context)
+  const sessions = cachedSessions ?? (await readSessionsInGlobalStorage(context))
+
+  const results: MigrationResultItem[] = []
+
+  // Migrate providers
+  results.push(
+    ...(await migrateProvidersSelection(context, client, selections.providers, profiles, onProgress))
+  )
+
+  // Migrate MCP servers
+  results.push(
+    ...(await migrateMcpServersSelection(client, selections.mcpServers, mcpSettings, onProgress))
+  )
+
+  // Migrate custom modes as agents
+  results.push(
+    ...(await migrateCustomModesSelection(client, selections.customModes, customModes, prompts, onProgress))
+  )
+
+  // Migrate sessions
+  results.push(
+    ...(await migrateSessionsSelection(context, client, selections.sessions ?? [], sessions, onProgress, onSessionProgress))
+  )
 
   // Migrate default model
   if (selections.defaultModel && profiles) {
@@ -582,150 +639,134 @@ async function migrateDefaultModel(
 // Internal — settings migration (auto-approval, language)
 // ---------------------------------------------------------------------------
 
+class AutoApprovalMigrator {
+  private permission: Record<string, any> = {}
+  private fallback: "allow" | "ask"
+  private globalAllowApplied = false
+  public results: MigrationResultItem[] = []
+
+  constructor(
+    private settings: LegacySettings,
+    private sel: MigrationAutoApprovalSelections,
+    private onProgress: ProgressCallback
+  ) {
+    this.fallback = settings.autoApprovalEnabled === true ? "allow" : "ask"
+  }
+
+  async migrate(client: StrataClient): Promise<MigrationResultItem[]> {
+    if (this.sel.commandRules) await this.migrateCommandRules(client)
+    if (this.sel.readPermission) this.migrateReadPermission()
+    if (this.sel.writePermission) this.migrateWritePermission()
+    if (this.sel.executePermission && !this.sel.commandRules) this.migrateExecutePermission()
+    else if (this.sel.executePermission) {
+      this.results.push({ item: "Execute permission", category: "settings", status: "success" })
+    }
+    if (this.sel.mcpPermission) this.migrateMcpPermission()
+    if (this.sel.taskPermission) this.migrateTaskPermission()
+
+    if (!this.globalAllowApplied && Object.keys(this.permission).length > 0) {
+      await client.global.config.update({ config: { permission: this.permission } })
+    }
+    return this.results
+  }
+
+  private async migrateCommandRules(client: StrataClient) {
+    const label = "Command rules"
+    this.onProgress(label, "migrating")
+    const hasCommandLists = Boolean(this.settings.allowedCommands?.length || this.settings.deniedCommands?.length)
+    
+    if (this.settings.autoApprovalEnabled === true && !hasCommandLists) {
+      await client.global.config.update({ config: { permission: "allow" } })
+      this.globalAllowApplied = true
+    } else if (hasCommandLists) {
+      const bashRules: PermissionObjectConfig = {}
+      for (const cmd of this.settings.allowedCommands ?? []) bashRules[cmd.trimEnd() + " *"] = "allow"
+      for (const cmd of this.settings.deniedCommands ?? []) bashRules[cmd.trimEnd() + " *"] = "deny"
+      bashRules["*"] = this.settings.alwaysAllowExecute === true ? "allow" : this.settings.alwaysAllowExecute === false ? "ask" : this.fallback
+      this.permission.bash = bashRules
+    }
+    
+    this.results.push({ item: label, category: "settings", status: "success" })
+    this.onProgress(label, "success")
+  }
+
+  private migrateReadPermission() {
+    const label = "Read permission"
+    this.onProgress(label, "migrating")
+    if (this.settings.alwaysAllowReadOnly === true) {
+      this.permission.read = "allow"
+      this.permission.glob = "allow"
+      this.permission.grep = "allow"
+      this.permission.list = "allow"
+    } else if (this.settings.alwaysAllowReadOnly === false) {
+      this.permission.read = "ask"
+    }
+    if (this.settings.alwaysAllowReadOnlyOutsideWorkspace === true) {
+      this.permission.external_directory = "allow"
+    } else if (this.settings.alwaysAllowReadOnlyOutsideWorkspace === false) {
+      this.permission.external_directory = "ask"
+    }
+    this.results.push({ item: label, category: "settings", status: "success" })
+    this.onProgress(label, "success")
+  }
+
+  private migrateWritePermission() {
+    const label = "Write permission"
+    this.onProgress(label, "migrating")
+    if (this.settings.alwaysAllowWrite === true) {
+      this.permission.edit = "allow"
+    } else if (this.settings.alwaysAllowWrite === false) {
+      this.permission.edit = "ask"
+    }
+    this.results.push({ item: label, category: "settings", status: "success" })
+    this.onProgress(label, "success")
+  }
+
+  private migrateExecutePermission() {
+    const label = "Execute permission"
+    this.onProgress(label, "migrating")
+    if (this.settings.alwaysAllowExecute === true) {
+      this.permission.bash = "allow"
+    } else if (this.settings.alwaysAllowExecute === false) {
+      this.permission.bash = "ask"
+    }
+    this.results.push({ item: label, category: "settings", status: "success" })
+    this.onProgress(label, "success")
+  }
+
+  private migrateMcpPermission() {
+    const label = "MCP permission"
+    this.onProgress(label, "migrating")
+    if (this.settings.alwaysAllowMcp === true) {
+      this.permission.skill = "allow"
+    } else if (this.settings.alwaysAllowMcp === false) {
+      this.permission.skill = "ask"
+    }
+    this.results.push({ item: label, category: "settings", status: "success" })
+    this.onProgress(label, "success")
+  }
+
+  private migrateTaskPermission() {
+    const label = "Task permission"
+    this.onProgress(label, "migrating")
+    if (this.settings.alwaysAllowModeSwitch === true || this.settings.alwaysAllowSubtasks === true) {
+      this.permission.task = "allow"
+    } else if (this.settings.alwaysAllowModeSwitch === false && this.settings.alwaysAllowSubtasks === false) {
+      this.permission.task = "ask"
+    }
+    this.results.push({ item: label, category: "settings", status: "success" })
+    this.onProgress(label, "success")
+  }
+}
+
 async function migrateAutoApproval(
   settings: LegacySettings,
   sel: MigrationAutoApprovalSelections,
   client: StrataClient,
   onProgress: ProgressCallback,
 ): Promise<MigrationResultItem[]> {
-  const {
-    autoApprovalEnabled,
-    allowedCommands,
-    deniedCommands,
-    alwaysAllowReadOnly,
-    alwaysAllowReadOnlyOutsideWorkspace,
-    alwaysAllowWrite,
-    alwaysAllowExecute,
-    alwaysAllowMcp,
-    alwaysAllowModeSwitch,
-    alwaysAllowSubtasks,
-  } = settings
-
-  // The master toggle acts as a global fallback for unspecified tools.
-  const fallback: "allow" | "ask" = autoApprovalEnabled === true ? "allow" : "ask"
-
-  const results: MigrationResultItem[] = []
-  // We collect all permission updates and apply them in one call at the end.
-  const permission: PermissionConfig = {}
-  // Track if global "allow" was already written so we skip the per-tool object update
-  // that would otherwise overwrite it with a narrower permission set.
-  let globalAllowApplied = false
-
-  // Command rules: master toggle + allowedCommands + deniedCommands
-  if (sel.commandRules) {
-    const label = "Command rules"
-    onProgress(label, "migrating")
-    const hasCommandLists = Boolean(allowedCommands?.length || deniedCommands?.length)
-    if (autoApprovalEnabled === true && !hasCommandLists) {
-      // Global allow with no specific command rules — apply immediately using the scalar form.
-      // PermissionConfig is "allow" | "ask" | "deny" | { read?: ..., ... }, so a global allow
-      // must be the scalar string, not an object with a "*" key.
-      await client.global.config.update({ config: { permission: "allow" } })
-      globalAllowApplied = true
-    } else if (hasCommandLists) {
-      const bashRules: PermissionObjectConfig = {}
-      // The legacy system matched commands as longest prefix (e.g. "npm run" matched "npm run dev").
-      // The new CLI uses Wildcard.match with full command text anchored to ^ and $, so "npm run"
-      // would only match the literal string "npm run". Appending " *" approximates prefix semantics:
-      // Wildcard.match treats trailing " *" as "( .*)?", matching with or without arguments.
-      for (const cmd of allowedCommands ?? []) {
-        bashRules[cmd.trimEnd() + " *"] = "allow"
-      }
-      for (const cmd of deniedCommands ?? []) {
-        bashRules[cmd.trimEnd() + " *"] = "deny"
-      }
-      // alwaysAllowExecute=false must override the master toggle
-      bashRules["*"] = alwaysAllowExecute === true ? "allow" : alwaysAllowExecute === false ? "ask" : fallback
-      permission.bash = bashRules
-    }
-    results.push({ item: label, category: "settings", status: "success" })
-    onProgress(label, "success")
-  }
-
-  // Read permissions
-  if (sel.readPermission) {
-    const label = "Read permission"
-    onProgress(label, "migrating")
-    if (alwaysAllowReadOnly === true) {
-      permission.read = "allow"
-      permission.glob = "allow"
-      permission.grep = "allow"
-      permission.list = "allow"
-    } else if (alwaysAllowReadOnly === false) {
-      permission.read = "ask"
-    }
-    if (alwaysAllowReadOnlyOutsideWorkspace === true) {
-      permission.external_directory = "allow"
-    } else if (alwaysAllowReadOnlyOutsideWorkspace === false) {
-      permission.external_directory = "ask"
-    }
-    results.push({ item: label, category: "settings", status: "success" })
-    onProgress(label, "success")
-  }
-
-  // Write permissions
-  if (sel.writePermission) {
-    const label = "Write permission"
-    onProgress(label, "migrating")
-    if (alwaysAllowWrite === true) {
-      permission.edit = "allow"
-    } else if (alwaysAllowWrite === false) {
-      permission.edit = "ask"
-    }
-    results.push({ item: label, category: "settings", status: "success" })
-    onProgress(label, "success")
-  }
-
-  // Execute permissions (bash only — command lists handled above in commandRules)
-  if (sel.executePermission && !sel.commandRules) {
-    const label = "Execute permission"
-    onProgress(label, "migrating")
-    if (alwaysAllowExecute === true) {
-      permission.bash = "allow"
-    } else if (alwaysAllowExecute === false) {
-      permission.bash = "ask"
-    }
-    results.push({ item: label, category: "settings", status: "success" })
-    onProgress(label, "success")
-  } else if (sel.executePermission) {
-    // executePermission selected together with commandRules — bash rules already built above,
-    // just record the result item
-    results.push({ item: "Execute permission", category: "settings", status: "success" })
-  }
-
-  // MCP / skill permissions
-  if (sel.mcpPermission) {
-    const label = "MCP permission"
-    onProgress(label, "migrating")
-    if (alwaysAllowMcp === true) {
-      permission.skill = "allow"
-    } else if (alwaysAllowMcp === false) {
-      permission.skill = "ask"
-    }
-    results.push({ item: label, category: "settings", status: "success" })
-    onProgress(label, "success")
-  }
-
-  // Task / subtask permissions
-  if (sel.taskPermission) {
-    const label = "Task permission"
-    onProgress(label, "migrating")
-    if (alwaysAllowModeSwitch === true || alwaysAllowSubtasks === true) {
-      permission.task = "allow"
-    } else if (alwaysAllowModeSwitch === false && alwaysAllowSubtasks === false) {
-      permission.task = "ask"
-    }
-    results.push({ item: label, category: "settings", status: "success" })
-    onProgress(label, "success")
-  }
-
-  // Only write the per-tool object form if global allow wasn't already applied —
-  // writing an object after "allow" would narrow permissions to only the listed tools.
-  if (!globalAllowApplied && Object.keys(permission).length > 0) {
-    await client.global.config.update({ config: { permission } })
-  }
-
-  return results
+  const migrator = new AutoApprovalMigrator(settings, sel, onProgress)
+  return await migrator.migrate(client)
 }
 
 async function migrateAutocomplete(settings: LegacyAutocompleteSettings): Promise<MigrationResultItem> {
@@ -1032,6 +1073,122 @@ function stripYamlQuotes(value: string): string {
   return value.replace(/^(['"])(.*)\1$/, "$2")
 }
 
+class CustomModeParser {
+  modes: LegacyCustomMode[] = []
+  inModes = false
+  current: Partial<LegacyCustomMode> | null = null
+  blockField: "roleDefinition" | "customInstructions" | null = null
+  inGroups = false
+  blockLines: string[] = []
+
+  flush() {
+    if (this.current?.slug && this.current?.name) {
+      if (this.blockField && this.blockLines.length > 0) {
+        this.current[this.blockField] = this.blockLines.join("\n").trim()
+      }
+      this.modes.push({ groups: [], ...this.current } as LegacyCustomMode)
+    }
+    this.current = null
+    this.blockField = null
+    this.inGroups = false
+    this.blockLines = []
+  }
+
+  parseLine(rawLine: string) {
+    if (!this.inModes) {
+      if (rawLine.trim() === "customModes:") this.inModes = true
+      return
+    }
+
+    if (/^  - slug: /.test(rawLine)) {
+      this.flush()
+      this.current = { slug: stripYamlQuotes(rawLine.replace(/^  - slug: /, "").trim()), groups: [] }
+      return
+    }
+
+    if (!this.current) return
+    this.parseCurrentLine(rawLine)
+  }
+
+  private parseCurrentLine(rawLine: string) {
+    if (this.parseScalarFields(rawLine)) return
+    this.parseBlockAndGroups(rawLine)
+  }
+
+  private parseScalarFields(rawLine: string): boolean {
+    if (!this.current) return false
+
+    if (/^    name: /.test(rawLine)) {
+      this.current.name = stripYamlQuotes(rawLine.replace(/^    name: /, "").trim())
+      return true
+    }
+
+    // Block scalar fields (roleDefinition, customInstructions) with | or >
+    const blockMatch = rawLine.match(/^    (roleDefinition|customInstructions): [|>]/)
+    if (blockMatch) {
+      if (this.blockField && this.blockLines.length > 0) {
+        this.current[this.blockField] = this.blockLines.join("\n").trim()
+      }
+      this.blockField = blockMatch[1] as "roleDefinition" | "customInstructions"
+      this.inGroups = false
+      this.blockLines = []
+      return true
+    }
+
+    // Single-line scalar fields
+    if (/^    roleDefinition: /.test(rawLine) && !this.blockField) {
+      this.current.roleDefinition = stripYamlQuotes(rawLine.replace(/^    roleDefinition: /, "").trim())
+      return true
+    }
+
+    if (/^    customInstructions: /.test(rawLine) && !this.blockField) {
+      this.current.customInstructions = stripYamlQuotes(rawLine.replace(/^    customInstructions: /, "").trim())
+      return true
+    }
+
+    if (/^    whenToUse: /.test(rawLine) && !this.blockField) {
+      this.current.whenToUse = stripYamlQuotes(rawLine.replace(/^    whenToUse: /, "").trim())
+      return true
+    }
+
+    if (/^    description: /.test(rawLine) && !this.blockField) {
+      this.current.description = stripYamlQuotes(rawLine.replace(/^    description: /, "").trim())
+      return true
+    }
+    return false
+  }
+
+  private parseBlockAndGroups(rawLine: string): void {
+    if (!this.current) return
+
+    if (this.blockField) {
+      if (/^      /.test(rawLine)) {
+        this.blockLines.push(rawLine.replace(/^      /, ""))
+        return
+      }
+      this.current[this.blockField] = this.blockLines.join("\n").trim()
+      this.blockField = null
+      this.blockLines = []
+    }
+
+    if (/^    groups:/.test(rawLine)) {
+      this.inGroups = true
+      this.current.groups = []
+      return
+    }
+
+    if (this.inGroups && /^      - /.test(rawLine)) {
+      const group = stripYamlQuotes(rawLine.replace(/^      - /, "").trim())
+      this.current.groups = [...(this.current.groups ?? []), group]
+      return
+    }
+
+    if (this.inGroups && !/^      /.test(rawLine)) {
+      this.inGroups = false
+    }
+  }
+}
+
 function parseCustomModesYaml(text: string): LegacyCustomMode[] | null {
   // Try JSON first
   const jsonResult = (() => {
@@ -1045,120 +1202,13 @@ function parseCustomModesYaml(text: string): LegacyCustomMode[] | null {
   })()
   if (jsonResult) return jsonResult
 
-  // Parse the simple YAML shape:
-  //   customModes:
-  //     - slug: xxx
-  //       name: xxx
-  //       roleDefinition: |
-  //         ...
-  //       groups:
-  //         - read
-  const modes: LegacyCustomMode[] = []
+  const parser = new CustomModeParser()
   const lines = text.split("\n")
-  let inModes = false
-  let current: Partial<LegacyCustomMode> | null = null
-  // Track which block scalar field is currently being collected
-  let blockField: "roleDefinition" | "customInstructions" | null = null
-  let inGroups = false
-  let blockLines: string[] = []
-
-  const flush = () => {
-    if (current?.slug && current?.name) {
-      if (blockField && blockLines.length > 0) {
-        current[blockField] = blockLines.join("\n").trim()
-      }
-      modes.push({ groups: [], ...current } as LegacyCustomMode)
-    }
-    current = null
-    blockField = null
-    inGroups = false
-    blockLines = []
-  }
-
   for (const rawLine of lines) {
-    if (!inModes) {
-      if (rawLine.trim() === "customModes:") inModes = true
-      continue
-    }
-
-    if (/^  - slug: /.test(rawLine)) {
-      flush()
-      current = { slug: stripYamlQuotes(rawLine.replace(/^  - slug: /, "").trim()), groups: [] }
-      continue
-    }
-
-    if (!current) continue
-
-    if (/^    name: /.test(rawLine)) {
-      current.name = stripYamlQuotes(rawLine.replace(/^    name: /, "").trim())
-      continue
-    }
-
-    // Block scalar fields (roleDefinition, customInstructions) with | or >
-    const blockMatch = rawLine.match(/^    (roleDefinition|customInstructions): [|>]/)
-    if (blockMatch) {
-      // Flush any previously open block
-      if (blockField && blockLines.length > 0) {
-        current[blockField] = blockLines.join("\n").trim()
-      }
-      blockField = blockMatch[1] as "roleDefinition" | "customInstructions"
-      inGroups = false
-      blockLines = []
-      continue
-    }
-
-    // Single-line scalar fields
-    if (/^    roleDefinition: /.test(rawLine) && !blockField) {
-      current.roleDefinition = stripYamlQuotes(rawLine.replace(/^    roleDefinition: /, "").trim())
-      continue
-    }
-
-    if (/^    customInstructions: /.test(rawLine) && !blockField) {
-      current.customInstructions = stripYamlQuotes(rawLine.replace(/^    customInstructions: /, "").trim())
-      continue
-    }
-
-    if (/^    whenToUse: /.test(rawLine) && !blockField) {
-      current.whenToUse = stripYamlQuotes(rawLine.replace(/^    whenToUse: /, "").trim())
-      continue
-    }
-
-    if (/^    description: /.test(rawLine) && !blockField) {
-      current.description = stripYamlQuotes(rawLine.replace(/^    description: /, "").trim())
-      continue
-    }
-
-    // Continuation lines of an open block scalar
-    if (blockField) {
-      if (/^      /.test(rawLine)) {
-        blockLines.push(rawLine.replace(/^      /, ""))
-        continue
-      }
-      // Block ended — flush and fall through to process this line
-      current[blockField] = blockLines.join("\n").trim()
-      blockField = null
-      blockLines = []
-    }
-
-    if (/^    groups:/.test(rawLine)) {
-      inGroups = true
-      current.groups = []
-      continue
-    }
-
-    if (inGroups && /^      - /.test(rawLine)) {
-      const group = stripYamlQuotes(rawLine.replace(/^      - /, "").trim())
-      current.groups = [...(current.groups ?? []), group]
-      continue
-    }
-
-    if (inGroups && !/^      /.test(rawLine)) {
-      inGroups = false
-    }
+    parser.parseLine(rawLine)
   }
-
-  flush()
-  return modes.length > 0 ? modes : null
+  parser.flush()
+  return parser.modes.length > 0 ? parser.modes : null
 }
 
 // ---------------------------------------------------------------------------
@@ -1209,8 +1259,8 @@ function buildMcpServerList(settings: LegacyMcpSettings | null): MigrationMcpSer
 
 /** @internal — exported for testing only */
 export function buildCustomModeList(
-  modes: LegacyCustomMode[] | null,
-  prompts: Record<string, LegacyPromptComponent> | null,
+  modes: LegacyCustomMode[] | null | undefined,
+  prompts: Record<string, LegacyPromptComponent> | null | undefined,
 ): MigrationCustomModeInfo[] {
   const result: MigrationCustomModeInfo[] = []
 

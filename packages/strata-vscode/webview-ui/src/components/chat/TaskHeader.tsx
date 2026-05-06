@@ -22,6 +22,7 @@ import { ContextProgress } from "./ContextProgress"
 import { ChangedFilesPanel } from "./ChangedFilesPanel"
 import { useChangedFiles } from "../../hooks/useChangedFiles"
 import type { TodoItem, ExtensionMessage } from "../../types/messages"
+import { ScenarioBadge } from "./ScenarioBadge"
 
 interface TaskHeaderProps {
   readonly?: boolean
@@ -129,6 +130,7 @@ export const TaskHeader: Component<TaskHeaderProps> = (props) => {
           {title()}
         </div>
         <div data-slot="task-header-stats">
+          <ScenarioBadge />
           <Show when={cost()}>
             {(c) => (
               <Tooltip value={costTooltip()} placement="bottom">

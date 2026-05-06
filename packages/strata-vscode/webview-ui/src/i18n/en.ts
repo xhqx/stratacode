@@ -1356,7 +1356,15 @@ export const dict = {
     "No MCP servers configured. Add MCP servers in strata.jsonc, or ask the agent to add them for you.",
   "settings.agentBehaviour.acpBrowseMarketplace": "Browse Marketplace",
   "settings.agentBehaviour.acpEmpty":
-    "No ACP agents configured. Add ACP agents in strata.jsonc, or ask the agent to add them for you.",
+    "No ACP providers configured. Add ACP providers in strata.jsonc, or ask the agent to add them for you.",
+  "settings.agentBehaviour.acpPredefined.title": "Built-in Providers",
+  "settings.agentBehaviour.acpPredefined.enable": "Enable",
+  "settings.agentBehaviour.acpPredefined.disable": "Disable",
+  "settings.agentBehaviour.acpPredefined.model": "Model",
+  "settings.agentBehaviour.acpPredefined.apiKey": "API Key",
+  "settings.agentBehaviour.acpPredefined.apiKey.placeholder": "Enter your API key",
+  "settings.agentBehaviour.acpPredefined.notInstalled": "Provider binary not installed",
+  "settings.agentBehaviour.acpCustom.title": "Custom Providers",
   "settings.agentBehaviour.workflowsPlaceholder": "Workflows are managed via workflow files in your workspace.",
   "settings.agentBehaviour.workflows.description":
     "Workflows are custom slash commands defined in your config. Type /command-name in the chat to invoke them. Commands are configured in opencode.json under the 'command' section.",
@@ -1365,21 +1373,21 @@ export const dict = {
   "settings.agentBehaviour.workflows.detail.description": "Description",
   "settings.agentBehaviour.workflows.detail.template": "Template",
 
-  // ACP edit keys (already referenced by AcpEditView.tsx)
-  "settings.agentBehaviour.editAcp": "Edit ACP Agent",
-  "settings.agentBehaviour.editAcp.transportLocal": "Local agent (stdio transport)",
-  "settings.agentBehaviour.editAcp.transportRemote": "Remote agent (HTTP transport)",
+  // ACP edit keys (already referenced by AcpProviderEditView.tsx)
+  "settings.agentBehaviour.editAcp": "Edit ACP Provider",
+  "settings.agentBehaviour.editAcp.transportLocal": "Local provider (stdio transport)",
+  "settings.agentBehaviour.editAcp.transportRemote": "Remote provider (HTTP transport)",
   "settings.agentBehaviour.editAcp.env": "Environment Variables",
-  "settings.agentBehaviour.editAcp.env.help": "Variables passed to the ACP agent process.",
+  "settings.agentBehaviour.editAcp.env.help": "Variables passed to the ACP provider process.",
   "settings.agentBehaviour.addAcp.command": "Command",
   "settings.agentBehaviour.addAcp.command.placeholder": "e.g. npx",
   "settings.agentBehaviour.addAcp.args": "Arguments",
   "settings.agentBehaviour.addAcp.args.help": "One argument per line. Paths with spaces are preserved as-is.",
   "settings.agentBehaviour.addAcp.args.placeholder": "e.g.\n-y\n@acpagent/server\n/tmp",
-  "settings.agentBehaviour.addAcp.url": "Agent URL",
+  "settings.agentBehaviour.addAcp.url": "Provider URL",
   "settings.agentBehaviour.addAcp.url.placeholder": "e.g. http://localhost:3000/acp",
-  "settings.agentBehaviour.removeAcp.title": "Remove ACP agent",
-  "settings.agentBehaviour.removeAcp.confirm": 'Remove ACP agent "{{name}}"? This will remove it from your config.',
+  "settings.agentBehaviour.removeAcp.title": "Remove ACP provider",
+  "settings.agentBehaviour.removeAcp.confirm": 'Remove ACP provider "{{name}}"? This will remove it from your config.',
   "settings.agentBehaviour.removeAcp.button": "Remove",
 
   // MCP create
@@ -1397,16 +1405,16 @@ export const dict = {
   "settings.agentBehaviour.mcpCreate.transportRemote": "Remote (SSE/HTTP)",
   "settings.agentBehaviour.mcpCreate.button": "Create",
 
-  // ACP create
-  "settings.agentBehaviour.addAcpAgent": "Add Agent",
-  "settings.agentBehaviour.acpCreate": "Create ACP Agent",
-  "settings.agentBehaviour.acpCreate.name": "Agent Name",
-  "settings.agentBehaviour.acpCreate.name.description": "A unique identifier for this ACP agent.",
-  "settings.agentBehaviour.acpCreate.name.placeholder": "my-agent",
+  // ACP provider create
+  "settings.agentBehaviour.addAcpAgent": "Add Provider",
+  "settings.agentBehaviour.acpCreate": "Create ACP Provider",
+  "settings.agentBehaviour.acpCreate.name": "Provider Name",
+  "settings.agentBehaviour.acpCreate.name.description": "A unique identifier for this ACP provider.",
+  "settings.agentBehaviour.acpCreate.name.placeholder": "my-provider",
   "settings.agentBehaviour.acpCreate.name.required": "Name is required",
   "settings.agentBehaviour.acpCreate.name.invalid":
     "Name must start with a lowercase letter and contain only lowercase letters, numbers, and hyphens",
-  "settings.agentBehaviour.acpCreate.name.taken": "An agent with this name already exists",
+  "settings.agentBehaviour.acpCreate.name.taken": "A provider with this name already exists",
   "settings.agentBehaviour.acpCreate.transport": "Transport",
   "settings.agentBehaviour.acpCreate.transportStdio": "Local (stdio)",
   "settings.agentBehaviour.acpCreate.transportHttp": "Remote (HTTP)",

@@ -1,6 +1,5 @@
 import { Component, createSignal, createEffect } from "solid-js"
 import { Card } from "@stratacode/strata-ui/card"
-import { Switch } from "@stratacode/strata-ui/switch"
 import SettingsRow from "./SettingsRow"
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
@@ -9,7 +8,6 @@ const RetriesTab: Component = () => {
   const language = useLanguage()
   const { config, updateConfig } = useConfig()
 
-  const [retryEnabled, setRetryEnabled] = createSignal(true)
   const [retryLimit, setRetryLimit] = createSignal(2)
   const [retryDelay, setRetryDelay] = createSignal(2)
   const [retryMaxDelay, setRetryMaxDelay] = createSignal(60)
@@ -19,14 +17,12 @@ const RetriesTab: Component = () => {
     const cfg = config()
     const r = (cfg as Record<string, unknown>).retry as
       | {
-          enabled?: boolean
           limit?: number
           delay?: number
           max_delay?: number
         }
       | undefined
     if (r) {
-      if (typeof r.enabled === "boolean") setRetryEnabled(r.enabled)
       if (typeof r.limit === "number") setRetryLimit(r.limit)
       if (typeof r.delay === "number") setRetryDelay(r.delay)
       if (typeof r.max_delay === "number") setRetryMaxDelay(r.max_delay)
@@ -36,22 +32,6 @@ const RetriesTab: Component = () => {
   return (
     <div>
       <Card>
-        <SettingsRow
-          title={language.t("settings.retries.enabled.title") || "Enabled"}
-          description={language.t("settings.retries.enabled.description") || "Enable automatic retries on errors"}
-        >
-          <Switch
-            checked={retryEnabled()}
-            onChange={(checked) => {
-              setRetryEnabled(checked)
-              updateConfig({ retry: { enabled: checked } } as Record<string, unknown>)
-            }}
-            hideLabel
-          >
-            {language.t("settings.retries.enabled.title") || "Enabled"}
-          </Switch>
-        </SettingsRow>
-
         <SettingsRow
           title={language.t("settings.retries.limit.title") || "Limit (attempts)"}
           description={language.t("settings.retries.limit.description") || "Maximum number of retry attempts"}
@@ -77,7 +57,6 @@ const RetriesTab: Component = () => {
               setRetryLimit(clamped)
               updateConfig({ retry: { limit: clamped } } as Record<string, unknown>)
             }}
-            disabled={!retryEnabled()}
           />
         </SettingsRow>
 
@@ -106,7 +85,6 @@ const RetriesTab: Component = () => {
               setRetryDelay(clamped)
               updateConfig({ retry: { delay: clamped } } as Record<string, unknown>)
             }}
-            disabled={!retryEnabled()}
           />
         </SettingsRow>
 
@@ -136,7 +114,6 @@ const RetriesTab: Component = () => {
               setRetryMaxDelay(clamped)
               updateConfig({ retry: { max_delay: clamped } } as Record<string, unknown>)
             }}
-            disabled={!retryEnabled()}
           />
         </SettingsRow>
       </Card>

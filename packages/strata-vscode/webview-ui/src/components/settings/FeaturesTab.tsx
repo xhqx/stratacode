@@ -106,11 +106,11 @@ const FeaturesTab: Component<FeaturesTabProps> = (props) => {
             <button
               type="button"
               data-testid="feature-sidebar-button"
+              data-feature-key={feature.key}
               onClick={() => setActive(feature.key)}
               style={btnStyle(
                 feature.key,
-                extensionFeatures()[feature.key] &&
-                  (!feature.requires || extensionFeatures()[feature.requires]),
+                extensionFeatures()[feature.key] && (!feature.requires || extensionFeatures()[feature.requires]),
               )}
             >
               <Icon name={feature.icon} size="small" />
@@ -135,11 +135,7 @@ const FeaturesTab: Component<FeaturesTabProps> = (props) => {
           </div>
           <For each={filteredPluginFeatures()}>
             {(feature) => (
-              <button
-                type="button"
-                onClick={() => setActive(feature.id)}
-                style={btnStyle(feature.id, true)}
-              >
+              <button type="button" onClick={() => setActive(feature.id)} style={btnStyle(feature.id, true)}>
                 <Show when={feature.icon} fallback={<Icon name="code" size="small" />}>
                   {(icon) => <Icon name={icon() as any} size="small" />}
                 </Show>
@@ -251,9 +247,7 @@ const FeaturesTab: Component<FeaturesTabProps> = (props) => {
                 }}
               >
                 <div style={{ opacity: feature.enabled ? 1 : 0.5, transition: "opacity 150ms ease" }}>
-                  <h2 style={{ margin: "0 0 8px 0", "font-size": "16px", "font-weight": "600" }}>
-                    {feature.label}
-                  </h2>
+                  <h2 style={{ margin: "0 0 8px 0", "font-size": "16px", "font-weight": "600" }}>{feature.label}</h2>
                   <p
                     style={{
                       margin: 0,

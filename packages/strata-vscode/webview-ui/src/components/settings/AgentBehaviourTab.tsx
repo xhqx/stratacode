@@ -1,4 +1,4 @@
-import { Component, createSignal, createMemo, For, Show, onCleanup, onMount } from "solid-js"
+import { Component, createSignal, createMemo, For, Show } from "solid-js"
 import { Switch } from "@stratacode/strata-ui/switch"
 import { Select } from "@stratacode/strata-ui/select"
 import { Card } from "@stratacode/strata-ui/card"

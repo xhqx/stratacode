@@ -1,0 +1,55 @@
+--- webview-ui/src/context/session.tsx	2023-10-10
++++ webview-ui/src/context/session.tsx	2023-10-10
+@@ -9,7 +9,8 @@
+ import { useVSCode, type VSCodeAPI } from "./vscode"
+ import { parseModelString } from "../utils/model-utils"
+ import { useProvider } from "./provider"
+ import { useConfig } from "./config"
++import { createModelSelectionLogic } from "./model-selection"
+ import { isDraftSession } from "../utils/session-utils"
+ import { resolveModelSelection, type ModelSelection } from "../types/providers"
+ import { FileAttachment } from "../types/messages/message"
+@@ -76,11 +77,6 @@
+   messages: Record<string, Message[]> // sessionID -> messages
+   parts: Record<string, Part[]> // messageID -> parts
+   todos: Record<string, TodoItem[]> // sessionID -> todos
+-  modelSelections: Record<string, ModelSelection | null> // agentName -> model (global, extension-lifetime)
+-  sessionOverrides: Record<string, ModelSelection> // sessionID -> per-session model override (compare mode)
+   agentSelections: Record<string, string> // sessionID -> agent name
+-  variantSelections: Record<string, string> // "providerID/modelID" -> variant name
+-  recentModels: ModelSelection[]
+-  favoriteModels: ModelSelection[]
+ }
+ 
+@@ -295,9 +291,4 @@
+   const [respondingSuggestions, setRespondingSuggestions] = createSignal<Set<string>>(new Set())
+ 
+-  // Tracks whether the user has explicitly set a model override per agent (to
+-  // prevent the default-sync effect from overwriting it).
+-  const [userSetAgents, setUserSetAgents] = createSignal<Record<string, boolean>>({})
+-
+   // Agents (modes) loaded from the CLI backend
+   const [agents, setAgents] = createSignal<AgentInfo[]>([])
+@@ -382,9 +373,4 @@
+     todos: {},
+-    modelSelections: {},
+-    sessionOverrides: {},
+     agentSelections: {},
+-    variantSelections: {},
+-    recentModels: [],
+-    favoriteModels: [],
+   })
+@@ -395,6 +381,14 @@
+     return pendingAgentSelection() ?? defaultAgent()
+   })
+ 
++  const modelSelection = createModelSelectionLogic({
++    currentSessionID,
++    selectedAgentName,
++    config,
++    providers: provider.providers,
++    providerConnected: provider.connected,
++    vscode,
++    clearSessionError: (sid) => setStore("messages", sid, (msgs = []) => msgs.filter((m) => !m.error)),
++  })
++

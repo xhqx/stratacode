@@ -225,13 +225,15 @@
   gap: 2px;
 }
 
-/* Expand toggle */
-[data-slot="task-header-expand"] {
+/* Header Actions */
+[data-slot="task-header-expand"],
+[data-slot="task-header-files-btn"] {
   all: unset;
   display: flex;
   align-items: center;
+  gap: 4px;
   cursor: pointer;
-  padding: 2px;
+  padding: 2px 4px;
   border-radius: 3px;
   color: var(--vscode-descriptionForeground);
   transition:
@@ -239,7 +241,18 @@
     background 0.15s;
 }
 
-[data-slot="task-header-expand"]:hover {
+[data-slot="task-header-expand"]:hover,
+[data-slot="task-header-files-btn"]:hover {
   color: var(--vscode-foreground);
   background: var(--vscode-toolbar-hoverBackground);
+}
+
+[data-slot="task-header-files-badge"] {
+  font-size: 10px;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  padding: 0 4px;
+  border-radius: 8px;
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
 }

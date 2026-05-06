@@ -283,6 +283,15 @@ export const layer = Layer.effect(
             options: {},
             permission: Permission.fromConfig({ "*": "deny", read: "allow" }),
           },
+          doc_worker: {
+            // stratacode_change
+            name: "doc_worker",
+            mode: "subagent",
+            native: true,
+            hidden: true,
+            options: {},
+            permission: Permission.fromConfig({ "*": "deny", read: "allow" }),
+          },
           title: {
             name: "title",
             mode: "primary",

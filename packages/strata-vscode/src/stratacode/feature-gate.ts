@@ -1,6 +1,6 @@
 // stratacode_change - new file
 import * as vscode from "vscode"
-import { FEATURE_DEFAULTS, type FeatureKey } from "./feature-defaults"
+import type { FeatureKey } from "./feature-defaults"
 import { FeatureGraph } from "./feature-graph"
 import { MANIFEST } from "./feature-manifest"
 

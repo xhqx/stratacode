@@ -24,6 +24,13 @@ import type {
   ConfigUpdateErrors,
   ConfigUpdateResponses,
   ConfigWarningsResponses,
+  DocsGenerateResponses,
+  DocsManifestErrors,
+  DocsManifestResponses,
+  DocsPageErrors,
+  DocsPageResponses,
+  DocsRegenerateErrors,
+  DocsRegenerateResponses,
   EnhancePromptEnhanceErrors,
   EnhancePromptEnhanceResponses,
   EventSubscribeResponses,
@@ -4852,6 +4859,132 @@ export class RepoMap extends HeyApiClient {
   }
 }
 
+export class Docs extends HeyApiClient {
+  /**
+   * Get documents manifest
+   *
+   * Returns the current documentation manifest including all generated pages and their statuses.
+   */
+  public manifest<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<DocsManifestResponses, DocsManifestErrors, ThrowOnError>({
+      url: "/docs/manifest",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Get document page content
+   *
+   * Returns the generated Markdown content for a specific document page.
+   */
+  public page<ThrowOnError extends boolean = false>(
+    parameters: {
+      id: string
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "id" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<DocsPageResponses, DocsPageErrors, ThrowOnError>({
+      url: "/docs/page/{id}",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Generate documentation
+   *
+   * Triggers background generation of documentation for all files.
+   */
+  public generate<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<DocsGenerateResponses, unknown, ThrowOnError>({
+      url: "/docs/generate",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Regenerate document page
+   *
+   * Triggers background regeneration of documentation for a specific file.
+   */
+  public regenerate<ThrowOnError extends boolean = false>(
+    parameters: {
+      id: string
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "id" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<DocsRegenerateResponses, DocsRegenerateErrors, ThrowOnError>({
+      url: "/docs/regenerate/{id}",
+      ...options,
+      ...params,
+    })
+  }
+}
+
 export class Suggestion extends HeyApiClient {
   /**
    * List pending suggestions
@@ -6569,6 +6702,11 @@ export class StrataClient extends HeyApiClient {
   private _repoMap?: RepoMap
   get repoMap(): RepoMap {
     return (this._repoMap ??= new RepoMap({ client: this.client }))
+  }
+
+  private _docs?: Docs
+  get docs(): Docs {
+    return (this._docs ??= new Docs({ client: this.client }))
   }
 
   private _suggestion?: Suggestion

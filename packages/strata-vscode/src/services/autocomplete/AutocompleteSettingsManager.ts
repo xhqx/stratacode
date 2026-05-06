@@ -13,7 +13,6 @@ export interface AutocompleteServiceSettings {
   snoozeUntil?: number
   chatMode: "fim" | "agent"
   chatDebounceMs: number
-  taskSuggestionsEnabled: boolean
 }
 
 export type WebviewMessage = {
@@ -31,7 +30,6 @@ const ALLOWED_KEYS = new Set([
   "enableChatAutocomplete",
   "chatMode",
   "chatDebounceMs",
-  "taskSuggestionsEnabled",
   "model",
   "snoozeUntil",
 ])
@@ -60,7 +58,6 @@ export class AutocompleteSettingsManager {
       snoozeUntil: config.get<number>("snoozeUntil"),
       chatMode: config.get<string>("chatMode", "fim") as "fim" | "agent",
       chatDebounceMs: config.get<number>("chatDebounceMs", 2000),
-      taskSuggestionsEnabled: config.get<boolean>("taskSuggestionsEnabled", true),
     }
   }
 

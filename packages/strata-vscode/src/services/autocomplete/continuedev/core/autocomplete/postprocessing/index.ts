@@ -86,6 +86,38 @@ function removeBackticks(completion: string): string {
   return completion
 }
 
+function processCodestralCompletion(completion: string, prefix: string, suffix: string): string {
+  // Codestral sometimes starts with an extra space
+  if (completion[0] === " " && completion[1] !== " ") {
+    if (prefix.endsWith(" ") && suffix.startsWith("\n")) {
+      completion = completion.slice(1)
+    }
+  }
+
+  // When there is no suffix, Codestral tends to begin with a new line
+  // We do this to avoid double new lines
+  if (suffix.length === 0 && prefix.endsWith("\n\n") && completion.startsWith("\n")) {
+    // Remove a single leading \n from the completion
+    completion = completion.slice(1)
+  }
+  return completion
+}
+
+function processMercuryCompletion(completion: string, prefix: string, suffix: string): string {
+  completion = removePrefixOverlap(completion, prefix)
+
+  // If completion starts with multiple whitespaces, but the cursor is at the
+  // end of the line then it should probably be on a new line
+  if (
+    (completion.startsWith("  ") || completion.startsWith("\t")) &&
+    !prefix.endsWith("\n") &&
+    (suffix.startsWith("\n") || suffix.trim().length === 0)
+  ) {
+    completion = "\n" + completion
+  }
+  return completion
+}
+
 export function postprocessCompletion({
   completion,
   llm,
@@ -118,33 +150,11 @@ export function postprocessCompletion({
   }
 
   if (llm.model.includes("codestral")) {
-    // Codestral sometimes starts with an extra space
-    if (completion[0] === " " && completion[1] !== " ") {
-      if (prefix.endsWith(" ") && suffix.startsWith("\n")) {
-        completion = completion.slice(1)
-      }
-    }
-
-    // When there is no suffix, Codestral tends to begin with a new line
-    // We do this to avoid double new lines
-    if (suffix.length === 0 && prefix.endsWith("\n\n") && completion.startsWith("\n")) {
-      // Remove a single leading \n from the completion
-      completion = completion.slice(1)
-    }
+    completion = processCodestralCompletion(completion, prefix, suffix)
   }
 
   if (llm.model.includes("mercury")) {
-    completion = removePrefixOverlap(completion, prefix)
-
-    // If completion starts with multiple whitespaces, but the cursor is at the
-    // end of the line then it should probably be on a new line
-    if (
-      (completion.startsWith("  ") || completion.startsWith("\t")) &&
-      !prefix.endsWith("\n") &&
-      (suffix.startsWith("\n") || suffix.trim().length === 0)
-    ) {
-      completion = "\n" + completion
-    }
+    completion = processMercuryCompletion(completion, prefix, suffix)
   }
 
   // If prefix ends with space and so does completion, then remove the space from completion

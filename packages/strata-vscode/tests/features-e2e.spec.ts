@@ -44,7 +44,7 @@ test.beforeEach(async ({ page }) => {
 
 // ─── Feature registry (mirrors feature-registry.ts) ──────────────────────────
 const FEATURE_KEYS = [
-  "acpAgents",
+  "acpProviders",
   "agentManager",
   "autoApprove",
   "autocomplete",
@@ -79,7 +79,7 @@ const FEATURE_KEYS = [
 // Features that have a sub-component rendered below the toggle.
 // When ON the panel `[data-testid="feature-panel-{key}"]` is visible.
 const FEATURES_WITH_PANEL = new Set([
-  "acpAgents",
+  "acpProviders",
   "agentManager",
   "autoApprove",
   "autocomplete",

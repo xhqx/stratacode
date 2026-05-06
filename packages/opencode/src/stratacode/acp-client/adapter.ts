@@ -1,5 +1,5 @@
 // stratacode_change - new file
-import { Effect, Context, Layer, Stream } from "effect"
+import { Effect, Context, Layer, Stream, Queue } from "effect"
 import { LLM } from "../../session/llm"
 import { Log } from "../../util"
 import { Service as ACPManagerService } from "./manager"
@@ -24,11 +24,22 @@ export const layer = Layer.effect(
     const stream = (input: LLM.StreamInput): Stream.Stream<LLM.Event, unknown> => {
       return Stream.unwrap(
         Effect.gen(function* () {
-          const config = input.agent.options.acp_config as ConfigACPAgent
-          const { conn } = yield* acpManager.getConnection(input.agent.name, config)
+          const config = input.model.options?.acpConfig as ConfigACPAgent
+          const key = (input.model.options?.acpKey as string) ?? input.model.providerID
+          const { conn, sessionId, events } = yield* acpManager.getConnection(key, config)
+          const model = config.model
+
+          if (model) {
+            yield* Effect.promise(() =>
+              conn.unstable_setSessionModel({
+                sessionId,
+                modelId: model,
+              }),
+            )
+          }
 
           const promptReq: Parameters<ClientSideConnection["prompt"]>[0] = {
-            sessionId: input.sessionID,
+            sessionId,
             prompt: input.messages.map((m) => ({
               type: "text" as const,
               text: Array.isArray(m.content)
@@ -46,38 +57,71 @@ export const layer = Layer.effect(
 
           log.info("Sending prompt to ACP agent", { sessionID: input.sessionID })
 
-          yield* Effect.sync(() => {
-            // Note: In real stream, these are emitted via queue
-          })
+          // Create a queue for incoming stream events
+          const queue = yield* Effect.acquireRelease(
+            Queue.unbounded<LLM.Event>(),
+            (q) => Queue.shutdown(q)
+          )
 
-          try {
-            const response = yield* Effect.promise(() => conn.prompt(promptReq))
-          } catch (e) {
-            log.error("Error from ACP agent", { error: e })
-            throw e
+          // We don't have access to the actual part IDs natively yet without parsing the events
+          // But LLM.Event needs IDs. Let's just track a current text ID.
+          let currentTextId = ""
+
+          const onSessionUpdate = (params: any) => {
+            if (params.sessionId !== sessionId) return
+            
+            const event = params.event
+            if (!event) return
+
+            // Simple event mapping
+            if (event.type === "text-start") {
+              currentTextId = PartID.ascending()
+              Effect.runFork(Queue.offer(queue, { type: "text-start", id: currentTextId }))
+            } else if (event.type === "text-delta" && event.text) {
+              if (!currentTextId) {
+                currentTextId = PartID.ascending()
+                Effect.runFork(Queue.offer(queue, { type: "text-start", id: currentTextId }))
+              }
+              Effect.runFork(Queue.offer(queue, { type: "text-delta", id: currentTextId, text: event.text }))
+            } else if (event.type === "text-end") {
+              if (currentTextId) {
+                Effect.runFork(Queue.offer(queue, { type: "text-end", id: currentTextId }))
+                currentTextId = ""
+              }
+            } else if (event.type === "finish-step") {
+              Effect.runFork(
+                Queue.offer(queue, { 
+                  type: "finish-step", 
+                  finishReason: "stop", 
+                  usage: { promptTokens: 0, completionTokens: 0 } 
+                } as unknown as Extract<LLM.Event, { type: "finish-step" }>).pipe(
+                  Effect.andThen(() => Queue.shutdown(queue))
+                )
+              )
+            }
           }
 
-          return Stream.fromIterable([
-            { type: "start" } as Extract<LLM.Event, { type: "start" }>,
-            {
-              type: "text-start",
-              id: PartID.ascending(),
-            } as Extract<LLM.Event, { type: "text-start" }>,
-            {
-              type: "text-delta",
-              id: PartID.ascending(),
-              text: "Response from ACP agent (simulated for now pending session/update implementation)",
-            } as Extract<LLM.Event, { type: "text-delta" }>,
-            {
-              type: "text-end",
-              id: PartID.ascending(),
-            } as Extract<LLM.Event, { type: "text-end" }>,
-            {
-              type: "finish-step",
-              finishReason: "stop",
-              usage: { promptTokens: 0, completionTokens: 0 },
-            } as unknown as Extract<LLM.Event, { type: "finish-step" }>,
-          ])
+          events.on("sessionUpdate", onSessionUpdate)
+
+          Effect.runFork(Queue.offer(queue, { type: "start" } as Extract<LLM.Event, { type: "start" }>))
+
+          // We fire the prompt asynchronously so the stream can start yielding
+          Effect.runFork(
+            Effect.promise(async () => {
+              try {
+                await conn.prompt(promptReq)
+              } catch (e) {
+                log.error("Error from ACP agent prompt", { error: e })
+                await Effect.runPromise(Queue.shutdown(queue))
+              }
+            })
+          )
+
+          return Stream.fromQueue(queue).pipe(
+            Stream.ensuring(Effect.sync(() => {
+              events.off("sessionUpdate", onSessionUpdate)
+            }))
+          )
         }),
       )
     }

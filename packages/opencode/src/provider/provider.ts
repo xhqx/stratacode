@@ -43,6 +43,7 @@ import {
   REQUEST_TIMEOUT_MS,
 } from "@/stratacode/provider/provider"
 // stratacode_change end
+import { PREDEFINED } from "@/stratacode/acp-client/registry" // stratacode_change
 
 const log = Log.create({ service: "provider" })
 
@@ -1321,6 +1322,124 @@ const layer: Layer.Layer<
           if (provider.options) partial.options = provider.options
           mergeProvider(providerID, partial)
         }
+
+        // stratacode_change start - inject ACP providers as native providers
+        const acpProvidersConfig = {
+          ...(cfg.acp_agents ?? {}),
+          ...(cfg.acp_providers ?? {}),
+        }
+        for (const [key, preset] of Object.entries(PREDEFINED)) {
+          const userConf = acpProvidersConfig[key]
+          if (!userConf?.enabled) continue
+
+          const providerID = ProviderID.make(`acp-${key}`)
+          if (disabled.has(providerID)) continue
+
+          const models: Record<string, Model> = {}
+          for (const m of preset.models) {
+            models[m.id] = {
+              id: ModelID.make(m.id),
+              name: m.name,
+              providerID,
+              api: { id: m.id, npm: "acp", url: "" },
+              status: "active",
+              capabilities: {
+                temperature: true,
+                reasoning: false,
+                attachment: true,
+                toolcall: true,
+                input: { text: true, audio: false, image: false, video: false, pdf: false },
+                output: { text: true, audio: false, image: false, video: false, pdf: false },
+                interleaved: false,
+              },
+              cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
+              options: { acp: true, acpKey: key, acpConfig: userConf },
+              limit: { context: 0, output: 0 },
+              headers: {},
+              family: "",
+              release_date: "",
+              variants: {},
+            }
+          }
+
+          mergeProvider(providerID, {
+            name: `[ACP] ${preset.name}`,
+            env: [],
+            source: "custom",
+            models,
+            options: { acp: true, acpKey: key, acpConfig: userConf },
+          })
+
+          // Ensure it's forcefully added if not present in database
+          if (!providers[providerID]) {
+            providers[providerID] = {
+              id: providerID,
+              name: `[ACP] ${preset.name}`,
+              env: [],
+              source: "custom",
+              options: { acp: true, acpKey: key, acpConfig: userConf },
+              models,
+            }
+          }
+        }
+
+        // Inject custom (non-predefined) ACP providers
+        for (const [key, userConf] of Object.entries(acpProvidersConfig)) {
+          if (key in PREDEFINED) continue // already handled above
+          if (!userConf?.enabled) continue
+
+          const providerID = ProviderID.make(`acp-${key}`)
+          if (disabled.has(providerID)) continue
+
+          // Custom providers get a single "default" model initially;
+          // real models are discovered at runtime via session/new
+          const models: Record<string, Model> = {
+            default: {
+              id: ModelID.make("default"),
+              name: userConf.name ?? key,
+              providerID,
+              api: { id: "default", npm: "acp", url: "" },
+              status: "active",
+              capabilities: {
+                temperature: true,
+                reasoning: false,
+                attachment: true,
+                toolcall: true,
+                input: { text: true, audio: false, image: false, video: false, pdf: false },
+                output: { text: true, audio: false, image: false, video: false, pdf: false },
+                interleaved: false,
+              },
+              cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
+              options: { acp: true, acpKey: key, acpConfig: userConf },
+              limit: { context: 0, output: 0 },
+              headers: {},
+              family: "",
+              release_date: "",
+              variants: {},
+            },
+          }
+
+          mergeProvider(providerID, {
+            name: `[ACP] ${userConf.name ?? key}`,
+            env: [],
+            source: "custom",
+            models,
+            options: { acp: true, acpKey: key, acpConfig: userConf },
+          })
+
+          // Ensure it's forcefully added if not present in database
+          if (!providers[providerID]) {
+            providers[providerID] = {
+              id: providerID,
+              name: `[ACP] ${userConf.name ?? key}`,
+              env: [],
+              source: "custom",
+              options: { acp: true, acpKey: key, acpConfig: userConf },
+              models,
+            }
+          }
+        }
+        // stratacode_change end
 
         const gitlab = ProviderID.make("gitlab")
         if (discoveryLoaders[gitlab] && providers[gitlab] && isProviderAllowed(gitlab)) {

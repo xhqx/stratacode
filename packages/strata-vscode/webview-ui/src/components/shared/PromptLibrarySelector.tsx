@@ -19,9 +19,7 @@ export const PromptLibrarySelector: Component<PromptLibrarySelectorProps> = (pro
   const filtered = createMemo(() => {
     const q = query().toLowerCase().trim()
     if (!q) return props.workflows
-    return props.workflows.filter(
-      (w) => w.name.toLowerCase().includes(q) || w.description?.toLowerCase().includes(q),
-    )
+    return props.workflows.filter((w) => w.name.toLowerCase().includes(q) || w.description?.toLowerCase().includes(q))
   })
 
   function pick(workflow: SlashCommandEntry) {
@@ -108,10 +106,7 @@ export const PromptLibrarySelector: Component<PromptLibrarySelectorProps> = (pro
               ref={listRef}
               style={bodyH() !== undefined ? { "max-height": `${bodyH()! - 38}px` } : {}}
             >
-              <Show
-                when={filtered().length > 0}
-                fallback={<div class="prompt-library-empty">No workflows found</div>}
-              >
+              <Show when={filtered().length > 0} fallback={<div class="prompt-library-empty">No workflows found</div>}>
                 <For each={filtered()}>
                   {(workflow, i) => (
                     <div

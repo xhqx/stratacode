@@ -153,12 +153,6 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const startWorktreeFromBranch = () =>
     vscode.postMessage({ type: "agentManager.createWorktree", baseBranch: repoBranch()! })
 
-  const openAgentManager = () => {
-    if (extensionFeatures().agentManager) {
-      vscode.postMessage({ type: "openAgentManager" })
-    }
-  }
-
   const openChanges = () => vscode.postMessage({ type: "openChanges" })
 
   const moveToWorktree = () => {

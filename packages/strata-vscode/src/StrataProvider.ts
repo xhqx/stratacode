@@ -1776,41 +1776,20 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       .catch((e: unknown) => Logger.error("StrataProvider", "Failed to fetch session statuses:", e))
   }
 
-  private async handleLoadMessages(
+  private async processMessagePage(
     sessionID: string,
-    options: { mode?: MessageLoadMode; before?: string; limit?: number } = {},
+    dir: string,
+    mode: MessageLoadMode,
+    limit: number,
+    before?: string,
+    abort?: AbortController,
   ): Promise<void> {
-    const mode = options.mode ?? "replace"
-    if (mode !== "prepend") {
-      this.trackedSessionIds.add(sessionID)
-      this.focusSession(sessionID)
-      this.contextSessionID = sessionID
-    }
-    if (!this.client) {
-      this.postMessage({ type: "error", message: "Not connected to CLI backend", sessionID })
-      return
-    }
-    const dir = this.getWorkspaceDirectory(sessionID)
-    if (mode === "focus") {
-      this.refreshSessionDetails(sessionID, dir)
-      // Reconcile tail so SSE drops self-heal. Throttled to skip rapid tab-switching bursts.
-      if (Date.now() - (this.lastReconciledAt.get(sessionID) ?? 0) < 1000) return
-      await this.handleLoadMessages(sessionID, { mode: "reconcile", limit: options.limit ?? MESSAGE_PAGE_LIMIT })
-      return
-    }
-    // Replace competes for the spinner and cancels earlier loads; prepend/reconcile run in parallel.
-    const abort = mode === "replace" ? new AbortController() : undefined
-    if (abort) {
-      this.loadMessagesAbort?.abort()
-      this.loadMessagesAbort = abort
-      this.refreshSessionDetails(sessionID, dir, abort.signal)
-    }
     try {
-      const page = await fetchMessagePage(this.client, {
+      const page = await fetchMessagePage(this.client!, {
         sessionID,
         workspaceDir: dir,
-        limit: options.limit ?? MESSAGE_PAGE_LIMIT,
-        before: options.before,
+        limit,
+        before,
         signal: abort?.signal,
       })
       if (abort?.signal.aborted) return
@@ -1844,6 +1823,38 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       Logger.error("StrataProvider", "Failed to load messages:", error)
       this.postMessage({ type: "error", message: getErrorMessage(error) || "Failed to load messages", sessionID })
     }
+  }
+
+  private async handleLoadMessages(
+    sessionID: string,
+    options: { mode?: MessageLoadMode; before?: string; limit?: number } = {},
+  ): Promise<void> {
+    const mode = options.mode ?? "replace"
+    if (mode !== "prepend") {
+      this.trackedSessionIds.add(sessionID)
+      this.focusSession(sessionID)
+      this.contextSessionID = sessionID
+    }
+    if (!this.client) {
+      this.postMessage({ type: "error", message: "Not connected to CLI backend", sessionID })
+      return
+    }
+    const dir = this.getWorkspaceDirectory(sessionID)
+    if (mode === "focus") {
+      this.refreshSessionDetails(sessionID, dir)
+      // Reconcile tail so SSE drops self-heal. Throttled to skip rapid tab-switching bursts.
+      if (Date.now() - (this.lastReconciledAt.get(sessionID) ?? 0) < 1000) return
+      await this.handleLoadMessages(sessionID, { mode: "reconcile", limit: options.limit ?? MESSAGE_PAGE_LIMIT })
+      return
+    }
+    // Replace competes for the spinner and cancels earlier loads; prepend/reconcile run in parallel.
+    const abort = mode === "replace" ? new AbortController() : undefined
+    if (abort) {
+      this.loadMessagesAbort?.abort()
+      this.loadMessagesAbort = abort
+      this.refreshSessionDetails(sessionID, dir, abort.signal)
+    }
+    await this.processMessagePage(sessionID, dir, mode, options.limit ?? MESSAGE_PAGE_LIMIT, options.before, abort)
   }
 
   /**
@@ -3502,6 +3513,94 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     }
   }
 
+  private async processExplanationBatches(
+    client: any,
+    targetDirectory: string,
+    validDiffs: { file: string; patch: string }[],
+    sessionContext?: string
+  ): Promise<void> {
+    const BATCH_SIZE = 5
+    let summary = ""
+
+    for (let i = 0; i < validDiffs.length; i += BATCH_SIZE) {
+      const chunk = validDiffs.slice(i, i + BATCH_SIZE)
+      const last = i + BATCH_SIZE >= validDiffs.length
+      const { annotatedDiffs, lineMap } = buildIndexedPatches(chunk)
+
+      if (!annotatedDiffs.trim()) {
+        if (last) {
+          this.postMessage({
+            type: "diffViewer.explainResult",
+            threads: [],
+            summary: summary || "Explanation completed.",
+            done: true,
+          })
+        }
+        continue
+      }
+
+      const prompt = buildExplainPrompt(annotatedDiffs, sessionContext)
+
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("Explanation timed out after 60s")), 60_000)
+      })
+
+      const res = await Promise.race([
+        client.session.prompt(
+          {
+            sessionID: this.diffExplainSession,
+            directory: targetDirectory,
+            agent: "explainer",
+            parts: [{ type: "text", text: prompt }],
+          },
+          { throwOnError: true },
+        ),
+        timeout,
+      ])
+
+      if (timer) clearTimeout(timer)
+
+      const part = res.data?.parts?.find((p: any) => p.type === "text")
+      if (part && "text" in part) {
+        const raw = part.text.trim()
+        const parsed = parseExplainResponse(raw, lineMap)
+        if (parsed.summary) summary = parsed.summary
+
+        const threads: ReviewThread[] = parsed.comments.map((c) => ({
+          id: Math.random().toString(36).substring(2, 9),
+          file: c.file,
+          side: c.side as "left" | "right" | "additions" | "deletions" | undefined,
+          line: c.line,
+          ...(c.endLine !== undefined ? { endLine: c.endLine } : {}),
+          messages: [
+            {
+              id: Math.random().toString(36).substring(2, 9),
+              author: "ai" as const,
+              text: c.text,
+              timestamp: Date.now(),
+            },
+          ],
+          pending: false,
+        }))
+
+        this.postMessage({
+          type: "diffViewer.explainResult",
+          threads,
+          summary: last ? summary || "Explanation completed." : undefined,
+          done: last,
+        })
+      } else if (last) {
+        this.postMessage({
+          type: "diffViewer.explainResult",
+          threads: [],
+          summary: summary || "Explanation completed.",
+          done: true,
+        })
+      }
+    }
+  }
+
   private async handleDiffExplainAll(message: any): Promise<void> {
     const worktreeId = message.worktreeId as string | undefined
     const root = this.getProjectDirectory(this.currentSession?.id)
@@ -3581,87 +3680,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           Logger.info("StrataProvider", "handleDiffExplainAll: session context fetch failed, continuing without", err)
         }
 
-        // Process in batches of BATCH_SIZE files
-        const BATCH_SIZE = 5
-        let summary = ""
-
-        for (let i = 0; i < validDiffs.length; i += BATCH_SIZE) {
-          const chunk = validDiffs.slice(i, i + BATCH_SIZE)
-          const last = i + BATCH_SIZE >= validDiffs.length
-          const { annotatedDiffs, lineMap } = buildIndexedPatches(chunk)
-
-          if (!annotatedDiffs.trim()) {
-            if (last) {
-              this.postMessage({
-                type: "diffViewer.explainResult",
-                threads: [],
-                summary: summary || "Explanation completed.",
-                done: true,
-              })
-            }
-            continue
-          }
-
-          const prompt = buildExplainPrompt(annotatedDiffs, sessionContext)
-
-          let timer: ReturnType<typeof setTimeout> | undefined
-          const timeout = new Promise<never>((_, reject) => {
-            timer = setTimeout(() => reject(new Error("Explanation timed out after 60s")), 60_000)
-          })
-
-          const res = await Promise.race([
-            client.session.prompt(
-              {
-                sessionID: this.diffExplainSession,
-                directory: targetDirectory,
-                agent: "explainer",
-                parts: [{ type: "text", text: prompt }],
-              },
-              { throwOnError: true },
-            ),
-            timeout,
-          ])
-
-          if (timer) clearTimeout(timer)
-
-          const part = res.data?.parts?.find((p: any) => p.type === "text")
-          if (part && "text" in part) {
-            const raw = part.text.trim()
-            const parsed = parseExplainResponse(raw, lineMap)
-            if (parsed.summary) summary = parsed.summary
-
-            const threads: ReviewThread[] = parsed.comments.map((c) => ({
-              id: Math.random().toString(36).substring(2, 9),
-              file: c.file,
-              side: c.side as "left" | "right" | "additions" | "deletions" | undefined,
-              line: c.line,
-              ...(c.endLine !== undefined ? { endLine: c.endLine } : {}),
-              messages: [
-                {
-                  id: Math.random().toString(36).substring(2, 9),
-                  author: "ai" as const,
-                  text: c.text,
-                  timestamp: Date.now(),
-                },
-              ],
-              pending: false,
-            }))
-
-            this.postMessage({
-              type: "diffViewer.explainResult",
-              threads,
-              summary: last ? summary || "Explanation completed." : undefined,
-              done: last,
-            })
-          } else if (last) {
-            this.postMessage({
-              type: "diffViewer.explainResult",
-              threads: [],
-              summary: summary || "Explanation completed.",
-              done: true,
-            })
-          }
-        }
+        await this.processExplanationBatches(client, targetDirectory, validDiffs, sessionContext)
       } finally {
         gitOps.dispose()
       }
@@ -3787,99 +3806,52 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
    * Handle SSE events from the CLI backend.
    * Filters events by project ID and tracked session IDs so each webview only sees its own sessions.
    */
-  private handleEvent(event: Event, directory?: string): void {
-    if (event.type === "strata-sessions.remote-status-changed") {
-      this.remoteService?.updateFromEvent({ enabled: event.properties.enabled, connected: event.properties.connected })
-      return
-    }
-
-    // Handle background worker events safely bypassing strict Event types for now
-    const workerEvent = event as any
+  private handleWorkerEvent(workerEvent: any): boolean {
     if (
       workerEvent.type === "worker.started" ||
       workerEvent.type === "worker.completed" ||
       workerEvent.type === "worker.failed"
     ) {
       this.workerStatusBar?.update(workerEvent)
-      // For auto_explain: forward explainer results to diff viewer webview
       if (workerEvent.type === "worker.completed" && workerEvent.properties?.worker === "explainer_worker") {
         this.postMessage({ type: "diffViewer.explainResult", ...workerEvent.properties.result })
       }
-      return
+      return true
     }
+    return false
+  }
 
-    // Drop session events from other projects before any tracking logic.
-    // This must come first: the trackedSessionIds guard below would otherwise
-    // let a foreign session through if it was accidentally tracked.
-    if (isEventFromForeignProject(event, this.projectID)) return
+  private handleSessionStatusEvent(event: Extract<Event, { type: "session.status" }>, sessionID: string): void {
+    this.sessionStatusMap.set(sessionID, event.properties.status.type)
+    checkCompletion(sessionID, event.properties.status.type)
 
-    if (event.type === "message.updated") {
-      this.confirmations.confirm(event.properties.info.id)
+    const msg = mapSSEEventToWebviewMessage(event, sessionID)
+    if (msg) {
+      this.streams.flush(sessionID)
+      this.postMessage(msg)
     }
+  }
 
-    // session.status events pass the onEventFiltered pre-filter for all providers (see line 842),
-    // so this runs on every StrataProvider instance — including the Settings panel which has no
-    // tracked sessions. Update sessionStatusMap and forward to webview before the
-    // trackedSessionIds guard so the Settings panel's allStatusMap stays current for the
-    // busy-session warning on Save.
-    if (event.type === "session.status") {
-      const sid = event.properties.sessionID
-      this.sessionStatusMap.set(sid, event.properties.status.type)
-      checkCompletion(sid, event.properties.status.type)
-
-      const msg = mapSSEEventToWebviewMessage(event, sid)
-      if (msg) {
-        this.streams.flush(sid)
-        this.postMessage(msg)
-      }
-      return
-    }
-
-    // Extract sessionID from the event
-    if (event.type === "session.created" && this.adoptPendingFollowup(event.properties.info)) {
-      return
-    }
-
-    const sessionID = this.connectionService.resolveEventSessionId(event)
-
-    // Drop all events for hidden sessions (e.g. the diff viewer explainer).
-    // This prevents them from appearing in the sidebar session list.
-    if (sessionID && this.connectionService.isSessionHidden(sessionID)) return
-    if (event.type === "session.created" && this.connectionService.isSessionHidden(event.properties.info.id)) return
-
-    // Events without sessionID (server.connected, server.heartbeat, indexing.status) → always forward
-    // Events with sessionID → only forward if this webview tracks that session
-    // message.part.updated and message.part.delta are always session-scoped; drop if session unknown.
-    if (!sessionID && (event.type === "message.part.updated" || event.type === "message.part.delta")) {
-      return
-    }
-    if (event.type !== "indexing.status" && sessionID && !this.trackedSessionIds.has(sessionID)) {
-      return
-    }
-
-    // Refresh provider and agent lists when the server signals a state disposal
+  private handleGlobalAndServerEvents(event: Event): boolean {
     if (event.type === "global.disposed") {
       void this.reloadAfterAuthChange()
-      return
+      return true
     }
-
     if (event.type === "server.instance.disposed") {
       const props = event.properties as Record<string, unknown> | null
       const dir = typeof props?.directory === "string" ? props.directory : undefined
-      if (dir && path.resolve(dir) !== path.resolve(this.getWorkspaceDirectory())) return
+      if (dir && path.resolve(dir) !== path.resolve(this.getWorkspaceDirectory())) return true
       void this.reloadAfterAuthChange()
-      return
+      return true
     }
-
-    // Config was updated without a full dispose (e.g. permission-only save).
-    // Fetch and push the updated config so the Settings panel reflects the change.
     if (event.type === "global.config.updated") {
       void this.fetchAndSendConfigUpdated()
-      return
+      return true
     }
+    return false
+  }
 
-    // Forward relevant events to webview
-    // Side effects that must happen before the webview message is sent
+  private handleSessionLifecycleEvents(event: Event): void {
     if (event.type === "session.created" && !this.currentSession) {
       this.currentSession = event.properties.info
       this.contextSessionID = event.properties.info.id
@@ -3889,26 +3861,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.currentSession = event.properties.info
       this.contextSessionID = event.properties.info.id
     }
+  }
 
-    // Auto-adopt child sessions as soon as the task tool part reveals their ID.
-    // This means the child's permission/question events are tracked immediately —
-    // before the webview renderer has a chance to call syncSession — eliminating
-    // the race where the child blocks on a prompt that the UI never sees.
-    if (event.type === "message.part.updated") {
-      const part = event.properties.part as {
-        type?: string
-        tool?: string
-        metadata?: { sessionId?: string }
-        state?: { metadata?: { sessionId?: string } }
-        sessionID?: string
-      }
-      const childId = childID(part)
-      if (childId && !this.trackedSessionIds.has(childId)) {
-        Logger.info("StrataProvider", "🔗 Auto-adopting child session from task tool", { childId })
-        void this.handleSyncSession(childId, part.sessionID ?? sessionID)
-      }
-    }
-
+  private handlePromptEvents(event: Event): void {
     if (event.type === "permission.asked" || event.type === "question.asked") {
       this.pendingPrompts++
       this.updateBadge()
@@ -3938,9 +3893,72 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       this.pendingPrompts--
       this.updateBadge()
     }
+  }
 
-    handleNetworkEvent(event.type as string, event.properties as any, this.client, (s) => this.getWorkspaceDirectory(s))
+  private scheduleAutoApproveTimer(msg: any, config: any, agentName: string, isQuestion: boolean) {
+    const agentConfig = agentName ? config.agent?.[agentName] : undefined
+    const timeoutSeconds = isQuestion
+      ? (agentConfig?.auto_approve?.question_timeout ?? config.auto_approve?.question_timeout ?? 0)
+      : (agentConfig?.auto_approve?.timeout ?? config.auto_approve?.timeout ?? 0)
 
+    if (timeoutSeconds <= 0) return
+
+    const reqId = isQuestion ? msg.question.id : msg.permission.id
+    this.autoApproveTimer.startTimer(reqId, timeoutSeconds, () => {
+      if (!isQuestion) {
+        handlePermissionResponse(this.permissionCtx, reqId, msg.permission.sessionID, "once", [], [], undefined, undefined)
+      } else {
+        const firstQ: any = msg.question.questions[0]
+        const answers = firstQ?.options?.length ? [firstQ.options[0].label] : [""]
+        handleQuestionReply(this.questionCtx, reqId, [answers], msg.question.sessionID)
+      }
+    })
+  }
+
+  private handleAutoApproveMessage(msg: any): void {
+    if (msg.type === "permissionRequest" || msg.type === "questionRequest") {
+      const config = (this.cachedConfigMessage as any)?.config
+      if (config) {
+        const isQuestion = msg.type === "questionRequest"
+        const agentName = isQuestion ? (msg.question as any).agent : msg.permission.agent
+        this.scheduleAutoApproveTimer(msg, config, agentName, isQuestion)
+      }
+    }
+    if (msg.type === "permissionResolved" || msg.type === "permissionError") {
+      if (this.autoApproveTimer.isTimerRunningFor(msg.permissionID)) this.autoApproveTimer.clearTimer()
+    }
+    if (msg.type === "questionResolved" || msg.type === "questionError") {
+      if (this.autoApproveTimer.isTimerRunningFor(msg.requestID)) this.autoApproveTimer.clearTimer()
+    }
+  }
+
+  private handleChildSessionEvent(event: Event, sessionID?: string): void {
+    if (event.type === "message.part.updated") {
+      const part = event.properties.part as {
+        type?: string
+        tool?: string
+        metadata?: { sessionId?: string }
+        state?: { metadata?: { sessionId?: string } }
+        sessionID?: string
+      }
+      const childId = childID(part)
+      if (childId && !this.trackedSessionIds.has(childId)) {
+        Logger.info("StrataProvider", "🔗 Auto-adopting child session from task tool", { childId })
+        void this.handleSyncSession(childId, part.sessionID ?? sessionID)
+      }
+    }
+  }
+
+  private isEventDropped(event: Event, sessionID: string | undefined): boolean {
+    if (isEventFromForeignProject(event, this.projectID)) return true
+    if (sessionID && this.connectionService.isSessionHidden(sessionID)) return true
+    if (event.type === "session.created" && this.connectionService.isSessionHidden(event.properties.info.id)) return true
+    if (!sessionID && (event.type === "message.part.updated" || event.type === "message.part.delta")) return true
+    if (event.type !== "indexing.status" && sessionID && !this.trackedSessionIds.has(sessionID)) return true
+    return false
+  }
+
+  private handleMessageEvent(event: Event, sessionID: string | undefined, directory?: string): void {
     if (event.type === "indexing.status" && directory) {
       const current = path.resolve(this.getWorkspaceDirectory(this.currentSession?.id))
       if (path.resolve(directory) !== current) return
@@ -3955,54 +3973,45 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     if (msg.type === "indexingStatusLoaded") {
       this.cachedIndexingStatusMessage = msg
     }
-    this.streams.flush(sessionID)
+    if (sessionID) this.streams.flush(sessionID)
     this.postMessage(msg)
 
-    if (msg.type === "permissionRequest" || msg.type === "questionRequest") {
-      const config = (this.cachedConfigMessage as any)?.config
-      if (config) {
-        const agentName = msg.type === "permissionRequest" ? msg.permission.agent : (msg.question as any).agent
-        const agentConfig = agentName ? config.agent?.[agentName] : undefined
-        const timeoutSeconds =
-          msg.type === "permissionRequest"
-            ? (agentConfig?.auto_approve?.timeout ?? config.auto_approve?.timeout ?? 0)
-            : (agentConfig?.auto_approve?.question_timeout ?? config.auto_approve?.question_timeout ?? 0)
+    this.handleAutoApproveMessage(msg)
+  }
 
-        if (timeoutSeconds > 0) {
-          const reqId = msg.type === "permissionRequest" ? msg.permission.id : msg.question.id
-          this.autoApproveTimer.startTimer(reqId, timeoutSeconds, () => {
-            if (msg.type === "permissionRequest") {
-              // Simulate user clicking "Run" (once)
-              handlePermissionResponse(
-                this.permissionCtx,
-                reqId,
-                msg.permission.sessionID,
-                "once",
-                [],
-                [],
-                undefined,
-                undefined,
-              )
-            } else if (msg.type === "questionRequest") {
-              // Simulate selecting the first option of the first question (or empty string if none)
-              const firstQ: any = msg.question.questions[0]
-              const answers = firstQ?.options?.length ? [firstQ.options[0].label] : [""]
-              handleQuestionReply(this.questionCtx, reqId, [answers], msg.question.sessionID)
-            }
-          })
-        }
-      }
+  private handleEvent(event: Event, directory?: string): void {
+    if (event.type === "strata-sessions.remote-status-changed") {
+      this.remoteService?.updateFromEvent({ enabled: event.properties.enabled, connected: event.properties.connected })
+      return
     }
-    if (msg.type === "permissionResolved" || msg.type === "permissionError") {
-      if (this.autoApproveTimer.isTimerRunningFor(msg.permissionID)) {
-        this.autoApproveTimer.clearTimer()
-      }
+
+    if (this.handleWorkerEvent(event)) return
+
+    if (event.type === "message.updated") {
+      this.confirmations.confirm(event.properties.info.id)
     }
-    if (msg.type === "questionResolved" || msg.type === "questionError") {
-      if (this.autoApproveTimer.isTimerRunningFor(msg.requestID)) {
-        this.autoApproveTimer.clearTimer()
-      }
+
+    if (event.type === "session.status") {
+      this.handleSessionStatusEvent(event, event.properties.sessionID)
+      return
     }
+
+    if (event.type === "session.created" && this.adoptPendingFollowup(event.properties.info)) {
+      return
+    }
+
+    const sessionID = this.connectionService.resolveEventSessionId(event)
+
+    if (this.isEventDropped(event, sessionID)) return
+
+    if (this.handleGlobalAndServerEvents(event)) return
+
+    this.handleSessionLifecycleEvents(event)
+    this.handleChildSessionEvent(event, sessionID)
+    this.handlePromptEvents(event)
+
+    handleNetworkEvent(event.type as string, event.properties as any, this.client, (s) => this.getWorkspaceDirectory(s))
+    this.handleMessageEvent(event, sessionID, directory)
   }
 
   /** Set or clear the Activity Bar badge based on pending prompt count. */
@@ -4122,42 +4131,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     return controller
   }
 
-  private async gatherEditorContext(): Promise<EditorContext> {
-    const workspaceDir = this.getWorkspaceDirectory()
-    const controller = await this.getIgnoreController(workspaceDir)
-
-    const toRelative = (fsPath: string): string | undefined => {
-      if (!workspaceDir) {
-        return undefined
-      }
-      const relative = path.relative(workspaceDir, fsPath)
-      if (relative.startsWith("..") || path.isAbsolute(relative)) {
-        return undefined
-      }
-      return relative
-    }
-
-    // Visible files (capped to avoid bloating context, filtered through .stratacodeignore)
-    const visibleFiles = vscode.window.visibleTextEditors
-      .map((e) => e.document.uri)
-      .filter((uri) => uri.scheme === "file")
-      .map((uri) => toRelative(uri.fsPath))
-      .filter((p): p is string => p !== undefined && controller.validateAccess(path.resolve(workspaceDir, p)))
-      .slice(0, 200)
-
-    // Open tabs — use instanceof TabInputText to exclude notebooks, diffs, custom editors
-    const openTabs = [...(await this.getOpenTabPaths(workspaceDir))].slice(0, 20)
-
-    // Active file (also filtered through .stratacodeignore)
-    const activeEditor = vscode.window.activeTextEditor
-    const activeRel =
-      activeEditor?.document.uri.scheme === "file" ? toRelative(activeEditor.document.uri.fsPath) : undefined
-    const activeFile = activeRel && controller.validateAccess(activeEditor!.document.uri.fsPath) ? activeRel : undefined
-
-    // Shell
-    const shell = vscode.env.shell || undefined
-
-    // Fetch RepoMap
+  private async gatherRepoContext(
+    visibleFiles: string[],
+  ): Promise<{ repoMap?: string; projectMemory?: { id: string; title: string; content: string }[] }> {
     let repoMap: string | undefined
     let projectMemory: { id: string; title: string; content: string }[] | undefined
     try {
@@ -4194,6 +4170,45 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     } catch (e) {
       Logger.error("StrataProvider", "Failed to generate repo map", e)
     }
+    return { repoMap, projectMemory }
+  }
+
+  private async gatherEditorContext(): Promise<EditorContext> {
+    const workspaceDir = this.getWorkspaceDirectory()
+    const controller = await this.getIgnoreController(workspaceDir)
+
+    const toRelative = (fsPath: string): string | undefined => {
+      if (!workspaceDir) {
+        return undefined
+      }
+      const relative = path.relative(workspaceDir, fsPath)
+      if (relative.startsWith("..") || path.isAbsolute(relative)) {
+        return undefined
+      }
+      return relative
+    }
+
+    // Visible files (capped to avoid bloating context, filtered through .stratacodeignore)
+    const visibleFiles = vscode.window.visibleTextEditors
+      .map((e) => e.document.uri)
+      .filter((uri) => uri.scheme === "file")
+      .map((uri) => toRelative(uri.fsPath))
+      .filter((p): p is string => p !== undefined && controller.validateAccess(path.resolve(workspaceDir, p)))
+      .slice(0, 200)
+
+    // Open tabs — use instanceof TabInputText to exclude notebooks, diffs, custom editors
+    const openTabs = [...(await this.getOpenTabPaths(workspaceDir))].slice(0, 20)
+
+    // Active file (also filtered through .stratacodeignore)
+    const activeEditor = vscode.window.activeTextEditor
+    const activeRel =
+      activeEditor?.document.uri.scheme === "file" ? toRelative(activeEditor.document.uri.fsPath) : undefined
+    const activeFile = activeRel && controller.validateAccess(activeEditor!.document.uri.fsPath) ? activeRel : undefined
+
+    // Shell
+    const shell = vscode.env.shell || undefined
+
+    const { repoMap, projectMemory } = await this.gatherRepoContext(visibleFiles)
 
     return {
       ...(visibleFiles.length > 0 ? { visibleFiles } : {}),
@@ -4374,11 +4389,8 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.planningService?.openPlanFile(file, line)
   }
 
-  dispose(): void {
+  private disposeSubscriptions(): void {
     this.unsubscribeRemote?.()
-    this.focusSession()
-    this.statsPoller?.stop()
-    this.statsGitOps?.dispose()
     this.unsubscribeEvent?.()
     this.unsubscribeState?.()
     this.unsubscribeNotificationDismiss?.()
@@ -4388,6 +4400,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.unsubscribeMigrationComplete?.()
     this.unsubscribeClearPendingPrompts?.()
     this.unsubscribeDirectoryProvider?.()
+  }
+
+  private disposeDisposables(): void {
     this.viewStateDisposable?.dispose()
     this.visibilityDisposable?.dispose()
     this.webviewMessageDisposable?.dispose()
@@ -4398,6 +4413,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.pluginConfigDisposable?.dispose()
     this.pluginContributionsDisposable?.dispose()
     this._onDidRegisterSession.dispose()
+  }
+
+  private disposeState(): void {
     this.loadMessagesAbort?.abort()
     this.loadMessagesAbort = null
     for (const controller of this.retryAbortControllers.values()) controller.abort()
@@ -4413,6 +4431,11 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.sessionDirectories.clear()
     this.sessionStatusMap.clear()
     this.lastReconciledAt.clear()
+  }
+
+  private disposeServices(): void {
+    this.statsPoller?.stop()
+    this.statsGitOps?.dispose()
     this.ignoreController?.dispose()
     this.chatAutocomplete?.dispose()
     this.gitWatcher?.dispose()
@@ -4420,5 +4443,13 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     this.workerStatusBar?.dispose()
     this.workerWatcher?.dispose()
     ;(this.marketplace?.dispose(), disposeGitChangesTarget())
+  }
+
+  dispose(): void {
+    this.focusSession()
+    this.disposeSubscriptions()
+    this.disposeDisposables()
+    this.disposeState()
+    this.disposeServices()
   }
 }

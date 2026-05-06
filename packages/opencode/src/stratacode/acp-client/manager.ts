@@ -2,21 +2,22 @@
 import { Effect, Context, Layer } from "effect"
 import { InstanceState } from "@/effect"
 import { Log } from "../../util"
-import { ConfigACPAgent } from "./config"
+import { ConfigACPProvider } from "./config"
 import { StdioTransport } from "./transport"
-import { ClientSideConnection, type InitializeRequest, type Client } from "@agentclientprotocol/sdk"
+import { ClientSideConnection, type Client, type InitializeRequest, type ModelInfo, type SessionUpdate } from "@agentclientprotocol/sdk"
+import { EventEmitter } from "events"
 
 const log = Log.create({ service: "acp-manager" })
 
 export interface Interface {
   readonly getConnection: (
     agentKey: string,
-    config: ConfigACPAgent,
-  ) => Effect.Effect<{ conn: ClientSideConnection; transport: StdioTransport }>
+    config: ConfigACPProvider,
+  ) => Effect.Effect<{ conn: ClientSideConnection; transport: StdioTransport; models: ModelInfo[]; sessionId: string; events: EventEmitter }>
 }
 
 type State = {
-  transports: Map<string, { conn: ClientSideConnection; transport: StdioTransport }>
+  transports: Map<string, { fingerprint: string; conn: ClientSideConnection; transport: StdioTransport; models: ModelInfo[]; sessionId: string; events: EventEmitter }>
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/ACPManager") {}
@@ -32,11 +33,29 @@ export const layer = Layer.effect(
       }),
     )
 
-    const getConnection = Effect.fn("ACPManager.getConnection")(function* (agentKey: string, config: ConfigACPAgent) {
+    const getConnection = Effect.fn("ACPManager.getConnection")(function* (
+      agentKey: string,
+      config: ConfigACPProvider,
+    ) {
       const s = yield* InstanceState.get(state)
 
+      const cmdStr = config.command?.join(" ") ?? ""
+      const envStr = Object.entries(config.env ?? {})
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, v]) => `${k}=${v}`)
+        .join(";")
+      const fingerprint = `${cmdStr}|${envStr}|${process.cwd()}`
+
       let entry = s.transports.get(agentKey)
-      if (entry) return entry
+      if (entry) {
+        if (entry.fingerprint === fingerprint) {
+          return entry
+        }
+        log.info("ACP provider config changed, restarting", { agentKey })
+        // Clean up the old transport if possible
+        // (In the future, add transport.stop() if supported)
+        s.transports.delete(agentKey)
+      }
 
       log.info("Initializing new ACP transport", { agentKey })
       const transport = new StdioTransport(config)
@@ -45,22 +64,25 @@ export const layer = Layer.effect(
 
       // Create a dummy client implementation for now.
       // We will enhance this when we implement adapter.ts tools.
+      const events = new EventEmitter()
+
       const conn = new ClientSideConnection((agent): Client => {
         return {
           readTextFile: async (params: any) => {
-            log.info("Agent requested fs.readTextFile", { params })
+            log.info("Provider requested fs.readTextFile", { params })
             return { content: "" }
           },
           writeTextFile: async (params: any) => {
-            log.info("Agent requested fs.writeTextFile", { params })
+            log.info("Provider requested fs.writeTextFile", { params })
             return {}
           },
           requestPermission: async (params: any) => {
-            log.info("Agent requested permission", { params })
+            log.info("Provider requested permission", { params })
             return { granted: true }
           },
-          sessionUpdate: async (params: any) => {
-            log.info("Agent session update", { params })
+          sessionUpdate: async (params: SessionUpdate) => {
+            log.debug("Provider session update", { params })
+            events.emit("sessionUpdate", params)
           },
           createTerminal: async (params: any) => {
             throw new Error("createTerminal not implemented yet")
@@ -79,13 +101,25 @@ export const layer = Layer.effect(
         clientInfo: { name: "stratacode", version: "1.0.0" },
         clientCapabilities: {
           fs: { readTextFile: true, writeTextFile: true },
-          terminal: true, // the ACP spec for terminal capability might be boolean or object, in latest SDK it's likely boolean? Wait, SDK says `{ create?: boolean }` or similar? Let's check.
+          terminal: true,
         },
       }
       yield* Effect.promise(() => conn.initialize(initReq))
-      log.info("ACP agent initialized successfully", { agentKey })
+      
+      const session = yield* Effect.promise(() => conn.newSession({ cwd: process.cwd(), mcpServers: [] }))
+      const sessionId = session.sessionId
+      
+      const discovered = session.models?.availableModels ?? []
+      if (discovered.length > 0) {
+        log.info("ACP provider reported models", {
+          agentKey,
+          count: discovered.length,
+          models: discovered.map((m) => m.modelId),
+        })
+      }
+      log.info("ACP provider initialized successfully", { agentKey })
 
-      entry = { conn, transport }
+      entry = { fingerprint, conn, transport, models: discovered, sessionId: session.sessionId, events }
       s.transports.set(agentKey, entry)
 
       return entry

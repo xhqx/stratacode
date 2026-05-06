@@ -163,17 +163,15 @@ const AutoApproveTab: Component = () => {
   const visibleGroupedTools = createMemo(() => {
     const feats = extensionFeatures()
     return GROUPED_TOOLS.map((group) => {
-      let ids = group.ids.filter((id) => toolVisible(id, feats))
-
+      const ids = group.ids.filter((id) => toolVisible(id, feats))
       if (ids.length === 0) return null
 
-      let label = group.label
-      let descKey = group.descriptionKey
-      if (ids.length < group.ids.length) {
-        label = ids.join(" / ")
-        // Fallback for single websearch tool
-        if (ids.length === 1 && ids[0] === "websearch") descKey = "settings.autoApprove.tool.websearch"
-      }
+      const partial = ids.length < group.ids.length
+      const label = partial ? ids.join(" / ") : group.label
+      const descKey =
+        partial && ids.length === 1 && ids[0] === "websearch"
+          ? "settings.autoApprove.tool.websearch"
+          : group.descriptionKey
       return { ...group, ids, label, descriptionKey: descKey }
     }).filter(Boolean) as GroupedToolDef[]
   })

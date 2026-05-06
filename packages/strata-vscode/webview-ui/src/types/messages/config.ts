@@ -4,13 +4,16 @@ import type { ProviderConfig } from "./providers"
 
 type SdkIndexingStatus = import("@stratacode/sdk/v2/client").IndexingStatus
 
-export interface AcpAgentConfig {
+export interface AcpProviderConfig {
   command?: string | string[]
   env?: Record<string, string>
   cwd?: string
   transport?: "stdio" | "http"
   url?: string
   trusted?: boolean
+  model?: string
+  enabled?: boolean
+  predefined?: boolean
 }
 
 export interface McpConfig {
@@ -116,7 +119,8 @@ export interface Config {
   disabled_providers?: string[]
   enabled_providers?: string[]
   mcp?: Record<string, McpConfig>
-  acp_agents?: Record<string, AcpAgentConfig>
+  acp_providers?: Record<string, AcpProviderConfig>
+  acp_agents?: Record<string, AcpProviderConfig>
   command?: Record<string, CommandConfig>
   instructions?: string[]
   skills?: SkillsConfig
@@ -160,4 +164,7 @@ export interface FeatureFlags {
   indexing: boolean
 }
 
-export type ExtensionFeatureFlags = Record<Extract<keyof typeof import("../../../../src/stratacode/feature-manifest").MANIFEST, string>, boolean>
+export type ExtensionFeatureFlags = Record<
+  Extract<keyof typeof import("../../../../src/stratacode/feature-manifest").MANIFEST, string>,
+  boolean
+>

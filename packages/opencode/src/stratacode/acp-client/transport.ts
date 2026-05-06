@@ -2,7 +2,7 @@
 import { spawn, type ChildProcess } from "child_process"
 import { ClientSideConnection, ndJsonStream } from "@agentclientprotocol/sdk"
 import { Log } from "../../util"
-import type { ConfigACPAgent } from "./config"
+import type { ConfigACPProvider } from "./config"
 
 const log = Log.create({ service: "acp-transport" })
 
@@ -10,17 +10,17 @@ export class StdioTransport {
   private child: ChildProcess | undefined
   public connection: ClientSideConnection | undefined
 
-  constructor(private config: ConfigACPAgent) {}
+  constructor(private config: ConfigACPProvider) {}
 
   async start(): Promise<{ child: ChildProcess; stream: import("@agentclientprotocol/sdk").Stream }> {
-    if (this.child) throw new Error("Agent already running")
+    if (this.child) throw new Error("Provider already running")
 
     if (!this.config.command || this.config.command.length === 0) {
-      throw new Error("ACP agent command is required")
+      throw new Error("ACP provider command is required")
     }
 
     const [cmd, ...args] = this.config.command
-    log.info("Spawning ACP agent", { cmd, args })
+    log.info("Spawning ACP provider", { cmd, args })
 
     this.child = spawn(cmd, args, {
       env: { ...process.env, ...(this.config.env ?? {}) },
@@ -29,15 +29,15 @@ export class StdioTransport {
     })
 
     this.child.stderr?.on("data", (data) => {
-      log.debug("ACP agent stderr", { output: data.toString() })
+      log.debug("ACP provider stderr", { output: data.toString() })
     })
 
     this.child.on("error", (err) => {
-      log.error("ACP agent process error", { error: err.message })
+      log.error("ACP provider process error", { error: err.message })
     })
 
     this.child.on("exit", (code) => {
-      log.info("ACP agent exited", { code })
+      log.info("ACP provider exited", { code })
       this.child = undefined
     })
 

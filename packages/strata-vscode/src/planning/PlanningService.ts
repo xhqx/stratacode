@@ -7,6 +7,8 @@ import { MarkdownPlanWatcher } from "./MarkdownPlanWatcher"
 import type { MarkdownTask } from "./markdown-parser"
 import { Logger } from "../stratacode/logger"
 
+import { isEnabled } from "../stratacode/feature-gate"
+
 export interface PlanningServiceOptions {
   context: vscode.ExtensionContext
   connectionService: StrataConnectionService
@@ -33,15 +35,14 @@ export class PlanningService {
     this.syncWatcherConfig()
 
     this.configDisposable = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("strata-code.new.planning.documentDrivenTasks")) {
+      if (e.affectsConfiguration("strata-code.new.features.documentDrivenTasks")) {
         this.syncWatcherConfig()
       }
     })
   }
 
   private syncWatcherConfig() {
-    const config = vscode.workspace.getConfiguration("strata-code.new.planning")
-    const documentDriven = config.get<boolean>("documentDrivenTasks") ?? true
+    const documentDriven = isEnabled("documentDrivenTasks")
 
     if (documentDriven && !this.watcher) {
       const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath

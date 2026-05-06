@@ -507,8 +507,61 @@ export class WorktreeStateManager {
   // Persistence
   // ---------------------------------------------------------------------------
 
+  private loadWorktrees(data: StateFile): void {
+    for (const [id, wt] of Object.entries(data.worktrees ?? {})) {
+      const fixed =
+        wt.path?.replace(/([/\\])\.stratacode([/\\])/g, (_match, leadingSep, trailingSep) => {
+          return `${leadingSep}.strata${trailingSep}`
+        }) ?? wt.path
+      this.worktrees.set(id, { id, ...wt, path: fixed })
+    }
+  }
+
+  private loadSessions(data: StateFile): number {
+    let pruned = 0
+    for (const [id, s] of Object.entries(data.sessions ?? {})) {
+      const ref = s.worktreeId
+      if (ref === null) {
+        this.sessions.set(id, { id, ...s })
+        continue
+      }
+      if (!ref || !this.worktrees.has(ref)) {
+        pruned++
+        continue
+      }
+      this.sessions.set(id, { id, ...s })
+    }
+    return pruned
+  }
+
+  private loadSections(data: StateFile): void {
+    for (const [id, sec] of Object.entries(data.sections ?? {})) {
+      this.sections.set(id, { id, ...sec })
+    }
+  }
+
+  private applyStateData(data: StateFile): number {
+    this.worktrees.clear()
+    this.sessions.clear()
+    this.sections.clear()
+    this.tabOrder = {}
+    this.worktreeOrder = []
+    this.reviewDiffStyle = "unified"
+
+    this.loadWorktrees(data)
+    const pruned = this.loadSessions(data)
+    this.loadSections(data)
+
+    if (data.tabOrder) this.tabOrder = data.tabOrder
+    if (data.worktreeOrder) this.worktreeOrder = data.worktreeOrder
+    this.collapsed = data.sessionsCollapsed ?? false
+    if (data.reviewDiffStyle === "split") this.reviewDiffStyle = "split"
+    this.defaultBase = data.defaultBaseBranch
+
+    return pruned
+  }
+
   async load(): Promise<MigrationResult> {
-    // Migrate Agent Manager data from .stratacode → .strata before first read
     let migration: MigrationResult = { refsFixed: 0 }
     if (!this.migrated) {
       this.migrated = true
@@ -517,50 +570,10 @@ export class WorktreeStateManager {
     try {
       const content = await fs.promises.readFile(this.file, "utf-8")
       const data = JSON.parse(content) as StateFile
-      this.worktrees.clear()
-      this.sessions.clear()
-      this.sections.clear()
-      this.tabOrder = {}
-      this.worktreeOrder = []
-      this.reviewDiffStyle = "unified"
 
-      for (const [id, wt] of Object.entries(data.worktrees ?? {})) {
-        // Rewrite stale .stratacode paths while preserving the separator style already stored.
-        const fixed =
-          wt.path?.replace(/([/\\])\.stratacode([/\\])/g, (_match, leadingSep, trailingSep) => {
-            return `${leadingSep}.strata${trailingSep}`
-          }) ?? wt.path
-        this.worktrees.set(id, { id, ...wt, path: fixed })
-      }
-      let pruned = 0
-      for (const [id, s] of Object.entries(data.sessions ?? {})) {
-        const ref = s.worktreeId
-        if (ref === null) {
-          this.sessions.set(id, { id, ...s })
-          continue
-        }
-        // Skip orphaned sessions referencing a deleted worktree.
-        if (!ref || !this.worktrees.has(ref)) {
-          pruned++
-          continue
-        }
-        this.sessions.set(id, { id, ...s })
-      }
-      for (const [id, sec] of Object.entries(data.sections ?? {})) {
-        this.sections.set(id, { id, ...sec })
-      }
-      if (data.tabOrder) {
-        this.tabOrder = data.tabOrder
-      }
-      if (data.worktreeOrder) {
-        this.worktreeOrder = data.worktreeOrder
-      }
+      const pruned = this.applyStateData(data)
       const repaired = this.setNormalizedWorktreeOrder(this.worktreeOrder)
-      this.collapsed = data.sessionsCollapsed ?? false
-      if (data.reviewDiffStyle === "split") {
-        this.reviewDiffStyle = "split"
-      }
-      this.defaultBase = data.defaultBaseBranch
+
       this.log(`Loaded state: ${this.worktrees.size} worktrees, ${this.sessions.size} sessions`)
       if (pruned > 0 || repaired) {
         if (pruned > 0) this.log(`Pruned ${pruned} orphaned sessions`)

@@ -37,9 +37,10 @@ export const GeneralTab: Component<
   }
 > = (props) => {
   const handleAutoApprove = (field: "timeout" | "question_timeout", val: string) => {
-    const parsed = parseInt(val, 10)
+    const raw = parseInt(val, 10)
+    const parsed = isNaN(raw) ? undefined : raw > 0 && raw < 1 ? 1 : raw
     const existing = props.cfg().auto_approve ?? {}
-    const updated = { ...existing, [field]: isNaN(parsed) ? undefined : parsed }
+    const updated = { ...existing, [field]: parsed }
     if (updated.timeout === undefined && updated.question_timeout === undefined) {
       props.update({ auto_approve: null })
     } else {
@@ -463,6 +464,7 @@ const ConfigOverridesSection: Component<{
               value={props.cfg().auto_approve?.timeout ?? ""}
               placeholder="Global"
               min="0"
+              step="1"
               max="300"
               onChange={(e) => props.onAutoApprove("timeout", e.currentTarget.value)}
             />
@@ -477,6 +479,7 @@ const ConfigOverridesSection: Component<{
               value={props.cfg().auto_approve?.question_timeout ?? ""}
               placeholder="Global"
               min="0"
+              step="1"
               max="300"
               onChange={(e) => props.onAutoApprove("question_timeout", e.currentTarget.value)}
             />

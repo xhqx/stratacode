@@ -34,7 +34,8 @@ import type {
   McpStatusEntry,
   MessageLoadMode,
 } from "../types/messages"
-import { removeSessionPermissions, upsertPermission } from "./permission-queue"
+import { createPermissionLogic } from "./permission-logic"
+import { createAgentLogic } from "./agent-logic"
 import {
   computeStatus,
   calcContextUsage,
@@ -45,7 +46,6 @@ import {
 } from "./session-utils"
 import { Identifier } from "../utils/id"
 import { resolveModelSelection } from "./model-selection"
-import { resolveSessionAgent } from "./session-agent"
 import { PartStash } from "./part-stash"
 import { parseModelString } from "../../../src/shared/provider-model"
 
@@ -247,6 +247,9 @@ export const SessionProvider: ParentComponent = (props) => {
   const provider = useProvider()
   const { config } = useConfig()
   const language = useLanguage()
+  const permissionLogic = createPermissionLogic({ vscode, showToast, language })
+  const agentLogic = createAgentLogic({ vscode })
+
 
   // Current session ID
   const [currentSessionID, setCurrentSessionID] = createSignal<string | undefined>()
@@ -280,10 +283,7 @@ export const SessionProvider: ParentComponent = (props) => {
   const stash = new PartStash()
 
   // Pending permissions
-  const [permissions, setPermissions] = createSignal<PermissionRequest[]>([])
 
-  // Permission IDs that have been responded to but not yet confirmed by the server
-  const [respondingPermissions, setRespondingPermissions] = createSignal<Set<string>>(new Set())
 
   // Pending questions
   const [questions, setQuestions] = createSignal<QuestionRequest[]>([])
@@ -299,31 +299,9 @@ export const SessionProvider: ParentComponent = (props) => {
   const [userSetAgents, setUserSetAgents] = createSignal<Record<string, boolean>>({})
 
   // Agents (modes) loaded from the CLI backend
-  const [agents, setAgents] = createSignal<AgentInfo[]>([])
-  const [allAgents, setAllAgents] = createSignal<AgentInfo[]>([])
-  const [defaultAgent, setDefaultAgent] = createSignal("code")
 
   // Skills loaded from the CLI backend
   const [skills, setSkills] = createSignal<SkillInfo[]>([])
-
-  const removeMode = (name: string) => {
-    setAgents((prev) => prev.filter((a) => a.name !== name))
-
-    // Clear stale selections so selectedAgentName() falls back to the default
-    if (pendingAgentSelection() === name) {
-      setPendingAgentSelection(null)
-    }
-    setStore(
-      "agentSelections",
-      produce((selections) => {
-        for (const sid of Object.keys(selections)) {
-          if (selections[sid] === name) delete selections[sid]
-        }
-      }),
-    )
-
-    vscode.postMessage({ type: "removeMode", name })
-  }
 
   const removeMcp = (name: string) => {
     vscode.postMessage({ type: "removeMcp", name })
@@ -394,12 +372,12 @@ export const SessionProvider: ParentComponent = (props) => {
   const selectedAgentName = createMemo<string>(() => {
     const sessionID = currentSessionID()
     if (sessionID) {
-      return store.agentSelections[sessionID] ?? defaultAgent()
+      return store.agentSelections[sessionID] ?? agentLogic.defaultAgent()
     }
-    return pendingAgentSelection() ?? defaultAgent()
+    return pendingAgentSelection() ?? agentLogic.defaultAgent()
   })
 
-  const agentNames = createMemo(() => new Set(agents().map((agent) => agent.name)))
+  const agentNames = createMemo(() => new Set(agentLogic.agents().map((agent) => agent.name)))
 
   /** Per-mode model from config (e.g. config.agent.code.model). */
   function getModeModel(agentName: string): ModelSelection | null {
@@ -525,44 +503,6 @@ export const SessionProvider: ParentComponent = (props) => {
   // Handle agentsLoaded immediately (not in onMount) so we never miss
   // the initial push that arrives before the DOM mounts. This mirrors the
   // pattern used by ProviderProvider for providersLoaded.
-  const unsubAgents = vscode.onMessage((message: ExtensionMessage) => {
-    if (message.type !== "agentsLoaded") {
-      return
-    }
-    setAgents(message.agents)
-    setAllAgents(message.allAgents ?? message.agents)
-    setDefaultAgent(message.defaultAgent)
-
-    const names = new Set(message.agents.map((a) => a.name))
-
-    // Reset pending selection if the agent no longer exists (e.g. after org switch)
-    const pending = pendingAgentSelection()
-    if (!pending || !names.has(pending)) {
-      setPendingAgentSelection(message.defaultAgent)
-    }
-
-    // Clear per-session selections that reference a mode no longer available
-    setStore(
-      "agentSelections",
-      produce((selections) => {
-        for (const sid of Object.keys(selections)) {
-          if (selections[sid] && !names.has(selections[sid]!)) delete selections[sid]
-        }
-      }),
-    )
-
-    // Rescan already-loaded message history so sessions whose messagesLoaded
-    // arrived before agentsLoaded (and therefore got no agent selection) are
-    // backfilled now that we know the valid agent names.
-    batch(() => {
-      for (const [sid, msgs] of Object.entries(store.messages)) {
-        if (store.agentSelections[sid]) continue
-        const agent = resolveSessionAgent(msgs, names)
-        if (agent) setStore("agentSelections", sid, agent)
-      }
-    })
-  })
-
   // Request agents immediately; if the extension's httpClient is not yet ready,
   // extensionDataReady will fire once initialization completes and we retry once.
   vscode.postMessage({ type: "requestAgents" })
@@ -583,23 +523,6 @@ export const SessionProvider: ParentComponent = (props) => {
     vscode.postMessage({ type: "removeSkill", location })
   }
 
-  // Handle permission events immediately (not in onMount) so we never miss
-  // the first permission request that may arrive before the DOM mounts.
-  // This matches the pattern already used for agentsLoaded and skillsLoaded.
-  const unsubPermissions = vscode.onMessage((message: ExtensionMessage) => {
-    switch (message.type) {
-      case "permissionRequest":
-        handlePermissionRequest(message.permission)
-        break
-      case "permissionResolved":
-        handlePermissionResolved(message.permissionID)
-        break
-      case "permissionError":
-        handlePermissionError(message.permissionID)
-        break
-    }
-  })
-  onCleanup(unsubPermissions)
 
   // MCP status loaded from CLI backend
   const unsubMcpStatus = vscode.onMessage((message: ExtensionMessage) => {
@@ -613,7 +536,6 @@ export const SessionProvider: ParentComponent = (props) => {
   vscode.postMessage({ type: "requestMcpStatus" })
 
   const fallback = setTimeout(() => {
-    if (agents().length === 0) vscode.postMessage({ type: "requestAgents" })
     if (Object.keys(mcpStatus()).length === 0) vscode.postMessage({ type: "requestMcpStatus" })
   }, 3000)
 
@@ -621,12 +543,10 @@ export const SessionProvider: ParentComponent = (props) => {
     if (message.type !== "extensionDataReady") return
     unsubReady()
     clearTimeout(fallback)
-    if (agents().length === 0) vscode.postMessage({ type: "requestAgents" })
     if (Object.keys(mcpStatus()).length === 0) vscode.postMessage({ type: "requestMcpStatus" })
   })
 
   onCleanup(() => {
-    unsubAgents()
     unsubSkills()
     unsubMcpStatus()
     unsubReady()
@@ -779,10 +699,10 @@ export const SessionProvider: ParentComponent = (props) => {
         break
 
       case "clearPendingPrompts":
-        setPermissions([])
+        permissionLogic.clearPermissions()
         setQuestions([])
         setSuggestions([])
-        setRespondingPermissions(new Set<string>())
+        
         setSuggestionErrors(new Set<string>())
         setRespondingSuggestions(new Set<string>())
         break
@@ -1027,10 +947,7 @@ export const SessionProvider: ParentComponent = (props) => {
         })
       }
 
-      const agent = resolveSessionAgent(merged, agentNames())
-      if (agent) {
-        setStore("agentSelections", sessionID, agent)
-      }
+      agentLogic.resolveMessagesAgent(sessionID, merged)
     })
     if (reset) requestAnimationFrame(() => patchPage(sessionID, { lastMutation: undefined }))
   }
@@ -1069,12 +986,7 @@ export const SessionProvider: ParentComponent = (props) => {
     patchPage(message.sessionID, { initialLoaded: true, lastMutation: exists ? "update" : "append" })
 
     // Sync mode picker from any message role (user or assistant).
-    // agentNames() already excludes subagent/hidden agents, so subtask
-    // assistant messages (e.g. "task" agent) are silently ignored.
-    const agent = message.agent?.trim()
-    if (agent && agentNames().has(agent)) {
-      setStore("agentSelections", message.sessionID, agent)
-    }
+    agentLogic.handleNewMessageAgent(message.sessionID, message.agent)
 
     if (message.parts && message.parts.length > 0) {
       stash.remove(message.id)
@@ -1168,34 +1080,6 @@ export const SessionProvider: ParentComponent = (props) => {
       // messages themselves will be reconciled on the next messagesLoaded.
       pendingOptimistic.delete(sessionID)
     }
-  }
-
-  function handlePermissionRequest(permission: PermissionRequest) {
-    setPermissions((prev) => upsertPermission(prev, permission))
-  }
-
-  function handlePermissionResolved(permissionID: string) {
-    setPermissions((prev) => prev.filter((p) => p.id !== permissionID))
-    setRespondingPermissions((prev) => {
-      if (!prev.has(permissionID)) return prev
-      const next = new Set(prev)
-      next.delete(permissionID)
-      return next
-    })
-  }
-
-  function handlePermissionError(permissionID: string) {
-    // Remove from responding set so buttons re-enable (permission prompt is still visible)
-    setRespondingPermissions((prev) => {
-      if (!prev.has(permissionID)) return prev
-      const next = new Set(prev)
-      next.delete(permissionID)
-      return next
-    })
-    showToast({
-      variant: "error",
-      title: language.t("settings.permissions.toast.updateFailed.title"),
-    })
   }
 
   function handleQuestionRequest(question: QuestionRequest) {
@@ -1346,7 +1230,7 @@ export const SessionProvider: ParentComponent = (props) => {
   function scopedPermissions(sessionID: string | undefined): PermissionRequest[] {
     if (!sessionID) return []
     const family = sessionFamily(sessionID)
-    return permissions().filter((p) => family.has(p.sessionID))
+    return permissionLogic.permissions().filter((p) => family.has(p.sessionID))
   }
 
   /** Return questions scoped to the given session's family (self + subagents). */
@@ -1466,7 +1350,7 @@ export const SessionProvider: ParentComponent = (props) => {
           return next
         })
       }
-      setPermissions((prev) => removeSessionPermissions(prev, sessionID))
+      permissionLogic.removeSession(sessionID)
       setStatusMap(
         produce((map) => {
           delete map[sessionID]
@@ -1541,9 +1425,7 @@ export const SessionProvider: ParentComponent = (props) => {
       setStore("sessions", session.id, session)
 
       const pendingAgent = pendingAgentSelection()
-      if (pendingAgent && !store.agentSelections[session.id]) {
-        setStore("agentSelections", session.id, pendingAgent)
-      }
+      agentLogic.setPendingIfMissing(session.id)
 
       // Carry over cloud messages so there's no loading flash
       setStore("messages", session.id, cloudMessages)
@@ -1598,7 +1480,7 @@ export const SessionProvider: ParentComponent = (props) => {
   function selectAgent(name: string) {
     const id = currentSessionID()
     if (id) {
-      setStore("agentSelections", id, name)
+      agentLogic.setSessionAgent(id, name)
       // Clear per-session model override so the new mode's configured/default
       // model takes effect instead of the previous mode's override.
       setStore(
@@ -1608,7 +1490,7 @@ export const SessionProvider: ParentComponent = (props) => {
         }),
       )
     } else {
-      setPendingAgentSelection(name)
+      agentLogic.setPendingAgentSelection(name)
       // When switching mode, initialize model for the new mode if the user
       // hasn't explicitly set one for it
       if (!userSetAgents()[name] && !store.modelSelections[name]) {
@@ -1669,7 +1551,7 @@ export const SessionProvider: ParentComponent = (props) => {
 
     const preview = cloudPreviewId()
     if (preview) {
-      const agent = selectedAgentName() !== defaultAgent() ? selectedAgentName() : undefined
+      const agent = selectedAgentName() !== agentLogic.defaultAgent() ? selectedAgentName() : undefined
       vscode.postMessage({
         type: "importAndSend",
         cloudSessionId: preview,
@@ -1692,7 +1574,7 @@ export const SessionProvider: ParentComponent = (props) => {
     }
     if (sid) addOptimistic(sid, messageID, text, files)
 
-    const agent = selectedAgentName() !== defaultAgent() ? selectedAgentName() : undefined
+    const agent = selectedAgentName() !== agentLogic.defaultAgent() ? selectedAgentName() : undefined
 
     vscode.postMessage({
       type: "sendMessage",
@@ -1724,7 +1606,7 @@ export const SessionProvider: ParentComponent = (props) => {
     // Cloud previews need import-then-command; post importAndSend with command metadata
     const preview = cloudPreviewId()
     if (preview) {
-      const agent = selectedAgentName() !== defaultAgent() ? selectedAgentName() : undefined
+      const agent = selectedAgentName() !== agentLogic.defaultAgent() ? selectedAgentName() : undefined
       vscode.postMessage({
         type: "importAndSend",
         cloudSessionId: preview,
@@ -1751,7 +1633,7 @@ export const SessionProvider: ParentComponent = (props) => {
 
     if (sid) addOptimistic(sid, messageID, `/${command} ${args}`.trim(), files)
 
-    const agent = selectedAgentName() !== defaultAgent() ? selectedAgentName() : undefined
+    const agent = selectedAgentName() !== agentLogic.defaultAgent() ? selectedAgentName() : undefined
 
     vscode.postMessage({
       type: "sendCommand",
@@ -1799,34 +1681,6 @@ export const SessionProvider: ParentComponent = (props) => {
       sessionID,
       providerID: sel?.providerID,
       modelID: sel?.modelID,
-    })
-  }
-
-  function respondToPermission(
-    permissionId: string,
-    response: "once" | "always" | "reject",
-    approvedAlways: string[],
-    deniedAlways: string[],
-    scope?: "global" | "agent",
-    agent?: string,
-  ) {
-    // Resolve sessionID from the stored permission request
-    const permission = permissions().find((p) => p.id === permissionId)
-    const sessionID = permission?.sessionID ?? currentSessionID() ?? ""
-
-    // Mark as responding so the UI disables the buttons.
-    // The permission is removed when the server confirms via permission.replied SSE.
-    setRespondingPermissions((prev) => new Set(prev).add(permissionId))
-
-    vscode.postMessage({
-      type: "permissionResponse",
-      permissionId,
-      sessionID,
-      response,
-      approvedAlways,
-      deniedAlways,
-      scope,
-      agent,
     })
   }
 
@@ -1901,7 +1755,7 @@ export const SessionProvider: ParentComponent = (props) => {
     }
 
     // Reset agent selection to default for the new session (model overrides persist)
-    setPendingAgentSelection(defaultAgent())
+    setPendingAgentSelection(agentLogic.defaultAgent())
     vscode.postMessage({ type: "createSession" })
   }
 
@@ -1910,7 +1764,7 @@ export const SessionProvider: ParentComponent = (props) => {
     setDraftSessionID(undefined)
     setCloudPreviewId(null)
     setLoading(false)
-    setPendingAgentSelection(defaultAgent())
+    setPendingAgentSelection(agentLogic.defaultAgent())
     vscode.postMessage({ type: "clearSession" })
   }
 
@@ -2136,7 +1990,7 @@ export const SessionProvider: ParentComponent = (props) => {
       // replace the generic "Delegating work" label with a more informative one
       // so the user understands why nothing appears to be happening.
       if (raw === language.t("ui.sessionTurn.status.delegating")) {
-        const scoped = scopedPermissions(id)
+        const scoped = permissionLogic.scopedPermissions(id)
         if (scoped.length > 0) return language.t("ui.sessionTurn.status.delegatingWaitingPermission")
         const scopedQ = scopedQuestions(id)
         if (scopedQ.length > 0) return language.t("ui.sessionTurn.status.delegatingWaitingQuestion")
@@ -2179,8 +2033,8 @@ export const SessionProvider: ParentComponent = (props) => {
     getParts,
     hydrateParts,
     todos,
-    permissions,
-    respondingPermissions,
+    permissions: permissionLogic.permissions,
+    respondingPermissions: permissionLogic.respondingPermissions,
     questions,
     questionErrors,
     suggestions,
@@ -2195,12 +2049,12 @@ export const SessionProvider: ParentComponent = (props) => {
     clearModelOverride,
     costBreakdown,
     contextUsage,
-    agents,
-    allAgents,
+    agents: agentLogic.agents,
+    allAgents: agentLogic.allAgents,
     skills,
     refreshSkills,
     removeSkill,
-    removeMode,
+    removeMode: agentLogic.removeMode,
     removeMcp,
     mcpStatus,
     mcpLoading,
@@ -2209,11 +2063,11 @@ export const SessionProvider: ParentComponent = (props) => {
     refreshMcpStatus,
     selectedAgent: selectedAgentName,
     selectAgent,
-    getSessionAgent: (sessionID: string) => store.agentSelections[sessionID] ?? defaultAgent(),
+    getSessionAgent: agentLogic.getSessionAgent,
     getSessionModel: (sessionID: string) => {
       const override = store.sessionOverrides[sessionID]
       if (override) return override
-      const agentName = store.agentSelections[sessionID] ?? defaultAgent()
+      const agentName = store.agentSelections[sessionID] ?? agentLogic.defaultAgent()
       return resolveModel(agentName, store.modelSelections[agentName])
     },
     setSessionModel: (sessionID: string, providerID: string, modelID: string) => {
@@ -2221,13 +2075,11 @@ export const SessionProvider: ParentComponent = (props) => {
       // userSetAgents.  The override is what selected()/getSessionModel() actually
       // reads, and mutating the global map here is both redundant and harmful: the
       // agent may not yet be assigned (sendInitialMessage calls setSessionModel
-      // before setSessionAgent), so the write would land on defaultAgent() and
+      // before setSessionAgent), so the write would land on agentLogic.defaultAgent() and
       // corrupt the default mode's model for later sessions.
       setStore("sessionOverrides", sessionID, { providerID, modelID })
     },
-    setSessionAgent: (sessionID: string, name: string) => {
-      setStore("agentSelections", sessionID, name)
-    },
+    setSessionAgent: agentLogic.setSessionAgent,
     allMessages,
     allParts,
     allStatusMap,
@@ -2246,7 +2098,7 @@ export const SessionProvider: ParentComponent = (props) => {
     sendCommand,
     abort,
     compact,
-    respondToPermission,
+    respondToPermission: permissionLogic.respondToPermission,
     replyToQuestion,
     rejectQuestion,
     acceptSuggestion,

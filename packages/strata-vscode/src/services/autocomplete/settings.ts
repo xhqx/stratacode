@@ -7,7 +7,6 @@ const keys = new Set([
   "enableChatAutocomplete",
   "chatMode",
   "chatDebounceMs",
-  "taskSuggestionsEnabled",
   "model",
 ])
 
@@ -46,7 +45,6 @@ export function buildAutocompleteSettingsMessage() {
       model: getAutocompleteModel(config.get<string>("model") ?? "").id,
       chatMode: config.get<string>("chatMode", "fim") as "fim" | "agent",
       chatDebounceMs: config.get<number>("chatDebounceMs", 2000),
-      taskSuggestionsEnabled: config.get<boolean>("taskSuggestionsEnabled", true),
     },
   }
 }

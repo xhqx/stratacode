@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import { isEnabled } from "./feature-gate"
 
 export function tipText(platform: string): string {
   return platform === "darwin" ? "⌘I — Add to Strata Chat" : "Ctrl+I — Add to Strata Chat"
@@ -44,7 +45,7 @@ export class SelectionTipService implements vscode.Disposable {
       this.editor.setDecorations(this.decoration, [])
     }
 
-    const enabled = vscode.workspace.getConfiguration().get<boolean>("strata-code.new.features.selectionTip") ?? true
+    const enabled = isEnabled("selectionTip")
     const count = this.context.globalState.get<number>("strata.selectionTipUsageCount") ?? 0
 
     const selection = e.selections[0]
@@ -70,7 +71,7 @@ export class SelectionTipService implements vscode.Disposable {
 
   private async onConfig(e: vscode.ConfigurationChangeEvent) {
     if (e.affectsConfiguration("strata-code.new.features.selectionTip")) {
-      const enabled = vscode.workspace.getConfiguration().get<boolean>("strata-code.new.features.selectionTip") ?? true
+      const enabled = isEnabled("selectionTip")
       if (enabled) {
         await this.context.globalState.update("strata.selectionTipUsageCount", 0)
       } else {

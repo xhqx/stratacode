@@ -272,6 +272,155 @@ export class DiffViewerProvider implements vscode.Disposable {
     })
   }
 
+  private async getValidDiffsToExplain(target: DiffTarget): Promise<{ validDiffs: { file: string; patch: string }[], firstCheck: string }> {
+    const anc = await ancestor(this.gitOps, target.directory, target.baseBranch, (...args) => this.log(...args))
+    const diffs = await diffSummary(this.gitOps, target.directory, target.baseBranch, (...args) => this.log(...args))
+    this.log(`explainAll: ${diffs.length} file(s) found`)
+
+    const effort = vscode.workspace.getConfiguration("strata-code.new.explainer").get<string>("effort", "medium")
+
+    const validDiffs: { file: string; patch: string }[] = []
+    const candidates = diffs.filter((d) => !d.generatedLike)
+
+    const patchMap = await batchPatches(
+      this.gitOps,
+      target.directory,
+      anc ?? "",
+      candidates.map((d) => ({ file: d.file, tracked: d.tracked })),
+      (...args) => this.log(...args),
+    )
+
+    for (const d of candidates) {
+      const patch = patchMap.get(d.file)
+      if (!patch || shouldPreSkip(patch, effort)) continue
+      validDiffs.push({ file: d.file, patch })
+    }
+
+    const { annotatedDiffs: firstCheck } = buildIndexedPatches(validDiffs)
+    return { validDiffs, firstCheck }
+  }
+
+  private async initializeExplainSession(root: string): Promise<string | undefined> {
+    const client = this.connectionService.getClient()
+    
+    if (!this.explainSession) {
+      this.log("explainAll: creating new session")
+      const { data } = await client.session.create({ directory: root }, { throwOnError: true })
+      this.explainSession = data.id
+      this.connectionService.hideSession(data.id)
+      this.log("explainAll: session created:", this.explainSession)
+    }
+
+    let sessionContext: string | undefined
+    try {
+      const res = await client.getWorkerContext({
+        directory: root,
+        tier: "big",
+      })
+      if (res.data?.summary) sessionContext = res.data.summary
+    } catch (err) {
+      this.log("explainAll: session context fetch failed, continuing without", err)
+    }
+    return sessionContext
+  }
+
+  private async processExplainBatches(
+    validDiffs: { file: string; patch: string }[],
+    sessionContext: string | undefined,
+    root: string,
+    explainSession: string
+  ): Promise<{ allThreads: ReviewThread[]; summary: string }> {
+    const BATCH_SIZE = 5
+    const allThreads: ReviewThread[] = []
+    let summary = ""
+    const client = this.connectionService.getClient()
+
+    for (let i = 0; i < validDiffs.length; i += BATCH_SIZE) {
+      const chunk = validDiffs.slice(i, i + BATCH_SIZE)
+      const last = i + BATCH_SIZE >= validDiffs.length
+      const { annotatedDiffs, lineMap } = buildIndexedPatches(chunk)
+
+      if (!annotatedDiffs.trim()) {
+        if (last) {
+          this.post({
+            type: "diffViewer.explainResult",
+            threads: [],
+            summary: summary || "Explanation completed.",
+            done: true,
+          })
+        }
+        continue
+      }
+
+      const prompt = buildExplainPrompt(annotatedDiffs, sessionContext)
+
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("Explanation timed out after 60s")), 60_000)
+      })
+
+      try {
+        this.log(`explainAll: sending batch ${Math.floor(i / BATCH_SIZE) + 1}...`)
+        const res = await Promise.race([
+          client.session.prompt(
+            {
+              sessionID: explainSession,
+              directory: root,
+              agent: "explainer",
+              parts: [{ type: "text", text: prompt }],
+            },
+            { throwOnError: true },
+          ),
+          timeout,
+        ])
+
+        const part = res.data?.parts?.find((p: any) => p.type === "text")
+        if (part && "text" in part) {
+          const raw = part.text.trim()
+          const parsed = parseExplainResponse(raw, lineMap)
+          if (parsed.summary) summary = parsed.summary
+
+          const threads: ReviewThread[] = parsed.comments.map((c) => ({
+            id: Math.random().toString(36).substring(2, 9),
+            file: c.file,
+            side: c.side,
+            line: c.line,
+            ...(c.endLine !== undefined ? { endLine: c.endLine } : {}),
+            messages: [
+              {
+                id: Math.random().toString(36).substring(2, 9),
+                author: "ai",
+                text: c.text,
+                timestamp: Date.now(),
+              },
+            ],
+            pending: false,
+          }))
+
+          allThreads.push(...threads)
+
+          this.post({
+            type: "diffViewer.explainResult",
+            threads,
+            summary: last ? summary || "Explanation completed." : undefined,
+            done: last,
+          })
+        } else if (last) {
+          this.post({
+            type: "diffViewer.explainResult",
+            threads: [],
+            summary: summary || "Explanation completed.",
+            done: true,
+          })
+        }
+      } finally {
+        clearTimeout(timer)
+      }
+    }
+
+    return { allThreads, summary }
+  }
+
   /** Generate explanation via the SDK and post the result back to the webview */
   private async explainAll(): Promise<void> {
     // Reset session so a fresh one is created for each explain run
@@ -286,33 +435,8 @@ export class DiffViewerProvider implements vscode.Disposable {
 
     try {
       this.log("explainAll: starting, target:", target.directory)
-      // Re-fetch patches for all files locally to ensure we have the full content
-      const anc = await ancestor(this.gitOps, target.directory, target.baseBranch, (...args) => this.log(...args))
-      const diffs = await diffSummary(this.gitOps, target.directory, target.baseBranch, (...args) => this.log(...args))
-      this.log(`explainAll: ${diffs.length} file(s) found`)
-
-      const effort = vscode.workspace.getConfiguration("strata-code.new.explainer").get<string>("effort", "medium")
-
-      const validDiffs: { file: string; patch: string }[] = []
-
-      const candidates = diffs.filter((d) => !d.generatedLike)
-
-      const patchMap = await batchPatches(
-        this.gitOps,
-        target.directory,
-        anc ?? "",
-        candidates.map((d) => ({ file: d.file, tracked: d.tracked })),
-        (...args) => this.log(...args),
-      )
-
-      for (const d of candidates) {
-        const patch = patchMap.get(d.file)
-        if (!patch || shouldPreSkip(patch, effort)) continue
-        validDiffs.push({ file: d.file, patch })
-      }
-
-      const { annotatedDiffs: firstCheck } = buildIndexedPatches(validDiffs)
-
+      
+      const { validDiffs, firstCheck } = await this.getValidDiffsToExplain(target)
       this.log(`explainAll: combined patches from files (${firstCheck.length} chars)`)
 
       if (!firstCheck.trim()) {
@@ -326,120 +450,15 @@ export class DiffViewerProvider implements vscode.Disposable {
         return
       }
 
-      const client = this.connectionService.getClient()
       const root = getWorkspaceRoot()
       if (!root) {
         this.post({ type: "diffViewer.explainError", error: "No workspace root found." })
         return
       }
 
-      if (!this.explainSession) {
-        this.log("explainAll: creating new session")
-        const { data } = await client.session.create({ directory: root }, { throwOnError: true })
-        this.explainSession = data.id
-        this.connectionService.hideSession(data.id)
-        this.log("explainAll: session created:", this.explainSession)
-      }
-
-      // Fetch session context once for all batches
-      let sessionContext: string | undefined
-      try {
-        const res = await client.getWorkerContext({
-          directory: root,
-          tier: "big",
-        })
-        if (res.data?.summary) sessionContext = res.data.summary
-      } catch (err) {
-        this.log("explainAll: session context fetch failed, continuing without", err)
-      }
-
-      // Process in batches of BATCH_SIZE files
-      const BATCH_SIZE = 5
-      const allThreads: ReviewThread[] = []
-      let summary = ""
-
-      for (let i = 0; i < validDiffs.length; i += BATCH_SIZE) {
-        const chunk = validDiffs.slice(i, i + BATCH_SIZE)
-        const last = i + BATCH_SIZE >= validDiffs.length
-        const { annotatedDiffs, lineMap } = buildIndexedPatches(chunk)
-
-        if (!annotatedDiffs.trim()) {
-          if (last) {
-            this.post({
-              type: "diffViewer.explainResult",
-              threads: [],
-              summary: summary || "Explanation completed.",
-              done: true,
-            })
-          }
-          continue
-        }
-
-        const prompt = buildExplainPrompt(annotatedDiffs, sessionContext)
-
-        let timer: ReturnType<typeof setTimeout> | undefined
-        const timeout = new Promise<never>((_, reject) => {
-          timer = setTimeout(() => reject(new Error("Explanation timed out after 60s")), 60_000)
-        })
-
-        try {
-          this.log(`explainAll: sending batch ${Math.floor(i / BATCH_SIZE) + 1}...`)
-          const res = await Promise.race([
-            client.session.prompt(
-              {
-                sessionID: this.explainSession,
-                directory: root,
-                agent: "explainer",
-                parts: [{ type: "text", text: prompt }],
-              },
-              { throwOnError: true },
-            ),
-            timeout,
-          ])
-
-          const part = res.data?.parts?.find((p: any) => p.type === "text")
-          if (part && "text" in part) {
-            const raw = part.text.trim()
-            const parsed = parseExplainResponse(raw, lineMap)
-            if (parsed.summary) summary = parsed.summary
-
-            const threads: ReviewThread[] = parsed.comments.map((c) => ({
-              id: Math.random().toString(36).substring(2, 9),
-              file: c.file,
-              side: c.side,
-              line: c.line,
-              ...(c.endLine !== undefined ? { endLine: c.endLine } : {}),
-              messages: [
-                {
-                  id: Math.random().toString(36).substring(2, 9),
-                  author: "ai",
-                  text: c.text,
-                  timestamp: Date.now(),
-                },
-              ],
-              pending: false,
-            }))
-
-            allThreads.push(...threads)
-
-            this.post({
-              type: "diffViewer.explainResult",
-              threads,
-              summary: last ? summary || "Explanation completed." : undefined,
-              done: last,
-            })
-          } else if (last) {
-            this.post({
-              type: "diffViewer.explainResult",
-              threads: [],
-              summary: summary || "Explanation completed.",
-              done: true,
-            })
-          }
-        } finally {
-          clearTimeout(timer)
-        }
-      }
+      const sessionContext = await this.initializeExplainSession(root)
+      
+      const { allThreads, summary } = await this.processExplainBatches(validDiffs, sessionContext, root, this.explainSession!)
 
       this.saveExplanations(allThreads, summary)
     } catch (err) {

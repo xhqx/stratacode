@@ -31,6 +31,11 @@ export interface SendMessageRequest {
   files?: FileAttachment[]
 }
 
+export interface InputFocusedRequest {
+  type: "inputFocused"
+  draftID?: string
+}
+
 export interface AbortRequest {
   type: "abort"
   sessionID: string
@@ -315,7 +320,6 @@ export interface UpdateAutocompleteSettingMessage {
     | "model"
     | "chatMode"
     | "chatDebounceMs"
-    | "taskSuggestionsEnabled"
   value: boolean | string | number
 }
 
@@ -1020,6 +1024,7 @@ export interface WebviewLogMessage {
 export type WebviewMessage =
   | WebviewLogMessage
   | SendMessageRequest
+  | InputFocusedRequest
   | AbortRequest
   | RevertSessionRequest
   | UnrevertSessionRequest
@@ -1205,13 +1210,24 @@ export type WebviewMessage =
   | PlanningApplyMarkdownMessage
   | PlanningRequestMarkdownPreviewMessage
   | PlanningOpenPlanFileMessage
-  | RequestPlanningSettingsMessage
-  | UpdatePlanningSettingMessage
+  // stratacode_change start
+  | DocsRequestManifestMessage
+  | DocsRequestPageMessage
+  | DocsGenerateMessage
+  | DocsRegenerateMessage
+  | DocsOpenInEditorMessage
+  // stratacode_change end
   | { type: "cancelAutoApproveTimer"; requestId: string }
   | RequestRepoMapStatsMessage
   | InvalidateRepoMapMessage
   | RequestTaskSuggestionsMessage
   | RequestAgentChatCompletionMessage
+  | TestAcpConnectionMessage
+
+export interface TestAcpConnectionMessage {
+  type: "testAcpConnection"
+  key: string
+}
 
 export interface RequestRepoMapStatsMessage {
   type: "requestRepoMapStats"
@@ -1231,6 +1247,31 @@ export interface RequestAgentChatCompletionMessage {
   type: "requestAgentChatCompletion"
   text: string
   requestId: string
+}
+// stratacode_change end
+
+// stratacode_change start
+export interface DocsRequestManifestMessage {
+  type: "docs.requestManifest"
+}
+
+export interface DocsRequestPageMessage {
+  type: "docs.requestPage"
+  id: string
+}
+
+export interface DocsGenerateMessage {
+  type: "docs.generate"
+}
+
+export interface DocsRegenerateMessage {
+  type: "docs.regenerate"
+  id: string
+}
+
+export interface DocsOpenInEditorMessage {
+  type: "docs.openInEditor"
+  id: string
 }
 // stratacode_change end
 
@@ -1304,16 +1345,6 @@ export interface PlanningOpenPlanFileMessage {
   type: "planning.openPlanFile"
   file: string
   line?: number
-}
-
-export interface RequestPlanningSettingsMessage {
-  type: "requestPlanningSettings"
-}
-
-export interface UpdatePlanningSettingMessage {
-  type: "updatePlanningSetting"
-  key: "taskView" | "documentDrivenTasks"
-  value: boolean
 }
 
 // ============================================

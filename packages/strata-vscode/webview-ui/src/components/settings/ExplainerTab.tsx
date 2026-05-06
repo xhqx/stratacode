@@ -1,5 +1,5 @@
 import { Component, createSignal, onCleanup } from "solid-js"
-import { Switch } from "@stratacode/strata-ui/switch"
+
 import { Select } from "@stratacode/strata-ui/select"
 import { Card } from "@stratacode/strata-ui/card"
 import { useVSCode } from "../../context/vscode"
@@ -29,19 +29,16 @@ const ExplainerTab: Component = () => {
 
   const [mode, setMode] = createSignal<"strata" | "native">("strata")
   const [effort, setEffort] = createSignal<"low" | "medium" | "high">("medium")
-  const [autoExplain, setAutoExplain] = createSignal(true)
 
   const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
     if (message.type !== "settingLoaded") return
     if (message.key === "explainer.mode") setMode(message.value as "strata" | "native")
     if (message.key === "explainer.effort") setEffort(message.value as "low" | "medium" | "high")
-    if (message.key === "explainer.autoExplain") setAutoExplain(message.value as boolean)
   })
   onCleanup(unsubscribe)
 
   vscode.postMessage({ type: "requestSetting", key: "explainer.mode" })
   vscode.postMessage({ type: "requestSetting", key: "explainer.effort" })
-  vscode.postMessage({ type: "requestSetting", key: "explainer.autoExplain" })
 
   const save = (key: string, value: unknown) => {
     vscode.postMessage({ type: "updateSetting", key, value })
@@ -92,23 +89,6 @@ const ExplainerTab: Component = () => {
             size="small"
             triggerVariant="settings"
           />
-        </SettingsRow>
-
-        <SettingsRow
-          title={language.t("settings.display.autoExplain.title")}
-          description={language.t("settings.display.autoExplain.description")}
-          last
-        >
-          <Switch
-            checked={autoExplain()}
-            onChange={(checked) => {
-              setAutoExplain(checked)
-              save("explainer.autoExplain", checked)
-            }}
-            hideLabel
-          >
-            {language.t("settings.display.autoExplain.title")}
-          </Switch>
         </SettingsRow>
       </Card>
     </div>

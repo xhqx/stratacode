@@ -3,6 +3,8 @@ import { Switch } from "@stratacode/strata-ui/switch"
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
 
+const clamp = (val: number): number => (val > 0 && val < 1 ? 1 : val)
+
 const AutoApproveSettingsTab: Component = () => {
   const { config, updateConfig } = useConfig()
   const language = useLanguage()
@@ -24,8 +26,9 @@ const AutoApproveSettingsTab: Component = () => {
           }}
           value={config().auto_approve?.timeout ?? 0}
           min="0"
+          step="1"
           max="300"
-          onChange={(e) => updateConfig({ auto_approve: { timeout: Number(e.currentTarget.value) } })}
+          onChange={(e) => updateConfig({ auto_approve: { timeout: clamp(Number(e.currentTarget.value)) } })}
         />
       </div>
       <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
@@ -43,8 +46,9 @@ const AutoApproveSettingsTab: Component = () => {
           }}
           value={config().auto_approve?.question_timeout ?? 0}
           min="0"
+          step="1"
           max="300"
-          onChange={(e) => updateConfig({ auto_approve: { question_timeout: Number(e.currentTarget.value) } })}
+          onChange={(e) => updateConfig({ auto_approve: { question_timeout: clamp(Number(e.currentTarget.value)) } })}
         />
       </div>
       <div style={{ display: "flex", "align-items": "center", gap: "12px", "margin-top": "8px" }}>

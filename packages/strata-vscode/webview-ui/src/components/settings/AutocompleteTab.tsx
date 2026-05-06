@@ -15,7 +15,6 @@ const AutocompleteTab: Component = () => {
   const [chatAuto, setChatAuto] = createSignal(false)
   const [chatMode, setChatMode] = createSignal<"fim" | "agent">("fim")
   const [chatDebounceMs, setChatDebounceMs] = createSignal(2000)
-  const [taskSuggestions, setTaskSuggestions] = createSignal(true)
 
   const unsubscribe = vscode.onMessage((message: ExtensionMessage) => {
     if (message.type === "autocompleteSettingsLoaded") {
@@ -24,7 +23,6 @@ const AutocompleteTab: Component = () => {
       setChatAuto(message.settings.enableChatAutocomplete)
       setChatMode(message.settings.chatMode ?? "fim")
       setChatDebounceMs(message.settings.chatDebounceMs ?? 2000)
-      setTaskSuggestions(message.settings.taskSuggestionsEnabled ?? true)
     }
   })
 
@@ -40,8 +38,7 @@ const AutocompleteTab: Component = () => {
       | "enableSmartInlineTaskKeybinding"
       | "enableChatAutocomplete"
       | "chatMode"
-      | "chatDebounceMs"
-      | "taskSuggestionsEnabled",
+      | "chatDebounceMs",
     value: boolean | string | number,
   ) => {
     vscode.postMessage({ type: "updateAutocompleteSetting", key, value })
@@ -82,6 +79,7 @@ const AutocompleteTab: Component = () => {
           description={
             language.t("settings.autocomplete.chatAutocomplete.description") || "Enable chat autocomplete suggestions."
           }
+          last={!chatAuto()}
         >
           <Switch checked={chatAuto()} onChange={(val) => updateSetting("enableChatAutocomplete", val)} hideLabel>
             {language.t("settings.autocomplete.chatAutocomplete.title") || "Chat Autocomplete"}
@@ -117,6 +115,7 @@ const AutocompleteTab: Component = () => {
           <SettingsRow
             title="Autocomplete Debounce (ms)"
             description="Delay after typing stops before requesting a completion. Default: 2000ms."
+            last
           >
             <input
               type="number"
@@ -140,41 +139,6 @@ const AutocompleteTab: Component = () => {
                 "font-size": "12px",
               }}
             />
-          </SettingsRow>
-
-          <SettingsRow
-            title="Task Suggestion Chips"
-            description="Show AI-generated next-task chips below the chat input when the prompt is empty."
-            last
-          >
-            <Switch
-              checked={taskSuggestions()}
-              onChange={(val) => {
-                setTaskSuggestions(val)
-                updateSetting("taskSuggestionsEnabled", val)
-              }}
-              hideLabel
-            >
-              Task Suggestion Chips
-            </Switch>
-          </SettingsRow>
-        </Show>
-        <Show when={!chatAuto()}>
-          <SettingsRow
-            title="Task Suggestion Chips"
-            description="Show AI-generated next-task chips below the chat input when the prompt is empty."
-            last
-          >
-            <Switch
-              checked={taskSuggestions()}
-              onChange={(val) => {
-                setTaskSuggestions(val)
-                updateSetting("taskSuggestionsEnabled", val)
-              }}
-              hideLabel
-            >
-              Task Suggestion Chips
-            </Switch>
           </SettingsRow>
         </Show>
       </Card>

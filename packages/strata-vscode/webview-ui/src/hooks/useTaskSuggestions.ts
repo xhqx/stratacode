@@ -1,6 +1,7 @@
 // stratacode_change - new file
 import { createSignal, onCleanup, onMount } from "solid-js"
 import type { ExtensionMessage, WebviewMessage } from "../types/messages"
+import { useConfig } from "../context/config"
 
 const FETCH_DEBOUNCE_MS = 500
 
@@ -24,12 +25,14 @@ let globalCounter = 0
  * - Fetches suggestions automatically when the chat panel opens (empty input).
  * - Re-fetches when the context map has been updated since the last fetch.
  * - Uses the requestId to guard against stale responses (request races).
- * - Respects the taskSuggestionsEnabled setting from autocomplete settings.
+ * - Respects the taskSuggestions setting from the feature registry.
  */
 export function useTaskSuggestions(vscode: VSCodeContext, hasActiveSession: () => boolean): TaskSuggestions {
+  const { extensionFeatures } = useConfig()
   const [suggestions, setSuggestions] = createSignal<string[]>([])
   const [loading, setLoading] = createSignal(false)
-  const [enabled, setEnabled] = createSignal(true)
+
+  const enabled = () => !!extensionFeatures().taskSuggestions
 
   // Timestamp of the context map at last successful fetch.
   // Prevents redundant re-fetches if context hasn't changed.
@@ -45,9 +48,6 @@ export function useTaskSuggestions(vscode: VSCodeContext, hasActiveSession: () =
       lastContextMapUpdated = message.contextMapUpdated
       return
     }
-    if (message.type === "autocompleteSettingsLoaded") {
-      setEnabled(message.settings.taskSuggestionsEnabled ?? true)
-    }
   })
 
   onCleanup(() => {
@@ -56,8 +56,7 @@ export function useTaskSuggestions(vscode: VSCodeContext, hasActiveSession: () =
   })
 
   onMount(() => {
-    // Request settings first, then schedule initial fetch
-    vscode.postMessage({ type: "requestAutocompleteSettings" })
+    // Schedule initial fetch
     scheduleInitialFetch()
   })
 

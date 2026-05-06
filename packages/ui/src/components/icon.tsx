@@ -112,6 +112,7 @@ const icons = {
   layers: `<path d="M10 2.5L2.5 6.25L10 10L17.5 6.25L10 2.5Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 13.75L10 17.5L17.5 13.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 10L10 13.75L17.5 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>`,
   models: `<path fill-rule="evenodd" clip-rule="evenodd" d="M17.5 10C12.2917 10 10 12.2917 10 17.5C10 12.2917 7.70833 10 2.5 10C7.70833 10 10 7.70833 10 2.5C10 7.70833 12.2917 10 17.5 10Z" stroke="currentColor"/>`,
   discard: `<path d="M7.5 5L4.167 8.333L7.5 11.667M4.583 8.333h6.667a4.167 4.167 0 0 1 4.167 4.167" stroke="currentColor" stroke-linecap="square"/>`,
+  book: `<path d="M4.167 3.333h11.666v13.334H4.167a1.25 1.25 0 0 1-1.25-1.25V4.583a1.25 1.25 0 0 1 1.25-1.25ZM4.167 16.667h11.666M7.083 3.333v13.334" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>`,
 }
 
 export interface IconProps extends ComponentProps<"svg"> {
