@@ -110,6 +110,7 @@ import {
   fetchAndSendPendingQuestions,
 } from "./strata-provider/handlers/question"
 import { fetchAndSendPendingSuggestions, routeSuggestionWebviewMessage } from "./strata-provider/handlers/suggestion"
+import { sendAcpProviderMeta, testAcpConnection } from "./stratacode/acp-test"
 
 import {
   buildActionContext,
@@ -1012,6 +1013,19 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           break
         case "requestProviders":
           this.fetchAndSendProviders().catch((e) => Logger.error("StrataProvider", "fetchAndSendProviders failed:", e))
+          try {
+            sendAcpProviderMeta((msg) => this.postMessage(msg), this.cachedConfigMessage)
+          } catch (e) {
+            Logger.error("StrataProvider", "sendAcpProviderMeta failed:", e)
+          }
+          break
+        case "testAcpConnection":
+          testAcpConnection(
+            message.key,
+            (msg) => this.postMessage(msg),
+            this.cachedConfigMessage,
+            this.getWorkspaceDirectory()
+          ).catch((e: unknown) => Logger.error("StrataProvider", "testAcpConnection failed:", e))
           break
         case "connectProvider":
         case "authorizeProviderOAuth":

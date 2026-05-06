@@ -8,6 +8,7 @@
  */
 import { execSync, spawn } from "child_process"
 import { Logger } from "./logger"
+import * as path from "path"
 
 interface ProviderModel {
   id: string
@@ -28,7 +29,12 @@ interface PredefinedProvider {
 }
 
 function registry(): Record<string, PredefinedProvider> {
-  return require("../../../opencode/src/stratacode/acp-client/registry").PREDEFINED
+  const extensionDir = __dirname
+  const pkgDir = path.resolve(extensionDir, "..", "..", "..")
+  const opencodeDir = path.join(pkgDir, "opencode")
+  const registryPath = path.join(opencodeDir, "src", "stratacode", "acp-client", "registry")
+  const { PREDEFINED } = require(registryPath)
+  return PREDEFINED as unknown as Record<string, PredefinedProvider>
 }
 
 const TAG = "ACP"
