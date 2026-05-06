@@ -2,6 +2,7 @@ import * as vscode from "vscode"
 import type { StrataProvider } from "../../StrataProvider"
 import { getWorkspaceRoot } from "../../review-utils"
 import { Logger } from "../../stratacode/logger"
+import { isEnabled } from "../../stratacode/feature-gate"
 
 const DENY = [
   /\.env.*/i,
@@ -43,7 +44,8 @@ export class WorkerWatcher implements vscode.Disposable {
 
   private handleSave(doc: vscode.TextDocument) {
     const config = this.provider.currentConfig
-    if (!config?.workers?.enabled) return
+    const enabled = config?.workers?.enabled || isEnabled("workers") || isEnabled("explainerWorker") || isEnabled("reviewerWorker")
+    if (!enabled) return
 
     const fsPath = doc.uri.fsPath
     const isDenied = DENY.some((pattern) => pattern.test(fsPath))

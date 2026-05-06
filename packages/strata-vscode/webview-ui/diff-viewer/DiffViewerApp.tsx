@@ -34,6 +34,7 @@ const DiffViewerContent: Component = () => {
   const [scroll, setScroll] = createSignal<HTMLDivElement>()
   const [eagerLoad, setEagerLoad] = createSignal(false)
   const [instantComments, setInstantComments] = createSignal(true)
+  const [mode, setMode] = createSignal<"branch" | "session">("branch")
 
   const preserveScroll = (fn: () => void) => {
     const el = scroll()
@@ -95,6 +96,11 @@ const DiffViewerContent: Component = () => {
 
     if (msg.type === "diffViewer.loading") {
       setLoading(msg.loading)
+      return
+    }
+
+    if (msg.type === "diffViewer.mode") {
+      setMode(msg.mode)
       return
     }
 
@@ -274,17 +280,21 @@ const DiffViewerContent: Component = () => {
       onRequestDiff={(file) => {
         post({ type: "diffViewer.requestDiff", file })
       }}
-      onRevertFile={(file) => {
-        markReverting(file, true)
-        post({ type: "diffViewer.revertFile", file })
-      }}
+      onRevertFile={
+        mode() === "branch"
+          ? (file) => {
+              markReverting(file, true)
+              post({ type: "diffViewer.revertFile", file })
+            }
+          : undefined
+      }
       revertingFiles={reverting()}
       eagerLoad={eagerLoad()}
       instantComments={instantComments()}
       // New review thread props
       reviewThreads={reviewThreads()}
       reviewSummary={reviewSummary()}
-      onExplainAll={explainAll}
+      onExplainAll={mode() === "branch" ? explainAll : undefined}
       onThreadReply={handleThreadReply}
       onStartThread={handleStartThread}
       explaining={explaining() || reviewThreads().some((t) => t.pending)}

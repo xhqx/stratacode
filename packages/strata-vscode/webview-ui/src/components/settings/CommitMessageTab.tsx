@@ -3,7 +3,6 @@ import { Card } from "@stratacode/strata-ui/card"
 import { Switch } from "@stratacode/strata-ui/switch"
 import SettingsRow from "./SettingsRow"
 import { Select } from "@stratacode/strata-ui/select"
-import { TextField } from "@stratacode/strata-ui/text-field"
 import MarkdownEditor from "./MarkdownEditor"
 import { useConfig } from "../../context/config"
 import { useLanguage } from "../../context/language"
@@ -35,6 +34,7 @@ const CommitMessageTab: Component = () => {
           description={
             language.t("settings.commitMessage.format.description") || "Select the style of generated commit messages."
           }
+          last
         >
           <Select
             options={FORMAT_OPTIONS}
@@ -48,22 +48,6 @@ const CommitMessageTab: Component = () => {
             size="small"
             triggerVariant="settings"
           />
-        </SettingsRow>
-
-        <SettingsRow
-          title={language.t("settings.commitMessage.model.title") || "Model Override"}
-          description={
-            language.t("settings.commitMessage.model.description") ||
-            "Specify a model ID to override the default commit message model."
-          }
-        >
-          <div style={{ width: "160px" }}>
-            <TextField
-              value={config().commit_message?.model ?? ""}
-              placeholder="e.g. claude-3-haiku"
-              onChange={(val) => updateConfig({ commit_message: { model: val.trim() || undefined } })}
-            />
-          </div>
         </SettingsRow>
       </Card>
 

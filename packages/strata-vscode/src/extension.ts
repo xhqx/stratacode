@@ -384,8 +384,8 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
         remoteService,
       )
     }),
-    vscode.commands.registerCommand("strata-code.new.showChanges", () => {
-      diffViewerProvider.openPanel()
+    vscode.commands.registerCommand("strata-code.new.showChanges", (sessionId?: string) => {
+      diffViewerProvider.openPanel(sessionId)
     }),
     vscode.commands.registerCommand("strata-code.new.applyPendingTasks", () => {
       provider.applyMarkdownTasks()

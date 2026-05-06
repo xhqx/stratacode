@@ -785,7 +785,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           post: (msg) => this.postMessage(msg),
           openAgentManager: () => vscode.commands.executeCommand("strata-code.new.agentManagerOpen"),
           openAdvancedWorktree: () => vscode.commands.executeCommand("strata-code.new.agentManager.advancedWorktree"),
-          openChanges: () => vscode.commands.executeCommand("strata-code.new.showChanges"),
+          openChanges: (sessionId?: string) => vscode.commands.executeCommand("strata-code.new.showChanges", sessionId),
           createWorktree: async (baseBranch, branchName) => {
             await this.createWorktreeHandler?.(baseBranch, branchName)
           },

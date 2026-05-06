@@ -27,7 +27,7 @@ export const layer = Layer.effect(
           const config = input.model.options?.acpConfig as ConfigACPAgent
           const key = (input.model.options?.acpKey as string) ?? input.model.providerID
           const { conn, sessionId, events } = yield* acpManager.getConnection(key, config)
-          const model = config.model
+          const model = input.model.api.id
 
           if (model && model !== "default") {
             yield* Effect.promise(() =>

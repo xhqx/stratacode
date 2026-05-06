@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import type { StrataProvider } from "../../StrataProvider"
+import { isEnabled } from "../../stratacode/feature-gate"
 
 export class WorkerStatusBar implements vscode.Disposable {
   private statusBarItem: vscode.StatusBarItem
@@ -70,12 +71,17 @@ export class WorkerStatusBar implements vscode.Disposable {
     this.updateDisplay()
   }
 
+  private hasWorkerFeature(): boolean {
+    return isEnabled("workers") || isEnabled("explainerWorker") || isEnabled("reviewerWorker")
+  }
+
   private updateDisplay() {
     const config = this.provider.currentConfig
     const vscodeConfig = vscode.workspace.getConfiguration("strata-code.new")
     const vscodeWorkersEnabled = vscodeConfig.get<boolean>("workers.enabled", false)
+    const feature = this.hasWorkerFeature()
 
-    if (!config?.workers?.enabled && !vscodeWorkersEnabled) {
+    if (!config?.workers?.enabled && !vscodeWorkersEnabled && !feature) {
       this.statusBarItem.hide()
       return
     }

@@ -9,8 +9,7 @@ export default function PasteSummaryTab() {
   const language = useLanguage()
 
   return (
-    <div style={{ padding: "16px", "overflow-y": "auto", height: "100%" }}>
-      <h3 style={{ "margin-bottom": "16px" }}>Paste Summary</h3>
+    <div style={{ "overflow-y": "auto", height: "100%" }}>
       <Card>
         <SettingsRow
           title={language.t("settings.experimental.pasteSummary.title") || "Paste Summary"}

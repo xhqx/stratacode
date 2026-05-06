@@ -153,7 +153,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   const startWorktreeFromBranch = () =>
     vscode.postMessage({ type: "agentManager.createWorktree", baseBranch: repoBranch()! })
 
-  const openChanges = () => vscode.postMessage({ type: "openChanges" })
+  const openChanges = () => vscode.postMessage({ type: "openChanges", sessionId: id() })
 
   const moveToWorktree = () => {
     if (transferring()) return
@@ -176,7 +176,7 @@ export const ChatView: Component<ChatViewProps> = (props) => {
   }
 
   const changesTooltip = () => {
-    const stats = session.worktreeStats()
+    const stats = session.summary()
     if (!stats?.files) return language.t("sidebar.session.showChanges.tooltip.empty")
     return (
       <span class="session-changes-tooltip">
@@ -282,26 +282,26 @@ export const ChatView: Component<ChatViewProps> = (props) => {
                 </span>
               </Button>
             </Tooltip>
-            <Tooltip value={changesTooltip()} placement="top" class="session-move-changes-trigger">
-              <Button
-                variant="ghost"
-                size="small"
-                class="session-move-changes"
-                classList={{
-                  "session-move-changes--empty": !session.worktreeStats()?.files,
-                  "session-move-changes--has-changes": !!session.worktreeStats()?.files,
-                }}
-                onClick={openChanges}
-                aria-label={language.t("command.session.show.changes")}
-              >
-                <Icon name="layers" size="small" />
-                <Show when={session.worktreeStats()?.files}>
-                  <span class="session-diff-add">+{session.worktreeStats()!.additions}</span>
-                  <span class="session-diff-del">-{session.worktreeStats()!.deletions}</span>
+            <Show when={session.summary()?.files}>
+              <Tooltip value={changesTooltip()} placement="top" class="session-move-changes-trigger">
+                <Button
+                  variant="ghost"
+                  size="small"
+                  class="session-move-changes"
+                  classList={{
+                    "session-move-changes--empty": !session.summary()?.files,
+                    "session-move-changes--has-changes": !!session.summary()?.files,
+                  }}
+                  onClick={openChanges}
+                  aria-label={language.t("command.session.show.changes")}
+                >
+                  <Icon name="layers" size="small" />
+                  <span class="session-diff-add">+{session.summary()!.additions}</span>
+                  <span class="session-diff-del">-{session.summary()!.deletions}</span>
                   <span class="session-move-dot" aria-hidden="true" />
-                </Show>
-              </Button>
-            </Tooltip>
+                </Button>
+              </Tooltip>
+            </Show>
           </>
         </Show>
         <Show when={server.pluginContributions().length > 0}>

@@ -764,6 +764,7 @@ export interface EnhancePromptRequest {
 // Open the standalone changes viewer tab from the sidebar
 export interface OpenChangesRequest {
   type: "openChanges"
+  sessionId?: string
 }
 
 export interface DiffViewerRequestDiffMessage {

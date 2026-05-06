@@ -9,8 +9,7 @@ export default function LspTab() {
   const language = useLanguage()
 
   return (
-    <div style={{ padding: "16px", "overflow-y": "auto", height: "100%" }}>
-      <h3 style={{ "margin-bottom": "16px" }}>Language Server Protocol</h3>
+    <div style={{ "overflow-y": "auto", height: "100%" }}>
       <Card>
         <div style={{ padding: "16px", color: "var(--foreground-muted)" }}>
           {language.t("settings.experimental.lsp.description") ||

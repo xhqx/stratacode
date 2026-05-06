@@ -161,7 +161,7 @@ export const MANIFEST = {
     label: "Task Suggestion Chips",
     description:
       "Show AI-generated next-task chips below the chat input. Requires background workers for optimal context.",
-    icon: "sparkle",
+    icon: "star",
     lifecycle: "runtime",
     requires: "workers",
   },

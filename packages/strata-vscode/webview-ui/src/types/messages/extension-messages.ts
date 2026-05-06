@@ -746,6 +746,11 @@ export interface DiffViewerLoadingMessage {
   loading: boolean
 }
 
+export interface DiffViewerModeMessage {
+  type: "diffViewer.mode"
+  mode: "branch" | "session"
+}
+
 export interface DiffViewerExplainResultMessage {
   type: "diffViewer.explainResult"
   threads?: ReviewThread[]
@@ -1037,6 +1042,7 @@ export type ExtensionMessage =
   | DiffViewerDiffsMessage
   | DiffViewerDiffFileMessage
   | DiffViewerLoadingMessage
+  | DiffViewerModeMessage
   | DiffViewerRevertFileResultMessage
   | DiffViewerExplainResultMessage
   | DiffViewerThreadReplyMessage

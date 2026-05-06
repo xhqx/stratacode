@@ -1,4 +1,7 @@
 import * as vscode from "vscode"
+import * as fs from "fs/promises"
+import * as path from "path"
+import { applyPatch, parsePatch, reversePatch } from "diff"
 import type { StrataConnectionService } from "./services/cli-backend"
 import { buildWebviewHtml } from "./utils"
 import { GitOps } from "./agent-manager/GitOps"
@@ -55,6 +58,8 @@ export class DiffViewerProvider implements vscode.Disposable {
   private outputChannel: vscode.OutputChannel
   private onSendComments: ((comments: unknown[], autoSend: boolean) => void) | undefined
   private onExplainTask: ((prompt: string) => void) | undefined
+  private sessionId: string | undefined
+  private sessionPatches = new Map<string, string>()
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -77,13 +82,20 @@ export class DiffViewerProvider implements vscode.Disposable {
     this.onExplainTask = handler
   }
 
-  public openPanel(): void {
+  public openPanel(sessionId?: string): void {
+    if (this.panel && this.sessionId !== sessionId) {
+      this.panel.dispose()
+      this.panel = undefined
+    }
+    this.sessionId = sessionId
+
     if (this.panel) {
       this.panel.reveal(vscode.ViewColumn.One)
       return
     }
 
-    const panel = vscode.window.createWebviewPanel(DiffViewerProvider.viewType, "Changes", vscode.ViewColumn.One, {
+    const title = sessionId ? "Session Changes" : "Changes"
+    const panel = vscode.window.createWebviewPanel(DiffViewerProvider.viewType, title, vscode.ViewColumn.One, {
       enableScripts: true,
       retainContextWhenHidden: true,
       localResourceRoots: [this.extensionUri],
@@ -184,6 +196,9 @@ export class DiffViewerProvider implements vscode.Disposable {
   }
 
   private async handleRequestDiff(file: string): Promise<void> {
+    if (this.sessionId) {
+      return this.handleSessionRequestDiff(file)
+    }
     const target = this.cachedDiffTarget ?? (await this.resolveLocalDiffTarget())
     if (!target) return
     try {
@@ -647,6 +662,9 @@ export class DiffViewerProvider implements vscode.Disposable {
   }
 
   private async initialFetch(): Promise<void> {
+    if (this.sessionId) {
+      return this.fetchSessionDiff()
+    }
     this.post({ type: "diffViewer.loading", loading: true })
 
     try {
@@ -679,10 +697,87 @@ export class DiffViewerProvider implements vscode.Disposable {
     }
   }
 
+  private async fetchSessionDiff(): Promise<void> {
+    this.post({ type: "diffViewer.loading", loading: true })
+    try {
+      const client = this.connectionService.getClient()
+      if (!client) {
+        this.post({ type: "diffViewer.diffs", diffs: [] })
+        return
+      }
+      const root = getWorkspaceRoot() || ""
+      const { data } = await client.session.diff({
+        sessionID: this.sessionId!,
+        directory: root,
+      })
+      this.sessionPatches.clear()
+      const diffs = (data ?? []).map((d) => {
+        if (d.patch) this.sessionPatches.set(d.file, d.patch)
+        return {
+          file: d.file,
+          patch: "",
+          before: "",
+          after: "",
+          additions: d.additions,
+          deletions: d.deletions,
+          status: d.status,
+          summarized: true as const,
+        }
+      })
+      this.lastDiffHash = hashFileDiffs(diffs)
+      this.post({ type: "diffViewer.diffs", diffs })
+      this.post({ type: "diffViewer.mode", mode: "session" })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      this.log("Failed to fetch session diff:", message)
+      this.post({ type: "diffViewer.diffs", diffs: [] })
+    } finally {
+      this.post({ type: "diffViewer.loading", loading: false })
+    }
+  }
+
+  private async handleSessionRequestDiff(file: string): Promise<void> {
+    try {
+      const root = getWorkspaceRoot()
+      if (!root) return
+      const patch = this.sessionPatches.get(file)
+      if (!patch) {
+        this.log(`handleSessionRequestDiff: no patch for ${file}`)
+        return
+      }
+      const full = path.join(root, file)
+      const after = await fs.readFile(full, "utf-8").catch(() => "")
+      const parsed = parsePatch(patch)
+      const reversed = parsed.length > 0 ? reversePatch(parsed[0]!) : undefined
+      const before = reversed ? applyPatch(after, reversed) : ""
+      this.post({
+        type: "diffViewer.diffFile",
+        file,
+        diff: {
+          file,
+          patch,
+          before: typeof before === "string" ? before : "",
+          after,
+          additions: 0,
+          deletions: 0,
+          status: !before ? "added" : !after ? "deleted" : "modified",
+          summarized: false,
+        },
+      })
+    } catch (err) {
+      this.log(`Failed to fetch session diff for ${file}:`, err)
+    }
+  }
+
   private async pollDiff(): Promise<void> {
     if (this.polling) return
     this.polling = true
     try {
+      if (this.sessionId) {
+        await this.fetchSessionDiff()
+        return
+      }
+
       const target = this.cachedDiffTarget
       if (!target) {
         await this.initialFetch()
@@ -745,7 +840,7 @@ export class DiffViewerProvider implements vscode.Disposable {
       scriptUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "diff-viewer.js")),
       styleUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "dist", "diff-viewer.css")),
       iconsBaseUri: webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, "assets", "icons")),
-      title: "Changes",
+      title: this.sessionId ? "Session Changes" : "Changes",
       port: this.connectionService.getServerInfo()?.port,
       extraStyles: "#root { display: flex; flex-direction: column; }",
     })
