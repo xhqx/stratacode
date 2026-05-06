@@ -29,7 +29,7 @@ export const layer = Layer.effect(
           const { conn, sessionId, events } = yield* acpManager.getConnection(key, config)
           const model = config.model
 
-          if (model) {
+          if (model && model !== "default") {
             yield* Effect.promise(() =>
               conn.unstable_setSessionModel({
                 sessionId,
@@ -66,6 +66,7 @@ export const layer = Layer.effect(
           // We don't have access to the actual part IDs natively yet without parsing the events
           // But LLM.Event needs IDs. Let's just track a current text ID.
           let currentTextId = ""
+          let currentReasoningId = ""
 
           const onSessionUpdate = (params: any) => {
             if (params.sessionId !== sessionId) return
@@ -74,7 +75,12 @@ export const layer = Layer.effect(
             if (!update) return
 
             // Map ACP session updates to Strata LLM events
-            if (update.sessionUpdate === "agent_message_chunk" || update.sessionUpdate === "agent_thought_chunk") {
+            if (update.sessionUpdate === "agent_message_chunk") {
+              if (currentReasoningId) {
+                // @ts-ignore
+                Effect.runFork(Queue.offer(queue, { type: "reasoning-end", id: currentReasoningId }))
+                currentReasoningId = ""
+              }
               const content = update.content
               if (content?.type === "text" && content.text) {
                 if (!currentTextId) {
@@ -82,6 +88,21 @@ export const layer = Layer.effect(
                   Effect.runFork(Queue.offer(queue, { type: "text-start", id: currentTextId }))
                 }
                 Effect.runFork(Queue.offer(queue, { type: "text-delta", id: currentTextId, text: content.text }))
+              }
+            } else if (update.sessionUpdate === "agent_thought_chunk") {
+              if (currentTextId) {
+                Effect.runFork(Queue.offer(queue, { type: "text-end", id: currentTextId }))
+                currentTextId = ""
+              }
+              const content = update.content
+              if (content?.type === "text" && content.text) {
+                if (!currentReasoningId) {
+                  currentReasoningId = PartID.ascending()
+                  // @ts-ignore
+                  Effect.runFork(Queue.offer(queue, { type: "reasoning-start", id: currentReasoningId }))
+                }
+                // @ts-ignore
+                Effect.runFork(Queue.offer(queue, { type: "reasoning-delta", id: currentReasoningId, text: content.text }))
               }
             }
           }
@@ -100,6 +121,11 @@ export const layer = Layer.effect(
                 if (currentTextId) {
                   await Effect.runPromise(Queue.offer(queue, { type: "text-end", id: currentTextId }))
                   currentTextId = ""
+                }
+                if (currentReasoningId) {
+                  // @ts-ignore
+                  await Effect.runPromise(Queue.offer(queue, { type: "reasoning-end", id: currentReasoningId }))
+                  currentReasoningId = ""
                 }
                 
                 await Effect.runPromise(Queue.offer(queue, { 

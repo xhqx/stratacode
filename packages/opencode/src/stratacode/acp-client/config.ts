@@ -18,6 +18,16 @@ export const ConfigACPProvider = Schema.Struct({
   model: Schema.optional(Schema.String).annotate({ description: "Selected model ID for this provider" }),
   enabled: Schema.optional(Schema.Boolean).annotate({ description: "Whether this provider is enabled" }),
   predefined: Schema.optional(Schema.Boolean).annotate({ description: "Whether this provider comes from the built-in registry" }),
+  discoveredModels: Schema.optional(
+    Schema.mutable(
+      Schema.Array(
+        Schema.Struct({
+          id: Schema.String,
+          name: Schema.String,
+        })
+      )
+    )
+  ).annotate({ description: "Models discovered during the last connection test" }),
 })
 
 export type ConfigACPProvider = Schema.Schema.Type<typeof ConfigACPProvider>

@@ -14,6 +14,7 @@ export interface AcpProviderConfig {
   model?: string
   enabled?: boolean
   predefined?: boolean
+  discoveredModels?: { id: string; name: string }[]
 }
 
 export interface McpConfig {

@@ -38,6 +38,18 @@ const AcpProvidersTab: Component = () => {
         models: msg.models,
       },
     }))
+
+    if (msg.success && msg.models && msg.models.length > 0) {
+      const existing = config().acp_providers?.[msg.key]?.discoveredModels
+      if (JSON.stringify(existing) !== JSON.stringify(msg.models)) {
+        const newProviders = { ...(config().acp_providers ?? {}) }
+        newProviders[msg.key] = {
+          ...newProviders[msg.key],
+          discoveredModels: msg.models,
+        }
+        updateConfig({ acp_providers: newProviders })
+      }
+    }
   })
   onCleanup(unsub)
 
@@ -71,12 +83,13 @@ const AcpProvidersTab: Component = () => {
     on(fingerprints, (current) => {
       for (const [name, fp] of Object.entries(current)) {
         const old = prev[name]
+        const hasModels = (config().acp_providers?.[name]?.discoveredModels?.length ?? 0) > 0
         if (old === undefined) {
           // New provider — initial probe
-          probe(name)
+          if (!hasModels) probe(name)
         } else if (old !== fp) {
           // Config changed — force re-probe
-          probe(name, true)
+          if (!hasModels) probe(name, true)
         }
       }
       prev = { ...current }
@@ -410,24 +423,18 @@ const AcpProvidersTab: Component = () => {
                             </div>
                           </Show>
 
-                          {/* Retry button — shown only when auto-connect failed */}
-                          <Show when={!testing()[name] && result()[name] && !result()[name]!.success}>
+                          {/* Refetch or Retry button */}
+                          <Show when={!testing()[name]}>
                             <div style={{ "margin-top": "8px", display: "flex", "align-items": "center", gap: "8px" }}>
                               <Button
                                 variant="secondary"
                                 size="small"
                                 onClick={(e: MouseEvent) => {
                                   e.stopPropagation()
-                                  setTesting((prev) => ({ ...prev, [name]: true }))
-                                  setResult((prev) => {
-                                    const next = { ...prev }
-                                    delete next[name]
-                                    return next
-                                  })
-                                  vscode.postMessage({ type: "testAcpConnection", key: name })
+                                  probe(name, true)
                                 }}
                               >
-                                Retry Connection
+                                {(acp as any).discoveredModels?.length > 0 ? "Refetch Models" : (result()[name]?.success ? "Retest Connection" : "Discover Models")}
                               </Button>
                             </div>
                           </Show>

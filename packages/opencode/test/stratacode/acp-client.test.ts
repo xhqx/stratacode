@@ -47,12 +47,12 @@ describe("ACP Client Provider Schema", () => {
     expect(() => Schema.decodeUnknownSync(ConfigACPProvider)(input)).toThrow()
   })
 
-  test("defines built-in providers with commands and models", () => {
+  test("defines built-in providers with commands and metadata", () => {
     for (const [key, item] of Object.entries(PREDEFINED)) {
       expect(key.length).toBeGreaterThan(0)
+      expect(item.name.length).toBeGreaterThan(0)
       expect(item.command.length).toBeGreaterThan(0)
-      expect(item.models.length).toBeGreaterThan(0)
-      expect(item.models.some((model: any) => model.id === item.default)).toBe(true)
+      expect(Array.isArray(item.env)).toBe(true)
     }
   })
 })

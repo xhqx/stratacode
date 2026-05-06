@@ -1,8 +1,8 @@
 import { Icon } from "@stratacode/strata-ui/icon"
-import { Select } from "@stratacode/strata-ui/select"
+import { IconButton } from "@stratacode/strata-ui/icon-button"
 import { Switch } from "@stratacode/strata-ui/switch"
 import { Button } from "@stratacode/strata-ui/button"
-import { createEffect, createMemo, createSignal, on, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, on, onCleanup, Show } from "solid-js"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
 import type { AcpProviderConfig } from "../../types/messages/config"
@@ -18,7 +18,6 @@ interface Props {
     enabled: boolean
     configuredModel: string
     status: "disconnected" | "connecting" | "connected" | "error"
-    staticModels: { id: string; name: string; description?: string }[]
     liveModels: { id: string; name: string; description?: string }[]
     env: string[]
     installed: boolean
@@ -29,16 +28,21 @@ interface Props {
   onEnv: (key: string, value: string) => void
 }
 
+interface TestResult {
+  success: boolean
+  error?: string
+  models: { id: string; name: string }[]
+}
+
 const PredefinedProviderCard = (props: Props) => {
   const language = useLanguage()
   const vscode = useVSCode()
 
   const enabled = () => props.cfg.enabled === true
-  const model = () => props.cfg.model ?? props.item.defaultModel
-  const models = () => props.item.liveModels?.length ? props.item.liveModels : props.item.staticModels
+  const [expanded, setExpanded] = createSignal(false)
 
   const [testing, setTesting] = createSignal(false)
-  const [result, setResult] = createSignal<{ success: boolean; error?: string; count?: number } | null>(null)
+  const [result, setResult] = createSignal<TestResult | null>(null)
 
   const unsub = vscode.onMessage((msg: ExtensionMessage) => {
     if (msg.type !== "acpTestResult") return
@@ -47,7 +51,7 @@ const PredefinedProviderCard = (props: Props) => {
     setResult({
       success: msg.success,
       error: msg.error,
-      count: msg.models?.length ?? 0,
+      models: msg.models ?? [],
     })
   })
   onCleanup(unsub)
@@ -73,21 +77,47 @@ const PredefinedProviderCard = (props: Props) => {
         setResult(null)
         return
       }
+
+      const hasModels = (props.cfg as any).discoveredModels && (props.cfg as any).discoveredModels.length > 0
+
       if (prev !== undefined && prev !== current) {
-        // Config changed while enabled — re-test
-        test()
+        // Config changed while enabled
+        if (!hasModels) test()
       } else if (prev === undefined) {
-        // Just enabled — auto-test
-        test()
+        // Just enabled
+        if (!hasModels) test()
       }
       prev = current
     }),
   )
 
+  const discovered = () => result()?.models ?? props.cfg.discoveredModels ?? []
+
+  const toggle = () => setExpanded((v) => !v)
+
   return (
     <div style={{ "margin-bottom": "12px" }}>
-      <div style={{ display: "flex", gap: "12px", "align-items": "flex-start", "justify-content": "space-between" }}>
-        <div style={{ display: "flex", gap: "10px", flex: 1 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          "align-items": "flex-start",
+          "justify-content": "space-between",
+          cursor: "pointer",
+        }}
+        onClick={toggle}
+      >
+        <div style={{ display: "flex", gap: "6px", "align-items": "flex-start", flex: 1 }}>
+          <IconButton
+            size="small"
+            variant="ghost"
+            icon={expanded() ? "chevron-down" : "chevron-right"}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation()
+              toggle()
+            }}
+            style={{ "margin-top": "1px", "flex-shrink": 0 }}
+          />
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", "align-items": "center", gap: "8px", "margin-bottom": "4px" }}>
               <div style={{ "font-weight": "600" }}>{props.item.name}</div>
@@ -121,7 +151,10 @@ const PredefinedProviderCard = (props: Props) => {
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", "align-items": "center", gap: "8px", "flex-shrink": 0 }}>
+        <div
+          style={{ display: "flex", "align-items": "center", gap: "8px", "flex-shrink": 0 }}
+          onClick={(e: MouseEvent) => e.stopPropagation()}
+        >
           <span style={{ "font-size": "12px", color: "var(--text-weak-base, var(--vscode-descriptionForeground))" }}>
             {enabled()
               ? language.t("settings.agentBehaviour.acpPredefined.disable")
@@ -131,51 +164,57 @@ const PredefinedProviderCard = (props: Props) => {
         </div>
       </div>
 
-      <Show when={enabled()}>
-        <div style={{ display: "grid", gap: "12px", "margin-top": "14px", "margin-left": "16px" }}>
-          <div style={{ display: "grid", gap: "4px" }}>
-            <label style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}>
-              {language.t("settings.agentBehaviour.acpPredefined.model")}
-            </label>
-            <Select
-              options={models()}
-              current={models().find((item) => item.id === model())}
-              value={(item) => item.id}
-              label={(item) => item.name}
-              onSelect={(item) => item && props.onModel(item.id)}
-              variant="secondary"
-              size="small"
-              triggerVariant="settings"
-            />
-          </div>
+      <Show when={expanded()}>
+        <div style={{ display: "grid", gap: "12px", "margin-top": "14px", "margin-left": "28px" }}>
+          {/* Discovered models list */}
+          <Show when={discovered().length > 0}>
+            <div style={{ display: "grid", gap: "4px" }}>
+              <label style={{ "font-size": "12px", "font-weight": "500", color: "var(--text-weak-base)" }}>
+                Models
+              </label>
+              <div style={{ display: "flex", "flex-wrap": "wrap", gap: "6px" }}>
+                <For each={discovered()}>
+                  {(m) => (
+                    <span
+                      style={{
+                        "font-size": "11px",
+                        padding: "2px 8px",
+                        "border-radius": "4px",
+                        background: "var(--vscode-badge-background, #333)",
+                        color: "var(--vscode-badge-foreground, #ccc)",
+                      }}
+                    >
+                      {m.name}
+                    </span>
+                  )}
+                </For>
+              </div>
+            </div>
+          </Show>
 
-          {/* Test Connection */}
-          <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={test}
-              disabled={testing()}
-            >
-              {testing() ? "Testing…" : result()?.success ? "Retest" : "Test Connection"}
-            </Button>
-            <Show when={result()}>
-              {(res) => (
+          {/* Test Connection — only when enabled */}
+          <Show when={enabled()}>
+            <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={test}
+                disabled={testing()}
+              >
+                {testing() ? "Testing…" : (discovered().length > 0 || result()?.success) ? "Refetch Models" : "Discover Models"}
+              </Button>
+              <Show when={result() && !result()!.success}>
                 <span
                   style={{
                     "font-size": "11px",
-                    color: res().success
-                      ? "var(--vscode-terminal-ansiGreen, #388e3c)"
-                      : "var(--vscode-errorForeground, #f44336)",
+                    color: "var(--vscode-errorForeground, #f44336)",
                   }}
                 >
-                  {res().success
-                    ? `✓ Connected — ${res().count} model${res().count !== 1 ? "s" : ""} found`
-                    : `✗ ${res().error ?? "Connection failed"}`}
+                  ✗ {result()!.error ?? "Connection failed"}
                 </span>
-              )}
-            </Show>
-          </div>
+              </Show>
+            </div>
+          </Show>
         </div>
       </Show>
     </div>
@@ -183,3 +222,4 @@ const PredefinedProviderCard = (props: Props) => {
 }
 
 export default PredefinedProviderCard
+

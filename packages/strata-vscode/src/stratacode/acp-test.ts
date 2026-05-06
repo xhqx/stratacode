@@ -8,12 +8,6 @@
  */
 import { execSync, spawn } from "child_process"
 import { Logger } from "./logger"
-interface ProviderModel {
-  id: string
-  name: string
-  description?: string
-}
-
 interface PredefinedProvider {
   name: string
   description: string
@@ -22,8 +16,6 @@ interface PredefinedProvider {
   localBin?: string
   localArgs?: string[]
   env: string[]
-  models: ProviderModel[]
-  default: string
 }
 
 function registry(): Record<string, PredefinedProvider> {
@@ -89,16 +81,16 @@ export function sendAcpProviderMeta(post: Post, cached: unknown): void {
     const providers: Record<string, unknown> = {}
     for (const [key, preset] of Object.entries(registry())) {
       const cfg = userConf[key] || {}
+      const discovered = cfg.discoveredModels ?? []
       providers[key] = {
         name: preset.name,
         description: preset.description,
         icon: preset.icon,
-        defaultModel: preset.default,
+        defaultModel: discovered[0]?.id ?? "default",
         enabled: cfg.enabled === true,
-        configuredModel: cfg.model ?? preset.default,
+        configuredModel: cfg.model ?? discovered[0]?.id ?? "default",
         status: "disconnected",
-        staticModels: preset.models,
-        liveModels: preset.models,
+        liveModels: discovered,
         env: preset.env,
         installed: true,
       }

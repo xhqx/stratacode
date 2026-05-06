@@ -1345,7 +1345,8 @@ const layer: Layer.Layer<
           }
 
           const models: Record<string, Model> = {}
-          for (const m of preset.models) {
+          const availableModels = userConf.discoveredModels?.length ? userConf.discoveredModels : [{ id: "default", name: preset.name }]
+          for (const m of availableModels) {
             models[m.id] = {
               id: ModelID.make(m.id),
               name: m.name,
@@ -1400,14 +1401,14 @@ const layer: Layer.Layer<
           const providerID = ProviderID.make(`acp-${key}`)
           if (disabled.has(providerID)) continue
 
-          // Custom providers get a single "default" model initially;
-          // real models are discovered at runtime via session/new
-          const models: Record<string, Model> = {
-            default: {
-              id: ModelID.make("default"),
-              name: userConf.name ?? key,
+          const models: Record<string, Model> = {}
+          const availableModels = userConf.discoveredModels?.length ? userConf.discoveredModels : [{ id: "default", name: userConf.name ?? key }]
+          for (const m of availableModels) {
+            models[m.id] = {
+              id: ModelID.make(m.id),
+              name: m.name,
               providerID,
-              api: { id: "default", npm: "acp", url: "" },
+              api: { id: m.id, npm: "acp", url: "" },
               status: "active",
               capabilities: {
                 temperature: true,
@@ -1425,7 +1426,7 @@ const layer: Layer.Layer<
               family: "",
               release_date: "",
               variants: {},
-            },
+            }
           }
 
           mergeProvider(providerID, {
