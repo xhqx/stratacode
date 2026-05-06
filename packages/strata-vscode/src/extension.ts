@@ -311,6 +311,9 @@ export function activate(context: vscode.ExtensionContext): StrataPluginAPI {
       provider.postMessage({ type: "navigate", view: "docs" })
     }),
     // stratacode_change end
+    vscode.commands.registerCommand("strata-code.new.dashboardButtonClicked", () => {
+      provider.postMessage({ type: "navigate", view: "dashboard" })
+    }),
     vscode.commands.registerCommand("strata-code.new.openIndexingSettings", () => {
       settingsEditorProvider.openPanel("settings", "indexing")
     }),

@@ -9,7 +9,16 @@ export interface PredefinedProvider {
   name: string
   description: string
   icon: string
+  /** Primary command — used when localBin is not found on $PATH. */
   command: string[]
+  /**
+   * Optional local binary name to check via `which` before falling back to
+   * the npx-based `command`.  When present AND found on $PATH, the spawn uses
+   * `[localBin, ...localArgs]` instead of `command`.
+   */
+  localBin?: string
+  /** Extra args appended after localBin when the local binary is used. */
+  localArgs?: string[]
   env: string[]
   models: ProviderModel[]
   default: string
@@ -20,7 +29,9 @@ export const PREDEFINED: Record<string, PredefinedProvider> = {
     name: "OpenCode",
     description: "OpenCode AI agent via ACP",
     icon: "robot",
-    command: ["npx", "-y", "@opencode-ai/acp-server"],
+    command: ["opencode", "acp", "--pure"],
+    localBin: "opencode",
+    localArgs: ["acp", "--pure"],
     env: [],
     models: [{ id: "default", name: "Default" }],
     default: "default",
@@ -30,6 +41,8 @@ export const PREDEFINED: Record<string, PredefinedProvider> = {
     description: "Google Gemini models via ACP",
     icon: "gemini",
     command: ["npx", "-y", "@google/gemini-cli", "--acp"],
+    localBin: "gemini",
+    localArgs: ["--acp"],
     env: [],
     models: [
       { id: "auto-gemini-3", name: "Auto (Gemini 3)", description: "Auto-selects best model" },

@@ -112,7 +112,6 @@ describe("DataProvider contract (runtime)", () => {
   })
 
   it("DataProvider accepts onOpenFile prop and exports OpenFileFn (source)", () => {
-    // onOpenFile and OpenFileFn are `stratacode_change` additions — TypeScript types
     // erased at runtime, so we verify via source analysis
     const src = fs.readFileSync(DATA_CONTEXT_FILE, "utf-8")
     expect(src).toContain("onOpenFile")
@@ -121,7 +120,6 @@ describe("DataProvider contract (runtime)", () => {
   })
 
   it("DataProvider accepts onOpenDiff prop and exports OpenDiffFn (source)", () => {
-    // onOpenDiff and OpenDiffFn are `stratacode_change` additions — TypeScript types
     // erased at runtime, so we verify via source analysis
     const src = fs.readFileSync(DATA_CONTEXT_FILE, "utf-8")
     expect(src).toContain("onOpenDiff")

@@ -42,18 +42,44 @@ const AcpProvidersTab: Component = () => {
   onCleanup(unsub)
 
   // Auto-connect every custom provider on mount / when the list changes
-  const probe = (name: string) => {
-    if (testing()[name] || result()[name]) return
+  const probe = (name: string, force = false) => {
+    if (!force && (testing()[name] || result()[name])) return
     setTesting((prev) => ({ ...prev, [name]: true }))
+    setResult((prev) => {
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
     vscode.postMessage({ type: "testAcpConnection", key: name })
   }
 
   const acpEntries = createMemo(() => Object.entries(config().acp_providers ?? {}))
   const custom = createMemo(() => acpEntries().filter(([name]) => !(name in (acpProviders() ?? {}))))
 
+  // Fingerprint each custom provider's config to detect changes
+  const fingerprints = createMemo(() => {
+    const map: Record<string, string> = {}
+    for (const [name, cfg] of custom()) {
+      map[name] = JSON.stringify({ command: cfg.command, env: cfg.env, url: cfg.url, cwd: cfg.cwd })
+    }
+    return map
+  })
+
+  // Track previous fingerprints to detect drift
+  let prev: Record<string, string> = {}
   createEffect(
-    on(custom, (entries) => {
-      for (const [name] of entries) probe(name)
+    on(fingerprints, (current) => {
+      for (const [name, fp] of Object.entries(current)) {
+        const old = prev[name]
+        if (old === undefined) {
+          // New provider — initial probe
+          probe(name)
+        } else if (old !== fp) {
+          // Config changed — force re-probe
+          probe(name, true)
+        }
+      }
+      prev = { ...current }
     }),
   )
 

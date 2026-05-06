@@ -1335,6 +1335,15 @@ const layer: Layer.Layer<
           const providerID = ProviderID.make(`acp-${key}`)
           if (disabled.has(providerID)) continue
 
+          // Merge registry defaults (command, env) into user config so the
+          // transport layer always has a command even when the user only sets
+          // { predefined: true, enabled: true, model: "..." }.
+          const merged = {
+            ...userConf,
+            command: userConf.command ?? preset.command,
+            env: { ...(preset.env ? Object.fromEntries(preset.env.map((e: string) => [e, ""])) : {}), ...(userConf.env ?? {}) },
+          }
+
           const models: Record<string, Model> = {}
           for (const m of preset.models) {
             models[m.id] = {
@@ -1353,7 +1362,7 @@ const layer: Layer.Layer<
                 interleaved: false,
               },
               cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
-              options: { acp: true, acpKey: key, acpConfig: userConf },
+              options: { acp: true, acpKey: key, acpConfig: merged },
               limit: { context: 0, output: 0 },
               headers: {},
               family: "",
@@ -1367,7 +1376,7 @@ const layer: Layer.Layer<
             env: [],
             source: "custom",
             models,
-            options: { acp: true, acpKey: key, acpConfig: userConf },
+            options: { acp: true, acpKey: key, acpConfig: merged },
           })
 
           // Ensure it's forcefully added if not present in database
@@ -1377,7 +1386,7 @@ const layer: Layer.Layer<
               name: `[ACP] ${preset.name}`,
               env: [],
               source: "custom",
-              options: { acp: true, acpKey: key, acpConfig: userConf },
+              options: { acp: true, acpKey: key, acpConfig: merged },
               models,
             }
           }

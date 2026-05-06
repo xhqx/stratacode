@@ -2,7 +2,7 @@ import { Icon } from "@stratacode/strata-ui/icon"
 import { Select } from "@stratacode/strata-ui/select"
 import { Switch } from "@stratacode/strata-ui/switch"
 import { Button } from "@stratacode/strata-ui/button"
-import { createSignal, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, on, onCleanup, Show } from "solid-js"
 import { useLanguage } from "../../context/language"
 import { useVSCode } from "../../context/vscode"
 import type { AcpProviderConfig } from "../../types/messages/config"
@@ -57,6 +57,32 @@ const PredefinedProviderCard = (props: Props) => {
     setResult(null)
     vscode.postMessage({ type: "testAcpConnection", key: props.name })
   }
+
+  // Fingerprint the relevant config to detect changes while enabled
+  const fingerprint = createMemo(() =>
+    JSON.stringify({ enabled: props.cfg.enabled, model: props.cfg.model, env: props.cfg.env }),
+  )
+
+  // Auto-test when config changes while enabled (debounced by config auto-save)
+  let prev: string | undefined
+  createEffect(
+    on(fingerprint, (current) => {
+      if (!enabled()) {
+        // Reset when disabled so next enable triggers a fresh test
+        prev = undefined
+        setResult(null)
+        return
+      }
+      if (prev !== undefined && prev !== current) {
+        // Config changed while enabled — re-test
+        test()
+      } else if (prev === undefined) {
+        // Just enabled — auto-test
+        test()
+      }
+      prev = current
+    }),
+  )
 
   return (
     <div style={{ "margin-bottom": "12px" }}>
@@ -129,9 +155,9 @@ const PredefinedProviderCard = (props: Props) => {
               variant="secondary"
               size="small"
               onClick={test}
-              disabled={testing() || result()?.success === true}
+              disabled={testing()}
             >
-              {testing() ? "Testing…" : result()?.success ? "Connected!" : "Test Connection"}
+              {testing() ? "Testing…" : result()?.success ? "Retest" : "Test Connection"}
             </Button>
             <Show when={result()}>
               {(res) => (

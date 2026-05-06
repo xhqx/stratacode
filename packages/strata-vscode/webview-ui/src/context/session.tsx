@@ -812,9 +812,11 @@ export const SessionProvider: ParentComponent = (props) => {
       // Transfer pending agent selection to the new session
       const pendingAgent = pendingAgentSelection()
       if (pendingAgent && !store.agentSelections[session.id]) {
+        agentLogic.setSessionAgent(session.id, pendingAgent)
         setStore("agentSelections", session.id, pendingAgent)
-        setPendingAgentSelection(null)
       }
+      setPendingAgentSelection(null)
+      agentLogic.setPendingAgentSelection(undefined)
 
       const active = currentSessionID()
       const draft = draftSessionID()
@@ -948,6 +950,9 @@ export const SessionProvider: ParentComponent = (props) => {
       }
 
       agentLogic.resolveMessagesAgent(sessionID, merged)
+      // Mirror to session store so selectedAgentName reacts
+      const resolved = agentLogic.getSessionAgent(sessionID)
+      if (resolved) setStore("agentSelections", sessionID, resolved)
     })
     if (reset) requestAnimationFrame(() => patchPage(sessionID, { lastMutation: undefined }))
   }
@@ -987,6 +992,9 @@ export const SessionProvider: ParentComponent = (props) => {
 
     // Sync mode picker from any message role (user or assistant).
     agentLogic.handleNewMessageAgent(message.sessionID, message.agent)
+    // Mirror to session store so selectedAgentName reacts
+    const synced = agentLogic.getSessionAgent(message.sessionID)
+    if (synced) setStore("agentSelections", message.sessionID, synced)
 
     if (message.parts && message.parts.length > 0) {
       stash.remove(message.id)
@@ -1481,6 +1489,8 @@ export const SessionProvider: ParentComponent = (props) => {
     const id = currentSessionID()
     if (id) {
       agentLogic.setSessionAgent(id, name)
+      // Mirror to session store so selectedAgentName memo reacts
+      setStore("agentSelections", id, name)
       // Clear per-session model override so the new mode's configured/default
       // model takes effect instead of the previous mode's override.
       setStore(
@@ -1491,6 +1501,7 @@ export const SessionProvider: ParentComponent = (props) => {
       )
     } else {
       agentLogic.setPendingAgentSelection(name)
+      setPendingAgentSelection(name) // Update local pending state to reflect in selectedAgentName memo
       // When switching mode, initialize model for the new mode if the user
       // hasn't explicitly set one for it
       if (!userSetAgents()[name] && !store.modelSelections[name]) {
@@ -1765,6 +1776,7 @@ export const SessionProvider: ParentComponent = (props) => {
     setCloudPreviewId(null)
     setLoading(false)
     setPendingAgentSelection(agentLogic.defaultAgent())
+    agentLogic.setPendingAgentSelection(agentLogic.defaultAgent())
     vscode.postMessage({ type: "clearSession" })
   }
 
@@ -2079,7 +2091,10 @@ export const SessionProvider: ParentComponent = (props) => {
       // corrupt the default mode's model for later sessions.
       setStore("sessionOverrides", sessionID, { providerID, modelID })
     },
-    setSessionAgent: agentLogic.setSessionAgent,
+    setSessionAgent: (sessionID: string, name: string) => {
+      agentLogic.setSessionAgent(sessionID, name)
+      setStore("agentSelections", sessionID, name)
+    },
     allMessages,
     allParts,
     allStatusMap,

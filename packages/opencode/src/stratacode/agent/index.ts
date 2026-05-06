@@ -229,7 +229,6 @@ export function patchAgents(
     agents.code = {
       ...agents.build,
       name: "code",
-      hidden: true,
       permission: Permission.merge(defaults, Permission.fromConfig({ semantic_search: "allow" }), user),
     }
     delete agents.build

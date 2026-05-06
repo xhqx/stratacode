@@ -14,8 +14,9 @@ export interface AgentDependencies {
 export function createAgentLogic(deps: AgentDependencies) {
   const [agents, setAgents] = createSignal<AgentInfo[]>([])
   const [allAgents, setAllAgents] = createSignal<AgentInfo[]>([])
+  const [backendDefaultAgent, setBackendDefaultAgent] = createSignal<string>("code")
 
-  const defaultAgent = createMemo(() => agents().find((a: any) => a.isDefault)?.name || "code")
+  const defaultAgent = createMemo(() => backendDefaultAgent())
   const agentNames = createMemo(() => new Set(agents().map((a) => a.name)))
 
   const [store, setStore] = createStore({
@@ -48,6 +49,7 @@ export function createAgentLogic(deps: AgentDependencies) {
     if (message.type === "agentsLoaded") {
       setAgents(message.agents)
       setAllAgents(message.allAgents ?? message.agents)
+      if (message.defaultAgent) setBackendDefaultAgent(message.defaultAgent)
 
       const names = new Set(message.agents.map((a) => a.name))
       const pending = pendingAgentSelection()

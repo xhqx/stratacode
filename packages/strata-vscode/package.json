@@ -138,6 +138,11 @@
         "icon": "$(book)"
       },
       {
+        "command": "strata-code.new.dashboardButtonClicked",
+        "title": "Dashboard",
+        "icon": "$(pulse)"
+      },
+      {
         "command": "strata-code.new.openInTab",
         "title": "Strata Code",
         "icon": "$(link-external)"
@@ -560,6 +565,11 @@
           "command": "strata-code.new.docsButtonClicked",
           "group": "navigation@4",
           "when": "view == strata-code.SidebarProvider && stratacode.docHub.enabled"
+        },
+        {
+          "command": "strata-code.new.dashboardButtonClicked",
+          "group": "navigation@5",
+          "when": "view == strata-code.SidebarProvider"
         }
       ],
       "scm/title": [
@@ -653,6 +663,9 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "strata-code.new.dashboardButtonClicked"
+        },
         {
           "command": "strata-code.new.agentManagerOpen",
           "when": "stratacode.agentManager.enabled"

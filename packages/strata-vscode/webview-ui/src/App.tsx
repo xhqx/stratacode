@@ -45,6 +45,7 @@ import { PlanningProvider } from "./context/planning"
 import { ScenarioProvider } from "./context/stratacode/scenario"
 import { lazy } from "solid-js"
 const PlanningView = lazy(() => import("./components/planning/PlanningView").then((m) => ({ default: m.PlanningView })))
+const DashboardView = lazy(() => import("./components/dashboard/DashboardView").then((m) => ({ default: m.DashboardView })))
 import type { Message as SDKMessage, Part as SDKPart } from "@stratacode/sdk/v2"
 import "./styles/chat.css"
 import { WebviewLogger } from "./utils/webview-logger"
@@ -59,6 +60,7 @@ type ViewType =
   | "kanban"
   | "planning"
   | "docs" // stratacode_change
+  | "dashboard"
 const VALID_VIEWS = new Set<string>([
   "newTask",
   "marketplace",
@@ -69,6 +71,7 @@ const VALID_VIEWS = new Set<string>([
   "kanban",
   "planning",
   "docs", // stratacode_change
+  "dashboard",
 ])
 
 /**
@@ -251,6 +254,9 @@ const AppContent: Component = () => {
         if (extensionFeatures().docHub) setCurrentView("docs")
         break
       // stratacode_change end
+      case "dashboardButtonClicked":
+        setCurrentView("dashboard")
+        break
       case "cycleAgentMode":
         if (document.hasFocus()) cycleAgent(1)
         break
@@ -387,6 +393,9 @@ const AppContent: Component = () => {
               </DocsProvider>
             </Match>
             {/* stratacode_change end */}
+            <Match when={currentView() === "dashboard"}>
+              <DashboardView onBack={() => setCurrentView("newTask")} />
+            </Match>
           </Switch>
         }
       >
