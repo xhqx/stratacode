@@ -3,6 +3,7 @@ import { useServer } from "../../context/server"
 import { useProvider } from "../../context/provider"
 import { useSession } from "../../context/session"
 import { useConfig } from "../../context/config"
+import { useWorker } from "../../context/worker"
 import { useScenario } from "../../context/stratacode/scenario"
 import { useIndexing } from "../../context/indexing"
 import { WidgetCard } from "./WidgetCard"
@@ -20,13 +21,32 @@ const Row: Component<{ label: string; value?: string; children?: any }> = (props
   </div>
 )
 
+/* eslint-disable complexity */
 export const DashboardView: Component<DashboardViewProps> = (props) => {
   const server = useServer()
   const providerCtx = useProvider()
   const session = useSession()
   const config = useConfig()
+  const worker = useWorker()
   const scenario = useScenario()
   const indexing = useIndexing()
+
+  const providers = createMemo(() => Object.values(providerCtx.providers()))
+  const models = createMemo(() => providerCtx.models())
+  const auth = createMemo(() => Object.values(providerCtx.authStates()))
+
+  const mcp = createMemo(() => Object.values(session.mcpStatus()))
+  const mcpCount = (status: string) => mcp().filter((item) => item.status === status).length
+
+  const acp = createMemo(() => Object.values(config.acpProviders()))
+  const acpEnabled = createMemo(() => acp().filter((p) => p.enabled).length)
+  const acpInstalled = createMemo(() => acp().filter((p) => p.installed).length)
+  const acpModels = createMemo(() => acp().reduce((sum, p) => sum + (p.staticModels?.length || 0) + (p.liveModels?.length || 0), 0))
+
+  const visibleAgents = createMemo(() => session.agents())
+  const allAgents = createMemo(() => session.allAgents())
+  const nativeAgents = createMemo(() => allAgents().filter((agent) => agent.native).length)
+  const customAgents = createMemo(() => allAgents().filter((agent) => !agent.native).length)
 
   onMount(() => {
     server.requestRepoMapStats()
@@ -85,6 +105,9 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
           <Show when={server.extensionVersion()}>
             <Row label="Extension Version" value={server.extensionVersion()} />
           </Show>
+          <Row label="Workspace" value={server.workspaceDirectory() ? server.workspaceDirectory().split("/").pop() : "Not set"} />
+          <Row label="Git" value={server.gitInstalled() ? "Available" : "Unavailable"} />
+          <Row label="Auth" value={server.profileData() ? "Signed in" : "Signed out"} />
         </WidgetCard>
 
         {/* 2. Model Providers Widget */}
@@ -95,6 +118,10 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
         >
           <Row label="Active Provider" value={providerCtx.defaultSelection().providerID || "None"} />
           <Row label="Active Model" value={providerCtx.defaultSelection().modelID || "None"} />
+          <Row label="Total Providers" value={`${providers().length}`} />
+          <Row label="Total Models" value={`${models().length}`} />
+          <Row label="Auth Methods" value={`${Object.keys(providerCtx.authMethods()).length}`} />
+          <Row label="Favorites" value={`${session.favoriteModels().length}`} />
         </WidgetCard>
 
         {/* 3. MCP Servers Widget */}
@@ -107,14 +134,31 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
             when={Object.keys(session.mcpStatus()).length > 0}
             fallback={<div style={{ "font-size": "12px", color: "var(--vscode-descriptionForeground)" }}>No MCP servers configured.</div>}
           >
+            <Row label="Total" value={`${mcp().length}`} />
+            <Row label="Connected" value={`${mcpCount("connected")}`} />
+            <Row label="Needs Auth" value={`${mcpCount("needs_auth") + mcpCount("needs_client_registration")}`} />
+            <Row label="Failed">
+              <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
+                {mcpCount("failed") > 0 ? <StatusDot status="failed" /> : null}
+                <span>{mcpCount("failed")}</span>
+              </div>
+            </Row>
+            <div style={{ margin: "4px 0", "border-top": "1px solid var(--vscode-widget-border, transparent)" }} />
             <For each={Object.entries(session.mcpStatus())}>
               {([name, stat]) => (
-                <Row label={name}>
-                  <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
-                    <StatusDot status={stat.status === "connected" ? "connected" : stat.status === "disabled" ? "disabled" : "failed"} />
-                    <span style={{ "text-transform": "capitalize" }}>{stat.status.replace("_", " ")}</span>
-                  </div>
-                </Row>
+                <div style={{ display: "flex", "flex-direction": "column", gap: "2px" }}>
+                  <Row label={name}>
+                    <div style={{ display: "flex", "align-items": "center", gap: "6px" }}>
+                      <StatusDot status={stat.status === "connected" ? "connected" : stat.status === "disabled" ? "disabled" : "failed"} />
+                      <span style={{ "text-transform": "capitalize" }}>{stat.status.replace("_", " ")}</span>
+                    </div>
+                  </Row>
+                  <Show when={stat.error}>
+                    <div style={{ "font-size": "10px", color: "var(--vscode-errorForeground)", "margin-left": "8px", "white-space": "normal" }}>
+                      {stat.error}
+                    </div>
+                  </Show>
+                </div>
               )}
             </For>
           </Show>
@@ -130,6 +174,11 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
             when={Object.keys(config.acpProviders()).length > 0}
             fallback={<div style={{ "font-size": "12px", color: "var(--vscode-descriptionForeground)" }}>No ACP providers configured.</div>}
           >
+            <Row label="Installed" value={`${acpInstalled()}/${acp().length}`} />
+            <Row label="Enabled" value={`${acpEnabled()}/${acp().length}`} />
+            <Row label="Models" value={`${acpModels()}`} />
+            <Row label="Missing Env" value={`${acp().filter((p) => p.env.length > 0 && !p.installed).length}`} />
+            <div style={{ margin: "4px 0", "border-top": "1px solid var(--vscode-widget-border, transparent)" }} />
             <For each={Object.values(config.acpProviders())}>
               {(p) => (
                 <Row label={p.name}>
@@ -137,6 +186,9 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
                     {p.installed ? (
                       <span style={{ "font-size": "10px", "background-color": "var(--vscode-badge-background)", color: "var(--vscode-badge-foreground)", padding: "1px 4px", "border-radius": "3px" }}>Installed</span>
                     ) : null}
+                    <Show when={p.configuredModel || p.defaultModel}>
+                      <span style={{ "font-size": "10px", color: "var(--vscode-descriptionForeground)" }}>{p.configuredModel || p.defaultModel}</span>
+                    </Show>
                     <StatusDot status={p.enabled ? (p.status === "connected" ? "connected" : p.status === "connecting" ? "pending" : "failed") : "disabled"} />
                   </div>
                 </Row>
@@ -152,7 +204,11 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
           summary={`${session.agents().length} Visible`}
         >
           <Row label="Active Agent" value={session.selectedAgent()} />
-          <Row label="Status" value={session.status()} />
+          <Row label="Current Status" value={session.status()} />
+          <Row label="Total" value={`${allAgents().length}`} />
+          <Row label="Visible" value={`${visibleAgents().length}`} />
+          <Row label="Native" value={`${nativeAgents()}`} />
+          <Row label="Custom" value={`${customAgents()}`} />
         </WidgetCard>
 
         {/* 6. Scenarios Widget */}
@@ -161,6 +217,7 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
           icon="play"
           summary={`${scenario.configuredScenarios().length} Configured`}
         >
+          <Row label="Configured" value={`${scenario.configuredScenarios().length}`} />
           <Show
             when={scenario.activeScenario()}
             fallback={<Row label="Status" value="Idle" />}
@@ -168,6 +225,7 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
             {(active) => (
               <>
                 <Row label="Active Scenario" value={active().length > 0 ? "Running" : "Idle"} />
+                <Row label="Active Steps" value={`${active().length}`} />
                 <ProgressBar
                   current={scenario.scenarioIndex() + 1}
                   max={active().length}
@@ -190,7 +248,9 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
           >
             {(stats) => (
               <>
+                <Row label="Files" value={stats().files.toLocaleString()} />
                 <Row label="Symbols" value={stats().symbols.toLocaleString()} />
+                <Row label="Characters" value={`${(stats().chars / 1000).toFixed(1)}k`} />
                 <ProgressBar
                   current={stats().chars}
                   max={stats().budget}
@@ -214,18 +274,18 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
             fallback={<div style={{ "font-size": "12px", color: "var(--vscode-descriptionForeground)" }}>No active context usage.</div>}
           >
             {(usage) => (
-              <Show
-                when={usage().percentage !== null}
-                fallback={<Row label="Tokens Used" value={usage().tokens.toLocaleString()} />}
-              >
-                <ProgressBar
-                  current={usage().percentage!}
-                  max={100}
-                  label={`Usage: ${Math.round(usage().percentage!)}%`}
-                  warn={75}
-                  danger={90}
-                />
-              </Show>
+              <>
+                <Row label="Tokens Used" value={usage().tokens.toLocaleString()} />
+                <Show when={usage().percentage !== null}>
+                  <ProgressBar
+                    current={usage().percentage!}
+                    max={100}
+                    label={`Usage: ${Math.round(usage().percentage!)}%`}
+                    warn={75}
+                    danger={90}
+                  />
+                </Show>
+              </>
             )}
           </Show>
         </WidgetCard>
@@ -240,6 +300,8 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
             when={config.features().indexing}
             fallback={<Row label="Status" value="Disabled" />}
           >
+            <Row label="Percent" value={`${Math.round(indexing.status().percent)}%`} />
+            <Row label="State" value={indexing.label()} />
             <ProgressBar
               current={indexing.status().percent}
               max={100}
@@ -249,16 +311,65 @@ export const DashboardView: Component<DashboardViewProps> = (props) => {
           </Show>
         </WidgetCard>
 
-        {/* 10. Workers Widget (Settings Summary) */}
+        {/* 10. Auto-Approve Widget */}
+        <WidgetCard
+          title="Auto-Approve"
+          icon="shield"
+          summary={Object.keys(session.timers()).length > 0 ? `${Object.keys(session.timers()).length} Timers` : "Idle"}
+        >
+          <Row label="Active Timers" value={`${Object.keys(session.timers()).length}`} />
+          <Row label="Pending Permissions" value={`${session.permissions().length}`} />
+          <Show when={Object.keys(session.timers()).length > 0}>
+            <Row label="Shortest Timer" value={`${Math.min(...Object.values(session.timers()))}s`} />
+          </Show>
+        </WidgetCard>
+
+        {/* 11. Changes Widget */}
+        <WidgetCard
+          title="Changes"
+          icon="review"
+          summary={session.worktreeStats() ? `${session.worktreeStats()!.files} Files` : "No changes"}
+        >
+          <Show
+            when={session.worktreeStats()}
+            fallback={<div style={{ "font-size": "12px", color: "var(--vscode-descriptionForeground)" }}>No active worktree changes.</div>}
+          >
+            {(stats) => (
+              <>
+                <Row label="Files Changed" value={`${stats().files}`} />
+                <Row label="Additions" value={`+${stats().additions}`} />
+                <Row label="Deletions" value={`-${stats().deletions}`} />
+              </>
+            )}
+          </Show>
+        </WidgetCard>
+
+        {/* 12. Workers Widget */}
         <WidgetCard
           title="Workers"
           icon="circuit-board"
-          summary={config.extensionFeatures().workers ? "Enabled" : "Disabled"}
+          summary={`${worker.status().activeWorkers} Active`}
         >
-          <div style={{ "font-size": "11px", color: "var(--vscode-descriptionForeground)", "margin-bottom": "8px", "line-height": "1.4" }}>
-            Settings summary only. No live worker runtime status available.
-          </div>
-          <Row label="Summarizer" value={config.extensionFeatures().workers ? "Active" : "Inactive"} />
+          <Row label="Active Workers" value={`${worker.status().activeWorkers}`} />
+          <Row label="Recent Tasks" value={`${worker.status().lastTasks.length}`} />
+          <Show when={worker.status().lastTasks.length > 0}>
+            <div style={{ "margin-top": "8px", "border-top": "1px solid var(--vscode-widget-border)", "padding-top": "8px" }}>
+              <div style={{ color: "var(--vscode-descriptionForeground)", "font-size": "11px", "margin-bottom": "4px" }}>Latest Task</div>
+              <div style={{ "font-size": "12px", "white-space": "nowrap", overflow: "hidden", "text-overflow": "ellipsis" }}>
+                {worker.status().lastTasks[worker.status().lastTasks.length - 1].worker} - {worker.status().lastTasks[worker.status().lastTasks.length - 1].status}
+              </div>
+            </div>
+          </Show>
+        </WidgetCard>
+
+        {/* 13. Remote Control Widget */}
+        <WidgetCard
+          title="Remote Control"
+          icon="link"
+          summary={server.remoteStatus()?.enabled ? (server.remoteStatus()?.connected ? "Connected" : "Disconnected") : "Disabled"}
+        >
+          <Row label="Enabled" value={server.remoteStatus()?.enabled ? "Yes" : "No"} />
+          <Row label="Status" value={server.remoteStatus()?.connected ? "Connected" : "Disconnected"} />
         </WidgetCard>
       </div>
     </div>

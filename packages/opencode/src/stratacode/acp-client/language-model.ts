@@ -13,7 +13,7 @@ export function createACPLanguageModel(
   modelOpts: any,
 ): any {
   return {
-    specificationVersion: "v1",
+    specificationVersion: "v3",
     provider: modelOpts.providerID,
     modelId: modelOpts.id,
     defaultObjectGenerationMode: "json",
@@ -84,8 +84,13 @@ export function createACPLanguageModel(
       }
 
       return {
-        text: generatedText,
-        usage: { promptTokens: 0, completionTokens: 0 },
+        content: [{ type: "text", text: generatedText }],
+        usage: {
+          promptTokens: 0,
+          completionTokens: 0,
+          inputTokens: { total: 0 },
+          outputTokens: { total: 0 },
+        },
         finishReason: "stop",
       }
     },

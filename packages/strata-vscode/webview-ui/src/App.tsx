@@ -43,6 +43,7 @@ import { DocHubView } from "./components/docs/DocHubView"
 // stratacode_change end
 import { PlanningProvider } from "./context/planning"
 import { ScenarioProvider } from "./context/stratacode/scenario"
+import { WorkerProvider } from "./context/worker"
 import { lazy } from "solid-js"
 const PlanningView = lazy(() => import("./components/planning/PlanningView").then((m) => ({ default: m.PlanningView })))
 const DashboardView = lazy(() => import("./components/dashboard/DashboardView").then((m) => ({ default: m.DashboardView })))
@@ -427,7 +428,9 @@ const App: Component = () => {
                                   <DataBridge>
                                     <PlanningProvider>
                                       <ScenarioProvider>
-                                        <AppContent />
+                                        <WorkerProvider>
+                                          <AppContent />
+                                        </WorkerProvider>
                                       </ScenarioProvider>
                                     </PlanningProvider>
                                   </DataBridge>

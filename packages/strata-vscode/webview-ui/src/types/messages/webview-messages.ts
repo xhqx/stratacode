@@ -1224,6 +1224,11 @@ export type WebviewMessage =
   | RequestTaskSuggestionsMessage
   | RequestAgentChatCompletionMessage
   | TestAcpConnectionMessage
+  | RequestWorkerRuntimeStatusMessage
+
+export interface RequestWorkerRuntimeStatusMessage {
+  type: "requestWorkerRuntimeStatus"
+}
 
 export interface TestAcpConnectionMessage {
   type: "testAcpConnection"

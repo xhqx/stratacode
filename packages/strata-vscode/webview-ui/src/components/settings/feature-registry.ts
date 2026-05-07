@@ -16,10 +16,7 @@ import ExplainerWorkerTab from "./ExplainerWorkerTab"
 import LspTab from "./LspTab"
 import NotificationsTab from "./NotificationsTab"
 import PasteSummaryTab from "./PasteSummaryTab"
-import ProjectMemoryTab from "./ProjectMemoryTab"
-import RemoteControlTab from "./RemoteControlTab"
 import RepoMapTab from "./RepoMapTab"
-import RetriesTab from "./RetriesTab"
 import ReviewerWorkerTab from "./ReviewerWorkerTab"
 
 export interface FeatureDefinition {
@@ -44,7 +41,6 @@ import { MANIFEST, type FeatureSpec } from "../../../../src/stratacode/feature-m
 const COMPONENT_MAP: Partial<Record<keyof ExtensionFeatureFlags, Component>> = {
   autoApprove: AutoApproveSettingsTab,
   autocomplete: AutocompleteTab,
-  autoretries: RetriesTab,
   browserAutomation: BrowserTab,
   checkpoints: CheckpointsTab,
   codeActions: CodeActionsTab,
@@ -56,8 +52,7 @@ const COMPONENT_MAP: Partial<Record<keyof ExtensionFeatureFlags, Component>> = {
   lsp: LspTab,
   notifications: NotificationsTab,
   pasteSummary: PasteSummaryTab,
-  projectMemory: ProjectMemoryTab,
-  remoteControl: RemoteControlTab,
+
   repoMap: RepoMapTab,
   reviewerWorker: ReviewerWorkerTab,
   workers: BackgroundWorkersTab,

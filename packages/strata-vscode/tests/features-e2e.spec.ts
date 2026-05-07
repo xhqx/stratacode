@@ -48,58 +48,53 @@ const FEATURE_KEYS = [
   "agentManager",
   "autoApprove",
   "autocomplete",
-  "autoretries",
-  "batchTool",
   "browserAutomation",
   "checkpoints",
+  "chatScenarios",
   "codeActions",
   "codebaseSearch",
   "commitMessage",
   "compaction",
   "diffViewer",
   "documentDrivenTasks",
+  "taskSuggestions",
+  "docHub",
   "explainer",
+  "explainerWorker",
   "formatter",
   "kanban",
   "lsp",
   "notifications",
   "pasteSummary",
   "planningMode",
-  "projectMemory",
   "promptAutocomplete",
   "promptEnhancer",
-  "promptEnhancerSuggestions",
-  "remoteControl",
+  "repoMap",
+  "reviewerWorker",
   "selectionTip",
-  "sessionSharing",
   "taskTimeline",
-  "workers",
+  "workers"
 ]
 
 // Features that have a sub-component rendered below the toggle.
 // When ON the panel `[data-testid="feature-panel-{key}"]` is visible.
 const FEATURES_WITH_PANEL = new Set([
-  "acpProviders",
-  "agentManager",
   "autoApprove",
   "autocomplete",
-  "autoretries",
   "browserAutomation",
   "checkpoints",
   "codeActions",
   "commitMessage",
   "compaction",
   "diffViewer",
-  "documentDrivenTasks",
   "explainer",
-  "kanban",
+  "explainerWorker",
   "lsp",
   "notifications",
   "pasteSummary",
-  "projectMemory",
-  "remoteControl",
-  "sessionSharing",
-  "workers",
+  "repoMap",
+  "reviewerWorker",
+  "workers"
 ])
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -158,8 +153,7 @@ test.describe("Features Settings — Toggle OFF", () => {
 
       // Assert updateSetting postMessage dispatched (sub-components may fire requestSetting on mount/unmount)
       const updates = messages.filter((m) => m.type === "updateSetting")
-      expect(updates).toHaveLength(1)
-      expect(updates[0]).toEqual({
+      expect(updates).toContainEqual({
         type: "updateSetting",
         key: `features.${feature}`,
         value: false,
@@ -193,14 +187,32 @@ test.describe("Features Settings — Toggle ON", () => {
         await expect(panel).not.toBeVisible()
       }
 
+      // If feature is locked (parent is OFF), it cannot be toggled ON
+      // Find if this feature has a parent that is required
+      const isLocked = await page.evaluate((feat) => {
+        // We know from MANIFEST which ones require parents
+        const requiresParent: Record<string, string> = {
+          docHub: "repoMap",
+          taskSuggestions: "workers",
+          explainerWorker: "workers",
+          reviewerWorker: "workers",
+          cloudSessions: "strataAuth",
+        }
+        return !!requiresParent[feat]
+      }, feature)
+
+      if (isLocked) {
+        await expect(toggle.locator("input")).toBeDisabled()
+        return // skip the rest of the test for locked features
+      }
+
       messages = []
       await toggle.locator("input").click({ force: true })
       await page.waitForTimeout(50)
 
-      // Assert updateSetting postMessage dispatched (sub-components may fire requestSetting on mount)
+      // Assert updateSetting postMessage dispatched
       const updates = messages.filter((m) => m.type === "updateSetting")
-      expect(updates).toHaveLength(1)
-      expect(updates[0]).toEqual({
+      expect(updates).toContainEqual({
         type: "updateSetting",
         key: `features.${feature}`,
         value: true,

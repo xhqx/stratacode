@@ -278,7 +278,7 @@ provider.webviewMessageDisposable = webview.onDidReceiveMessage(async (message) 
   if (
     await handleDocsMessage(
       message,
-      (msg) => provider.postMessage(msg),
+      (msg: any) => provider.postMessage(msg),
       () => provider.connectionService.getServerConfig(),
       () => provider.getWorkspaceDirectory(provider.currentSession?.id),
     )
@@ -856,6 +856,10 @@ provider.webviewMessageDisposable = webview.onDidReceiveMessage(async (message) 
             Logger.error("StrataProvider", "Failed to invalidate repo map", e)
           })
       }
+      break
+    }
+    case "requestWorkerRuntimeStatus": {
+      provider.workerStatusBar?.postRuntimeStatus()
       break
     }
 

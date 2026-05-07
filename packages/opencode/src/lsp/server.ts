@@ -32,7 +32,7 @@ export interface Handle {
 
 type RootFunction = (file: string, ctx: InstanceContext) => Promise<string | undefined>
 
-export const NearestRoot = (includePatterns: string[], excludePatterns?: string[]): RootFunction => {
+export function NearestRoot(includePatterns: string[], excludePatterns?: string[]): RootFunction {
   return async (file, ctx) => {
     if (excludePatterns) {
       const excludedFiles = Filesystem.up({

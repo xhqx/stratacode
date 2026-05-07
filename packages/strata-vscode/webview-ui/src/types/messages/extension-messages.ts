@@ -1080,6 +1080,7 @@ export type ExtensionMessage =
   | DocsPageContentMessage
   | DocsPageStatusMessage
   | AcpTestResultMessage
+  | WorkerRuntimeStatusLoadedMessage
 // stratacode_change end
 
 export interface KanbanTasksLoadedMessage {
@@ -1161,6 +1162,16 @@ export interface AcpTestResultMessage {
   success: boolean
   models?: { id: string; name: string }[]
   error?: string
+}
+// stratacode_change end
+
+// stratacode_change start
+export interface WorkerRuntimeStatusLoadedMessage {
+  type: "workerRuntimeStatusLoaded"
+  status: {
+    activeWorkers: number
+    lastTasks: Array<{ id: string; worker: string; status: string; time: string }>
+  }
 }
 // stratacode_change end
 

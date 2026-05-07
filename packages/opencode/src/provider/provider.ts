@@ -45,7 +45,7 @@ import {
 // stratacode_change end
 import { PREDEFINED } from "@/stratacode/acp-client/registry" // stratacode_change
 import { createACPLanguageModel } from "@/stratacode/acp-client/language-model" // stratacode_change
-import { Service as ACPManagerService } from "@/stratacode/acp-client/manager" // stratacode_change
+import { Service as ACPManagerService, defaultLayer as ACPManagerLayer } from "@/stratacode/acp-client/manager" // stratacode_change
 
 const log = Log.create({ service: "provider" })
 
@@ -1244,7 +1244,7 @@ export function sort<T extends { id: string }>(models: T[]) {
 }
 
 // stratacode_change start - legacy promise helpers for Strata callsites
-const { runPromise: runProviderPromise } = makeRuntime(Service, defaultLayer)
+const { runPromise: runProviderPromise } = makeRuntime(Service, Layer.merge(defaultLayer, ACPManagerLayer))
 export const list = () => runProviderPromise((svc) => svc.list())
 export const getModel = (providerID: ProviderID, modelID: ModelID) =>
   runProviderPromise((svc) => svc.getModel(providerID, modelID))

@@ -2299,6 +2299,13 @@ export type Config = {
        * Whether this provider comes from the built-in registry
        */
       predefined?: boolean
+      /**
+       * Models discovered during the last connection test
+       */
+      discoveredModels?: Array<{
+        id: string
+        name: string
+      }>
     }
   }
   /**
@@ -2348,6 +2355,13 @@ export type Config = {
        * Whether this provider comes from the built-in registry
        */
       predefined?: boolean
+      /**
+       * Models discovered during the last connection test
+       */
+      discoveredModels?: Array<{
+        id: string
+        name: string
+      }>
     }
   }
 }

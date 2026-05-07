@@ -354,7 +354,7 @@ describe("FeatureGraph / production MANIFEST invariants", () => {
         // This is allowed only if the child is also hidden.
         if (parent?.hidden && !s.hidden) {
           // This is a known pattern for cloud features — document but don't fail.
-          // strataAuth(hidden) ← cloudSessions(hidden), sessionSharing(hidden)
+          // strataAuth(hidden) ← cloudSessions(hidden)
           // If a visible feature requires a hidden parent, flag it for review.
           console.warn(`Feature "${key}" (visible) requires hidden parent "${s.requires}"`)
         }
@@ -368,16 +368,12 @@ describe("FeatureGraph / production MANIFEST invariants", () => {
     expect(result).toContain("reviewerWorker")
   })
 
-  test("cascade from strataAuth includes cloudSessions and sessionSharing", () => {
+  test("cascade from strataAuth includes cloudSessions", () => {
     const result = graph.cascade("strataAuth")
     expect(result).toContain("cloudSessions")
-    expect(result).toContain("sessionSharing")
   })
 
-  test("cascade from promptEnhancer includes promptEnhancerSuggestions", () => {
-    const result = graph.cascade("promptEnhancer")
-    expect(result).toContain("promptEnhancerSuggestions")
-  })
+
 
   test("all default-false features can be toggled on when parents are on", () => {
     const f = flags(MANIFEST as unknown as Record<string, FeatureSpec>, true)

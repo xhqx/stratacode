@@ -8,6 +8,7 @@ import { reviewWorker } from "./review"
 import { explainerWorker } from "./explainer"
 import { summarizerWorker } from "./summarizer"
 import { docWorker } from "./doc-worker" // stratacode_change
+import { Instance } from "@/project/instance"
 
 const log = Log.create({ service: "worker:manager" })
 
@@ -98,8 +99,12 @@ const execute = async (task: WorkerTask) => {
   Bus.publish(Started, { id: task.id, worker: task.worker, file: task.payload?.file }).catch(() => {})
 
   try {
-    const result = await fn(task.cwd, task.payload)
+    const result = await Instance.provide({
+      directory: task.cwd,
+      fn: () => fn(task.cwd, task.payload),
+    })
     const duration = Date.now() - start
+
     Bus.publish(Completed, { id: task.id, worker: task.worker, duration, result }).catch(() => {})
   } catch (err) {
     log.error("worker failed", { worker: task.worker, err })

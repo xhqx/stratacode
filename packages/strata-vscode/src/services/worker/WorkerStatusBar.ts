@@ -44,6 +44,21 @@ export class WorkerStatusBar implements vscode.Disposable {
     }
 
     this.updateDisplay()
+    this.postRuntimeStatus()
+  }
+
+  public snapshot() {
+    return {
+      activeWorkers: this.activeWorkers,
+      lastTasks: [...this.lastTasks],
+    }
+  }
+
+  public postRuntimeStatus() {
+    this.provider.postMessage({
+      type: "workerRuntimeStatusLoaded",
+      status: this.snapshot(),
+    })
   }
 
   public async showQuickPick() {

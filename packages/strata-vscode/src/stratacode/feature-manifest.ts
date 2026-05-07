@@ -64,20 +64,7 @@ export const MANIFEST = {
     agents: ["autocomplete"],
     pinned: ["autocomplete"],
   },
-  autoretries: {
-    default: true,
-    label: "Auto-Retries",
-    description: "Enable automatic retry logic for failed AI requests with exponential backoff.",
-    icon: "reset",
-    lifecycle: "runtime",
-  },
-  batchTool: {
-    default: false,
-    label: "Batch Tool",
-    description: "Enable the experimental batch tool for agents.",
-    icon: "layers",
-    lifecycle: "runtime",
-  },
+
   browserAutomation: {
     default: false,
     label: "Browser Automation",
@@ -176,14 +163,6 @@ export const MANIFEST = {
     agents: ["doc_worker"],
     pinned: ["doc_worker"],
   },
-  docWorker: {
-    default: false,
-    label: "Doc Worker",
-    description: "Background worker that auto-generates codebase documentation from the repo map.",
-    icon: "book",
-    lifecycle: "runtime",
-    requires: "docHub",
-  },
   // stratacode_change end
   explainer: {
     default: true,
@@ -246,13 +225,7 @@ export const MANIFEST = {
     icon: "bullet-list",
     lifecycle: "runtime",
   },
-  projectMemory: {
-    default: true,
-    label: "Project Memory",
-    description: "Enable project memory for persisting context across sessions.",
-    icon: "folder",
-    lifecycle: "runtime",
-  },
+
   promptAutocomplete: {
     default: true,
     label: "Prompt Autocomplete",
@@ -268,22 +241,7 @@ export const MANIFEST = {
     lifecycle: "runtime",
     agents: ["enhance"],
   },
-  promptEnhancerSuggestions: {
-    default: true,
-    label: "Prompt Enhancer Suggestions",
-    description: "Show inline suggestions from the prompt enhancer as you type.",
-    icon: "eye",
-    lifecycle: "runtime",
-    requires: "promptEnhancer",
-  },
-  remoteControl: {
-    default: false,
-    label: "Remote Control",
-    description: "Enable remote control API for external tool integration.",
-    icon: "console",
-    lifecycle: "runtime",
-    policy: "cloud",
-  },
+
   repoMap: {
     default: true,
     label: "Repository Map",
@@ -305,16 +263,6 @@ export const MANIFEST = {
     description: "Show a tip when you select code to explain or use code actions.",
     icon: "glasses",
     lifecycle: "runtime",
-  },
-  sessionSharing: {
-    default: false,
-    label: "Session Sharing",
-    description: "Enable sharing sessions.",
-    icon: "share",
-    lifecycle: "runtime",
-    requires: "strataAuth",
-    policy: "cloud",
-    hidden: true,
   },
   strataAuth: {
     default: false,

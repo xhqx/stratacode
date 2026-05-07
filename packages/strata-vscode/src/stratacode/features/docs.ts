@@ -1,6 +1,7 @@
 // stratacode_change - new file
 import { Logger } from "../logger"
-import type { PostMessage } from "../feature"
+
+export type PostMessage = (msg: any) => void
 
 interface ServerConfig {
   baseUrl: string

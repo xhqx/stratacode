@@ -1173,16 +1173,6 @@
             "default": true,
             "description": "Enable all autocomplete features (inline completions, chat autocomplete, task suggestions). Disabling requires a window reload."
           },
-          "strata-code.new.features.autoretries": {
-            "type": "boolean",
-            "default": true,
-            "description": "Enable automatic retry logic for failed AI requests with exponential backoff."
-          },
-          "strata-code.new.features.batchTool": {
-            "type": "boolean",
-            "default": false,
-            "description": "Enable the experimental batch tool for agents."
-          },
           "strata-code.new.features.browserAutomation": {
             "type": "boolean",
             "default": false,
@@ -1233,11 +1223,7 @@
             "default": true,
             "description": "Enable the Confluence-style sidebar view for codebase documentation."
           },
-          "strata-code.new.features.docWorker": {
-            "type": "boolean",
-            "default": false,
-            "description": "Background worker that auto-generates codebase documentation from the repo map."
-          },
+
           "strata-code.new.features.explainer": {
             "type": "boolean",
             "default": true,
@@ -1278,11 +1264,6 @@
             "default": false,
             "description": "Enable planning mode for structured multi-step task orchestration."
           },
-          "strata-code.new.features.projectMemory": {
-            "type": "boolean",
-            "default": true,
-            "description": "Enable project memory for persisting context across sessions."
-          },
           "strata-code.new.features.promptAutocomplete": {
             "type": "boolean",
             "default": true,
@@ -1292,16 +1273,6 @@
             "type": "boolean",
             "default": true,
             "description": "Enable the prompt enhancer to refine and improve user prompts before sending."
-          },
-          "strata-code.new.features.promptEnhancerSuggestions": {
-            "type": "boolean",
-            "default": true,
-            "description": "Show inline suggestions from the prompt enhancer as you type."
-          },
-          "strata-code.new.features.remoteControl": {
-            "type": "boolean",
-            "default": false,
-            "description": "Enable remote control API for external tool integration."
           },
           "strata-code.new.features.repoMap": {
             "type": "boolean",
@@ -1318,11 +1289,7 @@
             "default": true,
             "description": "Show a tip when you select code to explain or use code actions."
           },
-          "strata-code.new.features.sessionSharing": {
-            "type": "boolean",
-            "default": false,
-            "description": "Enable sharing sessions."
-          },
+
           "strata-code.new.features.strataAuth": {
             "type": "boolean",
             "default": false,

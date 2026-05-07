@@ -32,6 +32,7 @@ interface ServerContextValue {
   repoMapStats: Accessor<{ files: number; symbols: number; chars: number; budget: number } | undefined>
   requestRepoMapStats: () => void
   invalidateRepoMap: () => void
+  remoteStatus: Accessor<{ enabled: boolean; connected: boolean } | undefined>
 }
 
 export const ServerContext = createContext<ServerContextValue>()
@@ -56,6 +57,7 @@ export const ServerProvider: ParentComponent = (props) => {
   const [repoMapStats, setRepoMapStats] = createSignal<
     { files: number; symbols: number; chars: number; budget: number } | undefined
   >()
+  const [remoteStatus, setRemoteStatus] = createSignal<{ enabled: boolean; connected: boolean } | undefined>()
 
   const gitSub = vscode.onMessage((m: ExtensionMessage) => {
     if (m.type === "gitStatus") setGitInstalled(m.repo)
@@ -146,6 +148,10 @@ export const ServerProvider: ParentComponent = (props) => {
       case "repoMapStatsLoaded":
         setRepoMapStats(message.stats)
         break
+
+      case "remoteStatus":
+        setRemoteStatus({ enabled: message.enabled, connected: message.connected })
+        break
     }
   }
 
@@ -174,6 +180,7 @@ export const ServerProvider: ParentComponent = (props) => {
     // Without this handshake, messages posted during a webview refresh can be lost.
     console.log("[Strata New] Webview ready")
     vscode.postMessage({ type: "webviewReady" })
+    vscode.postMessage({ type: "requestRemoteStatus" })
   })
 
   const startLogin = () => {
@@ -203,6 +210,7 @@ export const ServerProvider: ParentComponent = (props) => {
     repoMapStats,
     requestRepoMapStats: () => vscode.postMessage({ type: "requestRepoMapStats" }),
     invalidateRepoMap: () => vscode.postMessage({ type: "invalidateRepoMap" }),
+    remoteStatus,
   }
 
   return <ServerContext.Provider value={value}>{props.children}</ServerContext.Provider>
