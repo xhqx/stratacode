@@ -46,7 +46,7 @@ export function hasCycle(tasks: PlanningTask[], taskId: string, newDeps: string[
  * Performs a topological sort of the given tasks based on their dependencies.
  * Returns null if a cycle is detected.
  */
-export function topologicalOrder(tasks: PlanningTask[]): string[] | null {
+function topologicalOrder(tasks: PlanningTask[]): string[] | null {
   const inDegree = new Map<string, number>()
   const adjList = new Map<string, string[]>()
 

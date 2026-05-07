@@ -60,7 +60,7 @@ export interface MatchingSuggestionResult {
   matchType: CacheMatchType
 }
 
-export interface LLMRetrievalResult extends ResponseMetaData {
+interface LLMRetrievalResult extends ResponseMetaData {
   suggestion: FillInAtCursorSuggestion
 }
 

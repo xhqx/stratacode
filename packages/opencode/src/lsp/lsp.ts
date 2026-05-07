@@ -167,7 +167,9 @@ export const layer = Layer.effect(
           log.info("all LSPs are disabled")
         } else {
           for (const server of Object.values(LSPServer)) {
-            servers[server.id] = server
+            if (typeof server === "object" && server !== null && "id" in server) {
+              servers[server.id as string] = server as LSPServer.Info
+            }
           }
 
           filterExperimentalServers(servers)

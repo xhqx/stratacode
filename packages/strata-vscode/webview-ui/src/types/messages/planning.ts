@@ -41,7 +41,7 @@ export interface PlanningTask {
 }
 
 // Derived subset for Kanban view
-export type PlannedKanbanTask = KanbanTask & {
+type PlannedKanbanTask = KanbanTask & {
   column: "planned"
   source: "planned"
 }

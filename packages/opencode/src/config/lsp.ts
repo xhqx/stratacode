@@ -29,7 +29,8 @@ export const requiresExtensionsForCustomServers = Schema.makeFilter<
   boolean | Record<string, Schema.Schema.Type<typeof Entry>>
 >((data) => {
   if (typeof data === "boolean") return undefined
-  const serverIds = new Set(Object.values(LSPServer).map((server) => server.id))
+  const servers = Object.values(LSPServer).filter((s: any): s is LSPServer.Info => typeof s === "object" && s !== null && "id" in s)
+  const serverIds = new Set(servers.map((server) => server.id))
   const ok = Object.entries(data).every(([id, config]) => {
     if ("disabled" in config && config.disabled) return true
     if (serverIds.has(id)) return true

@@ -70,7 +70,7 @@ export const NotificationsProvider: ParentComponent = (props) => {
   return <NotificationsContext.Provider value={value}>{props.children}</NotificationsContext.Provider>
 }
 
-export function useNotifications(): NotificationsContextValue {
+function useNotifications(): NotificationsContextValue {
   const context = useContext(NotificationsContext)
   if (!context) {
     throw new Error("useNotifications must be used within a NotificationsProvider")

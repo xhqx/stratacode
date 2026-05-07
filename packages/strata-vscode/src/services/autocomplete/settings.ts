@@ -50,7 +50,7 @@ export function buildAutocompleteSettingsMessage() {
 }
 
 /** Push autocomplete settings to the webview whenever VS Code config changes. */
-export function watchAutocompleteConfig(post: Post): vscode.Disposable {
+function watchAutocompleteConfig(post: Post): vscode.Disposable {
   return vscode.workspace.onDidChangeConfiguration((e) => {
     if (e.affectsConfiguration("strata-code.new.autocomplete")) {
       post(buildAutocompleteSettingsMessage())

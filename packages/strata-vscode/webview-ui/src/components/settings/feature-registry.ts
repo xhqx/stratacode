@@ -146,7 +146,7 @@ export function pinnedFor(feats: ExtensionFeatureFlags): string[] {
 }
 
 /** Returns true if a feature's parent dependency (if any) is enabled. */
-export function parentEnabled(key: keyof ExtensionFeatureFlags, feats: ExtensionFeatureFlags): boolean {
+function parentEnabled(key: keyof ExtensionFeatureFlags, feats: ExtensionFeatureFlags): boolean {
   const feature = FEATURE_MAP.get(key)
   if (!feature?.requires) return true
   return feats[feature.requires]
