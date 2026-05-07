@@ -709,7 +709,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
       }
 
       const affectsWorkers =
-        e.affectsConfiguration("strata-code.new.workers.enabled") ||
+        e.affectsConfiguration("strata-code.new.features.workers") ||
+        e.affectsConfiguration("strata-code.new.features.explainerWorker") ||
+        e.affectsConfiguration("strata-code.new.features.reviewerWorker") ||
         e.affectsConfiguration("strata-code.new.workers.autoExplain") ||
         e.affectsConfiguration("strata-code.new.workers.pollingIntervalSec") ||
         e.affectsConfiguration("strata-code.new.workers.summarizerPrompt") ||
@@ -717,14 +719,15 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
         e.affectsConfiguration("strata-code.new.workers.explainerPrompt")
 
       if (affectsWorkers) {
-        if (e.affectsConfiguration("strata-code.new.workers.enabled")) {
+        if (e.affectsConfiguration("strata-code.new.features.workers")) {
           this.workerStatusBar?.onConfigChanged()
           this.fetchAndSendAgents()
         }
 
         const config = vscode.workspace.getConfiguration("strata-code.new")
-        const enabled = config.get<boolean>("workers.enabled", false)
-        const auto_explain = config.get<boolean>("workers.autoExplain", false)
+        const enabled = isEnabled("workers")
+        const review = isEnabled("reviewerWorker")
+        const auto_explain = isEnabled("explainerWorker") || config.get<boolean>("workers.autoExplain", false)
         const polling_interval_sec = config.get<number>("workers.pollingIntervalSec", 5)
         const summarizer_prompt = config.get<string>("workers.summarizerPrompt", "")
         const review_prompt = config.get<string>("workers.reviewPrompt", "")
@@ -736,6 +739,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
               config: {
                 workers: {
                   enabled,
+                  review,
                   auto_explain,
                   polling_interval_sec,
                   summarizer_prompt,
@@ -1666,8 +1670,9 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
 
       // Sync specific VS Code settings to the CLI backend config before fetching agents
       const config = vscode.workspace.getConfiguration("strata-code.new")
-      const enabled = config.get<boolean>("workers.enabled", false)
-      const auto_explain = config.get<boolean>("workers.autoExplain", false)
+      const enabled = isEnabled("workers")
+      const review = isEnabled("reviewerWorker")
+      const auto_explain = isEnabled("explainerWorker") || config.get<boolean>("workers.autoExplain", false)
       const polling_interval_sec = config.get<number>("workers.pollingIntervalSec", 5)
       const summarizer_prompt = config.get<string>("workers.summarizerPrompt", "")
       const review_prompt = config.get<string>("workers.reviewPrompt", "")
@@ -1678,6 +1683,7 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
           config: {
             workers: {
               enabled,
+              review,
               auto_explain,
               polling_interval_sec,
               summarizer_prompt,
@@ -3711,11 +3717,6 @@ export class StrataProvider implements vscode.WebviewViewProvider, TelemetryProp
     if (key.startsWith("features.")) {
       this.postMessage({ type: "extensionFeaturesLoaded", features: readAllFeatures() })
       // Sync runtime keys for features that have separate service toggles
-      if (key === "features.workers") {
-        await vscode.workspace
-          .getConfiguration("strata-code.new")
-          .update("workers.enabled", value, vscode.ConfigurationTarget.Global)
-      }
       if (key === "features.browserAutomation") {
         await vscode.workspace
           .getConfiguration("strata-code.new.browserAutomation")

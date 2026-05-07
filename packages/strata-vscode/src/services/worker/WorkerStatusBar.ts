@@ -77,11 +77,9 @@ export class WorkerStatusBar implements vscode.Disposable {
 
   private updateDisplay() {
     const config = this.provider.currentConfig
-    const vscodeConfig = vscode.workspace.getConfiguration("strata-code.new")
-    const vscodeWorkersEnabled = vscodeConfig.get<boolean>("workers.enabled", false)
     const feature = this.hasWorkerFeature()
 
-    if (!config?.workers?.enabled && !vscodeWorkersEnabled && !feature) {
+    if (!config?.workers?.enabled && !feature) {
       this.statusBarItem.hide()
       return
     }

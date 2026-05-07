@@ -44,6 +44,8 @@ import {
 } from "@/stratacode/provider/provider"
 // stratacode_change end
 import { PREDEFINED } from "@/stratacode/acp-client/registry" // stratacode_change
+import { createACPLanguageModel } from "@/stratacode/acp-client/language-model" // stratacode_change
+import { Service as ACPManagerService } from "@/stratacode/acp-client/manager" // stratacode_change
 
 const log = Log.create({ service: "provider" })
 
@@ -1550,12 +1552,19 @@ const layer: Layer.Layer<
 
     const list = Effect.fn("Provider.list")(() => InstanceState.use(state, (s) => s.providers))
 
-    async function resolveSDK(model: Model, s: State, envs: Record<string, string | undefined>) {
+    // stratacode_change start - add acpManager to resolveSDK
+    async function resolveSDK(
+      model: Model,
+      s: State,
+      envs: Record<string, string | undefined>,
+      acpManager?: import("@/stratacode/acp-client/manager").Interface
+    ) {
+    // stratacode_change end
       try {
         using _ = log.time("getSDK", {
           providerID: model.providerID,
         })
-        const provider = s.providers[model.providerID]
+        const provider = s.providers[model.providerID]!
         const options = { ...provider.options }
 
         if (model.providerID === "google-vertex" && !model.api.npm.includes("@ai-sdk/openai-compatible")) {
@@ -1682,6 +1691,16 @@ const layer: Layer.Layer<
         }
 
         let installedPath: string
+        // stratacode_change start - return ACP models wrapped as AI SDK language models
+        if (model.api.npm === "acp") {
+          if (!acpManager) throw new Error("ACP Manager is not available.")
+          return {
+            languageModel: (modelId: string, opts?: any) => {
+              return createACPLanguageModel(acpManager, model)
+            }
+          } as any
+        }
+        // stratacode_change end
         if (!model.api.npm.startsWith("file://")) {
           const item = await Npm.add(model.api.npm)
           if (!item.entrypoint) throw new Error(`Package ${model.api.npm} has no import entrypoint`)
@@ -1736,9 +1755,15 @@ const layer: Layer.Layer<
       const key = `${model.providerID}/${model.id}`
       if (s.models.has(key)) return s.models.get(key)!
 
+      // stratacode_change start - get ACP manager
+      const acpManager = yield* Effect.serviceOption(ACPManagerService)
+      // stratacode_change end
+
       return yield* Effect.promise(async () => {
         const provider = s.providers[model.providerID]
-        const sdk = await resolveSDK(model, s, envs)
+        // stratacode_change start
+        const sdk = await resolveSDK(model, s, envs, acpManager._tag === "Some" ? acpManager.value : undefined)
+        // stratacode_change end
 
         try {
           const language = s.modelLoaders[model.providerID]
@@ -1831,13 +1856,6 @@ const layer: Layer.Layer<
           }
         }
       }
-
-      // stratacode_change start - fall back to strata's auto small model
-      const strataFallback = s.providers[ProviderID.make("strata")]
-      if (strataFallback?.models["strata-auto/small"]) {
-        return yield* getModel(ProviderID.make("strata"), ModelID.make("strata-auto/small"))
-      }
-      // stratacode_change end
 
       return undefined
     })
